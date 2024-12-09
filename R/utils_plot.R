@@ -47,7 +47,7 @@ fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
     nrow()
 
   txt_soln <- paste0(round(PU_count / nrow(sDat) * 100), "% of planning region selected in MPAs")
-  txt_cost <- paste0(round((outsideCost / totalCost) * 100), "% of total rational use values outside MPAs")
+  txt_cost <- paste0(round((outsideCost / totalCost) * 100), "% of total cost values outside MPAs")
 
   out <- list(txt_soln, txt_cost)
   return(out)

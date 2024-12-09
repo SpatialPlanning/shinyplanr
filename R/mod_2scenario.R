@@ -10,6 +10,7 @@
 mod_2scenario_ui <- function(id) {
   ns <- shiny::NS(id)
 
+  # TODO I want to use this in the server as well. Not sure how to pass between the two.
   slider_vars <- fcreate_vars(id = id,
                               Dict = Dict %>%
                                 dplyr::filter(.data$type == "Feature"),
@@ -30,7 +31,7 @@ mod_2scenario_ui <- function(id) {
   shiny::sidebarLayout(
     shiny::sidebarPanel(
       shiny::h2("1. Select Targets"),
-      shiny::actionButton(ns("deselectVars"), "Reset All Features",
+      shiny::actionButton(ns("resetFeat"), "Reset All Features",
                           width = "100%", class = "btn btn-outline-primary",
                           style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
       ),
@@ -41,6 +42,7 @@ mod_2scenario_ui <- function(id) {
         id = ns("switchClimSmart"),
         shiny::h2("3. Climate-resilient"),
         shiny::p("Should the spatial plan be made climate-resilient?"),
+        shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
         fcustom_climate(id, "climateid", Dict),
       )),
       shinyjs::hidden(div(
@@ -91,7 +93,7 @@ mod_2scenario_ui <- function(id) {
                  value = 2,
                  shiny::fixedPanel(
                    style = "z-index:100", # To force the button above all plots.
-                   shiny::downloadButton(ns("dlPlot2"), "Download Plots",
+                   shiny::downloadButton(ns("dlPlot2"), "Download Plot",
                                          style = "float: right; padding:4px; font-size:120%"
                    ),
                    right = "1%", bottom = "1%", left = "34%"
@@ -99,7 +101,7 @@ mod_2scenario_ui <- function(id) {
                  shiny::span(shiny::h2(shiny::textOutput(ns("hdr_target")))),
                  shiny::textOutput(ns("txt_target")),
                  shiny::br(),
-                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_TargetPlot"), height = "600px"))
+                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_targetPlot"), height = "600px"))
         ),
         tabPanel("Cost",
                  value = 3,
@@ -195,12 +197,10 @@ mod_2scenario_server <- function(id) {
     #                     ignoreInit = TRUE
     # )
 
-    # Deselect features
-    shiny::observeEvent(input$deselectVars,
-                        {
-                          fDeselectVars(session, input, output)
-                        },
-                        ignoreInit = TRUE
+    # Reset Features
+    shiny::observeEvent(input$resetFeat,
+                        {fResetFeat(session, input, output)
+                        },ignoreInit = TRUE
     )
 
 
@@ -295,7 +295,7 @@ mod_2scenario_server <- function(id) {
             "This plot shows the optimal planning scenario for the study area
               that meets the selected targets for the chosen features whilst
               minimising the cost. The categorical map displays, which of
-              the hexagonal planning units were selected as important for meeting
+              the planning units were selected as important for meeting
               the conservation targets (dark blue) and which were not selected (light blue)
               either due to not being in an area prioritized for the selected features or
               because they are within areas valuable for other uses.
@@ -305,6 +305,9 @@ mod_2scenario_server <- function(id) {
           )
         }) %>%
           shiny::bindEvent(input$analyse)
+
+        output$dlPlot1 <- fDownloadPlotServer(input, gg_id = plot_data1(), gg_prefix = "Solution", time_date = analysisTime()) # Download figure
+
       }
     )
 
@@ -353,7 +356,7 @@ mod_2scenario_server <- function(id) {
           shiny::bindEvent(input$analyse)
 
 
-        output$gg_TargetPlot <- shiny::renderPlot({
+        output$gg_targetPlot <- shiny::renderPlot({
           gg_Target()
         }) %>%
           shiny::bindEvent(input$analyse)
@@ -550,7 +553,9 @@ mod_2scenario_server <- function(id) {
         }) %>%
           shiny::bindEvent(input$analyse)
 
-        output$hdr_DetsData <- shiny::renderText("Feature Summary") %>%
+        output$hdr_DetsData <- shiny::renderText(
+          "Feature Summary"
+        ) %>%
           shiny::bindEvent(input$analyse)
 
         # Create data tables for download
@@ -576,7 +581,7 @@ mod_2scenario_server <- function(id) {
         }) %>%
           shiny::bindEvent(input$analyse)
 
-        output$dlPlot7 <- fDownloadPlotServer(input, gg_id = ggr_DataPlot(), gg_prefix = "DataSummary", time_date = analysisTime(), width = 16, height = 10) # Download figure
+        output$dlPlot7 <- fDownloadPlotServer(input, gg_id = DataTabler(), gg_prefix = "DataSummary", time_date = analysisTime(), width = 16, height = 10) # Download figure
       }
     ) # End observe event 7
   })

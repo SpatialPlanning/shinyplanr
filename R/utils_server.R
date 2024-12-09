@@ -242,32 +242,19 @@ fupdate_checkboxReset <- function(session, id_in, Dict, selected = NA) { # works
 #'
 #' @noRd
 #'
-fDeselectVars <- function(session, input, output, id = 1) {
+fResetFeat <- function(session, input, output, id = 1) {
   # Add 2 to check ID if using Input2 in the Compare module
-  if (id == 2) {
-    lng <- length(c(input$check2TopPred, input$check2Krill, input$check2Fish, input$check2impBenthic, input$check2Drifter))
-    chk <- "2"
-  } else {
-    lng <- length(c(input$checkTopPred, input$checkKrill, input$checkFish, input$checkimpBenthic, input$checkDrifter))
-    chk <- ""
-  }
 
-  if (lng < 14) { # More deselected than not
-    fupdate_checkboxReset(session, paste0("check", chk, "TopPred"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "Krill"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "Fish"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "impBenthic"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "Ice"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "Drifter"), Dict, selected = NA)
-  } else {
-    fupdate_checkbox(session, paste0("check", chk, "TopPred"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "Krill"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "Fish"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "impBenthic"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "Ice"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "Drifter"), Dict, selected = character(0))
-  }
-  rm(lng, chk)
+  idx <- ifelse(id == 2, "2", "")
+
+  sld <- fcreate_vars(id = id,
+                      Dict = Dict %>%
+                        dplyr::filter(.data$type == "Feature"),
+                      name_check = paste0("sli", idx, "_"),
+                      categoryOut = TRUE)
+
+  purrr::walk2(.x = sld$id_in, .y = sld$targetInitial,
+               .f = \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y))
 }
 
 
@@ -296,47 +283,51 @@ fCheckFeatureNo <- function(dat) {
 #' @noRd
 #'
 fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, height = 18) {
-  # Create reactiveValues object
-  # and set flag to 0 to prevent errors with adding NULL
-  rv <- reactiveValues(download_flag = 0)
 
-  dlPlot <- shiny::downloadHandler(
-    filename = function() {
-      paste("WSMPA2_", gg_prefix, "_", time_date, ".png", sep = "")
-    },
-    content = function(file) {
-      ggplot2::ggsave(file,
-                      plot = gg_id,
-                      device = "png", width = width, height = height, units = "in", dpi = 300
-      )
-      # When the downloadHandler function runs, increment rv$download_flag
-      rv$download_flag <- rv$download_flag + 1
+  # TODO For some reason, this code is run 5 times (once for each button/tab preseumably)
+  # every time the tab is changed. It should only load when the tab is active? Or load all at
+  # the start and then not update?
 
-      if (rv$download_flag > 0 & gg_prefix == "Solution") { # trigger event whenever the value of rv$download_flag changes
-        # shinyjs::alert("File downloaded!")
-        shinyalert::shinyalert("<h3><strong>Further Information!</strong></h3>", "<h4>Don't forget to also download the data table (Details Tab) to store information about the inputs you provided to this analysis.</h4>",
-                               type = "info",
-                               closeOnEsc = TRUE,
-                               closeOnClickOutside = TRUE,
-                               html = TRUE,
-                               callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+
+  if (gg_prefix != "DataSummary"){
+
+    # TODO what does this rv do? Stop downloading when nothing run?
+    # Create reactiveValues object
+    # and set flag to 0 to prevent errors with adding NULL
+    rv <- reactiveValues(download_flag = 0)
+
+    dlPlot <- shiny::downloadHandler(
+      filename = function() {
+        paste(gg_prefix, "_", time_date, ".png", sep = "")
+      },
+      content = function(file) {
+        ggplot2::ggsave(file,
+                        plot = gg_id,
+                        device = "png", width = width, height = height, units = "in", dpi = 400
         )
-        shinyjs::runjs("window.scrollTo(0, 0)")
-      }
-    }
-  )
-  # }
+        # When the downloadHandler function runs, increment rv$download_flag
+        rv$download_flag <- rv$download_flag + 1
 
-  # JDE - Code ready to start puting csv export if needed.
-  # else {
-  #   dlPlot <- shiny::downloadHandler(
-  #     filename = function() {
-  #       paste("WSMPA2_",gg_prefix,"_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv", sep="")
-  #     },
-  #     content = function(file){
-  #
-  #       ggplot2::ggsave(file, plot = gg_id,
-  #                       device = "png", width = 19, height = 18, units = "in", dpi = 300)
-  #     })
-  # }
+        # if (rv$download_flag > 0 & gg_prefix == "Solution") { # trigger event whenever the value of rv$download_flag changes
+        #   # shinyjs::alert("File downloaded!")
+        #   shinyalert::shinyalert("<h3><strong>Further Information!</strong></h3>", "<h4>Don't forget to also download the data table (Details Tab) to store information about the inputs you provided to this analysis.</h4>",
+        #                          type = "info",
+        #                          closeOnEsc = TRUE,
+        #                          closeOnClickOutside = TRUE,
+        #                          html = TRUE,
+        #                          callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+        #   )
+        #   shinyjs::runjs("window.scrollTo(0, 0)")
+        # }
+      }
+    )
+  } else {
+    dlPlot <- shiny::downloadHandler(
+      filename = function() {
+        paste(gg_prefix,"_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv", sep="")
+      },
+      content = function(file){
+        readr::write_csv(x = gg_id, file = file)
+      })
+  }
 }

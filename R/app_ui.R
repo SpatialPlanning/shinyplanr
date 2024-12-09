@@ -46,7 +46,7 @@ app_ui <- function(request) {
                     }
                     "
       ),
-    selected = "Scenario",
+    selected = "Welcome",
     shiny::tabPanel(
       "Welcome",
       shiny::fluidPage(

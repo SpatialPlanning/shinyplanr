@@ -23,12 +23,14 @@ Imports:
     config (>= 0.3.1),
     dplyr,
     ggplot2, 
+    ggridges,
     gridExtra,
     golem (>= 0.4.1),
     magrittr,
     patchwork,
     prioritizr,
     purrr,
+    rcbc,
     rlang,
     sf,
     shiny (>= 1.7.4),
@@ -40,11 +42,13 @@ Imports:
     stringr,
     tibble,
     tidyr, 
-    tidyselect
+    tidyselect,
+    viridis
 Suggests: 
     spelling,
     testthat (>= 3.0.0)
 Remotes: 
+    github::dirkschumacher/rcbc,
     github::mathmarecol/spatialplanr
 Config/testthat/edition: 3
 Encoding: UTF-8

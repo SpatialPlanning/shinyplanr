@@ -17,7 +17,7 @@ mod_4features_ui <- function(id) {
         value = 1,
         shiny::sidebarLayout(
           shiny::sidebarPanel(
-            shiny::p("Choose a feature and click 'Show Layer'."),
+            shiny::p("Choose a feature'."),
             shiny::h2("1. Select Layer"),
             create_fancy_dropdown(id, Dict, "checkFeat")
           ),

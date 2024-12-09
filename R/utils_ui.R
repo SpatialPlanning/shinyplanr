@@ -85,6 +85,7 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
     label = nameCommon,
     min = targetMin,
     max = targetMax,
+    step = 10,
     value = targetInitial
   )
 }
@@ -134,7 +135,7 @@ fcustom_checkCategory <- function(varsIn, labelNum) {
   return(shinyList)
 }
 
-#' Custom Drop Down for Cost (Rational Use)
+#' Custom Drop Down for Cost
 #'
 #' @noRd
 #'
@@ -153,7 +154,7 @@ fcustom_cost <- function(id, id_in, Dict) {
 
 
 
-#' Custom Drop Down for Cost (Rational Use)
+#' Custom Drop Down for Climate
 #'
 #' @noRd
 #'
