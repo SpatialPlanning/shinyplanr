@@ -37,21 +37,27 @@ mod_2scenario_ui <- function(id) {
       ),
       fcustom_sliderCategory(slider_vars, labelNum = 1),
       shiny::h2("2. Select Cost Layer"),
-      fcustom_cost(id, "costid", Dict),
+      create_fancy_dropdown(id, "costid", Dict %>%
+                              dplyr::filter(.data$type == "Cost")),
+
       shinyjs::hidden(div(
         id = ns("switchClimSmart"),
-        shiny::h2("3. Climate-resilient"),
-        shiny::p("Should the spatial plan be made climate-resilient?"),
+        shiny::h2("3. Climate-smart"),
+        shiny::p("Should the spatial plan be made climate-smart?"),
         shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
-        fcustom_climate(id, "climateid", Dict),
+        create_fancy_dropdown(id = id,  id_in = "climateid", Dict = Dict %>%
+                                dplyr::filter(.data$type == "Climate") %>%
+                                dplyr::add_row(nameCommon = "Don't consider",
+                                               category = "Climate", .before = 1)),
       )),
+
       shinyjs::hidden(div(
         id = ns("switchConstraints"),
         shiny::h2("3. Constraints"),
-        fcustom_checkCategory(check_constraints, labelNum = 3),
         shiny::p("You can also lock-in some pre-defined areas to ensure they are protected. Planning Units outside these areas will also be selected if needed to meet the targets."),
-        # shiny::checkboxInput(ns("checkClimsmart"), "Make Climate-resilient", FALSE)
+        fcustom_checkCategory(check_constraints, labelNum = 3),
       )),
+
       shiny::br(), # Leave space for analysis button at bottom
       shiny::br(), # Leave space for analysis button at bottom
       shiny::fixedPanel(
@@ -128,7 +134,7 @@ mod_2scenario_ui <- function(id) {
         #          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_selFreq")))),
         #          shiny::textOutput(ns("txt_selFreq")),
         #          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_selFreq"), height = "700px"))),
-        tabPanel("Climate Resilience",
+        tabPanel("Climate",
                  value = 6,
                  shiny::fixedPanel(
                    style = "z-index:100", # To force the button above all plots.
@@ -288,18 +294,10 @@ mod_2scenario_server <- function(id) {
         }) %>%
           shiny::bindEvent(input$analyse)
 
-        # TODO Move this text to the setup script as the default. It can then be modified.
         output$txt_soln <- shiny::renderText({
-
           paste(
-            "This plot shows the optimal planning scenario for the study area
-              that meets the selected targets for the chosen features whilst
-              minimising the cost. The categorical map displays, which of
-              the planning units were selected as important for meeting
-              the conservation targets (dark blue) and which were not selected (light blue)
-              either due to not being in an area prioritized for the selected features or
-              because they are within areas valuable for other uses.
-              For the chosen inputs ",
+            tx_2solution,
+            " For the chosen inputs ",
             round(sum(selectedData()$solution_1) / nrow(selectedData()) * 100),
             "% of the planning region was selected."
           )
@@ -310,9 +308,6 @@ mod_2scenario_server <- function(id) {
 
       }
     )
-
-
-
 
 
 
@@ -367,13 +362,7 @@ mod_2scenario_server <- function(id) {
           shiny::bindEvent(input$analyse)
 
         output$txt_target <- shiny::renderText({
-          "Given the scenario for the spatial planning problem formulated with
-      the chosen inputs, these plots show the proportion of
-      suitable habitat/area of each of the important and representative
-      conservation features that are included. The dashed line represents
-      the set target for the features. Hollow bars with a black border indicate incidental
-        protection of features which were not chosen in this analysis but
-          have areal overlap with selected planning units."
+          tx_2targets
         }) %>%
           shiny::bindEvent(input$analyse)
 
@@ -420,16 +409,13 @@ mod_2scenario_server <- function(id) {
           shiny::bindEvent(input$analyse)
 
 
-        # TODO Move this text to the Dictionary and implement call to display here as usual
         output$txt_cost <- shiny::renderText({
           # Extract cost info from Dictionary for justification
           cost_txt <- Dict %>%
             dplyr::filter(.data$nameVariable == input$costid) %>%
             dplyr::pull("justification")
 
-          paste0("To illustrate how the chosen cost influences the spatial plan, this plot shows the
-             spatial plan (= scenario) overlaid with the cost of including a planning unit in a
-             reserve. ", cost_txt)
+          paste(tx_2cost, "\n", "\n", cost_txt)
         }) %>%
           shiny::bindEvent(input$analyse)
 
@@ -473,14 +459,7 @@ mod_2scenario_server <- function(id) {
 
         output$txt_clim <- shiny::renderText({
           if (input$climateid != "NA") {
-            paste("Kernel density estimates for the climate-resilience metric. The metric comprises two components,
-          both based on projected temperature in 2100 from a suite of Earth System Models under a high emission scenario:
-          1. Exposure to climate change (amount of warming); 2. Climate velocity (the pace of isotherm movement).
-          These two components are combined into a single climate-resilience metric so that higher values represent areas
-          likely to warm less and where biodiversity is more likely to be retained. The prioritization preferentially places protected areas
-          where there are higher values of the climate-resilience metric, whilst still meeting the biodiversity targets and
-          minimising overlap with high cost areas. The dark blue polygon represents the climate-resilience metric in planning units
-          selected for protection. The light blue polygon represents the climate-resilience metric in areas not selected for protection. The median values of the climate-resilience metric for the two groups are represented by the vertical lines.")
+            paste(tx_2climate)
           } else if (input$climateid == "NA") {
             paste("Climate-smart spatial planning option not selected.")
           }
@@ -505,6 +484,9 @@ mod_2scenario_server <- function(id) {
         DataTabler <- shiny::reactive({
           if (input$climateid != "NA") {
             targets <- targetData()
+
+            browser()
+
             targetPlotData <- spatialplanr::splnr_get_featureRep(
               soln = selectedData(),
               pDat = p1Data(),
@@ -520,10 +502,12 @@ mod_2scenario_server <- function(id) {
             )
           }
 
+          # TODO I think I can clean up this code and make it into a function
           # Create named vector to do the replacement
           rpl <- Dict %>%
             dplyr::filter(.data$nameVariable %in% targetPlotData$feature) %>%
             dplyr::select("nameVariable", "nameCommon") %>%
+            dplyr::mutate(nameVariable = stringr::str_c("^", nameVariable, "$")) %>%
             tibble::deframe()
 
           # TODO Add category to spatialplanr::splnr_get_featureRep and remove from splnr_plot_featureRep

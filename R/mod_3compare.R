@@ -44,19 +44,27 @@ mod_3compare_ui <- function(id) {
         # Thanks to https://stackoverflow.com/questions/40077388/shiny-splitlayout-and-selectinput-issue
         tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
         cellWidths = c("0%", "50%", "50%"), # note the 0% here at position zero...
-        fcustom_cost(id, "costid1", Dict),
-        fcustom_cost(id, "costid2", Dict),
+        create_fancy_dropdown(id, "costid1", Dict %>%
+                                dplyr::filter(.data$type == "Cost")),
+        create_fancy_dropdown(id, "costid2", Dict %>%
+                                dplyr::filter(.data$type == "Cost")),
       ),
 
 
       shinyjs::hidden(div(
         id = ns("switchClimSmart"),
-        shiny::h2("3. Climate-resilient"),
+        shiny::h2("3. Climate-smart"),
         shiny::p("Should the spatial plan be made climate-resilient?"),
         shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
         shiny::splitLayout(
-          fcustom_climate(id, "climateid1", Dict),
-          fcustom_climate(id, "climateid2", Dict),
+          create_fancy_dropdown(id = id,  id_in = "climateid1", Dict = Dict %>%
+                                  dplyr::filter(.data$type == "Climate") %>%
+                                  dplyr::add_row(nameCommon = "Don't consider",
+                                                 category = "Climate", .before = 1)),
+          create_fancy_dropdown(id = id,  id_in = "climateid2", Dict = Dict %>%
+                                  dplyr::filter(.data$type == "Climate") %>%
+                                  dplyr::add_row(nameCommon = "Don't consider",
+                                                 category = "Climate", .before = 1)),
         )
       )),
 
@@ -148,7 +156,7 @@ mod_3compare_ui <- function(id) {
                  shiny::span(shiny::p(shiny::textOutput(ns("txt_cost")))),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_cost"), height = "700px")),
         ),
-        tabPanel("Climate Resilience",
+        tabPanel("Climate",
                  value = 7,
                  shiny::fixedPanel(
                    style = "z-index:100", # To force the button above all plots.=
@@ -708,6 +716,7 @@ mod_3compare_server <- function(id) {
           rpl <- Dict %>%
             dplyr::filter(.data$nameVariable %in% unique(c(targetPlotData1$feature, targetPlotData2$feature))) %>%
             dplyr::select("nameVariable", "nameCommon") %>%
+            dplyr::mutate(nameVariable = stringr::str_c("^", nameVariable, "$")) %>%
             tibble::deframe()
 
           # TODO Add category to spatialplanr::splnr_get_featureRep and remove from splnr_plot_featureRep

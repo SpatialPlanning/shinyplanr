@@ -10,7 +10,7 @@
 mod_1welcome_ui <- function(id) {
   ns <- NS(id)
   # tagList(
-    shiny::div(shiny::HTML(tx_1welcome))
+    shiny::div(shiny::markdown(tx_1welcome))
   # ) # tagList
 }
 

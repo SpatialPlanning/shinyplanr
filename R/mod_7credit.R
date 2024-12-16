@@ -11,7 +11,7 @@ mod_7credit_ui <- function(id) {
   ns <- NS(id)
   shiny::fluidPage(
     titlePanel("Development"),
-    shiny::div(shiny::HTML(tx_7credit)),
+    shiny::div(shiny::markdown(tx_7credit)),
     shiny::h2("Acknowledgements"),
     shiny::h6("This Web App is possible thanks to the following packages"),
     shiny::fluidPage(

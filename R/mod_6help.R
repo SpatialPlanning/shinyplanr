@@ -15,26 +15,26 @@ mod_6help_ui <- function(id) {
       tabPanel("Frequently Asked Questions",
         value = 1,
         shiny::fluidPage(
-          shiny::HTML(tx_6faq)
+          shiny::markdown(tx_6faq)
         )
       ),
       tabPanel("Technical Information",
         value = 2,
         shiny::fluidPage(
-          shiny::HTML(tx_6technical)
+          shiny::markdown(tx_6technical)
         )
       ),
       tabPanel("References",
         value = 4,
         shiny::fluidPage(
-          shiny::HTML(tx_6references)
+          shiny::markdown(tx_6references)
         )
       ),
       # tabPanel("Changelog",
       #   value = 5,
       #   shiny::fluidPage(
       #     shiny::h1("Application Changelog"),
-      #     shiny::div(shiny::HTML(tx_6changelog)),
+      #     shiny::div(shiny::markdown(tx_6changelog)),
       #   ),
       # )
     )

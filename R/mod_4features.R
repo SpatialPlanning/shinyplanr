@@ -19,7 +19,7 @@ mod_4features_ui <- function(id) {
           shiny::sidebarPanel(
             shiny::p("Choose a feature'."),
             shiny::h2("1. Select Layer"),
-            create_fancy_dropdown(id, Dict, "checkFeat")
+            create_fancy_dropdown(id, "checkFeat", Dict)
           ),
 
           # Show a plot of the generated distribution
