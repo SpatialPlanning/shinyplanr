@@ -4,7 +4,7 @@
 #' @noRd
 #'
 
-fdefine_problem <- function(targets, input, name_check = "sli_", clim_input = FALSE, compare_id = "") {
+fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_", clim_input = FALSE, compare_id = "") {
 
   #TODO need to get this to work for cost layers without Cost_ at the start
 
