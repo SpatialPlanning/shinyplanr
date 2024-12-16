@@ -85,6 +85,22 @@ app_ui <- function(request) {
       )
     ),
     shiny::tabPanel(title = HTML("<li><a href='https://www.waittinstitute.org'target='_blank'>Waitt Institute")),
+
+    tags$footer(shiny::hr(style = "border-top: 1px solid #000000;"),
+    shiny::HTML("This shiny application was developed by researchers at <strong>The University of Queensland</strong>.
+                            </br>
+                            Powered by <em>shinyplanr</em> and <em>spatialplanr</em>.
+                            </br>
+                            &copy; 2025."),
+                align = "center",
+                style = "
+                 bottom:11.5px;
+                 width:100%;
+                 height:30px;
+                 color: black;
+                 padding: 0px;
+                 z-index: 100;
+                "),
   )
 
 }
