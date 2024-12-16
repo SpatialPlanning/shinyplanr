@@ -6,21 +6,9 @@
 
 fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_", clim_input = FALSE, compare_id = "") {
 
-  #TODO need to get this to work for cost layers without Cost_ at the start
-
-  #TODO Move function to a new file. re write and structure the file...
-
-  browser()
-
-  # TODO raw_sf, options  is not passed into the function
-
   out_sf <- raw_sf %>%
     dplyr::select(
-      .data$geometry,
-      tidyselect::all_of(targets$feature)
-      # tidyselect::starts_with("Cost_")
-    ) %>%
-    sf::st_as_sf()
+      tidyselect::all_of(c(targets$feature[targets$target > 0], input$costid)))
 
   if (clim_input == "NA") {
     p_dat <- out_sf
@@ -82,14 +70,11 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
     targets <- CS_Approach$Targets
 
-    # browser()
 
     p_dat <- CS_Approach$Features %>%
       sf::st_join(out_sf %>% dplyr::select(tidyselect::starts_with("Cost_")),
                   join = sf::st_equals) %>%
       sf::st_join(climate_sf, join = sf::st_equals)
-    # } else {
-    # print("Something odd is going on here. Check climate-smart tick box.")
   }
 
   f_no <- fCheckFeatureNo(p_dat) # Check number of features
