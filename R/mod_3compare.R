@@ -242,12 +242,12 @@ mod_3compare_server <- function(id) {
 
     # Define Problems
     p1Data <- shiny::reactive({
-      p1 <- fdefine_problem(targetData1(), input, clim_input = input$climateid1, compare_id = "1")
+      p1 <- fdefine_problem(targetData1(), raw_sf, options, input, clim_input = input$climateid1, compare_id = "1")
       return(p1)
     })
 
     p2Data <- shiny::reactive({
-      p2 <- fdefine_problem(targetData2(), input, clim_input = input$climateid2, compare_id = "2")
+      p2 <- fdefine_problem(targetData2(), raw_sf, options, input, clim_input = input$climateid2, compare_id = "2")
       return(p2)
     })
 

@@ -219,7 +219,7 @@ mod_2scenario_server <- function(id) {
 
 
     p1Data <- shiny::reactive({
-      p1 <- fdefine_problem(targetData(), input, clim_input = input$climateid)
+      p1 <- fdefine_problem(targetData(), raw_sf, options, input, clim_input = input$climateid)
       return(p1)
     })
 
