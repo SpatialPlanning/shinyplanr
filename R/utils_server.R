@@ -23,7 +23,7 @@ fget_category <- function(Dict) {
 fget_targets <- function(input, name_check = "sli_") {
 
   ft <- Dict %>%
-    dplyr::filter(.data$type != "Constraint", .data$type != "Cost", .data$type != "Climate") %>%
+    dplyr::filter(.data$type == "Feature") %>%
     dplyr::pull("nameVariable")
 
   targets <- ft %>%
@@ -101,8 +101,7 @@ fResetFeat <- function(session, input, output, id = 1) {
   idx <- ifelse(id == 2, "2", "")
 
   sld <- fcreate_vars(id = id,
-                      Dict = Dict %>%
-                        dplyr::filter(.data$type == "Feature"),
+                      Dict = Dict,
                       name_check = paste0("sli", idx, "_"),
                       categoryOut = TRUE)
 
