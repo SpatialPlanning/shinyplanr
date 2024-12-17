@@ -11,8 +11,18 @@ mod_3compare_ui <- function(id) {
   ns <- NS(id)
   Vars <- fcreate_vars(id = id, Dict = Dict, name_check = "sli_", categoryOut = TRUE)
   Vars2 <- fcreate_vars(id = id, Dict = Dict, name_check = "sli2_", categoryOut = TRUE)
-  check_constraints <- fcreate_check(id = id, Dict = Dict %>% dplyr::filter(.data$type == "Constraint"), name_check = "checkLI_", categoryOut = TRUE)
-  check_constraints2 <- fcreate_check(id = id, Dict = Dict %>% dplyr::filter(.data$type == "Constraint"), name_check = "check2LI_", categoryOut = TRUE)
+
+  check_lockIn <- fcreate_check(id = id,
+                                Dict = Dict,
+                                idType = "LockIn",
+                                name_check = "checkLI_",
+                                categoryOut = TRUE)
+
+  check_lockIn2 <- fcreate_check(id = id,
+                                 Dict = Dict,
+                                 idType = "LockIn",
+                                 name_check = "check2LI_",
+                                 categoryOut = TRUE)
 
   shinyjs::useShinyjs()
 
@@ -72,8 +82,8 @@ mod_3compare_ui <- function(id) {
         id = ns("switchConstraints"),
         shiny::h2("3. Constraints"),
         shiny::splitLayout(
-          fcustom_checkCategory(check_constraints, labelNum = 3),
-          fcustom_checkCategory(check_constraints2, labelNum = 3)
+          fcustom_checkCategory(check_lockIn, labelNum = 3),
+          fcustom_checkCategory(check_lockIn2, labelNum = 3)
         ),
 
         # shiny::checkboxInput(ns("checkClimsmart"), "Make Climate-resilient", FALSE)

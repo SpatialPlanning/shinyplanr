@@ -27,7 +27,7 @@ fcreate_vars <- function(id, Dict = Dict, name_check = "check", categoryOut = FA
 #'
 #' @noRd
 #'
-fcreate_check <- function(id, Dict = Dict, idType = "Constraint", name_check = "check", categoryOut = FALSE) {
+fcreate_check <- function(id, Dict = Dict, idType, name_check = "check", categoryOut = FALSE) {
 
   vars <- Dict %>%
     dplyr::filter(.data$type == idType) %>%
@@ -48,33 +48,24 @@ fcreate_check <- function(id, Dict = Dict, idType = "Constraint", name_check = "
   return(vars)
 }
 
+#'
+#' #' Title
+#' #'
+#' #' @noRd
+#' #'
+#' fcustom_checkboxGroup <- function(id, id_in, Dict, titl) {
+#'   Dict <- Dict %>%
+#'     dplyr::select("nameCommon", "nameVariable") %>%
+#'     tibble::deframe()
+#'
+#'   shiny::checkboxGroupInput(shiny::NS(namespace = id, id = id_in),
+#'                             shiny::h5(titl),
+#'                             choices = Dict,
+#'                             selected = unlist(Dict)
+#'   )
+#' }
 
-#' Title
-#'
-#' @noRd
-#'
-fcustom_checkboxGroup <- function(id, id_in, Dict, titl) {
-  Dict <- Dict %>%
-    dplyr::select("nameCommon", "nameVariable") %>%
-    tibble::deframe()
 
-  shiny::checkboxGroupInput(shiny::NS(namespace = id, id = id_in),
-    shiny::h5(titl),
-    choices = Dict,
-    selected = unlist(Dict)
-  )
-}
-
-#' Title
-#'
-#' @noRd
-#'
-fcustom_checkbox <- function(id, id_in, nameCommon) {
-  shiny::checkboxInput(shiny::NS(namespace = id, id = id_in),
-    label = nameCommon,
-    FALSE
-  )
-}
 
 #' Title
 #'
@@ -114,13 +105,31 @@ fcustom_sliderCategory <- function(varsIn, labelNum) {
   return(shinyList)
 }
 
-#' Title
+
+
+
+
+
+
+
+#' Custom check box sorted by category
 #'
 #' @noRd
 #'
-fcustom_checkCategory <- function(varsIn, labelNum) {
+fcustom_checkCategory <- function(varsIn, labelNum = NULL) {
 
-  # browser()
+
+
+  fcustom_checkbox <- function(id, id_in, nameCommon) {
+    shinyWidgets::prettyCheckbox(
+      inputId = shiny::NS(namespace = id, id = id_in),
+      label = nameCommon,
+      value = FALSE,
+      thick = TRUE,
+      animation = "pulse",
+      status = "info"
+    )
+  }
 
   ctgs <- unique(varsIn$category)
 
@@ -133,9 +142,16 @@ fcustom_checkCategory <- function(varsIn, labelNum) {
 
     shinyList[ctg * 2] <- # times as many entries as you want to have for one category per list: here: title and sliders (=2); for example with gap between =3
       list(purrr::pmap(feats, fcustom_checkbox))
-    shinyList[ctg * 2 - 1] <-
-      list(shiny::h3(paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
+
+    if (is.null(labelNum)){
+      shinyList[ctg * 2 - 1] <- list(shiny::h5(
+        ctgs[ctg]))
+    } else {
+      shinyList[ctg * 2 - 1] <- list(shiny::h5(
+        paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
+    }
   }
+
   return(shinyList)
 }
 
@@ -150,9 +166,9 @@ fcustom_cost <- function(id, id_in, Dict) {
     tibble::deframe()
 
   shiny::selectInput(shiny::NS(namespace = id, id = id_in),
-    label = NULL, #shiny::h3(" "),
-    choices = choice,
-    multiple = FALSE
+                     label = NULL, #shiny::h3(" "),
+                     choices = choice,
+                     multiple = FALSE
   )
 }
 
@@ -194,8 +210,8 @@ create_fancy_dropdown <- function(id, id_in, Dict) {
     purrr::map(tibble::deframe)
 
   shiny::selectInput(inputId = shiny::NS(namespace = id, id = id_in),
-    label = NULL, #shiny::h4(" "),
-    choices = featureList,
-    multiple = FALSE
+                     label = NULL, #shiny::h4(" "),
+                     choices = featureList,
+                     multiple = FALSE
   )
 }
