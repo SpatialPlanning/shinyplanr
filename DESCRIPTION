@@ -36,12 +36,13 @@ Imports:
     shiny (>= 1.7.4),
     shinyalert,
     shinycssloaders,
-    shinydisconnect, 
-    shinyjs, 
-    spatialplanr (>= 0.6.8),
+    shinydisconnect,
+    shinyjs,
+    shinyWidgets,
+    spatialplanr (>= 0.6.9),
     stringr,
     tibble,
-    tidyr, 
+    tidyr,
     tidyselect,
     viridis
 Suggests: 
@@ -49,6 +50,7 @@ Suggests:
     testthat (>= 3.0.0)
 Remotes: 
     github::dirkschumacher/rcbc,
+    github::dreamRs/shinyWidgets,
     github::mathmarecol/spatialplanr
 Config/testthat/edition: 3
 Encoding: UTF-8
