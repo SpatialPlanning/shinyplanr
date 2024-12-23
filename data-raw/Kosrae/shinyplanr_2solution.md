@@ -1,0 +1,1 @@
+This plot shows the optimal spatial planning scenario for the study area that meets the selected targets for the chosen features whilst minimizing the cost. The map displays which planning units were selected for protection (dark blue) and which were not selected (light blue). 

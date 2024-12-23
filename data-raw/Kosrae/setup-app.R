@@ -14,8 +14,9 @@ data_dir <- file.path("data-raw", "Kosrae")
 options <- list(
 
   ## General Options
-  nav_title = "Kosrae Planning", # Navbar title
+  nav_title = "Kosrae Spatial Planning", # Navbar title
   nav_primary = "#2C3E50", # Hex colour codes: https://htmlcolorcodes.com
+  # Waitt Colour "#12329A"
 
   ## File locations
   file_logo = file.path(data_dir, "logos", "WaittSquareLogo_invert.png"),
@@ -23,7 +24,6 @@ options <- list(
   file_logo3 = file.path(data_dir, "logos", "WaittSquareLogo.png"),
 
   file_data = file.path(data_dir, "Kosrae_RawData.rda"),
-  file_climate = file.path(data_dir, "climate_data", "tos_ensemble_ssp245.rds"),
 
   ## App Setup Options
   mod_1welcome = TRUE, #switch modules on/off
@@ -35,6 +35,9 @@ options <- list(
 
   #TODO These options need to be updated. Probably into a list as we need specific
   # options (e.g. direction) for the number of layers we have in case they are different
+
+
+  include_climateChange = TRUE,
   climate_change = 1, #switch climate change on/off; 0 = not clim-smart; 1 = CPA; 2 = Feature; 3 = Percentile
   # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions
 
@@ -43,7 +46,7 @@ options <- list(
   refugiaTarget = 1,
 
 
-  lockedInArea = 0, # Includes locked in areas
+  include_lockedArea = TRUE, # Includes locked in/out areas
 
   ## Which objective function module are we using
   obj_func = "min_set", # Minimum set objective
@@ -97,8 +100,11 @@ vars <- vars[! vars %in% zero_cols] # Remove zero's from vars
 Dict <- Dict %>%
   dplyr::filter(!nameVariable %in% zero_cols)
 
+
+# browser()
+
 # Check if variables were removed from the data due to zero columns
-if (length(vars) != dim(raw_sf)[2]-1){
+if (length(unique(vars)) != dim(raw_sf)[2]-1){
 
   stop("raw_sf and the Dictionary have different numbers of variables. If columns
        were removed due to being all zero above, please remove corresponding
@@ -115,29 +121,31 @@ overlay <- coast
 
 
 # MODULE 1 - WELCOME ------------------------------------------------------
-tx_1welcome <- readr::read_file(file.path(data_dir, "html_1welcome.txt"))
+tx_1welcome <- readr::read_file(file.path(data_dir, "shinyplanr_1welcome.md"))
 
 # return_list <- read_textboxes(FILENAME)
 
 
 
 # MODULE 2 - SCENARIO ------------------------------------------------------
-
-
+tx_2solution <- readr::read_file(file.path(data_dir, "shinyplanr_2solution.md"))
+tx_2targets <- readr::read_file(file.path(data_dir, "shinyplanr_2targets.md"))
+tx_2cost <- readr::read_file(file.path(data_dir, "shinyplanr_2cost.md"))
+tx_2climate <- readr::read_file(file.path(data_dir, "shinyplanr_2climate.md"))
 
 # MODULE 3 - COMPARISON ------------------------------------------------------
 
 
 
 # MODULE 6 - HELP ------------------------------------------------------
-tx_6faq <- readr::read_file(file.path(data_dir, "html_6faq.txt"))
-tx_6changelog <- readr::read_file(file.path(data_dir, "html_6changelog.txt"))
-tx_6technical <- readr::read_file(file.path(data_dir, "html_6technical.txt"))
-tx_6references <- readr::read_file(file.path(data_dir, "html_6references.txt"))
+tx_6faq <- readr::read_file(file.path(data_dir, "shinyplanr_6faq.md"))
+tx_6changelog <- readr::read_file(file.path(data_dir, "shinyplanr_6changelog.md"))
+tx_6technical <- readr::read_file(file.path(data_dir, "shinyplanr_6technical.md"))
+tx_6references <- readr::read_file(file.path(data_dir, "shinyplanr_6references.md"))
 
 
 # MODULE 7 - CREDIT ------------------------------------------------------
-tx_7credit <- readr::read_file(file.path(data_dir, "html_7credit.txt"))
+tx_7credit <- readr::read_file(file.path(data_dir, "shinyplanr_7credit.md"))
 
 
 
@@ -197,6 +205,10 @@ usethis::use_data(options,
                   bndry,
                   overlay,
                   tx_1welcome,
+                  tx_2solution,
+                  tx_2targets,
+                  tx_2cost,
+                  tx_2climate,
                   tx_6faq,
                   tx_6technical,
                   tx_6changelog,

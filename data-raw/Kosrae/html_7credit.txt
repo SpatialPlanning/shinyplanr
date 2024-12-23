@@ -1,1 +1,0 @@
-This website was developed in conjunction with the <a href = https://www.waittinstitute.org target=_blank>Waitt Institute</a>. The interactive software was developed by scientists from the <a href=http://uq.edu.au target=_blank> University of Queensland </a>."

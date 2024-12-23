@@ -1,0 +1,1 @@
+To illustrate how the chosen cost layer influences the spatial plan, this plot shows the plan (= scenario) overlaid with the cost of including each planning unit in a protected area. 
