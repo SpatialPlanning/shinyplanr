@@ -39,7 +39,7 @@ mod_3compare_ui <- function(id) {
         shiny::h2("Input 2", style = "width: 100%; text-align:center; display: block"),
       ),
       shiny::h2("1. Select Targets"),
-      shiny::actionButton(ns("resetFeat"), "Reset All Features",
+      shiny::actionButton(ns("resetSlider"), "Reset All Features",
                           width = "100%", class = "btn btn-outline-primary",
                           style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
       ),
@@ -151,6 +151,14 @@ mod_3compare_ui <- function(id) {
                  ),
                  shiny::span(shiny::h2(shiny::textOutput(ns("hdr_target")))),
                  shiny::br(),
+                 shiny::selectInput(inputId = ns("checkSort"),
+                                    label = "Sort plot by:",
+                                    choices = c("Category" = "category",
+                                                # "Feature" = "feature",
+                                                "Target" = "target",
+                                                "Representation" = "representation",
+                                                "Difference from Target" = "difference"),
+                                    selected = "category",  multiple = FALSE),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_target"), height = "700px")),
         ),
         tabPanel("Cost",
@@ -207,11 +215,11 @@ mod_3compare_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    if (options$climate_change != 0) { # dont make observeEvent because it's a global variable
+    if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchClimSmart")
     }
 
-    if (options$lockedInArea != 0) { # dont make observeEvent because it's a global variable
+    if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchConstraints")
     }
 
@@ -219,13 +227,13 @@ mod_3compare_server <- function(id) {
       session$close()
     })
 
-    shiny::observeEvent(input$resetFeat,
-                        {fResetFeat(session, input, output, id = 1)
+    shiny::observeEvent(input$resetSlider,
+                        {fresetSlider(session, input, output, id = 1)
                         },ignoreInit = TRUE
     )
 
-    shiny::observeEvent(input$resetFeat,
-                        {fResetFeat(session, input, output, id = 2)
+    shiny::observeEvent(input$resetSlider,
+                        {fresetSlider(session, input, output, id = 2)
                         },ignoreInit = TRUE
     )
 
@@ -268,15 +276,31 @@ mod_3compare_server <- function(id) {
 
     # Solve the problem -------------------------------------------------------
     selectedData1 <- shiny::reactive({
-      selectedData1 <- solve(p1Data(), run_checks = FALSE) %>%
-        sf::st_as_sf()
-      return(selectedData1)
+
+      result <- tryCatch({
+        sD <- solve(p1Data(), run_checks = FALSE) %>%
+          sf::st_as_sf()
+
+      }, error = function(err) {
+        shinyalert::shinyalert("Error", "Can't find a solution! This is because it is impossible to meet the currently selected targets, budgets, or constraints. Try decreasing the targets or removing locked-out areas.",
+                               type = "error",
+                               callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+        )
+      })
+
     }) %>% shiny::bindEvent(input$analyse)
 
     selectedData2 <- shiny::reactive({
-      selectedData2 <- solve(p2Data(), run_checks = FALSE) %>%
-        sf::st_as_sf()
-      return(selectedData2)
+      result <- tryCatch({
+        sD <- solve(p1Data(), run_checks = FALSE) %>%
+          sf::st_as_sf()
+
+      }, error = function(err) {
+        shinyalert::shinyalert("Error", "Can't find a solution! This is because it is impossible to meet the currently selected targets, budgets, or constraints. Try decreasing the targets or removing locked-out areas.",
+                               type = "error",
+                               callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+        )
+      })
     }) %>% shiny::bindEvent(input$analyse)
 
 
@@ -457,6 +481,10 @@ mod_3compare_server <- function(id) {
             )
           }
 
+          # TODO Remove this when we fix spatialplanr as in mod_2
+          targetPlotData1 <- targetPlotData1 %>%
+            dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
+
           ## DATA FOR PLOT 2
 
           if (input$climateid2 != "NA") {
@@ -476,6 +504,10 @@ mod_3compare_server <- function(id) {
             )
           }
 
+          # TODO Remove this when we fix spatialplanr as in mod_2
+          targetPlotData2 <- targetPlotData2 %>%
+            dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
+
 
           ggr_target <- patchwork::wrap_plots(
 
@@ -484,7 +516,8 @@ mod_3compare_server <- function(id) {
                                                 showTarget = TRUE,
                                                 category = fget_category(Dict = Dict),
                                                 renameFeatures = TRUE,
-                                                namesToReplace = Dict) +
+                                                namesToReplace = Dict,
+                                                sort_by = input$checkSort) +
               ggplot2::ggtitle("Input 1"),
 
             spatialplanr::splnr_plot_featureRep(targetPlotData2,
@@ -492,7 +525,8 @@ mod_3compare_server <- function(id) {
                                                 showTarget = TRUE,
                                                 category = fget_category(Dict = Dict),
                                                 renameFeatures = TRUE,
-                                                namesToReplace = Dict) +
+                                                namesToReplace = Dict,
+                                                sort_by = input$checkSort) +
               ggplot2::ggtitle("Input 2"),
             nrow = 1, guides = "collect") &
             ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal")
@@ -500,13 +534,13 @@ mod_3compare_server <- function(id) {
           return(ggr_target)
 
         }) %>%
-          shiny::bindEvent(input$analyse)
+          shiny::bindCache(input$analyse, input$checkSort)
 
 
         output$gg_target <- shiny::renderPlot({
           ggr_target()
-        }) %>%
-          shiny::bindEvent(input$analyse)
+        }) #%>%
+          # shiny::bindEvent(input$analyse)
 
         output$hdr_target <- shiny::renderText({
           "Targets"
@@ -615,31 +649,51 @@ mod_3compare_server <- function(id) {
       },
       {
         ggr_clim <- shiny::reactive({
+
           if (!"metric" %in% colnames(selectedData1())) { # just if one of the inputs does not have climate smart selected
-            selectedData1 <- selectedData1() %>%
-              dplyr::mutate(metric = climate_sf$metric)
+            # selectedData1 <- selectedData1() %>%
+            #   dplyr::mutate(metric = climate_sf$metric)
+            metric1 <- FALSE
           } else {
-            selectedData1 <- selectedData1()
+            # selectedData1 <- selectedData1()
+            metric1 <- TRUE
           }
+          selectedData1 <- selectedData1()
 
           if (!"metric" %in% colnames(selectedData2())) {
-            selectedData2 <- selectedData2() %>%
-              dplyr::mutate(metric = climate_sf$metric)
+            # selectedData2 <- selectedData2() %>%
+            #   dplyr::mutate(metric = climate_sf$metric)
+            metric2 <- FALSE
           } else {
-            selectedData2 <- selectedData2()
+            # selectedData2 <- selectedData2()
+            metric2 <- TRUE
+          }
+          selectedData2 <- selectedData2()
+
+          if (isTRUE(metric1) & isTRUE(metric2)){
+            temp_soln <- list(selectedData1, selectedData2)
+            temp_names <- c("Input 1", "Input 2")
+          } else if (isTRUE(metric1) & isFALSE(metric2)){
+            temp_soln <- list(selectedData1)
+            temp_names <- c("Input 1")
+          } else if (isFALSE(metric1) & isTRUE(metric2)){
+            temp_soln <- list(selectedData2)
+            temp_names <- c("Input 2")
           }
 
+
           ggClimDens <- spatialplanr::splnr_plot_climKernelDensity(
-            soln = list(selectedData1, selectedData2),
-            names = c("Input 1", "Input 2"), type = "Normal",
+            soln = temp_soln,
+            names = temp_names, type = "Normal",
             legendTitle = "Climate resilience metric (add unit)",
             xAxisLab = "Climate resilience metric"
           )
           return(ggClimDens)
         }) %>%
-          shiny::bindEvent(input$analyse)
+        shiny::bindEvent(input$analyse)
 
         output$gg_clim <- shiny::renderPlot({
+
           if (input$climateid1 != "NA" | input$climateid2 != "NA") { # could also only generate one plot when only one of them is climate smart. Or always generate these plots when climate smart option is wanted in general.
             ggr_clim()
           }
@@ -671,141 +725,151 @@ mod_3compare_server <- function(id) {
 
         output$dlPlot7 <- fDownloadPlotServer(input, gg_id = ggr_clim(), gg_prefix = "Climate", time_date = analysisTime()) # Download figure
       }
-    ) # end observeEvent 5
+          ) # end observeEvent 5
 
 
 
-    observeEvent(
-      {
-        input$tabs == 8
-      },
-      {
-        # for saving data/ data next to plot
-        DataTabler <- shiny::reactive({
-          if (input$climateid1 != "NA") {
-            targets <- targetData1()
+      observeEvent(
+        {
+          input$tabs == 8
+        },
+        {
+          # for saving data/ data next to plot
+          DataTabler <- shiny::reactive({
+            if (input$climateid1 != "NA") {
+              targets <- targetData1()
 
-            targetPlotData1 <- spatialplanr::splnr_get_featureRep(
-              soln = selectedData1(),
-              pDat = p1Data(),
-              climsmart = TRUE,
-              climsmartApproach = options$climate_change,
-              targets = targets
-            ) %>% # TODO Move this mutate to spatialplanr to account for zeros
-              dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
-          } else {
-            targetPlotData1 <- spatialplanr::splnr_get_featureRep(
-              soln = selectedData1(),
-              pDat = p1Data(),
-              climsmart = FALSE
-            ) %>%
-              dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
-          }
+              targetPlotData1 <- spatialplanr::splnr_get_featureRep(
+                soln = selectedData1(),
+                pDat = p1Data(),
+                climsmart = TRUE,
+                climsmartApproach = options$climate_change,
+                targets = targets
+              ) %>% # TODO Move this mutate to spatialplanr to account for zeros
+                dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
+            } else {
+              targetPlotData1 <- spatialplanr::splnr_get_featureRep(
+                soln = selectedData1(),
+                pDat = p1Data(),
+                climsmart = FALSE
+              ) %>%
+                dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
+            }
 
-          if (input$climateid2 == TRUE) {
-            targets <- targetData2()
-
-            targetPlotData2 <- spatialplanr::splnr_get_featureRep(
-              soln = selectedData2(),
-              pDat = p2Data(),
-              climsmart = TRUE,
-              climsmartApproach = options$climate_change,
-              targets = targets
-            ) %>%
-              dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
-          } else {
-            targetPlotData2 <- spatialplanr::splnr_get_featureRep(
-              soln = selectedData2(),
-              pDat = p2Data(),
-              climsmart = FALSE
-            ) %>%
-              dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
-          }
-
-          # Create named vector to do the replacement
-          rpl <- Dict %>%
-            dplyr::filter(.data$nameVariable %in% unique(c(targetPlotData1$feature, targetPlotData2$feature))) %>%
-            dplyr::select("nameVariable", "nameCommon") %>%
-            dplyr::mutate(nameVariable = stringr::str_c("^", nameVariable, "$")) %>%
-            tibble::deframe()
-
-          # TODO Add category to spatialplanr::splnr_get_featureRep and remove from splnr_plot_featureRep
-          FeaturestoSave1 <- targetPlotData1 %>%
-            dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
-            dplyr::mutate(
-              value = as.integer(round(.data$relative_held * 100)),
-              target = as.integer(round(.data$target * 100))
-            ) %>%
-            dplyr::select("category", "feature", "target", "value", "incidental") %>%
-            dplyr::rename(
-              Feature = .data$feature,
-              `Protection 1 (%)` = .data$value,
-              `Target 1 (%)` = .data$target,
-              `Incidental 1` = .data$incidental,
-              Category = .data$category
-            ) %>%
-            dplyr::arrange(.data$Category, .data$Feature) %>%
-            dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
-
-          FeaturestoSave2 <- targetPlotData2 %>%
-            dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
-            dplyr::mutate(
-              value = as.integer(round(.data$relative_held * 100)),
-              target = as.integer(round(.data$target * 100))
-            ) %>%
-            dplyr::select("category", "feature", "target", "value", "incidental") %>%
-            dplyr::rename(
-              Feature = .data$feature,
-              `Protection 2 (%)` = .data$value,
-              `Target 2 (%)` = .data$target,
-              `Incidental 2` = .data$incidental,
-              Category = .data$category
-            ) %>%
-            dplyr::arrange(.data$Category, .data$Feature) %>%
-            dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
+            # TODO Remove this when we fix spatialplanr as in mod_2
+            targetPlotData1 <- targetPlotData1 %>%
+              dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
 
 
-          # TODO - Change to full join for compare
-          FeaturestoSave <- dplyr::full_join(FeaturestoSave1, FeaturestoSave2, by = c("Category", "Feature"))
+            if (input$climateid2 == TRUE) {
+              targets <- targetData2()
 
-          return(FeaturestoSave)
-        }) %>%
-          shiny::bindEvent(input$analyse)
+              targetPlotData2 <- spatialplanr::splnr_get_featureRep(
+                soln = selectedData2(),
+                pDat = p2Data(),
+                climsmart = TRUE,
+                climsmartApproach = options$climate_change,
+                targets = targets
+              ) %>%
+                dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
+            } else {
+              targetPlotData2 <- spatialplanr::splnr_get_featureRep(
+                soln = selectedData2(),
+                pDat = p2Data(),
+                climsmart = FALSE
+              ) %>%
+                dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
+            }
 
-        output$DataTable <- shiny::renderTable({
-          DataTabler()
-        }) %>%
-          shiny::bindEvent(input$analyse)
+            # TODO Remove this when we fix spatialplanr as in mod_2
+            targetPlotData2 <- targetPlotData2 %>%
+              dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
 
-        output$hdr_DetsData <- shiny::renderText("Feature Summary") %>%
-          shiny::bindEvent(input$analyse)
 
-        # Create data tables for download
-        ggr_DataPlot <- shiny::reactive({
-          dat <- DataTabler() %>%
-            dplyr::mutate(Class = as.factor(.data$Class)) %>%
-            dplyr::group_by(.data$Class) %>%
-            dplyr::group_split()
+            # Create named vector to do the replacement
+            rpl <- Dict %>%
+              dplyr::filter(.data$nameVariable %in% unique(c(targetPlotData1$feature, targetPlotData2$feature))) %>%
+              dplyr::select("nameVariable", "nameCommon") %>%
+              dplyr::mutate(nameVariable = stringr::str_c("^", nameVariable, "$")) %>%
+              tibble::deframe()
 
-          design <- "BBAA
+            # TODO Add category to spatialplanr::splnr_get_featureRep and remove from splnr_plot_featureRep
+            FeaturestoSave1 <- targetPlotData1 %>%
+              dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
+              dplyr::mutate(
+                value = as.integer(round(.data$relative_held * 100)),
+                target = as.integer(round(.data$target * 100))
+              ) %>%
+              dplyr::select("category", "feature", "target", "value", "incidental") %>%
+              dplyr::rename(
+                Feature = .data$feature,
+                `Protection 1 (%)` = .data$value,
+                `Target 1 (%)` = .data$target,
+                `Incidental 1` = .data$incidental,
+                Category = .data$category
+              ) %>%
+              dplyr::arrange(.data$Category, .data$Feature) %>%
+              dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
+
+            FeaturestoSave2 <- targetPlotData2 %>%
+              dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
+              dplyr::mutate(
+                value = as.integer(round(.data$relative_held * 100)),
+                target = as.integer(round(.data$target * 100))
+              ) %>%
+              dplyr::select("category", "feature", "target", "value", "incidental") %>%
+              dplyr::rename(
+                Feature = .data$feature,
+                `Protection 2 (%)` = .data$value,
+                `Target 2 (%)` = .data$target,
+                `Incidental 2` = .data$incidental,
+                Category = .data$category
+              ) %>%
+              dplyr::arrange(.data$Category, .data$Feature) %>%
+              dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
+
+
+            # TODO - Change to full join for compare
+            FeaturestoSave <- dplyr::full_join(FeaturestoSave1, FeaturestoSave2, by = c("Category", "Feature"))
+
+            return(FeaturestoSave)
+          }) %>%
+            shiny::bindEvent(input$analyse)
+
+          output$DataTable <- shiny::renderTable({
+            DataTabler()
+          }) %>%
+            shiny::bindEvent(input$analyse)
+
+          output$hdr_DetsData <- shiny::renderText("Feature Summary") %>%
+            shiny::bindEvent(input$analyse)
+
+          # Create data tables for download
+          ggr_DataPlot <- shiny::reactive({
+            dat <- DataTabler() %>%
+              dplyr::mutate(Class = as.factor(.data$Class)) %>%
+              dplyr::group_by(.data$Class) %>%
+              dplyr::group_split()
+
+            design <- "BBAA
            BBCC
            BBCC
            BBCC"
 
-          ggr_DataPlot <- patchwork::wrap_plots(
-            # gridExtra::tableGrob(SummaryTabler(), rows = NULL, theme = gridExtra::ttheme_default(base_size = 9)),
-            gridExtra::tableGrob(dat[[1]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 7)),
-            gridExtra::tableGrob(dat[[2]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 7)),
-            design = design
-          )
+            ggr_DataPlot <- patchwork::wrap_plots(
+              # gridExtra::tableGrob(SummaryTabler(), rows = NULL, theme = gridExtra::ttheme_default(base_size = 9)),
+              gridExtra::tableGrob(dat[[1]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 7)),
+              gridExtra::tableGrob(dat[[2]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 7)),
+              design = design
+            )
 
-          return(ggr_DataPlot)
-        }) %>%
-          shiny::bindEvent(input$analyse)
+            return(ggr_DataPlot)
+          }) %>%
+            shiny::bindEvent(input$analyse)
 
-        output$dlPlot8 <- fDownloadPlotServer(input, gg_id = DataTabler(), gg_prefix = "DataSummary", time_date = analysisTime(), width = 16, height = 10) # Download figure
-      }
-    ) # End observe event 8
+          output$dlPlot8 <- fDownloadPlotServer(input, gg_id = DataTabler(), gg_prefix = "DataSummary", time_date = analysisTime(), width = 16, height = 10) # Download figure
+        }
+      ) # End observe event 8
   })
 }
 

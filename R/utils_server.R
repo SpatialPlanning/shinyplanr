@@ -95,7 +95,7 @@ fupdate_checkboxReset <- function(session, id_in, Dict, selected = NA) { # works
 #'
 #' @noRd
 #'
-fResetFeat <- function(session, input, output, id = 1) {
+fresetSlider <- function(session, input, output, id = 1) {
   # Add 2 to check ID if using Input2 in the Compare module
 
   idx <- ifelse(id == 2, "2", "")

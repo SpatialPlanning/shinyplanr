@@ -10,18 +10,41 @@
 mod_2scenario_ui <- function(id) {
   ns <- shiny::NS(id)
 
+  # Decide numbering for optional sections
+  if (isTRUE(options$include_climateChange)){
+    LI_num <- "4"
+  } else {
+    LI_num <- "3"
+  }
+
+
   # TODO I want to use this in the server as well. Not sure how to pass between the two.
   slider_vars <- fcreate_vars(id = id,
-                              Dict = Dict %>%
-                                dplyr::filter(.data$type == "Feature"),
+                              Dict = Dict,
                               name_check = "sli_",
-                              categoryOut = TRUE)
+                              categoryOut = TRUE,
+                              byCategory = FALSE)
 
-  check_constraints <- fcreate_check(id = id,
-                                     Dict = Dict %>%
-                                       dplyr::filter(.data$type == "Constraint"),
-                                     name_check = "checkLI_",
-                                     categoryOut = TRUE)
+
+  # Reformat varsIn for the category sliders
+  slider_varsCat <- fcreate_vars(id = id,
+                                 Dict = Dict,
+                                 name_check = "sli_",
+                                 categoryOut = TRUE,
+                                 byCategory = TRUE)
+
+  check_lockIn <- fcreate_check(id = id,
+                                Dict = Dict,
+                                idType = "LockIn",
+                                name_check = "checkLI_",
+                                categoryOut = TRUE)
+
+
+  check_lockOut <- fcreate_check(id = id,
+                                 Dict = Dict,
+                                 idType = "LockOut",
+                                 name_check = "checkLO_",
+                                 categoryOut = TRUE)
 
   shinyjs::useShinyjs()
 
@@ -31,11 +54,83 @@ mod_2scenario_ui <- function(id) {
   shiny::sidebarLayout(
     shiny::sidebarPanel(
       shiny::h2("1. Select Targets"),
-      shiny::actionButton(ns("resetFeat"), "Reset All Features",
-                          width = "100%", class = "btn btn-outline-primary",
-                          style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
+      # shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
+      #                     width = "100%", class = "btn btn-outline-primary",
+      #                     style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
+      # ),
+      # shiny::hr(style = "border-top: 1px solid #000000;"),
+
+      shiny::h4("Master Slider"),
+      shiny::HTML("You can use this slider to adjust the value for all features at once."),
+      shiny::sliderInput(inputId = ns("masterSli"), label = NULL,
+                         min = min(Dict$targetMin, na.rm = TRUE), max = max(Dict$targetMax, na.rm = TRUE),
+                         step = 5,
+                         value = round(mean(Dict$targetInitial, na.rm = TRUE))),
+      shiny::hr(style = "border-top: 1px solid #000000;"),
+
+      shiny::h4("Category-based or Indiviudal Targets"),
+      shiny::p("Toggle to set protection targets for features based on broad categories or for individual features."),
+      # shinyWidgets::prettySwitch(
+      #   inputId = ns("switchTargets"),
+      #   label = "Use individual targets",
+      #   # width = "100%",
+      #   value = TRUE,
+      #   fill = TRUE,
+      #   bigger = TRUE,
+      #   status = "danger"
+      # ),
+      #
+      # shinyWidgets::prettyToggle(
+      #   inputId = "toggle",
+      #   label_on = "Checked!",
+      #   label_off = "Unchecked..."
+      #   ),
+
+      shiny::fluidRow(
+        shiny::column(6,
+                      shinyWidgets::checkboxGroupButtons( # or radioGroupButtons
+                        inputId =  ns("switchCategory"),
+                        label = NULL,
+                        choiceNames = "Category Targets",
+                        choiceValues = TRUE,
+                        selected = FALSE,
+                        justified = TRUE,
+                        individual = TRUE),
+        ),
+        shiny::column(6,
+                      shinyWidgets::checkboxGroupButtons( # or radioGroupButtons
+                        inputId =  ns("switchIndividual"),
+                        label = NULL,
+                        choiceNames = "Individual Targets",
+                        choiceValues = TRUE,
+                        selected = FALSE,
+                        justified = TRUE,
+                        individual = TRUE),
+        ),
       ),
-      fcustom_sliderCategory(slider_vars, labelNum = 1),
+      # shinyWidgets::checkbox(
+      #   inputId = "checkbox5",
+      #   label = "Click me!",
+      #   icon = icon("check"),
+      #   animation = "tada",
+      #   status = "default"
+      # ),
+
+      shiny::hr(style = "border-top: 1px solid #000000;"),
+
+      shinyjs::hidden(div(
+        id = ns("switchCategoryTargets"),
+        shiny::h3("Category-based Targets"),
+        fcustom_sliderCategory(slider_varsCat, labelNum = 1, byCategory = TRUE),
+        shiny::hr(style = "border-top: 1px solid #000000;"),
+      )),
+
+      shinyjs::hidden(div(
+        id = ns("switchIndividualTargets"),
+        shiny::h3("Individual Targets"),
+        fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
+      )),
+
       shiny::h2("2. Select Cost Layer"),
       create_fancy_dropdown(id, "costid", Dict %>%
                               dplyr::filter(.data$type == "Cost")),
@@ -53,9 +148,12 @@ mod_2scenario_ui <- function(id) {
 
       shinyjs::hidden(div(
         id = ns("switchConstraints"),
-        shiny::h2("3. Constraints"),
-        shiny::p("You can also lock-in some pre-defined areas to ensure they are protected. Planning Units outside these areas will also be selected if needed to meet the targets."),
-        fcustom_checkCategory(check_constraints, labelNum = 3),
+        shiny::h2(paste0(LI_num,". Constraints")),
+        shiny::p("You can also lock-in or lock-out some pre-defined areas to ensure they are either specifically included (lock-in) or excluded (lock-out) from the protected area. Planning Units outside these areas will be selected if needed to meet the targets."),
+        shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
+        fcustom_checkCategory(check_lockIn),
+        shiny::h3(paste0(LI_num,".2 Locked-Out Areas")),
+        fcustom_checkCategory(check_lockOut),
       )),
 
       shiny::br(), # Leave space for analysis button at bottom
@@ -107,6 +205,24 @@ mod_2scenario_ui <- function(id) {
                  shiny::span(shiny::h2(shiny::textOutput(ns("hdr_target")))),
                  shiny::textOutput(ns("txt_target")),
                  shiny::br(),
+                 shiny::selectInput(inputId = ns("checkSort"),
+                                    label = "Sort plot by:",
+                                    choices = c("Category" = "category",
+                                                # "Feature" = "feature",
+                                                "Target" = "target",
+                                                "Representation" = "representation",
+                                                "Difference from Target" = "difference"),
+                                    selected = "category",  multiple = FALSE),
+
+                 # shinyWidgets::prettyCheckboxGroup(inputId = ns("checkSort"),
+                 #                                   label = "Sort plot by:",
+                 #                                   choiceValues = c("category", "feature", "target",  "representation", "difference"),
+                 #                                   choiceNames = c("Category", "Feature", "Target",  "Representation", "Difference from Target"),
+                 #                                   selected = "category",
+                 #                                   inline = TRUE,
+                 #                                   thick = TRUE,
+                 #                                   animation = "pulse",
+                 #                                   status = "info"),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_targetPlot"), height = "600px"))
         ),
         tabPanel("Cost",
@@ -175,11 +291,11 @@ mod_2scenario_server <- function(id) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    if (options$climate_change != 0) { # dont make observeEvent because it's a global variable
+    if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchClimSmart")
     }
 
-    if (options$lockedInArea != 0) { # dont make observeEvent because it's a global variable
+    if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchConstraints")
     }
 
@@ -187,6 +303,8 @@ mod_2scenario_server <- function(id) {
       session$close()
     })
 
+
+    # TODO This is not working. Not sure why. Also not sure if we want that.
     # # Go back to the first tab when analyse is clicked.
     shiny::observeEvent(input$analyse, {
       shiny::updateTabsetPanel(session, "tabs", selected = 1)
@@ -197,17 +315,95 @@ mod_2scenario_server <- function(id) {
       shinyjs::runjs("window.scrollTo(0, 0)")
     })
 
-    # Reset values
-    # shiny::observeEvent(input$reset,
-    #                     {fResetInputs(session, input, output)},
-    #                     ignoreInit = TRUE
-    # )
+
+
+    shiny::observeEvent(input$switchCategory, {
+
+      if (isTruthy(input$switchCategory)){
+        shinyjs::show(id = "switchCategoryTargets") # Show Category targets
+        shinyjs::hide(id = "switchIndividualTargets") # Hide Individual targets
+        shinyWidgets::updateCheckboxGroupButtons(inputId = "switchIndividual", selected = FALSE) # Deselect Individual Button
+      }
+
+    }, ignoreInit = TRUE, ignoreNULL = FALSE)
+
+
+
+    shiny::observeEvent(input$switchIndividual, {
+
+      if (isTruthy(input$switchIndividual)){
+        shinyjs::show(id = "switchIndividualTargets") # Show Individual targets
+        shinyjs::hide(id = "switchCategoryTargets") # Hide category targets
+        shinyWidgets::updateCheckboxGroupButtons(inputId = "switchCategory", selected = FALSE) # Deselect Individual Button
+      }
+
+    }, ignoreInit = TRUE, ignoreNULL = FALSE)
+
+
+
+
+
+    slider_vars <- fcreate_vars(id = id,
+                                Dict = Dict,
+                                name_check = "sli_",
+                                categoryOut = TRUE,
+                                byCategory = FALSE)
+
+
+    # Reformat varsIn for the category sliders
+    slider_varsCat <- fcreate_vars(id = id,
+                                   Dict = Dict,
+                                   name_check = "sli_",
+                                   categoryOut = TRUE,
+                                   byCategory = TRUE)
+
+
+
+    shiny::observeEvent({
+      purrr::map(slider_varsCat$id_in, \(x) input[[x]]) # All category slider inputs
+    }, {
+
+      inps <- slider_vars %>%
+        # dplyr::filter(category) %>% # TODO I can't filter by category yet. Need to identify changes by category
+        dplyr::pull(id_in)
+
+      targ <- slider_varsCat %>%
+        dplyr::select("category") %>%
+        dplyr::mutate(targetCurrent = purrr::map_vec(slider_varsCat$id_in, \(x) input[[x]])) %>%
+        dplyr::right_join(slider_vars, by = "category")
+
+      purrr::map2(inps, targ$targetCurrent, \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y))
+
+
+    })
+    # browser()
+
+
+
 
     # Reset Features
-    shiny::observeEvent(input$resetFeat,
-                        {fResetFeat(session, input, output)
-                        },ignoreInit = TRUE
-    )
+    shiny::observeEvent(input$resetSlider, {
+      fresetSlider(session, input, output)
+    }, ignoreInit = TRUE)
+
+
+    # TODO This needs to be made generic.... somehow....
+    observeEvent(input$checkLI_aquaculture, {
+      shinyjs::toggleState("checkLO_aquaculture")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$checkLO_aquaculture, {
+      shinyjs::toggleState("checkLI_aquaculture")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$masterSli, {
+      inps <- names(input) %>%
+        stringr::str_subset("sli_")
+      purrr::map(inps, \(x) shiny::updateSliderInput(session = session, inputId = x, value = input$masterSli))
+    }, ignoreInit = TRUE)
+
 
 
     # Return targets and names for all features from sliders ---------------------------------------------------
@@ -226,9 +422,21 @@ mod_2scenario_server <- function(id) {
 
     # Solve the problem -------------------------------------------------------
     selectedData <- shiny::reactive({
-      selectedData <- solve(p1Data(), run_checks = FALSE) %>%
-        sf::st_as_sf()
-      return(selectedData)
+
+      result <- tryCatch({
+
+        sD <- solve(p1Data(), run_checks = FALSE) %>%
+          sf::st_as_sf()
+
+      }, error = function(err) {
+
+        shinyalert::shinyalert("Error", "Can't find a solution! This is because it is impossible to meet the currently selected targets, budgets, or constraints. Try decreasing the targets or removing locked-out areas.",
+                               type = "error",
+                               callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+        )
+
+      })
+
     }) %>% shiny::bindEvent(input$analyse)
 
 
@@ -249,6 +457,9 @@ mod_2scenario_server <- function(id) {
       {
         # Solution plotting reactive
         plot_data1 <- shiny::reactive({
+
+          # TODO Add better error tracking in here so I can change soln_text to provide a useful error when a solution can't be found.
+
           soln_text <- fSolnText(input, selectedData(), input$costid)
 
           plot1 <- spatialplanr::splnr_plot_solution(
@@ -326,6 +537,7 @@ mod_2scenario_server <- function(id) {
               pDat = p1Data(),
               climsmart = FALSE
             )
+
           } else {
 
             targets <- targetData()
@@ -338,23 +550,31 @@ mod_2scenario_server <- function(id) {
             )
           }
 
+          # TODO splnr_get_featureRep needs a rewrite. Now that we don't always use
+          # "Cost_" as a cost, we need to work out a better way (The Dict) to remove
+          # columns that are not features. The code below is just a workaround.
+
+          targetPlotData <- targetPlotData %>%
+            dplyr::filter(feature %in% (Dict %>%
+                                          dplyr::filter(type == "Feature") %>%
+                                          dplyr::pull(nameVariable)))
+
           gg_Target <- spatialplanr::splnr_plot_featureRep(targetPlotData,
                                                            category = fget_category(Dict = Dict),
                                                            renameFeatures = TRUE,
                                                            namesToReplace = Dict,
                                                            nr = 2,
                                                            showTarget = TRUE,
-          )
+                                                           sort_by = input$checkSort)
 
           return(gg_Target)
         }) %>%
-          shiny::bindEvent(input$analyse)
+          shiny::bindCache(input$analyse, input$checkSort) # TODO Check all caching and ensure I am caching correctly. E.g. the plot or the reactive or both?
 
 
         output$gg_targetPlot <- shiny::renderPlot({
           gg_Target()
-        }) %>%
-          shiny::bindEvent(input$analyse)
+        })
 
         output$hdr_target <- shiny::renderText({
           "Targets"
@@ -432,9 +652,11 @@ mod_2scenario_server <- function(id) {
       },
       {
         ggr_clim <- shiny::reactive({
+
           ggClimDens <- spatialplanr::splnr_plot_climKernelDensity(
             soln = list(selectedData()),
-            names = c("Input 1"), type = "Normal",
+            names = c("Input 1"),
+            type = "Normal",
             legendTitle = "Climate resilience metric",
             xAxisLab = "Climate resilience metric"
           )
@@ -485,8 +707,6 @@ mod_2scenario_server <- function(id) {
           if (input$climateid != "NA") {
             targets <- targetData()
 
-            browser()
-
             targetPlotData <- spatialplanr::splnr_get_featureRep(
               soln = selectedData(),
               pDat = p1Data(),
@@ -501,6 +721,10 @@ mod_2scenario_server <- function(id) {
               climsmart = FALSE
             )
           }
+
+          # TODO Remove this when we fix spatialplanr as above
+          targetPlotData <- targetPlotData %>%
+            dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
 
           # TODO I think I can clean up this code and make it into a function
           # Create named vector to do the replacement

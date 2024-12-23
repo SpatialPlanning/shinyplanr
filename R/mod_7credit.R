@@ -13,7 +13,7 @@ mod_7credit_ui <- function(id) {
     titlePanel("Development"),
     shiny::div(shiny::markdown(tx_7credit)),
     shiny::h2("Acknowledgements"),
-    shiny::h6("This Web App is possible thanks to the following packages"),
+    shiny::h6("This Shiny App was built in R Shiny and uses many R packages, and we would like to acknowledge the following contributions:"),
     shiny::fluidPage(
       tags$ul(
         shiny::HTML("<li>Sievert C, Cheng J (2022). <em>bslib: Custom 'Bootstrap' 'Sass' Themes for 'shiny' and 'rmarkdown'</em>. R package version 0.4.0, <a href = https://CRAN.R-project.org/package=bslib target = _blank> Website</a>."),
