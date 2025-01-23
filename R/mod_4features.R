@@ -146,6 +146,11 @@ mod_4features_server <- function(id) {
         dplyr::filter(nameVariable == input$checkFeat) %>%
         dplyr::pull(type)
 
+      # TODO I have fudged this it only returns a single type (e.g. when a feature is both lock in and lock out). Are there situations where this will be a problem?
+      # Ideally we would used the same function regardless of the type so this becomes irrelevent.
+
+      type <- type[[1]]
+
       if (type == "Cost") {
 
         gg <- spatialplanr::splnr_plot(raw_sf,
