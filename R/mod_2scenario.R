@@ -250,19 +250,19 @@ mod_2scenario_ui <- function(id) {
         #          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_selFreq")))),
         #          shiny::textOutput(ns("txt_selFreq")),
         #          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_selFreq"), height = "700px"))),
-        tabPanel("Climate",
-                 value = 6,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.
-                   shiny::downloadButton(ns("dlPlot6"), "Download Plot",
-                                         style = "float: right; padding:4px; font-size:120%"
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
-                 shiny::textOutput(ns("txt_clim")),
-                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "700px"))
-        ),
+        # tabPanel("Climate",
+        #          value = 6,
+        #          shiny::fixedPanel(
+        #            style = "z-index:100", # To force the button above all plots.
+        #            shiny::downloadButton(ns("dlPlot6"), "Download Plot",
+        #                                  style = "float: right; padding:4px; font-size:120%"
+        #            ),
+        #            right = "1%", bottom = "1%", left = "34%"
+        #          ),
+        #          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
+        #          shiny::textOutput(ns("txt_clim")),
+        #          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "700px"))
+        # ),
         tabPanel("Details",
                  value = 7,
                  shiny::fixedPanel(

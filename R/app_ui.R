@@ -21,9 +21,11 @@ app_ui <- function(request) {
     id = "navbar",
 
     # TODO Can I move this into a css?
+    # TODO Or move to the setup_app.R so it can be modified for each app.
+    # TODO Currently we are using "litera" for vanuatu and "sandstone" (nicer) for Kosrae
     theme = bslib::bs_theme(
       version = 5,
-      bootswatch = "sandstone", #"zephyr", #"flatly", # https://bootswatch.com/flatly/
+      bootswatch = "litera", #sandstone", #"zephyr", #"flatly", # https://bootswatch.com/flatly/
       primary = options$nav_primary,
       #  # "border-width" = "5px",
       #  # "border-color" = "red",
@@ -123,7 +125,7 @@ golem_add_external_resources <- function() {
     favicon(ext = "png"),
     bundle_resources(
       path = app_sys("app/www"),
-      app_title = "shinyplanr"
+      app_title = "shinyplanr" # TODO add this to the options so we can change the title on a tab
     )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
