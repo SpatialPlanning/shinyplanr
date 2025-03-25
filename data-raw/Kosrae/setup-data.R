@@ -140,26 +140,27 @@ ous_cost <- c(terra::rast(file.path(data_path, "ocean-use-survey", "kosrae_ous_h
 
 
 
+# There is a lot of missing data in the region
 
-gfw_cost <- spatialplanr::splnr_get_gfw("Micronesia",
-                                        start_date = "2013-01-01",
-                                        end_date = "2023-12-31",
-                                        temp_res = "YEARLY",
-                                        spat_res = "LOW",
-                                        compress = TRUE) %>%
-  dplyr::select(-GFWregionID) %>%
-  dplyr::mutate(ApparentFishingHrs = if_else(ApparentFishingHrs > 1000, NA, ApparentFishingHrs)) %>%
-  sf::st_transform(sf::st_crs(PUs)) %>%
-  sf::st_interpolate_aw(., PUs, extensive = TRUE, keep_NA = TRUE)
-
+# gfw_cost <- spatialplanr::splnr_get_gfw("Micronesia",
+#                                         start_date = "2013-01-01",
+#                                         end_date = "2023-12-31",
+#                                         temp_res = "YEARLY",
+#                                         spat_res = "HIGH",
+#                                         compress = TRUE) %>%
+#   dplyr::select(-GFWregionID) %>%
+#   dplyr::mutate(ApparentFishingHrs = if_else(ApparentFishingHrs > 1000, NA, ApparentFishingHrs)) %>%
+#   sf::st_transform(sf::st_crs(PUs)) %>%
+#   sf::st_interpolate_aw(., to = PUs, extensive = FALSE, na.rm = TRUE)
 
 
 cost <- ous_cost %>%
   splnr_get_distCoast(custom_coast = coast) %>%  # Distance to nearest coast
   dplyr::rename(Cost_Distance = coastDistance_km) %>%
   dplyr::mutate(Cost_None = 0.1,
-                Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001),
-                Cost_FishingHrs = dplyr::if_else(Cost_FishingHrs == 0, 0.00001, Cost_FishingHrs)) %>%
+                # Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001),
+                # Cost_FishingHrs = dplyr::if_else(Cost_FishingHrs == 0, 0.00001, Cost_FishingHrs),
+  ) %>%
   dplyr::relocate(geometry, .after = tidyselect::last_col())
 
 
@@ -188,18 +189,29 @@ cost <- ous_cost %>%
 
 # Climate Data ------------------------------------------------------------
 
-# Start with 1 climate layer called metric. Then come back and add other layers wth unique names
+# Start with 0.5 deg files
 climate_sf <- bind_cols(
   read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_trends_ssp245_r1i1p1f1_RegriddedAnnual_20150101-21001231.rds")) %>%
-    sf::st_drop_geometry() %>% dplyr::select("slpTrends_245"="slpTrends"),
+    sf::st_drop_geometry() %>%
+    dplyr::select("slpTrends_245"="slpTrends"),
   read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_trends_ssp370_r1i1p1f1_RegriddedAnnual_20150101-21001231.rds")) %>%
-    sf::st_drop_geometry() %>% dplyr::select("slpTrends_370"="slpTrends"),
+    sf::st_drop_geometry() %>%
+    dplyr::select("slpTrends_370"="slpTrends"),
   read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_trends_ssp585_r1i1p1f1_RegriddedAnnual_20150101-21001231.rds")) %>%
     dplyr::select("slpTrends_585"="slpTrends")) %>%
+  sf::st_drop_geometry() %>%
   sf::st_as_sf() %>%
   sf::st_transform(kos_crs) %>%
   sf::st_interpolate_aw(dat_sf, extensive = FALSE, na.rm = TRUE, keep_NA = TRUE)
 
+# Now add High Res
+climate_sf <-
+  bind_cols(climate_sf,
+            read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_ensemble_highres-future_r1i1p1f1_RegriddedAnnual_20150101-205003311.rds")) %>%
+              sf::st_transform(kos_crs) %>%
+              dplyr::select("slpTrends_HR" = "slpTrends") %>%
+              sf::st_interpolate_aw(dat_sf, extensive = FALSE, na.rm = TRUE, keep_NA = TRUE) %>%
+              sf::st_drop_geometry())
 
 # Save raw data -----------------------------------------------------------
 

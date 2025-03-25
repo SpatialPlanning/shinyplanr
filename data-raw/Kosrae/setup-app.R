@@ -18,6 +18,8 @@ options <- list(
   nav_primary = "#2C3E50", # Hex colour codes: https://htmlcolorcodes.com
   # Waitt Colour "#12329A"
 
+  theme = "sandstone", # https://bootswatch.com/
+
   ## File locations
   file_logo = file.path(data_dir, "logos", "WaittSquareLogo_invert.png"),
   file_logo2 = file.path(data_dir, "logos", "BPM_logo.png"),
@@ -39,9 +41,7 @@ options <- list(
 
   include_climateChange = TRUE,
   climate_change = 1, #switch climate change on/off; 0 = not clim-smart; 1 = CPA; 2 = Feature; 3 = Percentile
-  # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions
-
-  percentile = 5,
+  percentile = 5,  # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions 
   direction = -1,
   refugiaTarget = 1,
 
