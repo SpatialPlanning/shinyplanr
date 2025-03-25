@@ -1,0 +1,1 @@
+A frequency histogram of the scores for the climate resilience metric for each planning unit, categorized by those selected for protection and those not selected (for more information, see Technical Information).

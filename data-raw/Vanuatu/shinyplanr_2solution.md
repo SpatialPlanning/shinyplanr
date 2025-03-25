@@ -1,0 +1,1 @@
+This plot shows the optimal Marine Spatial Planning (MSP) scenario (map with results) for the study area (Vanuatu waters) that meets the selected conservation targets for the chosen features whilst minimizing the cost (overlap with selected cost layer). The map displays which planning units meet the targets  (dark blue) and which do not (light blue). 
