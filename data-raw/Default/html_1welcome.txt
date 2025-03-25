@@ -1,10 +1,10 @@
 <img src="www/Hex.png" style="height:300px;float:right">
 <h2>Welcome</h2>
-<br> 
+<br>
 Dear Valued Stakeholders,
-<br> 
-<br> 
-Welcome to our interactive visualisation tool. The aim of this tool is to allow you to explore, discuss and identify potential spatial planning scenarios. We hope that this will aid discussions towards transparent and scientific evidence-based spatial planning. The tool uses spatial layers of scientific evidence to help identify those areas that are relevant to one or more of your objectives. The layers have been created from a range of observational data and models. 
+<br>
+<br>
+Welcome to our interactive visualisation tool. The aim of this tool is to allow you to explore, discuss and identify potential spatial planning scenarios. We hope that this will aid discussions towards transparent and scientific evidence-based spatial planning. The tool uses spatial layers of scientific evidence to help identify those areas that are relevant to one or more of your objectives. The layers have been created from a range of observational data and models.
 <br>
 <br>
 Regards,
@@ -17,7 +17,7 @@ Waitt Institute.
 <br>
 </ol>
 <h2>Scientific Evidence</h2>
-The tool uses spatial layers of scientific evidence to help identify those areas that are relevant to one or more of your objectives. The layers have been created from a range of observational data and models. 
+The tool uses spatial layers of scientific evidence to help identify those areas that are relevant to one or more of your objectives. The layers have been created from a range of observational data and models.
 <br>
 <br>
 <h2>How this works</h2>
@@ -25,10 +25,10 @@ We provide a quick introduction here to run a planning scenario and to examine t
 <h3>Running a scenario</h3>
 <ol>
 <li><b>Select targets</b>: to achieve a planning solution, you need to first set a target value for the percentage of features.</li>
-<li><b>Select Rational Use:</b> you can then decide to include rational use or not in the planning scenario. When these are selected, the software will try to avoid selecting any grid that includes rational use in the MPA planning scenario.</li>
-<li><b>Select Climate resilience:</b> this option allows you to make the spatial plan climate-resilient - i.e., the algorithm will try to ensure suggested MPAs are robust to impacts of climate change to 2100. We achieve this by calculating a climate-resilience metric  that represents climate refugia, whereby higher values represent areas likely to warm less and where biodiversity is more likely to be retained. The planning scenario will then preferentially place protected areas where there are higher values of the climate-resilience metric, whilst still meeting the biodiversity objectives and minimising overlap with rational use areas.</li>
+<li><b>Select Cost Layer:</b> you can then decide to include a cost layer or not in the planning scenario. When these are selected, the software will try to avoid selecting any grid that includes high cost areas in the MPA planning scenario.</li>
+<li><b>Select Climate resilience:</b> this option allows you to make the spatial plan climate-resilient - i.e., the algorithm will try to ensure suggested MPAs are robust to impacts of climate change to 2100. We achieve this by calculating a climate-resilience metric  that represents climate refugia, whereby higher values represent areas likely to warm less and where biodiversity is more likely to be retained. The planning scenario will then preferentially place protected areas where there are higher values of the climate-resilience metric, whilst still meeting the biodiversity objectives and minimising overlap with more costly areas.</li>
 <li><b>Run the scenario:</b> Once the different options have been selected, you select 'Run analysis' and the software will then produce a spatial planning scenario in real time (~60 seconds) based on your inputs. Please note that it will take more time if you include 'Climate Refugia'. The spatial planning scenario is solved using an algorithm known as an exact integer linear programming solver (EILP). This aims to find an optimal scenario in real time to aid our discussions.</li>
-<li><b>Examine the spatial results:</b> you can download a plot of the spatial solution that will show how much and which areas would be included in the MPA and how much and which areas would be available for rational use. </li>
+<li><b>Examine the spatial results:</b> you can download a plot of the spatial solution that will show how much and which areas would be included in the MPA and how much and which areas would be available for other uses. </li>
 <li><b>Examine in detail:</b> we suggest that you then select the 'targets' tab. This will show you if you have achieved the target you set for each feature. </li>
 </ol>
 <h2>Further information</h2>
