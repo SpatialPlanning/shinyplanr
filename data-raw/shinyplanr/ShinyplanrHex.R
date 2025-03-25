@@ -229,3 +229,113 @@ hexSticker::sticker(gg,
 )
 
 
+
+
+
+(gg <- ggplot2::ggplot() +
+    ggplot2::geom_sf(data = PUs, colour = "#4F4F51", fill = "#84A9BF", linewidth = 0.1, show.legend = FALSE) +
+    ggplot2::geom_sf(data = landmass, colour = "grey70", fill = "#4F4F51", alpha = 1, linewidth = 0.05, show.legend = FALSE) +
+    ggplot2::geom_sf(data = MPA, colour = "white", fill = "#46718C", alpha = 0.8, linewidth = 0.1, show.legend = FALSE) +
+    ggplot2::geom_sf(data = MPA2, colour = "black", fill = NA, linewidth = 0.5, show.legend = FALSE) +
+    ggplot2::coord_sf(xlim = sf::st_bbox(PUs)$xlim, ylim = sf::st_bbox(PUs)$ylim) +
+    ggplot2::theme_void()
+    # ggplot2::annotation_custom(img, xmin = 150, xmax = 212, ymin = -35, ymax = 15) +
+    # ggplot2::annotation_custom(pntr, xmin = 205, xmax = 230, ymin = 13, ymax = 38)
+)
+
+
+hexSticker::sticker(gg,
+                    package = "",
+                    p_x = 1.38,
+                    p_y = 0.98,
+                    p_color = "white",
+                    p_family = "Aller_Rg",
+                    p_fontface = "bold",
+                    p_size = 80,
+                    s_x = 1,
+                    s_y = 1,
+                    s_width = 2.2,
+                    s_height = 2.2,
+                    # h_fill = "#9FE2BF",
+                    h_color = "black", # "grey40",
+                    dpi = 1000,
+                    asp = 1,
+                    filename = file.path("shinyplanr_Daniel.png")
+)
+
+
+
+
+(gg <- ggplot2::ggplot() +
+    ggplot2::geom_sf(data = PUs, colour = "#4F4F51", fill = "#84A9BF", linewidth = 0.1, show.legend = FALSE) +
+    # ggplot2::geom_sf(data = landmass, colour = "grey70", fill = "#4F4F51", alpha = 1, linewidth = 0.05, show.legend = FALSE) +
+    # ggplot2::geom_sf(data = MPA, colour = "white", fill = "#46718C", alpha = 0.8, linewidth = 0.1, show.legend = FALSE) +
+    # ggplot2::geom_sf(data = MPA2, colour = "black", fill = NA, linewidth = 0.5, show.legend = FALSE) +
+    ggplot2::coord_sf(xlim = sf::st_bbox(PUs)$xlim, ylim = sf::st_bbox(PUs)$ylim) +
+    ggplot2::theme_void()
+  # ggplot2::annotation_custom(img, xmin = 150, xmax = 212, ymin = -35, ymax = 15) +
+  # ggplot2::annotation_custom(pntr, xmin = 205, xmax = 230, ymin = 13, ymax = 38)
+)
+
+
+hexSticker::sticker(gg,
+                    package = "",
+                    p_x = 1.38,
+                    p_y = 0.98,
+                    p_color = "white",
+                    p_family = "Aller_Rg",
+                    p_fontface = "bold",
+                    p_size = 80,
+                    s_x = 1,
+                    s_y = 1,
+                    s_width = 2.2,
+                    s_height = 2.2,
+                    # h_fill = "#9FE2BF",
+                    h_color = "black", # "grey40",
+                    dpi = 1000,
+                    asp = 1,
+                    filename = file.path("shinyplanr_Daniel2.png")
+)
+
+
+# This block works
+PUs <- sf::st_make_grid(Bndry,
+                        square = FALSE,
+                        cellsize = c(2, 2),
+                        what = "polygons") %>%
+  sf::st_sf() %>%
+  sf::st_intersection(Bndry) %>%
+  sf::st_shift_longitude()
+
+
+
+(gg <- ggplot2::ggplot() +
+    ggplot2::geom_sf(data = PUs, colour = "#4F4F51", fill = "#84A9BF", linewidth = 0.1, show.legend = FALSE) +
+    # ggplot2::geom_sf(data = landmass, colour = "grey70", fill = "#4F4F51", alpha = 1, linewidth = 0.05, show.legend = FALSE) +
+    # ggplot2::geom_sf(data = MPA, colour = "white", fill = "#46718C", alpha = 0.8, linewidth = 0.1, show.legend = FALSE) +
+    # ggplot2::geom_sf(data = MPA2, colour = "black", fill = NA, linewidth = 0.5, show.legend = FALSE) +
+    ggplot2::coord_sf(xlim = sf::st_bbox(PUs)$xlim, ylim = sf::st_bbox(PUs)$ylim) +
+    ggplot2::theme_void()
+  # ggplot2::annotation_custom(img, xmin = 150, xmax = 212, ymin = -35, ymax = 15) +
+  # ggplot2::annotation_custom(pntr, xmin = 205, xmax = 230, ymin = 13, ymax = 38)
+)
+
+
+hexSticker::sticker(gg,
+                    package = "",
+                    p_x = 1.38,
+                    p_y = 0.98,
+                    p_color = "white",
+                    p_family = "Aller_Rg",
+                    p_fontface = "bold",
+                    p_size = 80,
+                    s_x = 1,
+                    s_y = 1,
+                    s_width = 2.2,
+                    s_height = 2.2,
+                    # h_fill = "#9FE2BF",
+                    h_color = "black", # "grey40",
+                    dpi = 1000,
+                    asp = 1,
+                    filename = file.path("shinyplanr_Daniel3.png")
+)
