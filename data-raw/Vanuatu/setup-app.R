@@ -24,6 +24,9 @@ options <- list(
   # "#E74C3C"
   # "#2C3E50"
 
+  theme = "litera", # https://bootswatch.com/
+  navbar = list(theme = "dark"), # light or dark or auto - determines colour of text
+
   ## File locations
   file_logo = file.path(data_dir, "logos", "WaittSquareLogo_invert.png"),
   file_logo2 = file.path(data_dir, "logos", "BPV_logo_invert.png"),

@@ -25,7 +25,8 @@ app_ui <- function(request) {
     # TODO Currently we are using "litera" for vanuatu and "sandstone" (nicer) for Kosrae
     theme = bslib::bs_theme(
       version = 5,
-      bootswatch = "litera", #sandstone", #"zephyr", #"flatly", # https://bootswatch.com/flatly/
+      # bootswatch = "litera", # Vanuatu
+      bootswatch = options$theme, #"sandstone", # Kosrae
       primary = options$nav_primary,
       #  # "border-width" = "5px",
       #  # "border-color" = "red",
@@ -35,19 +36,11 @@ app_ui <- function(request) {
       "h4-font-size" = "1.4rem",
       "h5-font-size" = "1.2rem",
       "h6-font-size" = "1rem",
-      # "border-width" = "0px",
+      # # "border-width" = "0px",
       "navbar-padding-bottom" = "100px",
       "enable-rounded" = TRUE,
-      # inverse = TRUE
-    ) %>% # https://rstudio.github.io/bslib/articles/bslib.html#custom
-      bslib::bs_add_rules(
-        # https://stackoverflow.com/questions/77230269/bslib-theme-not-coloring-page-navbar-as-expected
-        rules = "
-                  .navbar.navbar-default {
-                        background-color: $primary !important;
-                    }
-                    "
-      ),
+    ),
+    navbar_options = list(class = "bg-primary", theme = options$navbar$theme),
     selected = "Welcome",
     shiny::tabPanel(
       "Welcome",
@@ -89,7 +82,7 @@ app_ui <- function(request) {
     shiny::tabPanel(title = HTML("<li><a href='https://www.waittinstitute.org'target='_blank'>Waitt Institute")),
 
     tags$footer(shiny::hr(style = "border-top: 1px solid #000000;"),
-    shiny::HTML("This shiny application was developed by researchers at <strong>The University of Queensland</strong>.
+                shiny::HTML("This shiny application was developed by researchers at <strong>The University of Queensland</strong>.
                             </br>
                             Powered by <em>shinyplanr</em> and <em>spatialplanr</em>.
                             </br>
@@ -125,7 +118,7 @@ golem_add_external_resources <- function() {
     favicon(ext = "png"),
     bundle_resources(
       path = app_sys("app/www"),
-      app_title = "shinyplanr" # TODO add this to the options so we can change the title on a tab
+      app_title = options$app_title # TODO add this to the options so we can change the title on a tab
     )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
