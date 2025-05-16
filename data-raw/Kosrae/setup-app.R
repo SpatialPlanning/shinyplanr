@@ -102,9 +102,6 @@ vars <- vars[! vars %in% zero_cols] # Remove zero's from vars
 Dict <- Dict %>%
   dplyr::filter(!nameVariable %in% zero_cols)
 
-
-# browser()
-
 # Check if variables were removed from the data due to zero columns
 if (length(unique(vars)) != dim(raw_sf)[2]-1){
 

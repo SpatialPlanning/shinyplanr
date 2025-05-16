@@ -156,7 +156,7 @@ ous_cost <- c(terra::rast(file.path(data_path, "ocean-use-survey", "kosrae_ous_h
 
 cost <- ous_cost %>%
   splnr_get_distCoast(custom_coast = coast) %>%  # Distance to nearest coast
-  dplyr::rename(Cost_Distance = coastDistance_km) %>%
+  dplyr::rename(Cost_Distance = 1/coastDistance_km) %>%
   dplyr::mutate(Cost_None = 0.1,
                 # Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001),
                 # Cost_FishingHrs = dplyr::if_else(Cost_FishingHrs == 0, 0.00001, Cost_FishingHrs),
