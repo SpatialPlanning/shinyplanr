@@ -225,6 +225,12 @@ hexSticker::sticker(gg,
                     h_color = "black", # "grey40",
                     dpi = 1000,
                     asp = 1,
+                    url = "spatialplanning.github.io",
+                    u_color = "white",
+                    # u_family = "sans",
+                    u_size = 16,
+                    u_x = 1.19,
+                    u_y = 0.18,
                     filename = file.path("man", "figures", "logo.png")
 )
 
