@@ -236,7 +236,7 @@ create_fancy_dropdown <- function(id, id_in, Dict) {
     purrr::map(tibble::deframe)
 
   shiny::selectInput(inputId = shiny::NS(namespace = id, id = id_in),
-                     label = NULL, #shiny::h4(" "),
+                     label = NULL,
                      choices = featureList,
                      multiple = FALSE
   )

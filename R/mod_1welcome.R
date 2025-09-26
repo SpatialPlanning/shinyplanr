@@ -1,3 +1,26 @@
+
+
+create_welcome_page <- function(x, ns){
+
+  if (length(x) == 1) {
+    shiny::div(shiny::markdown(x[[1]]$text))
+  } else {
+
+    shiny::tabsetPanel(
+      id = ns("welcome_tabs"), # type = "pills",
+
+      !!!purrr::map2(x, seq_along(x), ~ shiny::tabPanel(.x$title,
+                                              value = .y,
+                                              shiny::div(shiny::markdown(.x$text))))
+
+    ) # end tabset panel
+  } # end else
+} # end function
+
+
+
+
+
 #' 1welcome UI Function
 #'
 #' @description A shiny Module.
@@ -9,9 +32,11 @@
 #' @importFrom shiny NS tagList
 mod_1welcome_ui <- function(id) {
   ns <- NS(id)
-  # tagList(
-    shiny::div(shiny::markdown(tx_1welcome))
-  # ) # tagList
+  shiny::fluidPage(
+
+    create_welcome_page(tx$welcome, ns)
+
+  )
 }
 
 #' 1welcome Server Functions

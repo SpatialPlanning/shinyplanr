@@ -89,8 +89,32 @@ ous_ss[ous_ss<1] <- 0 # Cutoff of 1
 # ous[ous>=1] <- 1 # Cutoff of 1
 
 
+# Find the layers that start with "Coral"
+coral_layers <- grep("^Coral", names(habitat_coral_seagrass))
 
-dat_sf <- c(habitat_coral_seagrass, habitat_other_reef, depth_zones, ous, ous_ss) %>%
+# Find the layers that start with "Seagrass"
+seagrass_layers <- grep("^Seagrass", names(habitat_coral_seagrass))
+
+# Sum the "Coral" layers
+coral_seagrass <- c(sum(habitat_coral_seagrass[[coral_layers]]),  sum(habitat_coral_seagrass[[seagrass_layers]]))
+coral_seagrass <- clamp(coral_seagrass, upper=1, values=TRUE)
+names(coral_seagrass) <- c("Coral", "Seagrass")
+
+
+# Depth Zones from GEBCO Bathymetry
+depth_zones <- sf::st_read(file.path(data_path, "depth_zones.geojson")) %>%
+  sf::st_as_sf() %>%
+  dplyr::mutate(zone = janitor::make_clean_names(zone, case = "snake")) %>%
+  get_data_in_grid(spatial_grid = pgrid,
+                 dat = .,
+                 meth = "average",
+                 feature_names = "zone",
+                 antimeridian = FALSE,
+                 cutoff = 0.1)
+
+
+
+dat_sf <- c(coral_seagrass, habitat_other_reef, depth_zones, ous, ous_ss) %>%
   terra::as.polygons(trunc = FALSE, dissolve = FALSE, na.rm = TRUE, na.all = TRUE, round = FALSE) %>%
   sf::st_as_sf() %>%
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
@@ -156,11 +180,12 @@ ous_cost <- c(terra::rast(file.path(data_path, "ocean-use-survey", "kosrae_ous_h
 
 cost <- ous_cost %>%
   splnr_get_distCoast(custom_coast = coast) %>%  # Distance to nearest coast
-  dplyr::rename(Cost_Distance = 1/coastDistance_km) %>%
-  dplyr::mutate(Cost_None = 0.1,
+  dplyr::mutate(Cost_Distance = 1/if_else(coastDistance_km == 0, .Machine$double.eps, coastDistance_km),
+                Cost_None = 0.1,
                 # Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001),
                 # Cost_FishingHrs = dplyr::if_else(Cost_FishingHrs == 0, 0.00001, Cost_FishingHrs),
   ) %>%
+  dplyr::select(-coastDistance_km) %>%
   dplyr::relocate(geometry, .after = tidyselect::last_col())
 
 
@@ -199,10 +224,11 @@ climate_sf <- bind_cols(
     dplyr::select("slpTrends_370"="slpTrends"),
   read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_trends_ssp585_r1i1p1f1_RegriddedAnnual_20150101-21001231.rds")) %>%
     dplyr::select("slpTrends_585"="slpTrends")) %>%
-  sf::st_drop_geometry() %>%
   sf::st_as_sf() %>%
   sf::st_transform(kos_crs) %>%
   sf::st_interpolate_aw(dat_sf, extensive = FALSE, na.rm = TRUE, keep_NA = TRUE)
+
+
 
 # Now add High Res
 climate_sf <-
@@ -223,3 +249,5 @@ dat_sf <- bind_cols(dat_sf,
 
 
 save(dat_sf, bndry, coast, climate_sf, file = file.path("data-raw", name, paste0(name,"_RawData.rda")))
+
+cat("Finished processing data")

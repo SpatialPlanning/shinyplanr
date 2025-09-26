@@ -37,10 +37,10 @@ options <- list(
   mod_6help = TRUE, #switch modules on/off
   mod_7credit = TRUE, #switch modules on/off
 
+
+
   #TODO These options need to be updated. Probably into a list as we need specific
   # options (e.g. direction) for the number of layers we have in case they are different
-
-
   include_climateChange = TRUE,
   climate_change = 1, #switch climate change on/off; 0 = not clim-smart; 1 = CPA; 2 = Feature; 3 = Percentile
   percentile = 5,  # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions
@@ -49,6 +49,8 @@ options <- list(
 
 
   include_lockedArea = TRUE, # Includes locked in/out areas
+
+  targetsBy = "individual", # How to group the targets. Options are c("individual", "category", "master")
 
   ## Which objective function module are we using
   obj_func = "min_set", # Minimum set objective
@@ -94,7 +96,7 @@ zero_cols <- colnames(raw_sf)[which(colSums(raw_sf, na.rm=TRUE) %in% 0)] # Remov
 
 raw_sf <- raw_sf %>%
   dplyr::select(-tidyselect::any_of(zero_cols)) %>%
-    dplyr::bind_cols(dat_sf %>% dplyr::select(geometry)) %>%  # Add geometry back in
+  dplyr::bind_cols(dat_sf %>% dplyr::select(geometry)) %>%  # Add geometry back in
   sf::st_as_sf()
 
 vars <- vars[! vars %in% zero_cols] # Remove zero's from vars
@@ -120,7 +122,27 @@ overlay <- coast
 
 
 # MODULE 1 - WELCOME ------------------------------------------------------
-tx_1welcome <- readr::read_file(file.path(data_dir, "shinyplanr_1welcome.md"))
+
+tx <- list(
+  welcome = list(
+    list(
+      title = "Welcome",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome1.md"))
+    ),
+    list(
+      title = "Terminology",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome2.md"))
+    ),
+    list(
+      title = "Instructions",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome3.md"))
+    ),
+    list(
+      title = "C.A.R.E.",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome4.md"))
+    )
+  )
+)
 
 # return_list <- read_textboxes(FILENAME)
 
@@ -167,8 +189,7 @@ golem::use_favicon(options$file_logo, pkg = golem::get_golem_wd(), method = "cur
 
 
 # PLOTTING THEME -----------------------------------------------------------
-map_theme <- list(
-  ggplot2::theme_bw(),
+map_theme <- ggplot2::theme_bw() +
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
@@ -179,10 +200,8 @@ map_theme <- list(
     legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
-)
 
-bar_theme <- list(
-  ggplot2::theme_bw(),
+bar_theme <- ggplot2::theme_bw() +
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
@@ -193,7 +212,6 @@ bar_theme <- list(
     legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
-)
 
 usethis::use_data(options,
                   map_theme,
@@ -203,7 +221,7 @@ usethis::use_data(options,
                   raw_sf,
                   bndry,
                   overlay,
-                  tx_1welcome,
+                  tx,
                   tx_2solution,
                   tx_2targets,
                   tx_2cost,

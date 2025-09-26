@@ -53,83 +53,36 @@ mod_2scenario_ui <- function(id) {
   # actionLink("sidebar_button","",icon = icon("bars")
   shiny::sidebarLayout(
     shiny::sidebarPanel(
-      shiny::h2("1. Select Targets"),
+
       # shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
       #                     width = "100%", class = "btn btn-outline-primary",
       #                     style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
       # ),
       # shiny::hr(style = "border-top: 1px solid #000000;"),
 
-      shiny::h4("Master Slider"),
-      shiny::HTML("You can use this slider to adjust the value for all features at once."),
-      shiny::sliderInput(inputId = ns("masterSli"), label = NULL,
-                         min = min(Dict$targetMin, na.rm = TRUE), max = max(Dict$targetMax, na.rm = TRUE),
-                         step = 5,
-                         value = round(mean(Dict$targetInitial, na.rm = TRUE))),
-      shiny::hr(style = "border-top: 1px solid #000000;"),
 
-      shiny::h4("Category-based or Indiviudal Targets"),
-      shiny::p("Toggle to set protection targets for features based on broad categories or for individual features."),
-      # shinyWidgets::prettySwitch(
-      #   inputId = ns("switchTargets"),
-      #   label = "Use individual targets",
-      #   # width = "100%",
-      #   value = TRUE,
-      #   fill = TRUE,
-      #   bigger = TRUE,
-      #   status = "danger"
-      # ),
-      #
-      # shinyWidgets::prettyToggle(
-      #   inputId = "toggle",
-      #   label_on = "Checked!",
-      #   label_off = "Unchecked..."
-      #   ),
-
-      shiny::fluidRow(
-        shiny::column(6,
-                      shinyWidgets::checkboxGroupButtons( # or radioGroupButtons
-                        inputId =  ns("switchCategory"),
-                        label = NULL,
-                        choiceNames = "Category Targets",
-                        choiceValues = TRUE,
-                        selected = FALSE,
-                        justified = TRUE,
-                        individual = TRUE),
-        ),
-        shiny::column(6,
-                      shinyWidgets::checkboxGroupButtons( # or radioGroupButtons
-                        inputId =  ns("switchIndividual"),
-                        label = NULL,
-                        choiceNames = "Individual Targets",
-                        choiceValues = TRUE,
-                        selected = FALSE,
-                        justified = TRUE,
-                        individual = TRUE),
-        ),
-      ),
-      # shinyWidgets::checkbox(
-      #   inputId = "checkbox5",
-      #   label = "Click me!",
-      #   icon = icon("check"),
-      #   animation = "tada",
-      #   status = "default"
-      # ),
-
-      shiny::hr(style = "border-top: 1px solid #000000;"),
+      shinyjs::hidden(div(
+        id = ns("switchMasterTargets"),
+        shiny::h2("1. Select Master Target"),
+        shiny::sliderInput(inputId = ns("masterSli"), label = NULL,
+                           min = min(Dict$targetMin, na.rm = TRUE), max = max(Dict$targetMax, na.rm = TRUE),
+                           step = 5,
+                           value = round(mean(Dict$targetInitial, na.rm = TRUE))),
+      )),
 
       shinyjs::hidden(div(
         id = ns("switchCategoryTargets"),
-        shiny::h3("Category-based Targets"),
+        shiny::h2("1. Select Category Targets"),
         fcustom_sliderCategory(slider_varsCat, labelNum = 1, byCategory = TRUE),
-        shiny::hr(style = "border-top: 1px solid #000000;"),
       )),
 
       shinyjs::hidden(div(
         id = ns("switchIndividualTargets"),
-        shiny::h3("Individual Targets"),
+        shiny::h2("1. Select Individual Targets"),
         fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
       )),
+
+      shiny::hr(style = "border-top: 1px solid #000000;"),
 
       shiny::h2("2. Select Cost Layer"),
       create_fancy_dropdown(id, "costid", Dict %>%
@@ -316,30 +269,11 @@ mod_2scenario_server <- function(id) {
     })
 
 
-
-    shiny::observeEvent(input$switchCategory, {
-
-      if (isTruthy(input$switchCategory)){
-        shinyjs::show(id = "switchCategoryTargets") # Show Category targets
-        shinyjs::hide(id = "switchIndividualTargets") # Hide Individual targets
-        shinyWidgets::updateCheckboxGroupButtons(inputId = "switchIndividual", selected = FALSE) # Deselect Individual Button
-      }
-
-    }, ignoreInit = TRUE, ignoreNULL = FALSE)
-
-
-
-    shiny::observeEvent(input$switchIndividual, {
-
-      if (isTruthy(input$switchIndividual)){
-        shinyjs::show(id = "switchIndividualTargets") # Show Individual targets
-        shinyjs::hide(id = "switchCategoryTargets") # Hide category targets
-        shinyWidgets::updateCheckboxGroupButtons(inputId = "switchCategory", selected = FALSE) # Deselect Individual Button
-      }
-
-    }, ignoreInit = TRUE, ignoreNULL = FALSE)
-
-
+    switch(options$targetsBy,
+           "master" = shinyjs::show(id = "switchMasterTargets"), # Hide Individual targets,
+           "category" = shinyjs::show(id = "switchCategoryTargets"), # Show Category targets
+           "individual" = shinyjs::show(id = "switchIndividualTargets") # Hide Individual targets
+    )
 
 
 
@@ -376,9 +310,6 @@ mod_2scenario_server <- function(id) {
 
 
     })
-    # browser()
-
-
 
 
     # Reset Features
@@ -602,9 +533,11 @@ mod_2scenario_server <- function(id) {
       },
       {
         costPlotData <- shiny::reactive({
-          spatialplanr::splnr_plot_costOverlay(selectedData(),
-                                               Cost = NA,
-                                               Cost_name = input$costid,
+
+          #TODO Need to scale the cost data to look better on the plot.
+          spatialplanr::splnr_plot_costOverlay(soln = selectedData(),
+                                               cost = NA,
+                                               costName = input$costid,
                                                legendTitle = "Cost",
                                                plotTitle = "Solution overlaid with cost"
           ) +
@@ -655,7 +588,8 @@ mod_2scenario_server <- function(id) {
 
           ggClimDens <- spatialplanr::splnr_plot_climKernelDensity(
             soln = list(selectedData()),
-            names = c("Input 1"),
+            solution_names = "solution_1",
+            climate_names = input$climateid,
             type = "Normal",
             legendTitle = "Climate resilience metric",
             xAxisLab = "Climate resilience metric"
