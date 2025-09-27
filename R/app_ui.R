@@ -13,37 +13,13 @@ app_ui <- function(request) {
 
     title = shiny::a(shiny::img(src = "www/logo.png",
                                 height = 40,
-                                style = "padding-right:10px; margin-top:-10px; margin-bottom:-10px"),
+                                class = "navbar-logo"),
                      options$nav_title
     ),
     id = "navbar",
 
-    # TODO Can I move this into a css?
-    theme = bslib::bs_theme(
-      version = 5,
-      bootswatch = "sandstone", #"zephyr", #"flatly", # https://bootswatch.com/flatly/
-      primary = options$nav_primary,
-      #  # "border-width" = "5px",
-      #  # "border-color" = "red",
-      "h1-font-size" = "2rem", # Twice the base size
-      "h2-font-size" = "1.8rem",
-      "h3-font-size" = "1.6rem", # 1.6 times base size
-      "h4-font-size" = "1.4rem",
-      "h5-font-size" = "1.2rem",
-      "h6-font-size" = "1rem",
-      # "border-width" = "0px",
-      "navbar-padding-bottom" = "100px",
-      "enable-rounded" = TRUE,
-      # inverse = TRUE
-    ) %>% # https://rstudio.github.io/bslib/articles/bslib.html#custom
-      bslib::bs_add_rules(
-        # https://stackoverflow.com/questions/77230269/bslib-theme-not-coloring-page-navbar-as-expected
-        rules = "
-                  .navbar.navbar-default {
-                        background-color: $primary !important;
-                    }
-                    "
-      ),
+    # Theme completely handled by inst/app/www/custom.css
+    theme = bslib::bs_theme(version = 5),
     selected = "Scenario",
     shiny::tabPanel(
       "Welcome",

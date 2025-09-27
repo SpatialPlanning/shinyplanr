@@ -17,8 +17,6 @@ options <- list(
   app_title = "Kosrae: shinyplanr",
 
   nav_title = "Kosrae Spatial Planning", # Navbar title
-  nav_primary = "#2C3E50", # Hex colour codes: https://htmlcolorcodes.com
-  # Waitt Colour "#12329A"
 
   theme = "sandstone", # https://bootswatch.com/
   navbar = list(theme = "dark"), # light or dark or auto - determines colour of text

@@ -132,7 +132,8 @@ mod_2scenario_ui <- function(id) {
       ),
       shinyjs::useShinyjs(),
       tabsetPanel(
-        id = ns("tabs"), # type = "pills",
+        id = ns("tabs"),
+        type = "pills",
         tabPanel("Scenario",
                  value = 1,
                  shiny::fixedPanel(
