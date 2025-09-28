@@ -1,8 +1,5 @@
--------------------
 Welcome
 -------
-
-* * *
 
 <img src="www/logo2.png" style="width:25%;float:right">
   

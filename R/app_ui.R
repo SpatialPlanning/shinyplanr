@@ -52,12 +52,6 @@ app_ui <- function(request) {
         value = "help", mod_6help_ui("6help_ui_1")
       )
     ),
-    shiny::tabPanel(
-      "Credit",
-      shiny::fluidPage(
-        value = "credit", mod_7credit_ui("7credit_1")
-      )
-    ),
     shiny::tabPanel(title = HTML("<li><a href='https://www.waittinstitute.org'target='_blank'>Waitt Institute")),
   )
 

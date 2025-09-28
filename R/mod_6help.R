@@ -11,7 +11,8 @@ mod_6help_ui <- function(id) {
   ns <- shiny::NS(id)
   # shiny::tagList(
     tabsetPanel(
-      id = "tabs5", # type = "pills",
+      id = "tabs5",
+      type = "pills",
       tabPanel("Frequently Asked Questions",
         value = 1,
         shiny::fluidPage(
@@ -24,19 +25,6 @@ mod_6help_ui <- function(id) {
           shiny::markdown(tx_6technical)
         )
       ),
-      tabPanel("References",
-        value = 4,
-        shiny::fluidPage(
-          shiny::markdown(tx_6references)
-        )
-      ),
-      # tabPanel("Changelog",
-      #   value = 5,
-      #   shiny::fluidPage(
-      #     shiny::h1("Application Changelog"),
-      #     shiny::div(shiny::markdown(tx_6changelog)),
-      #   ),
-      # )
     )
   # ) # tagList
 }

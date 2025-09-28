@@ -5,7 +5,37 @@
 
 /* CSS Custom Properties (Variables) for theme consistency */
 :root {
-  --bs-primary: #2C3E50;
+  /* Primary Colors */
+  --primary-1: #3B7592;
+  --primary-2: #191919;
+  --primary-3: #B3E1E9;
+  --primary-4: #D9F0F4;
+  
+  /* Secondary Colors */
+  --secondary-1: #3899EC;
+  
+  /* State Colors */
+  --state-complete: #88C057;
+  --state-warning: #E9C46A;
+  --state-error: #E76F51;
+  --state-info: #3A86FF;
+  
+  /* Text Colors */
+  --text-1: #2A2929;
+  --text-2: #090C02;
+  --text-3: #FFFFFF;
+  
+  /* Background Colors */
+  --background: #F7F7F7;
+  
+  /* Grey Scale */
+  --grey-100: #FAFAFA;
+  --grey-300: #F0F0F0;
+  --grey-500: #BFBFBF;
+  --grey-700: #595959;
+  
+  /* Bootstrap compatibility - map to new primary */
+  --bs-primary: var(--primary-1);
   
   /* Typography Scale */
   --bs-h1-font-size: 2rem;
@@ -43,9 +73,9 @@
   /* Navbar styling variables */
   --bs-navbar-font-size: var(--bs-h6-font-size);
   --bs-navbar-font-weight: var(--font-weight-medium);
-  --bs-navbar-color: white;
-  --bs-navbar-hover-color: rgba(255, 255, 255, 0.8);
-  --bs-navbar-active-bg: rgba(255, 255, 255, 0.1);
+  --bs-navbar-color: var(--text-3);
+  --bs-navbar-hover-color: var(--primary-4);
+  --bs-navbar-active-bg: var(--primary-4);
   --bs-navbar-toggler-border: rgba(255, 255, 255, 0.3);
 }
 
@@ -54,6 +84,13 @@ body {
   font-family: var(--bs-font-family) !important;
   font-weight: var(--font-weight-normal) !important;
   line-height: var(--line-height-normal) !important;
+  color: var(--text-1) !important;
+  background-color: var(--background) !important;
+}
+
+/* Paragraph text styling */
+p {
+  color: var(--text-1) !important;
 }
 
 /* Apply Montserrat to all headings */
@@ -129,39 +166,39 @@ body {
 .navbar-light,
 .navbar-dark,
 #navbar {
-  background: #2C3E50 !important;
-  background-color: #2C3E50 !important;
+  background: var(--primary-1) !important;
+  background-color: var(--primary-1) !important;
   padding-top: 0.5rem !important;
   padding-bottom: 0.5rem !important;
   border: none !important;
   border-color: transparent !important;
 }
 
-/* Target only navbar text elements - exclude general nav classes */
-.navbar *,
-.navbar-default *,
-.navbar-inverse *,
-.navbar-light *,
-.navbar-dark *,
-#navbar *,
-.navbar a,
-.navbar-default a,
-.navbar-inverse a,
-.navbar-light a,
-.navbar-dark a,
-#navbar a,
-.navbar span,
-.navbar-default span,
-#navbar span,
-.navbar li,
-.navbar-default li,
-#navbar li,
-.navbar .nav-link,
-.navbar .navbar-nav,
+/* Target only navbar text elements - exclude general nav classes, active elements, and hover states */
+.navbar *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar-default *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar-inverse *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar-light *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar-dark *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+#navbar *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar a:not(.nav-link.active):not(.active):not(:hover),
+.navbar-default a:not(.nav-link.active):not(.active):not(:hover),
+.navbar-inverse a:not(.nav-link.active):not(.active):not(:hover),
+.navbar-light a:not(.nav-link.active):not(.active):not(:hover),
+.navbar-dark a:not(.nav-link.active):not(.active):not(:hover),
+#navbar a:not(.nav-link.active):not(.active):not(:hover),
+.navbar span:not(.active),
+.navbar-default span:not(.active),
+#navbar span:not(.active),
+.navbar li:not(.active),
+.navbar-default li:not(.active),
+#navbar li:not(.active),
+.navbar .nav-link:not(.active):not(:hover),
+.navbar .navbar-nav:not(.active),
 .navbar .navbar-brand,
 .navbar-brand,
 .navbar-text {
-  color: white !important;
+  color: var(--text-3) !important;
 }
 
 /* Base styling for all navbar elements - consistent layout */
@@ -185,19 +222,32 @@ ul.nav.navbar-nav li a,
 ul.nav.navbar-nav li a:hover,
 .navbar .navbar-nav > li > a:hover,
 .navbar-default .navbar-nav > li > a:hover {
-  color: rgba(255, 255, 255, 0.8) !important;
-  background-color: var(--bs-navbar-active-bg) !important;
+  color: var(--primary-1) !important;
+  background-color: var(--primary-4) !important;
   border-radius: var(--bs-border-radius) !important;
 }
 
-/* Active/selected navbar elements - with rounded corners for the background shading */
+/* Active/selected navbar elements - with rounded corners for the background shading and outline border with gap */
 .navbar .nav-tabs .nav-link.active,
 .navbar-nav .nav-link.active,
 ul.nav.navbar-nav li.active a,
 .navbar .navbar-nav > li.active > a,
 .navbar-default .navbar-nav > li.active > a {
-  background-color: var(--bs-navbar-active-bg) !important;
+  background-color: var(--primary-4) !important;
+  color: var(--primary-1) !important;
   border-radius: var(--bs-border-radius) !important;
+  outline: 1px solid var(--primary-4) !important;
+  outline-offset: 2px !important;
+  border: none !important;
+}
+
+/* Ensure active navbar elements override the general navbar text color */
+.navbar .nav-tabs .nav-link.active,
+.navbar-nav .nav-link.active,
+ul.nav.navbar-nav li.active a,
+.navbar .navbar-nav > li.active > a,
+.navbar-default .navbar-nav > li.active > a {
+  color: var(--primary-1) !important;
 }
 
 /* Hide empty nav-link elements that Shiny generates */
@@ -241,11 +291,13 @@ ul.nav.navbar-nav li.active a,
 .btn-primary {
   background-color: var(--bs-primary);
   border-color: var(--bs-primary);
+  color: var(--text-3);
 }
 
 .btn-primary:hover {
-  background-color: color-mix(in srgb, var(--bs-primary) 85%, black);
-  border-color: color-mix(in srgb, var(--bs-primary) 85%, black);
+  background-color: var(--primary-2);
+  border-color: var(--primary-2);
+  color: var(--text-3);
 }
 
 .btn-primary:focus, .btn-primary.focus {
@@ -261,22 +313,24 @@ ul.nav.navbar-nav li.active a,
 .btn-outline-primary:hover {
   background-color: var(--bs-primary);
   border-color: var(--bs-primary);
-  color: white;
+  color: var(--text-3);
 }
 
 .btn-outline-primary:focus {
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 50%, transparent);
 }
 
-/* Secondary buttons - override Bootstrap blue */
+/* Secondary buttons */
 .btn-secondary {
-  background-color: #6c757d;
-  border-color: #6c757d;
+  background-color: var(--grey-700);
+  border-color: var(--grey-700);
+  color: var(--text-3);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
-  border-color: #545b62;
+  background-color: var(--grey-500);
+  border-color: var(--grey-500);
+  color: var(--text-3);
 }
 
 /* Link colors */
@@ -285,7 +339,7 @@ a {
 }
 
 a:hover {
-  color: color-mix(in srgb, var(--bs-primary) 85%, black);
+  color: var(--secondary-1);
 }
 
 /* Form controls focus state */
@@ -329,7 +383,7 @@ input[type="range"]:focus::-webkit-slider-thumb {
 /* Nav tabs */
 .nav-tabs .nav-link.active {
   color: var(--bs-primary);
-  border-color: var(--bs-primary) var(--bs-primary) #fff;
+  border-color: var(--bs-primary) var(--bs-primary) var(--text-3);
 }
 
 .nav-tabs .nav-link:hover {
@@ -338,7 +392,17 @@ input[type="range"]:focus::-webkit-slider-thumb {
 }
 
 .nav-tabs .nav-link {
-  color: #6c757d;
+  color: var(--grey-700);
+}
+
+/* Tab panel nav-links (not in navbar) - unselected only */
+.nav-link:not(.navbar .nav-link):not(.navbar-nav .nav-link):not(.active) {
+  color: var(--primary-1) !important;
+}
+
+/* Tab panel nav-links (not in navbar) - hover on any tab (selected or unselected) */
+.nav-link:not(.navbar .nav-link):not(.navbar-nav .nav-link):hover {
+  color: var(--primary-1) !important;
 }
 
 /* Tab panels */
@@ -378,7 +442,7 @@ ul.nav.navbar-nav li.active a {
 /* Additional tabPanel selectors for Shiny */
 .nav.nav-tabs li a,
 .nav-tabs > li > a {
-  color: #6c757d;
+  color: var(--grey-700);
 }
 
 .nav.nav-tabs li.active a,
@@ -477,4 +541,84 @@ ul.nav.navbar-nav li.active a {
   padding-right: 10px;
   margin-top: -10px;
   margin-bottom: -10px;
+}
+
+/* Footer Styles */
+.home-footer {
+  margin-top: 20px;
+  margin-left: -100px;
+  margin-right: -100px;
+  padding: 8px 120px;
+  border-top: 2px solid var(--primary-1);
+  background: var(--primary-2);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.footer-content {
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.funding-section {
+  padding: 5px 0;
+}
+
+.contact-section {
+  padding: 5px 0;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.contact-section p {
+  color: var(--primary-4) !important;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  font-weight: var(--font-weight-normal);
+}
+
+.contact-link {
+  color: var(--primary-3);
+  text-decoration: none;
+  font-weight: var(--font-weight-normal);
+  transition: color 0.3s ease;
+}
+
+.contact-link:hover {
+  color: var(--primary-4);
+  text-decoration: underline;
+}
+
+.funding-title {
+  color: var(--primary-4);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: var(--font-weight-medium);
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.funding-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 5px 0;
+}
+
+.funding-logos a {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.funding-logos img {
+  height: 50px !important;
+  width: auto;
+  max-height: 100px;
+  object-fit: contain;
+  display: block;
 }

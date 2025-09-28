@@ -1,8 +1,4 @@
--------------------
-The CARE principles that underpin conservation planning
--------------------
-* * *
-
+## The CARE principles that underpin conservation planning
 
 The four key principles that should be considered when designing a spatial plan are Connectivity, Adequacy, Representation, and Efficiency (CARE). The CARE principles are fundamental to conserving  biodiversity over the long term.
 * **Connectivity**: Connectivity is the exchange of individuals (or genes, traits, energy or materials) among habitat patches, populations, communities or ecosystems. Ensuring connectivity could include protecting sources and sinks of coral or fish larvae, migration corridors for terrestrial and marine vertebrates, stopover sites for migratory birds, or keeping interdependent habitats that species need throughout their life cycle (e.g., nesting and feeding grounds).

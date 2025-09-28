@@ -1,1 +1,0 @@
-This website was developed in conjunction with the [Waitt Institute](https://www.waittinstitute.org). The interactive software was developed by scientists from the [University of Queensland](http://uq.edu.au).

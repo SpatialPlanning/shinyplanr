@@ -7,14 +7,17 @@ create_welcome_page <- function(x, ns){
   } else {
 
     shiny::tabsetPanel(
-      id = ns("welcome_tabs"), # type = "pills",
+      id = ns("welcome_tabs"),
+      type = "pills",
 
       !!!purrr::map2(x, seq_along(x), ~ shiny::tabPanel(.x$title,
-                                              value = .y,
-                                              shiny::div(shiny::markdown(.x$text))))
+                                                        value = .y,
+                                                        shiny::div(shiny::br(),
+                                                                   shiny::markdown(.x$text))))
 
     ) # end tabset panel
   } # end else
+
 } # end function
 
 
@@ -34,8 +37,63 @@ mod_1welcome_ui <- function(id) {
   ns <- NS(id)
   shiny::fluidPage(
 
-    create_welcome_page(tx$welcome, ns)
+    create_welcome_page(tx$welcome, ns),
 
+
+    # Footer section with logos and funding information
+    div(
+      class = "home-footer",
+      shiny::fluidRow(
+        shiny::column(
+          width = 4,
+          div(
+            class = "contact-section",
+            shiny::h4("For further information:", class = "funding-title"),
+            shiny::p(
+              "General Enquiries: ",
+              a("Emily Stokes",
+                href = "https://www.waittinstitute.org/team",
+                target = "_blank",
+                class = "contact-link"),
+              shiny::br(),
+              "About the app: ",
+              a("Jason Everett",
+                href = "https://jaseeverett.github.io",
+                target = "_blank",
+                class = "contact-link")
+            )
+          )
+        ),
+
+        shiny::column(
+          width = 4,
+          shiny::div(class = "contact-section",
+                     shiny::p("This shiny application was developed by researchers at The University of Queensland."),
+                     shiny::p("Powered by shinyplanr and spatialplanr."),
+                     shiny::p("© 2025"),
+          )
+        ),
+
+        shiny::column(
+          width = 4,
+          div(
+            class = "funding-section",
+            shiny::h4("Funded by:", class = "funding-title"),
+            div(
+              class = "funding-logos",
+              a(img(src = "www/logo.png",
+                    alt = "Waitt Institute Logo"),
+                href = "https://waittinstitute.org",
+                target = "_blank"),
+              a(img(src = "www/uq-logo-white.png",
+                    alt = "UQ Logo"),
+                href = "https://www.uq.edu.au",
+                target = "_blank")
+            )
+          )
+        )
+      )
+    )
   )
 }
 

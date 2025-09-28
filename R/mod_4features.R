@@ -23,7 +23,8 @@ mod_4features_ui <- function(id) {
 
   # shiny::tagList(
   tabsetPanel(
-    id = "tabs4", # type = "pills",
+    id = "tabs4",
+    type = "pills",
     tabPanel("Feature Density",
              value = 3,
              shiny::sidebarLayout(
@@ -109,14 +110,15 @@ mod_4features_server <- function(id) {
         dplyr::mutate(FeatureSum = rowSums(dplyr::across(tidyselect::all_of(c(ftd, "DummyVar"))), na.rm = TRUE)) %>%
         dplyr::select(FeatureSum)
 
-      gg <- spatialplanr::splnr_plot(df = dens, col_names = "FeatureSum",
+      gg <- spatialplanr::splnr_plot(df = dens,
+                                     colNames = "FeatureSum",
                                      paletteName = "YlGnBu",
-                                     legend_title = "Density of Features per Planning Unit"
+                                     legendTitle = "Density of Features per Planning Unit"
       ) +
         spatialplanr::splnr_gg_add(
           Bndry = bndry,
           overlay = overlay,
-          cropOverlay = df,
+          cropOverlay = dens,
           ggtheme = map_theme
         )
       return(gg)
@@ -152,16 +154,15 @@ mod_4features_server <- function(id) {
       type <- type[[1]]
 
       if (type == "Cost") {
-
-        gg <- spatialplanr::splnr_plot(raw_sf,
-                                       df = raw_sf, col_names = input$checkFeat,
+        gg <- spatialplanr::splnr_plot(df = raw_sf,
+                                       colNames = input$checkFeat,
                                        paletteName = "YlGnBu",
-                                       legend_title = paste0("Cost Layer: ", pl_title)
+                                       legendTitle = paste0("Cost Layer: ", pl_title)
         ) +
           spatialplanr::splnr_gg_add(
             Bndry = bndry,
             overlay = overlay,
-            cropOverlay = df,
+            cropOverlay = raw_sf,
             ggtheme = map_theme
           )
 
@@ -169,13 +170,13 @@ mod_4features_server <- function(id) {
       } else {
 
         gg <- spatialplanr::splnr_plot(raw_sf,
-                                       col_names = input$checkFeat,
-                                       legend_title = pl_title
+                                       colNames = input$checkFeat,
+                                       legendTitle = pl_title
         ) +
           spatialplanr::splnr_gg_add(
             Bndry = bndry,
             overlay = overlay,
-            cropOverlay = df,
+            cropOverlay = raw_sf,
             ggtheme = map_theme
           )
 

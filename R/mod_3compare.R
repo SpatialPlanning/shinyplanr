@@ -111,7 +111,8 @@ mod_3compare_ui <- function(id) {
       ),
       shinyjs::useShinyjs(),
       tabsetPanel(
-        id = ns("tabs"), # type = "pills",
+        id = ns("tabs"),
+        type = "pills",
         tabPanel("Comparison",
                  value = 1,
                  shiny::fixedPanel(

@@ -1,8 +1,5 @@
--------------------
 How to use the Shiny App
 -------------------
-* * *   
-
 
 We provide a quick introduction here to run a planning scenario and to examine the results. See Help/Technical Information for more details.  
   

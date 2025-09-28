@@ -33,7 +33,7 @@ options <- list(
   mod_3compare = TRUE, #switch modules on/off
   mod_4features = TRUE, #switch modules on/off
   mod_6help = TRUE, #switch modules on/off
-  mod_7credit = TRUE, #switch modules on/off
+  mod_7credit = FALSE, #switch modules on/off
 
 
 
@@ -138,6 +138,10 @@ tx <- list(
     list(
       title = "C.A.R.E.",
       text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome4.md"))
+    ),
+    list(
+      title = "Credit",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome5.md"))
     )
   )
 )
@@ -145,7 +149,7 @@ tx <- list(
 # return_list <- read_textboxes(FILENAME)
 
 
-
+#TODO Add all these to the tx list above.
 # MODULE 2 - SCENARIO ------------------------------------------------------
 tx_2solution <- readr::read_file(file.path(data_dir, "shinyplanr_2solution.md"))
 tx_2targets <- readr::read_file(file.path(data_dir, "shinyplanr_2targets.md"))
@@ -160,11 +164,10 @@ tx_2climate <- readr::read_file(file.path(data_dir, "shinyplanr_2climate.md"))
 tx_6faq <- readr::read_file(file.path(data_dir, "shinyplanr_6faq.md"))
 tx_6changelog <- readr::read_file(file.path(data_dir, "shinyplanr_6changelog.md"))
 tx_6technical <- readr::read_file(file.path(data_dir, "shinyplanr_6technical.md"))
-tx_6references <- readr::read_file(file.path(data_dir, "shinyplanr_6references.md"))
 
 
 # MODULE 7 - CREDIT ------------------------------------------------------
-tx_7credit <- readr::read_file(file.path(data_dir, "shinyplanr_7credit.md"))
+# tx_7credit <- readr::read_file(file.path(data_dir, "shinyplanr_7credit.md"))
 
 
 
@@ -227,8 +230,6 @@ usethis::use_data(options,
                   tx_6faq,
                   tx_6technical,
                   tx_6changelog,
-                  tx_6references,
-                  tx_7credit,
                   overwrite = TRUE,
                   internal = TRUE)
 

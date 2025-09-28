@@ -1,8 +1,5 @@
-
--------------------
 Some terminology to get you started
 -------------------
-* * *
 
 
 (see https://marxansolutions.org/ for more information).
