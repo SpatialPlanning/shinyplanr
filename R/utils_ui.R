@@ -61,22 +61,22 @@ fcreate_check <- function(id, Dict = Dict, idType, name_check = "check", categor
   return(vars)
 }
 
-#'
-#' #' Title
-#' #'
-#' #' @noRd
-#' #'
-#' fcustom_checkboxGroup <- function(id, id_in, Dict, titl) {
-#'   Dict <- Dict %>%
-#'     dplyr::select("nameCommon", "nameVariable") %>%
-#'     tibble::deframe()
-#'
-#'   shiny::checkboxGroupInput(shiny::NS(namespace = id, id = id_in),
-#'                             shiny::h5(titl),
-#'                             choices = Dict,
-#'                             selected = unlist(Dict)
-#'   )
-#' }
+#
+# #' Title
+# #'
+# #' @noRd
+# #'
+# fcustom_checkboxGroup <- function(id, id_in, Dict, titl) {
+#   Dict <- Dict %>%
+#     dplyr::select("nameCommon", "nameVariable") %>%
+#     tibble::deframe()
+#
+#   shiny::checkboxGroupInput(shiny::NS(namespace = id, id = id_in),
+#                             shiny::h5(titl),
+#                             choices = Dict,
+#                             selected = unlist(Dict)
+#   )
+# }
 
 
 
@@ -85,15 +85,18 @@ fcreate_check <- function(id, Dict = Dict, idType, name_check = "check", categor
 #' @noRd
 #'
 fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetInitial) {
+
   shiny::sliderInput(
     inputId = shiny::NS(namespace = id, id = id_in),
-    label = nameCommon,
+    label = shiny::h5(nameCommon),
     min = targetMin,
     max = targetMax,
     step = 5,
     value = targetInitial
   )
 }
+
+
 
 #' Title
 #'
@@ -198,25 +201,25 @@ fcustom_cost <- function(id, id_in, Dict) {
   )
 }
 
-#'
-#'
-#' #' Custom Drop Down for Climate
-#' #'
-#' #' @noRd
-#' #'
-#' fcustom_climate <- function(id, id_in, Dict) {
-#'   choice <- Dict %>%
-#'     dplyr::filter(.data$type == "Climate") %>%
-#'     dplyr::select("nameCommon", "nameVariable") %>%
-#'     dplyr::add_row(nameCommon = "Don't consider", .before = 1) %>%
-#'     tibble::deframe()
-#'
-#'   shiny::selectInput(shiny::NS(namespace = id, id = id_in),
-#'                      label = NULL, #shiny::h3(" "),
-#'                      choices = choice,
-#'                      multiple = FALSE
-#'   )
-#' }
+#
+#
+# #' Custom Drop Down for Climate
+# #'
+# #' @noRd
+# #'
+# fcustom_climate <- function(id, id_in, Dict) {
+#   choice <- Dict %>%
+#     dplyr::filter(.data$type == "Climate") %>%
+#     dplyr::select("nameCommon", "nameVariable") %>%
+#     dplyr::add_row(nameCommon = "Don't consider", .before = 1) %>%
+#     tibble::deframe()
+#
+#   shiny::selectInput(shiny::NS(namespace = id, id = id_in),
+#                      label = NULL, #shiny::h3(" "),
+#                      choices = choice,
+#                      multiple = FALSE
+#   )
+# }
 
 
 

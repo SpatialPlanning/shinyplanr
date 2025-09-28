@@ -226,9 +226,7 @@ mod_2scenario_ui <- function(id) {
                    ),
                    right = "1%", bottom = "1%", left = "34%"
                  ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsSummary")))),
-                 shiny::br(),
-                 shiny::tableOutput(ns("SummaryTable")),
+
                  shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
                  shiny::tableOutput(ns("DataTable"))
         ),
@@ -407,6 +405,11 @@ mod_2scenario_server <- function(id) {
               overlay = overlay,
               cropOverlay = selectedData(),
               ggtheme = map_theme
+            ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
           if (input$costid != "Cost_None") {
@@ -423,7 +426,7 @@ mod_2scenario_server <- function(id) {
 
         output$gg_soln <- shiny::renderPlot({
           plot_data1()
-        }) %>%
+        }, bg = "transparent") %>%
           shiny::bindEvent(input$analyse)
 
         hdrr_soln <- shiny::reactive({
@@ -497,7 +500,12 @@ mod_2scenario_server <- function(id) {
                                                            namesToReplace = Dict,
                                                            nr = 2,
                                                            showTarget = TRUE,
-                                                           sort_by = input$checkSort)
+                                                           sort_by = input$checkSort) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            )
 
           return(gg_Target)
         }) %>%
@@ -506,7 +514,7 @@ mod_2scenario_server <- function(id) {
 
         output$gg_targetPlot <- shiny::renderPlot({
           gg_Target()
-        })
+        }, bg = "transparent")
 
         output$hdr_target <- shiny::renderText({
           "Targets"
@@ -547,6 +555,11 @@ mod_2scenario_server <- function(id) {
               overlay = overlay,
               cropOverlay = selectedData(),
               ggtheme = map_theme
+            ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
         }) %>%
           shiny::bindEvent(input$analyse)
@@ -554,7 +567,7 @@ mod_2scenario_server <- function(id) {
 
         output$gg_cost <- shiny::renderPlot({
           costPlotData()
-        }) %>%
+        }, bg = "transparent") %>%
           shiny::bindEvent(input$analyse)
 
         output$hdr_cost <- shiny::renderText({
@@ -594,7 +607,12 @@ mod_2scenario_server <- function(id) {
             type = "Normal",
             legendTitle = "Climate resilience metric",
             xAxisLab = "Climate resilience metric"
-          )
+          ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            )
 
           return(ggClimDens)
         }) %>%
@@ -604,7 +622,7 @@ mod_2scenario_server <- function(id) {
           if (input$climateid != "NA") {
             ggr_clim()
           }
-        }) %>%
+        }, bg = "transparent") %>%
           shiny::bindEvent(input$analyse)
 
         output$hdr_clim <- shiny::renderText({
@@ -718,7 +736,12 @@ mod_2scenario_server <- function(id) {
             gridExtra::tableGrob(dat[[1]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 8)),
             gridExtra::tableGrob(dat[[2]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 8)),
             design = design
-          )
+          ) &
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            )
 
           return(ggr_DataPlot)
         }) %>%

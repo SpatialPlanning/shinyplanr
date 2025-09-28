@@ -10,10 +10,12 @@ create_welcome_page <- function(x, ns){
       id = ns("welcome_tabs"),
       type = "pills",
 
-      !!!purrr::map2(x, seq_along(x), ~ shiny::tabPanel(.x$title,
-                                                        value = .y,
-                                                        shiny::div(shiny::br(),
-                                                                   shiny::markdown(.x$text))))
+      !!!purrr::map2(x,
+                     seq_along(x),
+                     ~ shiny::tabPanel(.x$title,
+                                       value = .y,
+                                       shiny::div(shiny::br(),
+                                                  shiny::markdown(.x$text))))
 
     ) # end tabset panel
   } # end else
@@ -45,10 +47,10 @@ mod_1welcome_ui <- function(id) {
       class = "home-footer",
       shiny::fluidRow(
         shiny::column(
-          width = 4,
+          width = 3,
           div(
             class = "contact-section",
-            shiny::h4("For further information:", class = "funding-title"),
+            shiny::h5("Further information:", class = "funding-title"),
             shiny::p(
               "General Enquiries: ",
               a("Emily Stokes",
@@ -64,21 +66,23 @@ mod_1welcome_ui <- function(id) {
             )
           )
         ),
+        shiny::column(
+          width = 1),
 
         shiny::column(
           width = 4,
           shiny::div(class = "contact-section",
                      shiny::p("This shiny application was developed by researchers at The University of Queensland."),
-                     shiny::p("Powered by shinyplanr and spatialplanr."),
                      shiny::p("© 2025"),
           )
         ),
-
         shiny::column(
-          width = 4,
+          width = 1),
+        shiny::column(
+          width = 3,
           div(
             class = "funding-section",
-            shiny::h4("Funded by:", class = "funding-title"),
+            shiny::h5("Funded by:", class = "funding-title"),
             div(
               class = "funding-logos",
               a(img(src = "www/logo.png",

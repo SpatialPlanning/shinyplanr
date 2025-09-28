@@ -120,6 +120,11 @@ mod_4features_server <- function(id) {
           overlay = overlay,
           cropOverlay = dens,
           ggtheme = map_theme
+        ) +
+        ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                       # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                       legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                       # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
         )
       return(gg)
     })
@@ -127,7 +132,7 @@ mod_4features_server <- function(id) {
 
     output$gg_dens <- shiny::renderPlot({
       plotDensity()
-    })
+    }, bg = "transparent")
 
 
 
@@ -164,6 +169,11 @@ mod_4features_server <- function(id) {
             overlay = overlay,
             cropOverlay = raw_sf,
             ggtheme = map_theme
+          ) +
+          ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                         # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                         legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                         # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
           )
 
         return(gg)
@@ -178,6 +188,11 @@ mod_4features_server <- function(id) {
             overlay = overlay,
             cropOverlay = raw_sf,
             ggtheme = map_theme
+          ) +
+          ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                         # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                         legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                         # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
           )
 
         return(gg)
@@ -187,7 +202,7 @@ mod_4features_server <- function(id) {
 
     output$gg_feat <- shiny::renderPlot({
       plotFeature()
-    }) %>% shiny::bindCache(input$checkFeat)
+    }, bg = "transparent") %>% shiny::bindCache(input$checkFeat)
 
 
     # Feature justification table

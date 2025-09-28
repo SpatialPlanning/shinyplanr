@@ -343,6 +343,11 @@ mod_3compare_server <- function(id) {
               overlay = overlay,
               cropOverlay = selectedData1(),
               ggtheme = map_theme
+            ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
           return(ggr_comp)
@@ -350,7 +355,7 @@ mod_3compare_server <- function(id) {
 
         output$gg_comp <- shiny::renderPlot({
           ggr_comp()
-        })
+        }, bg = "transparent")
 
         output$dlPlot1 <- fDownloadPlotServer(input, gg_id = ggr_comp(), gg_prefix = "Compare", time_date = analysisTime()) # Download figure
 
@@ -381,6 +386,11 @@ mod_3compare_server <- function(id) {
               overlay = overlay,
               cropOverlay = selectedData1(),
               ggtheme = map_theme
+            ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
           if (input$costid1 != "Cost_None") {
@@ -402,6 +412,11 @@ mod_3compare_server <- function(id) {
               overlay = overlay,
               cropOverlay = selectedData2(),
               ggtheme = map_theme
+            ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
           if (input$costid2 != "Cost_None") {
@@ -416,7 +431,12 @@ mod_3compare_server <- function(id) {
                                             plot_soln2 + ggplot2::ggtitle("Input 2"),
                                             nrow = 1, guides = "collect"
           ) &
-            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal")
+            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
+                           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            )
 
           return(ggr_soln)
 
@@ -424,7 +444,7 @@ mod_3compare_server <- function(id) {
 
         output$gg_soln <- shiny::renderPlot({
           ggr_soln()
-        }) %>%
+        }, bg = "transparent") %>%
           shiny::bindEvent(input$analyse)
 
         hdrr_soln <- shiny::reactive({
@@ -520,7 +540,12 @@ mod_3compare_server <- function(id) {
                                                 renameFeatures = TRUE,
                                                 namesToReplace = Dict,
                                                 sort_by = input$checkSort) +
-              ggplot2::ggtitle("Input 1"),
+              ggplot2::ggtitle("Input 1") +
+              ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                             # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                             legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                             # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+              ),
 
             spatialplanr::splnr_plot_featureRep(targetPlotData2,
                                                 nr = 2,
@@ -529,9 +554,19 @@ mod_3compare_server <- function(id) {
                                                 renameFeatures = TRUE,
                                                 namesToReplace = Dict,
                                                 sort_by = input$checkSort) +
-              ggplot2::ggtitle("Input 2"),
+              ggplot2::ggtitle("Input 2") +
+              ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                             # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                             legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                             # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+              ),
             nrow = 1, guides = "collect") &
-            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal")
+            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
+                           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            )
 
           return(ggr_target)
 
@@ -541,7 +576,7 @@ mod_3compare_server <- function(id) {
 
         output$gg_target <- shiny::renderPlot({
           ggr_target()
-        }) #%>%
+        }, bg = "transparent") #%>%
         # shiny::bindEvent(input$analyse)
 
         output$hdr_target <- shiny::renderText({
@@ -581,6 +616,11 @@ mod_3compare_server <- function(id) {
               overlay = overlay,
               cropOverlay = selectedData1(),
               ggtheme = map_theme
+            ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
 
@@ -595,6 +635,11 @@ mod_3compare_server <- function(id) {
               overlay = overlay,
               cropOverlay = selectedData2(),
               ggtheme = map_theme
+            ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
 
@@ -602,7 +647,12 @@ mod_3compare_server <- function(id) {
                                             gg_cost2 + ggplot2::ggtitle("Input 2"),
                                             nrow = 1, guides = "collect"
           ) &
-            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal")
+            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
+                           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            )
 
           return(ggr_cost)
         })
@@ -610,7 +660,7 @@ mod_3compare_server <- function(id) {
 
         output$gg_cost <- shiny::renderPlot({
           ggr_cost()
-        }) %>%
+        }, bg = "transparent") %>%
           shiny::bindEvent(input$analyse)
 
         output$hdr_cost <- shiny::renderText({
@@ -687,7 +737,12 @@ mod_3compare_server <- function(id) {
             type = "Normal",
             legendTitle = "Climate resilience metric",
             xAxisLab = "Climate resilience metric"
-          )
+          ) +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            )
           return(ggClimDens)
         }) %>%
           shiny::bindEvent(input$analyse)
@@ -697,7 +752,7 @@ mod_3compare_server <- function(id) {
           if (input$climateid1 != "NA" | input$climateid2 != "NA") { # could also only generate one plot when only one of them is climate smart. Or always generate these plots when climate smart option is wanted in general.
             ggr_clim()
           }
-        }) %>%
+        }, bg = "transparent") %>%
           shiny::bindEvent(input$analyse)
 
         output$hdr_clim <- shiny::renderText({
@@ -861,7 +916,12 @@ mod_3compare_server <- function(id) {
             gridExtra::tableGrob(dat[[1]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 7)),
             gridExtra::tableGrob(dat[[2]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 7)),
             design = design
-          )
+          ) &
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            )
 
           return(ggr_DataPlot)
         }) %>%

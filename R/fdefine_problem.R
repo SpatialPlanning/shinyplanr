@@ -38,6 +38,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
     # TODO Rewrite the functions to allow other names of climate columns
     # Rename column based on user selection
     if (rlang::eval_tidy(rlang::parse_expr(paste0("input$climateid", compare_id))) != "NA") {
+
       climate_sf <- raw_sf %>%
         dplyr::select("metric" = rlang::eval_tidy(rlang::parse_expr(paste0("input$climateid", compare_id))))
     }

@@ -52,6 +52,21 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   
+  /* Spacing Variables */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.25rem;
+  --spacing-xl: 1.5rem;
+  --spacing-xxl: 2rem;
+  
+  /* Pixel spacing for specific cases */
+  --spacing-2px: 2px;
+  --spacing-5px: 5px;
+  --spacing-8px: 8px;
+  --spacing-50px: 50px;
+  --spacing-120px: 120px;
+  
   /* Heading Font Weights */
   --bs-h1-font-weight: var(--font-weight-bold);
   --bs-h2-font-weight: var(--font-weight-semibold);
@@ -72,6 +87,7 @@
   
   /* Navbar styling variables */
   --bs-navbar-font-size: var(--bs-h6-font-size);
+  --bs-navbar-title-font-size: var(--bs-h4-font-size);
   --bs-navbar-font-weight: var(--font-weight-medium);
   --bs-navbar-color: var(--text-3);
   --bs-navbar-hover-color: var(--primary-4);
@@ -86,6 +102,7 @@ body {
   line-height: var(--line-height-normal) !important;
   color: var(--text-1) !important;
   background-color: var(--background) !important;
+  padding-bottom: 120px !important; /* Space for fixed footer */
 }
 
 /* Paragraph text styling */
@@ -103,6 +120,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--bs-font-family) !important;
 }
 
+/* Navbar font styling and alignment - consolidated */
 .navbar .nav-link,
 .navbar .navbar-brand,
 .navbar .navbar-nav > li > a,
@@ -111,6 +129,50 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: var(--bs-navbar-font-weight) !important;
   border-radius: var(--bs-border-radius) !important;
 }
+
+/* Navbar vertical centering */
+.nav.navbar-nav {
+  align-items: center !important;
+  display: flex !important;
+}
+
+.nav.navbar-nav .nav-item {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.nav.navbar-nav .nav-link {
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+}
+
+.navbar-brand {
+  display: flex !important;
+  align-items: center !important;
+  font-size: var(--bs-navbar-title-font-size) !important;
+}
+
+/* Fix specific Bootstrap navbar alignment */
+.navbar > .container-fluid {
+  align-items: center !important;
+}
+
+/* Navbar title specific styling */
+.navbar-header .navbar-brand,
+.navbar .navbar-brand,
+.navbar-brand {
+  font-size: var(--bs-navbar-title-font-size) !important;
+  font-weight: var(--bs-navbar-font-weight) !important;
+}
+
+/* Target navbar brand text specifically */
+.navbar-header .navbar-brand *,
+.navbar .navbar-brand *,
+.navbar-brand * {
+  font-size: var(--bs-navbar-title-font-size) !important;
+}
+
 
 /* Apply Montserrat to buttons */
 .btn {
@@ -168,8 +230,8 @@ body {
 #navbar {
   background: var(--primary-1) !important;
   background-color: var(--primary-1) !important;
-  padding-top: 0.5rem !important;
-  padding-bottom: 0.5rem !important;
+  padding-top: var(--spacing-sm) !important;
+  padding-bottom: var(--spacing-sm) !important;
   border: none !important;
   border-color: transparent !important;
 }
@@ -208,7 +270,7 @@ ul.nav.navbar-nav li a,
 .navbar .navbar-nav > li > a,
 .navbar-default .navbar-nav > li > a {
   border: none !important;
-  padding: 0.5rem 1rem !important;
+  padding: var(--spacing-sm) var(--spacing-md) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -271,10 +333,9 @@ ul.nav.navbar-nav li.active a,
 }
 
 .navbar-brand {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-  margin-right: 1rem;
-  font-size: 1.25rem;
+  padding-top: var(--spacing-xs);
+  padding-bottom: var(--spacing-xs);
+  margin-right: var(--spacing-md);
   line-height: inherit;
 }
 
@@ -545,13 +606,16 @@ ul.nav.navbar-nav li.active a {
 
 /* Footer Styles */
 .home-footer {
-  margin-top: 20px;
-  margin-left: -100px;
-  margin-right: -100px;
-  padding: 8px 120px;
-  border-top: 2px solid var(--primary-1);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: var(--spacing-8px) var(--spacing-120px);
+  border-top: var(--spacing-2px) solid var(--primary-1);
   background: var(--primary-2);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
 }
 
 .footer-content {
@@ -561,20 +625,24 @@ ul.nav.navbar-nav li.active a {
 }
 
 .funding-section {
-  padding: 5px 0;
+  padding: var(--spacing-5px) 0;
 }
 
 .contact-section {
-  padding: 5px 0;
+  padding: var(--spacing-5px) 0;
   text-align: center;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
 }
 
 .contact-section p {
   color: var(--primary-4) !important;
-  font-size: 1.1rem;
+  font-size: var(--bs-h6-font-size);
   line-height: 1.4;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-xs);
   font-weight: var(--font-weight-normal);
 }
 
@@ -594,8 +662,8 @@ ul.nav.navbar-nav li.active a {
   color: var(--primary-4);
   font-family: 'Montserrat', sans-serif;
   font-weight: var(--font-weight-medium);
-  font-size: 1.5rem;
-  margin-bottom: 6px;
+  font-size: var(--bs-h5-font-size);
+  margin-bottom: var(--spacing-xs);
   text-transform: uppercase;
   letter-spacing: 1px;
   text-align: center;
@@ -607,7 +675,7 @@ ul.nav.navbar-nav li.active a {
   align-items: center;
   flex-wrap: wrap;
   gap: 15px;
-  padding: 5px 0;
+  padding: var(--spacing-5px) 0;
 }
 
 .funding-logos a {
@@ -616,9 +684,72 @@ ul.nav.navbar-nav li.active a {
 }
 
 .funding-logos img {
-  height: 50px !important;
+  height: var(--spacing-50px) !important;
   width: auto;
   max-height: 100px;
   object-fit: contain;
   display: block;
+}
+
+/* Shiny plot output styling - make transparent to inherit page background */
+/* More comprehensive selectors with higher specificity */
+.shiny-plot-output,
+.shiny-bound-output.shiny-plot-output,
+.shiny-plot-output.html-fill-item,
+div.shiny-plot-output,
+#shiny-tab-welcome .shiny-plot-output,
+.tab-content .shiny-plot-output,
+.tab-pane .shiny-plot-output {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Target any div containing plots */
+div[id*="plot"],
+div[class*="plot"] {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Target ggplot specifically if it has identifiable classes */
+.ggplot,
+.plotly,
+.htmlwidget {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Target the specific plot outputs in your module */
+#mod_2scenario_ui_1-gg_soln,
+#mod_2scenario_ui_1-gg_targetPlot,
+#mod_2scenario_ui_1-gg_cost {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* More specific targeting for plot containers */
+.shiny-plot-output img,
+.shiny-plot-output canvas,
+.shiny-plot-output svg {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Shiny table output styling - make transparent to inherit page background */
+.shiny-table-output,
+.shiny-bound-output.shiny-table-output,
+div.shiny-table-output {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Table elements */
+.shiny-table-output table,
+.shiny-table-output tbody,
+.shiny-table-output thead,
+.shiny-table-output tr,
+.shiny-table-output td,
+.shiny-table-output th {
+  background-color: transparent !important;
+  background: transparent !important;
 }
