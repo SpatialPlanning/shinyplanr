@@ -10,13 +10,22 @@
 mod_3compare_ui <- function(id) {
 
   ns <- NS(id)
+
+  # Decide numbering for optional sections
+  if (isTRUE(options$include_climateChange)){
+    LI_num <- "4"
+  } else {
+    LI_num <- "3"
+  }
+
+
   Vars <- fcreate_vars(id = id, Dict = Dict, name_check = "sli_", categoryOut = TRUE)
   Vars2 <- fcreate_vars(id = id, Dict = Dict, name_check = "sli2_", categoryOut = TRUE)
 
   check_lockIn <- fcreate_check(id = id,
                                 Dict = Dict,
                                 idType = "LockIn",
-                                name_check = "checkLI_",
+                                name_check = "check1LI_",
                                 categoryOut = TRUE)
 
   check_lockIn2 <- fcreate_check(id = id,
@@ -24,6 +33,20 @@ mod_3compare_ui <- function(id) {
                                  idType = "LockIn",
                                  name_check = "check2LI_",
                                  categoryOut = TRUE)
+
+  check_lockOut <- fcreate_check(id = id,
+                                 Dict = Dict,
+                                 idType = "LockOut",
+                                 name_check = "check1LO_",
+                                 categoryOut = TRUE)
+
+  check_lockOut2 <- fcreate_check(id = id,
+                                  Dict = Dict,
+                                  idType = "LockOut",
+                                  name_check = "check2LO_",
+                                  categoryOut = TRUE)
+
+
 
   shinyjs::useShinyjs()
 
@@ -36,8 +59,8 @@ mod_3compare_ui <- function(id) {
                                                 targets and costs of the two analyses, navigate through the additional tabs.")),
       shiny::hr(style = "border-top: 1px solid #000000;"),
       shiny::splitLayout(
-        shiny::h2("Input 1", style = "width: 100%; text-align:center; display: block"),
-        shiny::h2("Input 2", style = "width: 100%; text-align:center; display: block"),
+        shiny::h2("Scenario 1", style = "width: 100%; text-align:center; display: block"),
+        shiny::h2("Scenario 2", style = "width: 100%; text-align:center; display: block"),
       ),
       shiny::h2("1. Select Targets"),
       shiny::actionButton(ns("resetSlider"), "Reset All Features",
@@ -78,16 +101,34 @@ mod_3compare_ui <- function(id) {
                                                  category = "Climate", .before = 1)),
         )
       )),
+      #
+      #       shinyjs::hidden(div(
+      #         id = ns("switchConstraints"),
+      #         shiny::h2("3. Constraints"),
+      #         shiny::splitLayout(
+      #           fcustom_checkCategory(check_lockIn, labelNum = 3),
+      #           fcustom_checkCategory(check_lockIn2, labelNum = 3)
+      #         ),
+      # )),
+
 
       shinyjs::hidden(div(
         id = ns("switchConstraints"),
-        shiny::h2("3. Constraints"),
+        shiny::h2(paste0(LI_num,". Constraints")),
+        shiny::p("You can also lock-in or lock-out some pre-defined areas to ensure they are either specifically included (lock-in) or excluded (lock-out) from the protected area. Planning Units outside these areas will be selected if needed to meet the targets."),
+        shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
         shiny::splitLayout(
-          fcustom_checkCategory(check_lockIn, labelNum = 3),
-          fcustom_checkCategory(check_lockIn2, labelNum = 3)
+          fcustom_checkCategory(check_lockIn),
+          fcustom_checkCategory(check_lockIn2)
         ),
-
+        shiny::h3(paste0(LI_num,".2 Locked-Out Areas")),
+        shiny::splitLayout(
+          fcustom_checkCategory(check_lockOut),
+          fcustom_checkCategory(check_lockOut2)
+        )
       )),
+
+
       shiny::br(), # Leave space for analysis button at bottom
       shiny::br(), # Leave space for analysis button at bottom
       shiny::fixedPanel(
@@ -136,8 +177,16 @@ mod_3compare_ui <- function(id) {
                    right = "1%", bottom = "1%", left = "34%"
                  ),
                  shiny::fluidRow(
-                   shiny::span(shiny::h2(shiny::textOutput(ns("hdr_soln")))),
                    shiny::span(shiny::p(shiny::textOutput(ns("txt_soln")))),
+                   shiny::column(width = 1),
+                   shiny::column(width = 4,
+                                 shiny::h2(shiny::textOutput(ns("hdr_soln1"))),
+                                 shiny::p(shiny::textOutput(ns("txt_soln1")))),
+                   shiny::column(width = 2),
+                   shiny::column(width = 4,
+                                 shiny::h2(shiny::textOutput(ns("hdr_soln2"))),
+                                 shiny::p(shiny::textOutput(ns("txt_soln2")))),
+                   shiny::column(width = 1),
                    shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_soln"), height = "700px"))
                  ),
         ),
@@ -248,6 +297,12 @@ mod_3compare_server <- function(id) {
       shinyjs::runjs("window.scrollTo(0, 0)")
     })
 
+    # Track when analysis has been run
+    analysisRun <- shiny::reactiveVal(FALSE)
+    shiny::observeEvent(input$analyse, {
+      analysisRun(TRUE)
+    })
+
     # Get Target Data
     targetData1 <- shiny::reactive({
       targets <- fget_targets(input)
@@ -345,16 +400,16 @@ mod_3compare_server <- function(id) {
               ggtheme = map_theme
             ) +
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
             )
 
           return(ggr_comp)
         })
 
         output$gg_comp <- shiny::renderPlot({
-          ggr_comp()
+          if (analysisRun()) {
+            ggr_comp()
+          }
         }, bg = "transparent")
 
         output$dlPlot1 <- fDownloadPlotServer(input, gg_id = ggr_comp(), gg_prefix = "Compare", time_date = analysisTime()) # Download figure
@@ -372,95 +427,140 @@ mod_3compare_server <- function(id) {
         # Solution plotting reactive
         ggr_soln <- shiny::reactive({
 
-          ## PLOT 1
+          LI1 <- get_lockIn(input, num = 1)
+          LO1 <- get_lockOut(input, num = 1)
 
-          soln_text1 <- fSolnText(input, selectedData1(), input$costid1)
+          ## PLOT 1 -----
 
           plot_soln1 <- spatialplanr::splnr_plot_solution(
-            soln = selectedData1(),
-            plotTitle = "Planning Units"
-          ) +
-            ggplot2::annotate(geom = "text", label = soln_text1[[1]], x = Inf, y = Inf, hjust = 1.05, vjust = 1.5) +
-            spatialplanr::splnr_gg_add(
-              Bndry = bndry,
-              overlay = overlay,
-              cropOverlay = selectedData1(),
-              ggtheme = map_theme
-            ) +
-            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
-            )
-
-          if (input$costid1 != "Cost_None") {
-            plot_soln1 <- plot_soln1 +
-              ggplot2::annotate(geom = "text", label = soln_text1[[2]], x = Inf, y = Inf, hjust = 1.03, vjust = 3.5)
-          }
-
-          ## PLOT 2
-
-          soln_text2 <- fSolnText(input, selectedData2(), input$costid2)
-
-          plot_soln2 <- spatialplanr::splnr_plot_solution(
             soln = selectedData2(),
-            plotTitle = "Planning Units"
+            plotTitle = ""
           ) +
-            ggplot2::annotate(geom = "text", label = soln_text2[[1]], x = Inf, y = Inf, hjust = 1.05, vjust = 1.5) +
             spatialplanr::splnr_gg_add(
               Bndry = bndry,
               overlay = overlay,
               cropOverlay = selectedData2(),
               ggtheme = map_theme
-            ) +
-            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
-          if (input$costid2 != "Cost_None") {
-            plot_soln2 <- plot_soln2 +
-              ggplot2::annotate(geom = "text", label = soln_text2[[2]], x = Inf, y = Inf, hjust = 1.03, vjust = 3.5)
+          if (length(LI1) > 0){
+            plot_soln1 <- plot_soln1 +
+              spatialplanr::splnr_gg_add(
+                lockIn = raw_sf,
+                nameLockIn = LI1,
+                legendLockIn = "Locked In Areas",
+                ggtheme = FALSE
+              )
           }
+
+          if (length(LO1) > 0) {
+            plot_soln1 <- plot_soln1 +
+              spatialplanr::splnr_gg_add(
+                lockOut = raw_sf,
+                nameLockOut = LO1,
+                legendLockOut = "Locked Out Areas",
+                ggtheme = FALSE
+              )
+          }
+
+          plot_soln1 <- plot_soln1 +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           legend.position = "bottom", legend.direction = "horizontal",
+                           legend.box = "horizontal")
+
+
+          ## PLOT 2 -----
+
+          LI2 <- get_lockIn(input, num = 2)
+          LO2 <- get_lockOut(input, num = 2)
+
+          plot_soln2 <- spatialplanr::splnr_plot_solution(
+            soln = selectedData2(),
+            plotTitle = ""
+          ) +
+            spatialplanr::splnr_gg_add(
+              Bndry = bndry,
+              overlay = overlay,
+              cropOverlay = selectedData2(),
+              ggtheme = map_theme
+            )
+
+          if (length(LI2) > 0){
+            plot_soln2 <- plot_soln2 +
+              spatialplanr::splnr_gg_add(
+                lockIn = raw_sf,
+                nameLockIn = LI2,
+                legendLockIn = "Locked In Areas",
+                ggtheme = FALSE
+              )
+          }
+
+          if (length(LO2) > 0) {
+            plot_soln2 <- plot_soln2 +
+              spatialplanr::splnr_gg_add(
+                lockOut = raw_sf,
+                nameLockOut = LO2,
+                legendLockOut = "Locked Out Areas",
+                ggtheme = FALSE
+              )
+          }
+
+          plot_soln2 <- plot_soln2 +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           legend.position = "bottom", legend.direction = "horizontal",
+                           legend.box = "horizontal")
+
+
 
 
           ## COMBINE PLOTS
 
-          ggr_soln <- patchwork::wrap_plots(plot_soln1 + ggplot2::ggtitle("Input 1"),
-                                            plot_soln2 + ggplot2::ggtitle("Input 2"),
+          ggr_soln <- patchwork::wrap_plots(plot_soln1,
+                                            plot_soln2,
                                             nrow = 1, guides = "collect"
           ) &
             ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
                            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
-            )
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           legend.box = "horizontal") &
+            ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
           return(ggr_soln)
 
         })
 
         output$gg_soln <- shiny::renderPlot({
-          ggr_soln()
-        }, bg = "transparent") %>%
-          shiny::bindEvent(input$analyse)
+          if (analysisRun()) {
+            ggr_soln()
+          }
+        }, bg = "transparent")
 
-        hdrr_soln <- shiny::reactive({
-          txt_out <- "Your Scenario"
+        hdrr_soln1 <- shiny::reactive({
+          txt_out <- "Scenario 1"
           return(txt_out)
         })
 
-        output$hdr_soln <- shiny::renderText({
-          hdrr_soln()
+        hdrr_soln2 <- shiny::reactive({
+          txt_out <- "Scenario 2"
+          return(txt_out)
+        })
+
+        output$hdr_soln1 <- shiny::renderText({
+          hdrr_soln1()
+        }) %>%
+          shiny::bindEvent(input$analyse)
+
+        output$hdr_soln2 <- shiny::renderText({
+          hdrr_soln2()
         }) %>%
           shiny::bindEvent(input$analyse)
 
         output$txt_soln <- shiny::renderText({
           paste(
-            "This plot shows the optimal planning scenario for the study area
-              that meets the selected targets for the chosen features whilst
+            "These plots shows the optimal planning scenario for the study area
+              that meet the selected targets for the chosen features whilst
               minimising the cost. The categorical map displays, which of
               the planning units were selected as important for meeting
               the conservation targets (dark blue) and which were not selected (light blue)
@@ -469,6 +569,30 @@ mod_3compare_server <- function(id) {
           )
         }) %>%
           shiny::bindEvent(input$analyse)
+
+
+        output$txt_soln1 <- shiny::renderText({
+          soln_text1 <- fSolnText(input, selectedData1(), input$costid1)
+          if (input$costid1 != "Cost_None") {
+            paste(soln_text1[[1]], soln_text1[[2]])
+          } else {
+            paste(soln_text1[[1]])
+          }
+        }) %>%
+          shiny::bindEvent(input$analyse)
+
+
+        output$txt_soln2 <- shiny::renderText({
+          soln_text2 <- fSolnText(input, selectedData2(), input$costid2)
+          if (input$costid2 != "Cost_None") {
+            paste(soln_text2[[1]], soln_text2[[2]])
+          } else {
+            paste(soln_text2[[1]])
+          }
+        }) %>%
+          shiny::bindEvent(input$analyse)
+
+
 
         output$dlPlot2 <- fDownloadPlotServer(input, gg_id = ggr_soln(), gg_prefix = "Solution", time_date = analysisTime()) # Download figure
 
@@ -540,11 +664,9 @@ mod_3compare_server <- function(id) {
                                                 renameFeatures = TRUE,
                                                 namesToReplace = Dict,
                                                 sort_by = input$checkSort) +
-              ggplot2::ggtitle("Input 1") +
+              ggplot2::ggtitle("Scenario 1") +
               ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                             # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                             legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                             # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                             legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
               ),
 
             spatialplanr::splnr_plot_featureRep(targetPlotData2,
@@ -554,18 +676,14 @@ mod_3compare_server <- function(id) {
                                                 renameFeatures = TRUE,
                                                 namesToReplace = Dict,
                                                 sort_by = input$checkSort) +
-              ggplot2::ggtitle("Input 2") +
+              ggplot2::ggtitle("Scenario 2") +
               ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                             # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                             legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                             # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                             legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
               ),
             nrow = 1, guides = "collect") &
             ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
                            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
             )
 
           return(ggr_target)
@@ -575,9 +693,10 @@ mod_3compare_server <- function(id) {
 
 
         output$gg_target <- shiny::renderPlot({
-          ggr_target()
-        }, bg = "transparent") #%>%
-        # shiny::bindEvent(input$analyse)
+          if (analysisRun()) {
+            ggr_target()
+          }
+        }, bg = "transparent")
 
         output$hdr_target <- shiny::renderText({
           "Targets"
@@ -618,9 +737,7 @@ mod_3compare_server <- function(id) {
               ggtheme = map_theme
             ) +
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
             )
 
 
@@ -637,21 +754,17 @@ mod_3compare_server <- function(id) {
               ggtheme = map_theme
             ) +
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
             )
 
 
-          ggr_cost <- patchwork::wrap_plots(gg_cost1 + ggplot2::ggtitle("Input 1"),
-                                            gg_cost2 + ggplot2::ggtitle("Input 2"),
+          ggr_cost <- patchwork::wrap_plots(gg_cost1 + ggplot2::ggtitle("Scenario 1"),
+                                            gg_cost2 + ggplot2::ggtitle("Scenario 2"),
                                             nrow = 1, guides = "collect"
           ) &
             ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
                            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
             )
 
           return(ggr_cost)
@@ -659,9 +772,10 @@ mod_3compare_server <- function(id) {
 
 
         output$gg_cost <- shiny::renderPlot({
-          ggr_cost()
-        }, bg = "transparent") %>%
-          shiny::bindEvent(input$analyse)
+          if (analysisRun()) {
+            ggr_cost()
+          }
+        }, bg = "transparent")
 
         output$hdr_cost <- shiny::renderText({
           "The Cost Layer Overlaid with Selection"
@@ -702,32 +816,24 @@ mod_3compare_server <- function(id) {
       {
         ggr_clim <- shiny::reactive({
 
-          if (input$climateid1 == "NA")  {
-            metric1 <- FALSE
-          } else {
-            metric1 <- TRUE
-          }
+          metric1 <- dplyr::if_else(input$climateid1 == "NA", FALSE, TRUE)
           selectedData1 <- selectedData1()
 
-          if (input$climateid2 == "NA")  {
-            metric2 <- FALSE
-          } else {
-            metric2 <- TRUE
-          }
+          metric2 <- dplyr::if_else(input$climateid2 == "NA", FALSE, TRUE)
           selectedData2 <- selectedData2()
 
-          if (isTRUE(metric1) & isTRUE(metric2)){
+          if (isTRUE(metric1) & isTRUE(metric2)){ # Both
             temp_soln <- list(selectedData1, selectedData2)
             solution_names <- c("solution_1", "solution_1")
             climate_names = c(input$climateid1, input$limateid2)
-          } else if (isTRUE(metric1) & isFALSE(metric2)){
+          } else if (isTRUE(metric1) & isFALSE(metric2)){ # Scenario 1
             temp_soln <- list(selectedData1)
             solution_names <- "solution_1"
             climate_names = input$climateid1
-          } else if (isFALSE(metric1) & isTRUE(metric2)){
+          } else if (isFALSE(metric1) & isTRUE(metric2)){ # Scenario 2
             temp_soln <- list(selectedData2)
             solution_names <- "solution_1"
-            climate_names = input$limateid2
+            climate_names = input$climateid2
           }
 
           ggClimDens <- spatialplanr::splnr_plot_climKernelDensity(
@@ -739,21 +845,17 @@ mod_3compare_server <- function(id) {
             xAxisLab = "Climate resilience metric"
           ) +
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
             )
           return(ggClimDens)
         }) %>%
           shiny::bindEvent(input$analyse)
 
         output$gg_clim <- shiny::renderPlot({
-
-          if (input$climateid1 != "NA" | input$climateid2 != "NA") { # could also only generate one plot when only one of them is climate smart. Or always generate these plots when climate smart option is wanted in general.
+          if (analysisRun() && (input$climateid1 != "NA" | input$climateid2 != "NA")) {
             ggr_clim()
           }
-        }, bg = "transparent") %>%
-          shiny::bindEvent(input$analyse)
+        }, bg = "transparent")
 
         output$hdr_clim <- shiny::renderText({
           if (input$climateid1 != "NA" | input$climateid2 != "NA") {
@@ -814,7 +916,6 @@ mod_3compare_server <- function(id) {
           # TODO Remove this when we fix spatialplanr as in mod_2
           targetPlotData1 <- targetPlotData1 %>%
             dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
-
 
           if (input$climateid2 == TRUE) {
             targets <- targetData2()
@@ -918,9 +1019,7 @@ mod_3compare_server <- function(id) {
             design = design
           ) &
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
             )
 
           return(ggr_DataPlot)

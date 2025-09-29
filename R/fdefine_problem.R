@@ -139,27 +139,16 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   ## Do Locked In Regions ----------------------------------------------------
 
-  # Are there locked in areas in the app
-  inps <- names(input) %>%
-    stringr::str_subset("checkLI_") %>%
-    stringr::str_c("input$", .)
+  LI <- get_lockIn(input)
 
-  # Are any of them selected?
-  n_inps <- purrr::map_vec(inps, \(x) rlang::eval_tidy(rlang::parse_expr(x)))
 
-  if(sum(n_inps) > 0) {
-
-    # Which ones are selected
-    LI <- inps[n_inps] %>%
-      stringr::str_remove_all("input\\$checkLI_")
-
+  if (length(LI) > 0) {
     for (idx in 1:length(LI)){
       p1 <- p1 %>%
         prioritizr::add_locked_in_constraints(as.logical(
           rlang::eval_tidy(rlang::parse_expr(paste0("raw_sf$",LI[idx])))
         ))
     } # End loop
-
   } # End Lock In
 
 

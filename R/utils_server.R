@@ -64,6 +64,8 @@ fupdate_checkbox <- function(session, id_in, Dict, selected = NA) { # works unle
   )
 }
 
+
+
 #' Title
 #'
 #' @noRd
@@ -90,6 +92,9 @@ fupdate_checkboxReset <- function(session, id_in, Dict, selected = NA) { # works
     )
   }
 }
+
+
+
 
 #' Reset all inputs to default
 #'
@@ -126,6 +131,49 @@ fCheckFeatureNo <- function(dat) {
 
   return(f_no)
 }
+
+
+#' Get the names of the locked In variables
+#'
+#' @noRd
+#'
+get_lockIn <- function(input, num = "") {
+
+  # Are there locked in areas in the app
+  inps <- names(input) %>%
+    stringr::str_subset(paste0("check",num,"LI_")) %>%
+    stringr::str_c("input$", .)
+
+  # Which ones (if any) are selected?
+  n_inps <- purrr::map_vec(inps, \(x) rlang::eval_tidy(rlang::parse_expr(x)))
+
+  # Get the selected names
+  LI <- inps[n_inps] %>%
+    stringr::str_remove_all("input\\$check\\d*LI_")
+
+}
+
+
+#' Get the names of the locked Out variables
+#'
+#' @noRd
+#'
+get_lockOut <- function(input, num = "") {
+
+  # Are there locked in areas in the app
+  inps <- names(input) %>%
+    stringr::str_subset(paste0("check",num,"LO_")) %>%
+    stringr::str_c("input$", .)
+
+  # Which ones (if any) are selected?
+  n_inps <- purrr::map_vec(inps, \(x) rlang::eval_tidy(rlang::parse_expr(x)))
+
+  # Get the selected names
+  LO <- inps[n_inps] %>%
+    stringr::str_remove_all("input\\$check\\d*LO_")
+
+}
+
 
 
 

@@ -190,27 +190,27 @@ golem::use_favicon(options$file_logo, pkg = golem::get_golem_wd(), method = "cur
 
 
 # PLOTTING THEME -----------------------------------------------------------
-map_theme <- ggplot2::theme_bw() +
+map_theme <- ggplot2::theme_bw(base_size = 14) +
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
     # text = ggplot2::element_text(size = 6, colour = "black"),
-    axis.text = ggplot2::element_text(size = 9, colour = "black"),
-    plot.title = ggplot2::element_text(size = 12),
-    legend.title = ggplot2::element_text(size = 9),
-    legend.text = ggplot2::element_text(size = 9),
+    # axis.text = ggplot2::element_text(size = 9, colour = "black"),
+    # plot.title = ggplot2::element_text(size = 12),
+    # legend.title = ggplot2::element_text(size = 9),
+    # legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
 
-bar_theme <- ggplot2::theme_bw() +
+bar_theme <- ggplot2::theme_bw(base_size = 14) +
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
     # text = ggplot2::element_text(size = 6, colour = "black"),
-    axis.text = ggplot2::element_text(size = 6, colour = "black"),
-    plot.title = ggplot2::element_text(size = 12),
-    legend.title = ggplot2::element_text(size = 9),
-    legend.text = ggplot2::element_text(size = 9),
+    # axis.text = ggplot2::element_text(size = 6, colour = "black"),
+    # plot.title = ggplot2::element_text(size = 12),
+    # legend.title = ggplot2::element_text(size = 9),
+    # legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
 

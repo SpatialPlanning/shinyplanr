@@ -110,11 +110,42 @@ depth_zones <- sf::st_read(file.path(data_path, "depth_zones.geojson")) %>%
                  meth = "average",
                  feature_names = "zone",
                  antimeridian = FALSE,
-                 cutoff = 0.1)
+                 cutoff = 1e-10) %>%
+  terra::app(fun=function(x) {
+    if(all(is.na(x))) return(x)
+    max_val <- max(x, na.rm=TRUE)
+    if(max_val == 0) return(x * 0)  # All zeros case
+    max_idx <- which.max(x)  # Returns index of first maximum
+    result <- x * 0  # Set all to zero
+    result[max_idx] <- x[max_idx]  # Keep only the first maximum
+    return(result)
+  })
 
 
 
-dat_sf <- c(coral_seagrass, habitat_other_reef, depth_zones, ous, ous_ss) %>%
+# Geomorphology -----------------------------------------------------------
+geomorph <- sf::st_read(file.path(data_path, "reef_geomorph_complete.geojson")) %>%
+  sf::st_as_sf() %>%
+  sf::st_make_valid() %>%
+  get_data_in_grid(spatial_grid = pgrid,
+                   dat = .,
+                   meth = "average",
+                   feature_names = "class",
+                   antimeridian = FALSE,
+                   cutoff = 0.1) %>%
+  terra::app(fun=function(x) {
+    if(all(is.na(x))) return(x)
+    max_val <- max(x, na.rm=TRUE)
+    if(max_val == 0) return(x * 0)  # All zeros case
+    max_idx <- which.max(x)  # Returns index of first maximum
+    result <- x * 0  # Set all to zero
+    result[max_idx] <- x[max_idx]  # Keep only the first maximum
+    return(result)
+  })
+
+
+
+dat_sf <- c(coral_seagrass, habitat_other_reef, depth_zones, ous, ous_ss, geomorph) %>%
   terra::as.polygons(trunc = FALSE, dissolve = FALSE, na.rm = TRUE, na.all = TRUE, round = FALSE) %>%
   sf::st_as_sf() %>%
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
@@ -123,22 +154,6 @@ dat_sf <- c(coral_seagrass, habitat_other_reef, depth_zones, ous, ous_ss) %>%
 
 PUs <- dat_sf %>%
   dplyr::select(geometry)
-
-
-
-# Geomorphology -----------------------------------------------------------
-
-## TODO Seems to be an error in the data - Abyss is inside the shelf for Kosrae. Contact Blue Planet
-# geo <- list.files(file.path(data_path, "geomorph"), pattern = ".shp$", full.names = TRUE) %>%
-#   purrr::map(st_read) %>%
-#   bind_rows() %>%
-#   dplyr::select(-area_km2) %>%
-#   sf::st_transform(kos_crs) %>%
-#   sf::st_crop(PUs) %>%
-#   dplyr::group_by(Geomorphic) %>%
-#   st_intersection(PUs)
-#
-# geo_sf <- spatialgridr::get_data_in_grid(spatial_grid = PUs, dat = geo, feature_names = )
 
 
 ## Remove cost layers from dat_sf

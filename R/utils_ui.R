@@ -3,6 +3,7 @@
 #' @noRd
 #'
 fcreate_vars <- function(id, Dict = Dict, name_check = "check", categoryOut = FALSE, byCategory = FALSE) {
+
   vars <- Dict %>%
     dplyr::filter(.data$type == "Feature") %>%
     dplyr::select(-c("justification", "includeApp", "includeJust", "type")) %>%

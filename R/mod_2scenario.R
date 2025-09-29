@@ -204,19 +204,19 @@ mod_2scenario_ui <- function(id) {
         #          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_selFreq")))),
         #          shiny::textOutput(ns("txt_selFreq")),
         #          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_selFreq"), height = "700px"))),
-        # tabPanel("Climate",
-        #          value = 6,
-        #          shiny::fixedPanel(
-        #            style = "z-index:100", # To force the button above all plots.
-        #            shiny::downloadButton(ns("dlPlot6"), "Download Plot",
-        #                                  style = "float: right; padding:4px; font-size:120%"
-        #            ),
-        #            right = "1%", bottom = "1%", left = "34%"
-        #          ),
-        #          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
-        #          shiny::textOutput(ns("txt_clim")),
-        #          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "700px"))
-        # ),
+        tabPanel("Climate",
+                 value = 6,
+                 shiny::fixedPanel(
+                   style = "z-index:100", # To force the button above all plots.
+                   shiny::downloadButton(ns("dlPlot6"), "Download Plot",
+                                         style = "float: right; padding:4px; font-size:120%"
+                   ),
+                   right = "1%", bottom = "1%", left = "34%"
+                 ),
+                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
+                 shiny::textOutput(ns("txt_clim")),
+                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "700px"))
+        ),
         tabPanel("Details",
                  value = 7,
                  shiny::fixedPanel(
@@ -229,7 +229,7 @@ mod_2scenario_ui <- function(id) {
 
                  shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
                  shiny::tableOutput(ns("DataTable"))
-        ),
+        )
       )
     )
   )
@@ -244,7 +244,14 @@ mod_2scenario_server <- function(id) {
     ns <- session$ns
 
     if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
+
+      # browser()
       shinyjs::show(id = "switchClimSmart")
+    } else {
+      # browser()
+      shinyjs::hide(id = "switchClimSmart")
+      # Hide the Climate tab if climate change is not enabled
+      shiny::hideTab(inputId = "tabs", target = 6, session = session)
     }
 
     if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
@@ -265,6 +272,12 @@ mod_2scenario_server <- function(id) {
     # Go back to the top of the page when analyse is clicked.
     shiny::observeEvent(input$analyse, {
       shinyjs::runjs("window.scrollTo(0, 0)")
+    })
+
+    # Track when analysis has been run
+    analysisRun <- shiny::reactiveVal(FALSE)
+    shiny::observeEvent(input$analyse, {
+      analysisRun(TRUE)
     })
 
 
@@ -390,44 +403,57 @@ mod_2scenario_server <- function(id) {
 
           # TODO Add better error tracking in here so I can change soln_text to provide a useful error when a solution can't be found.
 
-          soln_text <- fSolnText(input, selectedData(), input$costid)
+          LI <- get_lockIn(input)
+          LO <- get_lockOut(input)
 
           plot1 <- spatialplanr::splnr_plot_solution(
             soln = selectedData(),
-            plotTitle = "Planning Units"
+            plotTitle = ""
           ) +
-            ggplot2::annotate(
-              geom = "text",
-              label = soln_text[[1]], x = Inf, y = Inf,
-              hjust = 1.05, vjust = 1.5) +
             spatialplanr::splnr_gg_add(
               Bndry = bndry,
               overlay = overlay,
               cropOverlay = selectedData(),
               ggtheme = map_theme
-            ) +
-            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
-          if (input$costid != "Cost_None") {
+          if (length(LI) > 0){
             plot1 <- plot1 +
-              ggplot2::annotate(
-                geom = "text",
-                label = soln_text[[2]], x = Inf, y = Inf,
-                hjust = 1.03, vjust = 3.5)
-          } else {
-            plot1 <- plot1
+              spatialplanr::splnr_gg_add(
+                lockIn = raw_sf,
+                nameLockIn = LI,
+                legendLockIn = "Locked In Areas",
+                ggtheme = FALSE
+              )
           }
+
+          if (length(LO) > 0) {
+            plot1 <- plot1 +
+              spatialplanr::splnr_gg_add(
+                lockOut = raw_sf,
+                nameLockOut = LO,
+                legendLockOut = "Locked Out Areas",
+                ggtheme = FALSE
+              )
+          }
+
+          plot1 <- plot1 +
+            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
+                           legend.position = "bottom", legend.direction = "horizontal",
+                           legend.box = "horizontal")
+          # + ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+
+          plot1 <- plot1
+
           return(plot1)
         })
 
         output$gg_soln <- shiny::renderPlot({
-          plot_data1()
-        }, bg = "transparent") %>%
-          shiny::bindEvent(input$analyse)
+          if (analysisRun()) {
+            plot_data1()
+          }
+        }, bg = "transparent")
 
         hdrr_soln <- shiny::reactive({
           txt_out <- "Your Scenario"
@@ -440,13 +466,14 @@ mod_2scenario_server <- function(id) {
         }) %>%
           shiny::bindEvent(input$analyse)
 
+
         output$txt_soln <- shiny::renderText({
-          paste(
-            tx_2solution,
-            " For the chosen inputs ",
-            round(sum(selectedData()$solution_1) / nrow(selectedData()) * 100),
-            "% of the planning region was selected."
-          )
+          soln_text <- fSolnText(input, selectedData(), input$costid)
+          if (input$costid != "Cost_None") {
+            paste(tx_2solution, soln_text[[1]], soln_text[[2]])
+          } else {
+            paste(tx_2solution, soln_text[[1]])
+          }
         }) %>%
           shiny::bindEvent(input$analyse)
 
@@ -502,9 +529,7 @@ mod_2scenario_server <- function(id) {
                                                            showTarget = TRUE,
                                                            sort_by = input$checkSort) +
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
             )
 
           return(gg_Target)
@@ -513,7 +538,9 @@ mod_2scenario_server <- function(id) {
 
 
         output$gg_targetPlot <- shiny::renderPlot({
-          gg_Target()
+          if (analysisRun()) {
+            gg_Target()
+          }
         }, bg = "transparent")
 
         output$hdr_target <- shiny::renderText({
@@ -557,18 +584,17 @@ mod_2scenario_server <- function(id) {
               ggtheme = map_theme
             ) +
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the legend background transparent
             )
         }) %>%
           shiny::bindEvent(input$analyse)
 
 
         output$gg_cost <- shiny::renderPlot({
-          costPlotData()
-        }, bg = "transparent") %>%
-          shiny::bindEvent(input$analyse)
+          if (analysisRun()) {
+            costPlotData()
+          }
+        }, bg = "transparent")
 
         output$hdr_cost <- shiny::renderText({
           "Cost Layer Overlaid with Selection"
@@ -619,11 +645,10 @@ mod_2scenario_server <- function(id) {
           shiny::bindEvent(input$analyse)
 
         output$gg_clim <- shiny::renderPlot({
-          if (input$climateid != "NA") {
+          if (analysisRun() && input$climateid != "NA") {
             ggr_clim()
           }
-        }, bg = "transparent") %>%
-          shiny::bindEvent(input$analyse)
+        }, bg = "transparent")
 
         output$hdr_clim <- shiny::renderText({
           if (input$climateid != "NA") {
