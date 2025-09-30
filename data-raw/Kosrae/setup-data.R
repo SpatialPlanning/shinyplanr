@@ -21,13 +21,12 @@ coast <-  sf::st_read(file.path(data_path, "kos_osm_shoreline.gpkg")) %>%
 bndry <- sf::st_read(file.path(data_path, "contour_500.gpkg")) %>%
   sf::st_transform(crs = kos_crs)
 
-contour_500 <- read_sf(file.path(data_path, "contour_500.gpkg"))
-
-pgrid <- get_grid(boundary = contour_500,
+pgrid <- get_grid(boundary = bndry,
                   # resolution = 50,
                   resolution = 100,
                   crs = kos_crs,
                   touches = TRUE)
+
 
 habitat_coral_seagrass <- read_sf(file.path(data_path, "benthic_geomorph_allen_intersect.gpkg")) %>%
   get_data_in_grid(spatial_grid = pgrid,
@@ -45,157 +44,215 @@ habitat_other_reef <- read_sf(file.path(data_path, "benthic_no_coral_seagrass.gp
                    antimeridian = FALSE,
                    cutoff = 0.1)
 
+
+
 depth_zones <- oceandatr::get_bathymetry(spatial_grid = pgrid,
                                          classify_bathymetry = TRUE,
                                          above_sea_level_isNA = FALSE,
-                                         bathymetry_data_filepath = file.path(data_path, "gebco_2024_n6.0_s4.9_w162.0_e164.0.tif")) %>%
-  mask(sum(c(habitat_coral_seagrass, habitat_other_reef), na.rm = TRUE) %>% subst(1:10, NA))
+                                         bathymetry_data_filepath = file.path(data_path, "gebco_2024_n6.0_s4.9_w162.0_e164.0.tif"))
+# mask(sum(c(habitat_coral_seagrass, habitat_other_reef), na.rm = TRUE) %>% subst(1:10, NA))
+names(depth_zones) <- c("Shelf", "Slope")
 
-ous_fisheries_sectors <- list.files(file.path(data_path, "ocean-use-survey", "subsectors", "fishing"), pattern = "\\.tif$", full.names = TRUE) %>%
-  lapply(rast) %>%
-  lapply(FUN = function(x) get_data_in_grid(spatial_grid = pgrid, dat = x, meth = "average", antimeridian = FALSE)) %>%
-  rast() %>%
-  round() #avoid problems with fractional differences in OUS values driving prioritization results
+# Features: Tourism, Community and recreational use (you can use binary values)
+# Cost: OUS fisheries data (you already have in the app), maybe also include bottom fishing and trolling (have values across most of the planning area)
+# Locked-out: Construction and infrastructure (binary values)
 
-ous_trochus_farm <- rast(file.path(data_path, "ocean-use-survey", "subsectors", "aquaculture", "trochus_farming.tif")) %>%
+ous <- terra::rast(c(
+  file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "aquaculture.tif"),
+  file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "community_recreational_use.tif"),
+  file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "construction_and_infrastructure.tif"),
+  file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "cultural_use.tif"),
+  # file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "maritime_activity.tif"),
+  # file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "other.tif"),
+  file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "research.tif"),
+  file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "transportation.tif"),
+  file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "tourism.tif"))) %>%
   get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE)
 
+ous[ous>=1] <- 1 # Cutoff of 1
+ous[ous<1] <- 0 # Cutoff of 1
 
-# habitat_coral_seagrass <- st_read(file.path(data_path, "benthic_geomorph_allen_intersect.gpkg")) %>%
-#   get_data_in_grid(spatial_grid = PUs,
-#                    dat = .,
-#                    meth = "average",
-#                    feature_names = "habitat",
-#                    antimeridian = FALSE,
-#                    cutoff = 0.1)
+files <- list.files(file.path(data_path, "ocean-use-survey", "subsectors"), recursive = TRUE, pattern = ".tif$", full.names = TRUE)
+ous_ss <- purrr::map(files, \(x) terra::rast(x) %>% get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE)) %>%
+  terra::rast()
+
+ous_ss[ous_ss>=1] <- 1 # Cutoff of 1
+ous_ss[ous_ss<1] <- 0 # Cutoff of 1
+
+# Locked in areas ---------------------------------------------------------
+
+# ous_lock <- c(terra::rast(file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "aquaculture.tif")) %>%
+#                 get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE),
+#               terra::rast(file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "construction_and_infrastructure.tif")) %>%
+#                 get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE))
 #
-# habitat_other_reef <- st_read(file.path(data_path, "benthic_no_coral_seagrass.gpkg")) %>%
-#   get_data_in_grid(spatial_grid = PUs,
-#                    dat = .,
-#                    meth = "average",
-#                    feature_names = "Benthic_cover",
-#                    antimeridian = FALSE,
-#                    cutoff = 0.1)
-#
-# depth_zones <- oceandatr::get_bathymetry(
-#   spatial_grid = PUs,
-#   classify_bathymetry = TRUE,
-#   above_sea_level_isNA = FALSE,
-#   bathymetry_data_filepath = file.path(data_path, "gebco_2024_n6.0_s4.9_w162.0_e164.0.tif")) # %>%
-#   # mask(sum(c(habitat_coral_seagrass, habitat_other_reef), na.rm = TRUE) %>% subst(1:10, NA))
-#
-# convert_rast <- function(r, PUs){
-#
-#   out <- terra::rast(r) %>%
-#     terra::round() %>% #avoid problems with fractional differences in OUS values driving prioritization results
-#     terra::as.polygons(trunc = FALSE, dissolve = FALSE, na.rm = TRUE, na.all = TRUE, round = FALSE) %>%
-#     sf::st_as_sf() %>%
-#     get_data_in_grid(spatial_grid = PUs, dat = ., meth = "average", antimeridian = FALSE)
-#
-# }
-#
-# ous_fisheries_sectors <- list.files(file.path(data_path, "ocean-use-survey", "subsectors", "fishing"),
-#                                     pattern = "\\.tif$",
-#                                     full.names = TRUE) %>%
-#   purrr::map(convert_rast, PUs)
-#
-# ous_fisheries_sectors <- ous_fisheries_sectors %>%
-#   purrr::map(sf::st_drop_geometry) %>%
-#   bind_cols(PUs) %>%
-#   sf::st_as_sf()
-#
-#
-# ous_trochus_farm <- terra::rast(file.path(data_path, "ocean-use-survey", "subsectors", "aquaculture", "trochus_farming.tif")) %>%
-#   terra::as.polygons(trunc = FALSE, dissolve = FALSE, na.rm = TRUE, na.all = TRUE, round = FALSE) %>%
-#   sf::st_as_sf() %>%
-#   get_data_in_grid(spatial_grid = PUs,
-#                    dat = .,
-#                    meth = "average",
-#                    antimeridian = FALSE)
-#
-# dat_sf <- bind_cols(habitat_coral_seagrass %>% sf::st_drop_geometry(),
-#                     habitat_other_reef %>% sf::st_drop_geometry(),
-#                     ous_fisheries_sectors %>% sf::st_drop_geometry(),
-#                     ous_trochus_farm %>% sf::st_drop_geometry(),
-#                     depth_zones) %>%
-#   sf::st_as_sf()
+# ous[ous>=1] <- 1 # Cutoff of 1
 
 
-dat <- c(habitat_coral_seagrass, habitat_other_reef, ous_fisheries_sectors, ous_trochus_farm, depth_zones)
+# Find the layers that start with "Coral"
+coral_layers <- grep("^Coral", names(habitat_coral_seagrass))
 
-dat_sf <- dat %>%
+# Find the layers that start with "Seagrass"
+seagrass_layers <- grep("^Seagrass", names(habitat_coral_seagrass))
+
+# Sum the "Coral" layers
+coral_seagrass <- c(sum(habitat_coral_seagrass[[coral_layers]]),  sum(habitat_coral_seagrass[[seagrass_layers]]))
+coral_seagrass <- clamp(coral_seagrass, upper=1, values=TRUE)
+names(coral_seagrass) <- c("Coral", "Seagrass")
+
+
+# Depth Zones from GEBCO Bathymetry
+depth_zones <- sf::st_read(file.path(data_path, "depth_zones.geojson")) %>%
+  sf::st_as_sf() %>%
+  dplyr::mutate(zone = janitor::make_clean_names(zone, case = "snake")) %>%
+  get_data_in_grid(spatial_grid = pgrid,
+                 dat = .,
+                 meth = "average",
+                 feature_names = "zone",
+                 antimeridian = FALSE,
+                 cutoff = 1e-10) %>%
+  terra::app(fun=function(x) {
+    if(all(is.na(x))) return(x)
+    max_val <- max(x, na.rm=TRUE)
+    if(max_val == 0) return(x * 0)  # All zeros case
+    max_idx <- which.max(x)  # Returns index of first maximum
+    result <- x * 0  # Set all to zero
+    result[max_idx] <- x[max_idx]  # Keep only the first maximum
+    return(result)
+  })
+
+
+
+# Geomorphology -----------------------------------------------------------
+geomorph <- sf::st_read(file.path(data_path, "reef_geomorph_complete.geojson")) %>%
+  sf::st_as_sf() %>%
+  sf::st_make_valid() %>%
+  get_data_in_grid(spatial_grid = pgrid,
+                   dat = .,
+                   meth = "average",
+                   feature_names = "class",
+                   antimeridian = FALSE,
+                   cutoff = 0.1) %>%
+  terra::app(fun=function(x) {
+    if(all(is.na(x))) return(x)
+    max_val <- max(x, na.rm=TRUE)
+    if(max_val == 0) return(x * 0)  # All zeros case
+    max_idx <- which.max(x)  # Returns index of first maximum
+    result <- x * 0  # Set all to zero
+    result[max_idx] <- x[max_idx]  # Keep only the first maximum
+    return(result)
+  })
+
+
+
+dat_sf <- c(coral_seagrass, habitat_other_reef, depth_zones, ous, ous_ss, geomorph) %>%
   terra::as.polygons(trunc = FALSE, dissolve = FALSE, na.rm = TRUE, na.all = TRUE, round = FALSE) %>%
   sf::st_as_sf() %>%
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
-  janitor::clean_names()
+  janitor::clean_names() %>%
+  sf::st_transform(kos_crs)
 
 PUs <- dat_sf %>%
   dplyr::select(geometry)
 
+
+## Remove cost layers from dat_sf
+dat_sf <- dat_sf %>%
+  dplyr::select(-c("bottom_fishing", "trolling"))
+
 # Add cost data -----------------------------------------------------------
-
-gfw_cost <- spatialplanr::splnr_get_gfw("Micronesia",
-                                        start_date = "2013-01-01",
-                                        end_date = "2023-12-31",
-                                        temp_res = "YEARLY",
-                                        spat_res = "LOW",
-                                        compress = TRUE) %>%
-  dplyr::select(-GFWregionID) %>%
-  dplyr::mutate(ApparentFishingHrs = if_else(ApparentFishingHrs > 1000, NA, ApparentFishingHrs)) %>%
-  sf::st_transform(sf::st_crs(PUs)) %>%
-  sf::st_interpolate_aw(., PUs, extensive = TRUE, keep_NA = TRUE)
-
-ous_fish <- terra::rast(file.path(data_path, "ocean-use-survey", "fisheries.tif")) %>%
-  get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE) %>%
+ous_cost <- c(terra::rast(file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "fisheries.tif")) %>%
+                get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE),
+              terra::rast(file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "maritime_activity.tif")) %>%
+                get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE),
+              terra::rast(file.path(data_path, "ocean-use-survey", "subsectors", "fishing", "bottom_fishing.tif")) %>%
+                get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE),
+              terra::rast(file.path(data_path, "ocean-use-survey", "subsectors", "fishing", "trolling.tif")) %>%
+                get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE)) %>%
   terra::as.polygons(trunc = FALSE, dissolve = FALSE, na.rm = TRUE, na.all = TRUE, round = FALSE) %>%
   sf::st_as_sf() %>%
+  mutate(across(everything(), ~replace_na(.x, 0))) %>%
+  mutate(across(tidyselect::where(is.numeric), \(x) if_else(x > quantile(x, 0.99), quantile(x, 0.99), x))) %>%
+  janitor::clean_names() %>%
   sf::st_transform(kos_crs) %>%
-  sf::st_interpolate_aw(PUs, extensive = FALSE, na.rm = TRUE, keep_NA = TRUE)
+  sf::st_interpolate_aw(ous_lock, to = PUs, extensive = TRUE, keep_NA = TRUE)
 
 
-cost <- PUs %>%
+
+# There is a lot of missing data in the region
+
+# gfw_cost <- spatialplanr::splnr_get_gfw("Micronesia",
+#                                         start_date = "2013-01-01",
+#                                         end_date = "2023-12-31",
+#                                         temp_res = "YEARLY",
+#                                         spat_res = "HIGH",
+#                                         compress = TRUE) %>%
+#   dplyr::select(-GFWregionID) %>%
+#   dplyr::mutate(ApparentFishingHrs = if_else(ApparentFishingHrs > 1000, NA, ApparentFishingHrs)) %>%
+#   sf::st_transform(sf::st_crs(PUs)) %>%
+#   sf::st_interpolate_aw(., to = PUs, extensive = FALSE, na.rm = TRUE)
+
+
+cost <- ous_cost %>%
   splnr_get_distCoast(custom_coast = coast) %>%  # Distance to nearest coast
-  dplyr::rename(Cost_Distance = coastDistance_km) %>%
-  dplyr::mutate(Cost_OUS = ous_fish$fisheries,
+  dplyr::mutate(Cost_Distance = 1/if_else(coastDistance_km == 0, .Machine$double.eps, coastDistance_km),
                 Cost_None = 0.1,
-                Cost_Random = runif(dim(.)[1]),
-                Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001)) %>%
+                # Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001),
+                # Cost_FishingHrs = dplyr::if_else(Cost_FishingHrs == 0, 0.00001, Cost_FishingHrs),
+  ) %>%
+  dplyr::select(-coastDistance_km) %>%
   dplyr::relocate(geometry, .after = tidyselect::last_col())
 
 
 
-# Locked in areas ---------------------------------------------------------
-
-# TODO These are only point MPAs. Need some polygons to do this right.
-
-# lock_in <- "Micronesia (Federated States of)" %>%
-#   lapply(wdpar::wdpa_fetch,
-#          wait = TRUE,
-#          download_dir = rappdirs::user_data_dir("wdpar")
-#   ) %>%
-#   dplyr::bind_rows() %>%
-#   dplyr::filter(.data$MARINE > 0) %>%
-#   sf::st_transform(crs = kos_crs) %>%
-#   dplyr::select(geometry) %>%
-#   spatialgridr::get_data_in_grid(spatial_grid = PUs, dat = ., name = "MPAs")
 #
-# ggplot(lock_in, aes(fill = MPAs)) + geom_sf()
+#
+#
+# mutate(across(!tidyselect::matches("geometry"), ~ifelse(is.nan(.), NA, .))) %>%
+#   sf::st_transform(sf::st_crs(PUs))
+#
+#
+# x <- sf::st_interpolate_aw(ous_lock, to = PUs, extensive = TRUE, keep_NA = TRUE)
+#
+
+# convert_rast <- function(files, PUs){
+#   rast(files) %>%
+#     get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE) %>%
+#     terra::as.polygons(trunc = FALSE, dissolve = FALSE, na.rm = TRUE, na.all = TRUE, round = FALSE) %>%
+#     sf::st_as_sf() %>%
+#     sf::st_transform(sf::st_crs(PUs)) %>%
+#     sf::st_interpolate_aw(to = PUs, extensive = FALSE, na.rm = TRUE) #%>%
+# sf::st_drop_geometry()
+# }
+
 
 
 # Climate Data ------------------------------------------------------------
 
-# Start with 1 climate layer called metric. Then come back and add other layers wth unique names
+# Start with 0.5 deg files
 climate_sf <- bind_cols(
   read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_trends_ssp245_r1i1p1f1_RegriddedAnnual_20150101-21001231.rds")) %>%
-    sf::st_drop_geometry() %>% dplyr::select("slpTrends_245"="slpTrends"),
+    sf::st_drop_geometry() %>%
+    dplyr::select("slpTrends_245"="slpTrends"),
   read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_trends_ssp370_r1i1p1f1_RegriddedAnnual_20150101-21001231.rds")) %>%
-    sf::st_drop_geometry() %>% dplyr::select("slpTrends_370"="slpTrends"),
+    sf::st_drop_geometry() %>%
+    dplyr::select("slpTrends_370"="slpTrends"),
   read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_trends_ssp585_r1i1p1f1_RegriddedAnnual_20150101-21001231.rds")) %>%
     dplyr::select("slpTrends_585"="slpTrends")) %>%
   sf::st_as_sf() %>%
   sf::st_transform(kos_crs) %>%
   sf::st_interpolate_aw(dat_sf, extensive = FALSE, na.rm = TRUE, keep_NA = TRUE)
 
+
+
+# Now add High Res
+climate_sf <-
+  bind_cols(climate_sf,
+            read_rds(file.path("data-raw", "Kosrae", "climate_data", "tos_Omon_ensemble_highres-future_r1i1p1f1_RegriddedAnnual_20150101-205003311.rds")) %>%
+              sf::st_transform(kos_crs) %>%
+              dplyr::select("slpTrends_HR" = "slpTrends") %>%
+              sf::st_interpolate_aw(dat_sf, extensive = FALSE, na.rm = TRUE, keep_NA = TRUE) %>%
+              sf::st_drop_geometry())
 
 # Save raw data -----------------------------------------------------------
 
@@ -205,5 +262,7 @@ dat_sf <- bind_cols(dat_sf,
                     climate_sf %>% sf::st_drop_geometry()) %>%
   dplyr::relocate(geometry, .after = tidyselect::everything())
 
+
 save(dat_sf, bndry, coast, climate_sf, file = file.path("data-raw", name, paste0(name,"_RawData.rda")))
 
+cat("Finished processing data")

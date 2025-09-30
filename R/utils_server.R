@@ -23,7 +23,7 @@ fget_category <- function(Dict) {
 fget_targets <- function(input, name_check = "sli_") {
 
   ft <- Dict %>%
-    dplyr::filter(.data$type != "Constraint", .data$type != "Cost", .data$type != "Climate") %>%
+    dplyr::filter(.data$type == "Feature") %>%
     dplyr::pull("nameVariable")
 
   targets <- ft %>%
@@ -38,153 +38,6 @@ fget_targets <- function(input, name_check = "sli_") {
 }
 
 
-#' Define conservation problem
-#'
-#' @noRd
-#'
-
-fdefine_problem <- function(targets, input, name_check = "sli_", clim_input = FALSE, compare_id = "") {
-
-  # TODO raw_sf, climate_sf, options  is not passed into the function
-
-  out_sf <- raw_sf %>%
-    dplyr::select(
-      .data$geometry,
-      tidyselect::all_of(targets$feature),
-      tidyselect::starts_with("Cost_")
-    ) %>%
-    sf::st_as_sf()
-
-  if (clim_input == "NA") {
-    p_dat <- out_sf
-  } else {
-    features <- out_sf %>%
-      dplyr::select(
-        .data$geometry,
-        tidyselect::all_of(targets$feature)
-      )
-
-    # TODO Rewrite this to allow other names of climate columns
-    # Rename column based on user selection
-
-    if (isTruthy(input$climateid)){
-      climate_sf <- raw_sf %>%
-        sf::st_as_sf() %>%
-        dplyr::select("metric" = input$climateid)
-    } else if (compare_id == "1" & input$climateid1 != "NA") {
-      climate_sf <- raw_sf %>%
-        sf::st_as_sf() %>%
-        dplyr::select("metric" = input$climateid1)
-    } else if (compare_id == "2" & input$climateid2 != "NA") {
-      climate_sf <- raw_sf %>%
-        sf::st_as_sf() %>%
-        dplyr::select("metric" = input$climateid2)
-    }
-
-
-    if (options$climate_change == 1) { # CPA approach
-
-      CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
-        features = features,
-        metric = climate_sf,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction,
-        refugiaTarget = options$refugiaTarget
-      )
-    } else if (options$climate_change == 2) { # feature approach
-
-      CS_Approach <- spatialplanr::splnr_climate_featureApproach(
-        features = features,
-        metric = climate_sf,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction,
-        refugiaTarget = options$refugiaTarget
-      )
-    } else if (options$climate_change == 3) { # percentile approach
-
-      CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
-        features = features,
-        metric = climate_sf,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction
-      )
-    }
-
-    targets <- CS_Approach$Targets
-
-    # browser()
-
-    p_dat <- CS_Approach$Features %>%
-      sf::st_join(out_sf %>% dplyr::select(tidyselect::starts_with("Cost_")),
-                  join = sf::st_equals) %>%
-      sf::st_join(climate_sf, join = sf::st_equals)
-    # } else {
-    # print("Something odd is going on here. Check climate-smart tick box.")
-  }
-
-  f_no <- fCheckFeatureNo(p_dat) # Check number of features
-
-  if (f_no == 1) {
-    shinyalert::shinyalert("Error", "No features have been selected. You can't run a spatial prioritization without any features.",
-                           type = "error",
-                           callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
-    )
-
-    p_dat <- p_dat %>%
-      dplyr::mutate(DummyVar = 1)
-
-    p1 <- prioritizr::problem(p_dat, "DummyVar", ) %>%
-      prioritizr::add_min_set_objective() %>%
-      prioritizr::add_relative_targets(0) %>%
-      prioritizr::add_binary_decisions() %>%
-      prioritizr::add_cbc_solver(verbose = TRUE)
-  } else {
-    ## Get names of the features
-    if (clim_input == TRUE) {
-      usedFeatures <- p_dat %>%
-        sf::st_drop_geometry() %>%
-        dplyr::select(-tidyselect::starts_with("Cost_"), -.data$metric) %>%
-        names()
-    } else {
-      usedFeatures <- targets$feature
-    }
-
-    if (options$obj_func == "min_set") {
-      p1 <- prioritizr::problem(p_dat, usedFeatures, eval(parse(text = paste0("input$costid", compare_id)))) %>%
-        prioritizr::add_min_set_objective() %>%
-        prioritizr::add_relative_targets(targets$target) %>%
-        prioritizr::add_binary_decisions() %>%
-        prioritizr::add_cbc_solver(verbose = TRUE)
-
-      # Do Locked In Regions ----------------------------------------------------
-
-      if (options$lockedInArea != 0) {
-        LI <- Dict %>%
-          dplyr::filter(.data$categoryID == "LockedInArea") %>%
-          dplyr::pull("nameVariable")
-
-        LI_check <- paste0("input$check", compare_id, "LI_", LI)
-        LI_sf <- paste0("raw_sf$", LI)
-
-        for (area in 1:length(LI)) { # TODO Why is area here? It is not used anywhere.... Is a placeholder needed?
-          if (!rlang::is_null(rlang::eval_tidy(rlang::parse_expr(LI_check)))) {
-            p1 <- p1 %>%
-              prioritizr::add_locked_in_constraints(as.logical(rlang::eval_tidy(rlang::parse_expr(LI_sf))))
-          }
-        }
-      }
-    } else if (options$obj_func == "min_shortfall") {
-      # Add new objective functions
-    }
-  }
-
-  rm(p_dat)
-
-  return(p1)
-}
 
 #' Title
 #'
@@ -210,6 +63,8 @@ fupdate_checkbox <- function(session, id_in, Dict, selected = NA) { # works unle
     selected = selected
   )
 }
+
+
 
 #' Title
 #'
@@ -238,36 +93,25 @@ fupdate_checkboxReset <- function(session, id_in, Dict, selected = NA) { # works
   }
 }
 
+
+
+
 #' Reset all inputs to default
 #'
 #' @noRd
 #'
-fDeselectVars <- function(session, input, output, id = 1) {
+fresetSlider <- function(session, input, output, id = 1) {
   # Add 2 to check ID if using Input2 in the Compare module
-  if (id == 2) {
-    lng <- length(c(input$check2TopPred, input$check2Krill, input$check2Fish, input$check2impBenthic, input$check2Drifter))
-    chk <- "2"
-  } else {
-    lng <- length(c(input$checkTopPred, input$checkKrill, input$checkFish, input$checkimpBenthic, input$checkDrifter))
-    chk <- ""
-  }
 
-  if (lng < 14) { # More deselected than not
-    fupdate_checkboxReset(session, paste0("check", chk, "TopPred"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "Krill"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "Fish"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "impBenthic"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "Ice"), Dict, selected = NA)
-    fupdate_checkboxReset(session, paste0("check", chk, "Drifter"), Dict, selected = NA)
-  } else {
-    fupdate_checkbox(session, paste0("check", chk, "TopPred"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "Krill"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "Fish"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "impBenthic"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "Ice"), Dict, selected = character(0))
-    fupdate_checkbox(session, paste0("check", chk, "Drifter"), Dict, selected = character(0))
-  }
-  rm(lng, chk)
+  idx <- ifelse(id == 2, "2", "")
+
+  sld <- fcreate_vars(id = id,
+                      Dict = Dict,
+                      name_check = paste0("sli", idx, "_"),
+                      categoryOut = TRUE)
+
+  purrr::walk2(.x = sld$id_in, .y = sld$targetInitial,
+               .f = \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y))
 }
 
 
@@ -289,6 +133,49 @@ fCheckFeatureNo <- function(dat) {
 }
 
 
+#' Get the names of the locked In variables
+#'
+#' @noRd
+#'
+get_lockIn <- function(input, num = "") {
+
+  # Are there locked in areas in the app
+  inps <- names(input) %>%
+    stringr::str_subset(paste0("check",num,"LI_")) %>%
+    stringr::str_c("input$", .)
+
+  # Which ones (if any) are selected?
+  n_inps <- purrr::map_vec(inps, \(x) rlang::eval_tidy(rlang::parse_expr(x)))
+
+  # Get the selected names
+  LI <- inps[n_inps] %>%
+    stringr::str_remove_all("input\\$check\\d*LI_")
+
+}
+
+
+#' Get the names of the locked Out variables
+#'
+#' @noRd
+#'
+get_lockOut <- function(input, num = "") {
+
+  # Are there locked in areas in the app
+  inps <- names(input) %>%
+    stringr::str_subset(paste0("check",num,"LO_")) %>%
+    stringr::str_c("input$", .)
+
+  # Which ones (if any) are selected?
+  n_inps <- purrr::map_vec(inps, \(x) rlang::eval_tidy(rlang::parse_expr(x)))
+
+  # Get the selected names
+  LO <- inps[n_inps] %>%
+    stringr::str_remove_all("input\\$check\\d*LO_")
+
+}
+
+
+
 
 
 #' Download Plot - Server Side
@@ -296,47 +183,50 @@ fCheckFeatureNo <- function(dat) {
 #' @noRd
 #'
 fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, height = 18) {
-  # Create reactiveValues object
-  # and set flag to 0 to prevent errors with adding NULL
-  rv <- reactiveValues(download_flag = 0)
 
-  dlPlot <- shiny::downloadHandler(
-    filename = function() {
-      paste("WSMPA2_", gg_prefix, "_", time_date, ".png", sep = "")
-    },
-    content = function(file) {
-      ggplot2::ggsave(file,
-                      plot = gg_id,
-                      device = "png", width = width, height = height, units = "in", dpi = 300
-      )
-      # When the downloadHandler function runs, increment rv$download_flag
-      rv$download_flag <- rv$download_flag + 1
+  # TODO For some reason, this code is run 5 times (once for each button/tab preseumably)
+  # every time the tab is changed. It should only load when the tab is active? Or load all at
+  # the start and then not update?
 
-      if (rv$download_flag > 0 & gg_prefix == "Solution") { # trigger event whenever the value of rv$download_flag changes
-        # shinyjs::alert("File downloaded!")
-        shinyalert::shinyalert("<h3><strong>Further Information!</strong></h3>", "<h4>Don't forget to also download the data table (Details Tab) to store information about the inputs you provided to this analysis.</h4>",
-                               type = "info",
-                               closeOnEsc = TRUE,
-                               closeOnClickOutside = TRUE,
-                               html = TRUE,
-                               callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+
+  if (gg_prefix != "DataSummary"){
+
+    # TODO what does this rv do? Stop downloading when nothing run?
+    # Create reactiveValues object
+    # and set flag to 0 to prevent errors with adding NULL
+    rv <- reactiveValues(download_flag = 0)
+
+    dlPlot <- shiny::downloadHandler(
+      filename = function() {
+        paste(gg_prefix, "_", time_date, ".png", sep = "")
+      },
+      content = function(file) {
+        ggplot2::ggsave(file,
+                        plot = gg_id,
+                        device = "png", width = width, height = height, units = "in", dpi = 400
         )
-        shinyjs::runjs("window.scrollTo(0, 0)")
-      }
-    }
-  )
-  # }
+        # When the downloadHandler function runs, increment rv$download_flag
+        rv$download_flag <- rv$download_flag + 1
 
-  # JDE - Code ready to start puting csv export if needed.
-  # else {
-  #   dlPlot <- shiny::downloadHandler(
-  #     filename = function() {
-  #       paste("WSMPA2_",gg_prefix,"_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv", sep="")
-  #     },
-  #     content = function(file){
-  #
-  #       ggplot2::ggsave(file, plot = gg_id,
-  #                       device = "png", width = 19, height = 18, units = "in", dpi = 300)
-  #     })
-  # }
+        # if (rv$download_flag > 0 & gg_prefix == "Solution") { # trigger event whenever the value of rv$download_flag changes
+        #   # shinyjs::alert("File downloaded!")
+        #   shinyalert::shinyalert("<h3><strong>Further Information!</strong></h3>", "<h4>Don't forget to also download the data table (Details Tab) to store information about the inputs you provided to this analysis.</h4>",
+        #                          type = "info",
+        #                          closeOnEsc = TRUE,
+        #                          closeOnClickOutside = TRUE,
+        #                          html = TRUE,
+        #                          callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+        #   )
+        #   shinyjs::runjs("window.scrollTo(0, 0)")
+        # }
+      }
+    )
+  } else {
+    dlPlot <- shiny::downloadHandler(
+      filename = function() {
+        paste(gg_prefix,"_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv", sep="")
+      },
+      content = function(file){
+      })
+  }
 }

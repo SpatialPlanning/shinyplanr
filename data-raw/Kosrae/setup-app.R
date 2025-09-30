@@ -14,16 +14,18 @@ data_dir <- file.path("data-raw", "Kosrae")
 options <- list(
 
   ## General Options
-  nav_title = "Kosrae Planning", # Navbar title
-  nav_primary = "#2C3E50", # Hex colour codes: https://htmlcolorcodes.com
+  app_title = "Kosrae: shinyplanr",
 
+  nav_title = "Kosrae Spatial Planning", # Navbar title
+
+  theme = "sandstone", # https://bootswatch.com/
+  navbar = list(theme = "dark"), # light or dark or auto - determines colour of text
   ## File locations
   file_logo = file.path(data_dir, "logos", "WaittSquareLogo_invert.png"),
   file_logo2 = file.path(data_dir, "logos", "BPM_logo.png"),
   file_logo3 = file.path(data_dir, "logos", "WaittSquareLogo.png"),
 
   file_data = file.path(data_dir, "Kosrae_RawData.rda"),
-  file_climate = file.path(data_dir, "climate_data", "tos_ensemble_ssp245.rds"),
 
   ## App Setup Options
   mod_1welcome = TRUE, #switch modules on/off
@@ -31,19 +33,22 @@ options <- list(
   mod_3compare = TRUE, #switch modules on/off
   mod_4features = TRUE, #switch modules on/off
   mod_6help = TRUE, #switch modules on/off
-  mod_7credit = TRUE, #switch modules on/off
+  mod_7credit = FALSE, #switch modules on/off
+
+
 
   #TODO These options need to be updated. Probably into a list as we need specific
   # options (e.g. direction) for the number of layers we have in case they are different
+  include_climateChange = TRUE,
   climate_change = 1, #switch climate change on/off; 0 = not clim-smart; 1 = CPA; 2 = Feature; 3 = Percentile
-  # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions
-
-  percentile = 5,
+  percentile = 5,  # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions
   direction = -1,
   refugiaTarget = 1,
 
 
-  lockedInArea = 0, # Includes locked in areas
+  include_lockedArea = TRUE, # Includes locked in/out areas
+
+  targetsBy = "individual", # How to group the targets. Options are c("individual", "category", "master")
 
   ## Which objective function module are we using
   obj_func = "min_set", # Minimum set objective
@@ -89,7 +94,7 @@ zero_cols <- colnames(raw_sf)[which(colSums(raw_sf, na.rm=TRUE) %in% 0)] # Remov
 
 raw_sf <- raw_sf %>%
   dplyr::select(-tidyselect::any_of(zero_cols)) %>%
-    dplyr::bind_cols(dat_sf %>% dplyr::select(geometry)) %>%  # Add geometry back in
+  dplyr::bind_cols(dat_sf %>% dplyr::select(geometry)) %>%  # Add geometry back in
   sf::st_as_sf()
 
 vars <- vars[! vars %in% zero_cols] # Remove zero's from vars
@@ -98,7 +103,7 @@ Dict <- Dict %>%
   dplyr::filter(!nameVariable %in% zero_cols)
 
 # Check if variables were removed from the data due to zero columns
-if (length(vars) != dim(raw_sf)[2]-1){
+if (length(unique(vars)) != dim(raw_sf)[2]-1){
 
   stop("raw_sf and the Dictionary have different numbers of variables. If columns
        were removed due to being all zero above, please remove corresponding
@@ -115,29 +120,54 @@ overlay <- coast
 
 
 # MODULE 1 - WELCOME ------------------------------------------------------
-tx_1welcome <- readr::read_file(file.path(data_dir, "html_1welcome.txt"))
+
+tx <- list(
+  welcome = list(
+    list(
+      title = "Welcome",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome1.md"))
+    ),
+    list(
+      title = "Terminology",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome2.md"))
+    ),
+    list(
+      title = "Instructions",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome3.md"))
+    ),
+    list(
+      title = "C.A.R.E.",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome4.md"))
+    ),
+    list(
+      title = "Credit",
+      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome5.md"))
+    )
+  )
+)
 
 # return_list <- read_textboxes(FILENAME)
 
 
-
+#TODO Add all these to the tx list above.
 # MODULE 2 - SCENARIO ------------------------------------------------------
-
-
+tx_2solution <- readr::read_file(file.path(data_dir, "shinyplanr_2solution.md"))
+tx_2targets <- readr::read_file(file.path(data_dir, "shinyplanr_2targets.md"))
+tx_2cost <- readr::read_file(file.path(data_dir, "shinyplanr_2cost.md"))
+tx_2climate <- readr::read_file(file.path(data_dir, "shinyplanr_2climate.md"))
 
 # MODULE 3 - COMPARISON ------------------------------------------------------
 
 
 
 # MODULE 6 - HELP ------------------------------------------------------
-tx_6faq <- readr::read_file(file.path(data_dir, "html_6faq.txt"))
-tx_6changelog <- readr::read_file(file.path(data_dir, "html_6changelog.txt"))
-tx_6technical <- readr::read_file(file.path(data_dir, "html_6technical.txt"))
-tx_6references <- readr::read_file(file.path(data_dir, "html_6references.txt"))
+tx_6faq <- readr::read_file(file.path(data_dir, "shinyplanr_6faq.md"))
+tx_6changelog <- readr::read_file(file.path(data_dir, "shinyplanr_6changelog.md"))
+tx_6technical <- readr::read_file(file.path(data_dir, "shinyplanr_6technical.md"))
 
 
 # MODULE 7 - CREDIT ------------------------------------------------------
-tx_7credit <- readr::read_file(file.path(data_dir, "html_7credit.txt"))
+# tx_7credit <- readr::read_file(file.path(data_dir, "shinyplanr_7credit.md"))
 
 
 
@@ -160,33 +190,29 @@ golem::use_favicon(options$file_logo, pkg = golem::get_golem_wd(), method = "cur
 
 
 # PLOTTING THEME -----------------------------------------------------------
-map_theme <- list(
-  ggplot2::theme_bw(),
+map_theme <- ggplot2::theme_bw(base_size = 14) +
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
     # text = ggplot2::element_text(size = 6, colour = "black"),
-    axis.text = ggplot2::element_text(size = 9, colour = "black"),
-    plot.title = ggplot2::element_text(size = 12),
-    legend.title = ggplot2::element_text(size = 9),
-    legend.text = ggplot2::element_text(size = 9),
+    # axis.text = ggplot2::element_text(size = 9, colour = "black"),
+    # plot.title = ggplot2::element_text(size = 12),
+    # legend.title = ggplot2::element_text(size = 9),
+    # legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
-)
 
-bar_theme <- list(
-  ggplot2::theme_bw(),
+bar_theme <- ggplot2::theme_bw(base_size = 14) +
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
     # text = ggplot2::element_text(size = 6, colour = "black"),
-    axis.text = ggplot2::element_text(size = 6, colour = "black"),
-    plot.title = ggplot2::element_text(size = 12),
-    legend.title = ggplot2::element_text(size = 9),
-    legend.text = ggplot2::element_text(size = 9),
+    # axis.text = ggplot2::element_text(size = 6, colour = "black"),
+    # plot.title = ggplot2::element_text(size = 12),
+    # legend.title = ggplot2::element_text(size = 9),
+    # legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
-)
 
 usethis::use_data(options,
                   map_theme,
@@ -196,12 +222,14 @@ usethis::use_data(options,
                   raw_sf,
                   bndry,
                   overlay,
-                  tx_1welcome,
+                  tx,
+                  tx_2solution,
+                  tx_2targets,
+                  tx_2cost,
+                  tx_2climate,
                   tx_6faq,
                   tx_6technical,
                   tx_6changelog,
-                  tx_6references,
-                  tx_7credit,
                   overwrite = TRUE,
                   internal = TRUE)
 

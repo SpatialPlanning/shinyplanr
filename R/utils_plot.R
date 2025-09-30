@@ -34,21 +34,22 @@ fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
     dplyr::select(cost_name, col_name)
 
   totalCost <- sDat %>%
-    dplyr::select(cost_name) %>%
+    dplyr::pull(cost_name) %>%
     sum()
 
   outsideCost <- sDat %>%
     dplyr::filter(.data[[col_name]] == 0) %>%
-    dplyr::select(cost_name) %>%
+    dplyr::pull(cost_name) %>%
     sum()
 
   PU_count <- sDat %>%
     dplyr::filter(.data[[col_name]] == 1) %>%
     nrow()
 
-  txt_soln <- paste0(round(PU_count / nrow(sDat) * 100), "% of planning region selected in MPAs")
-  txt_cost <- paste0(round((outsideCost / totalCost) * 100), "% of total rational use values outside MPAs")
+  txt_soln <- paste0("In this scenario ", round(PU_count / nrow(sDat) * 100), "% of the planning region was selected.")
+  txt_cost <- paste0(round((outsideCost / totalCost) * 100), "% of the total cost is outside the selected area.")
 
   out <- list(txt_soln, txt_cost)
   return(out)
 }
+
