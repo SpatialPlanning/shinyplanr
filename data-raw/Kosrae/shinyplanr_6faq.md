@@ -1,29 +1,30 @@
 #### Does the Shiny App run in real time?
 
-The planning problem in the Shiny App is solved in real time (should be <60 seconds) based on the input choices the user makes. Different  Tabs across the top of the Shiny App give the user the ability to create and explore spatial plans (in the Scenario tab) and compare plans (in the Comparison tab). The speed depends on the complexity of the problem (e.g., the number of planning units, the number of features, whether zones are included).
+Yes. The app solves the planning problem live, usually in under 60 seconds. The time depends on complexity (e.g., number of planning units, features, and whether zones are included). Use the Scenario tab to create and explore plans, and the Comparison tab to compare them.
 
 #### Why is the download button not working?
 
-Have you run an analysis first? The download relies on results from the analysis, based on your selections.    
+Have you run an analysis first? Downloads are only available once results have been generated.
 
-#### How can I return to the default values of my selections?
+#### How can I return to the default values?
 
-All inputs can be returned to default settings by pressing 'Reset all features' at the top of the Scenario tab.  
+Click 'Reset all features' at the top of the Scenario tab to restore default settings.
 
 #### Can I compare more than two plans?
 
-No, unfortunately only two spatial plans can be compared using the Comparison tab. However, you can download the results from each spatial plan you run as a .png file (by using the Download Plot button on the Scenario page of the Scenario tab and the Download Table button on the Details page of the Scenario tab), and then insert these into a document summarizing the different scenarios.  
+No. Only two spatial plans can be compared at a time in the Comparison tab. However, you can download maps and tables (from the Scenario and Details pages) as .png files and combine them in a document to compare multiple scenarios.  
 
-#### The Shiny App crashed when I tried to use it. Why?
+#### Why did the Shiny App crash?
 
-Sometimes the Shiny App can crash when the 'Run Analysis' button is pressed too many times without waiting for the results. Since the prioritizations are run live, they can take up to 60 seconds. You will see that an analysis is currently running when vertical bars are bouncing. If the Shiny App continues to fail, try refreshing your screen. 
+The app may crash if 'Run Analysis' is pressed repeatedly without waiting for results. Analyses can take up to 60 seconds. While running, bouncing vertical bars will appear. If the app fails, refresh your browser and try again.
 
-#### How can you set targets?
+#### How can I set targets?
 
-There are different ways to set targets, and the Shiny App can help with these.
-1. Through engagement with experts and stakeholders in the region;
-2. Setting higher targets for more at-risk species and habitats. For example, the conservation status of species can be obtained from the IUCN red list;
-3. Features with larger areas in the planning region can be given smaller targets;
-4. It is possible to iteratively explore a range of plausible targets, and document the outcomes in the prioritizaton. Often different targets make little difference in the prioritizaton.
-5. For pragmatic reasons, targets are often adjusted downward during the process to ensure that not too large an area is protected. This is especially the case for widely distributed features;
-6. Some countries have legal mandates for protecting a certain proportion of some habitats.
+Targets can be set in different ways, often through discussion with experts and stakeholders. Common approaches include:
+
+1. Engaging experts and stakeholders directly.
+2. Setting higher targets for vulnerable species or habitats (e.g., based on IUCN Red List status).
+3. Using smaller targets for features that cover very large areas.
+4. Testing a range of plausible targets and documenting the outcomes — often differences are small.
+5. Adjusting targets pragmatically to avoid selecting overly large areas, especially for widespread features.
+6. Following national or legal requirements (where these exist).

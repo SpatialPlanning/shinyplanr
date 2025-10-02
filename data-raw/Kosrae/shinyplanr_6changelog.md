@@ -1,3 +1,1 @@
-### December 2024
-
-Beta Version Released
+### October 2025
