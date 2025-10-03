@@ -53,3 +53,5 @@ data-raw/FSM/climate_data/*
 data-raw/Kosrae/climate_data/*
 data-raw/Kosrae/KosraeData/*
 Data-raw/Vanuatu/climate_data/*
+data-raw/Fiji/FijiData/geomorphic-crop.fgb
+/data-raw/Fiji/FijiData

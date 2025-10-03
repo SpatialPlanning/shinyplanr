@@ -69,7 +69,7 @@ mod_3compare_ui <- function(id) {
       ),
       shiny::splitLayout(
         fcustom_sliderCategory(Vars, labelNum = 1),
-        fcustom_sliderCategory(Vars2, labelNum = 1)
+        fcustom_sliderCategory(Vars2, labelNum = 1, labelCategory = FALSE)
       ),
       #   purrr::pmap(Vars, fcustom_slider),
       shiny::h2("2. Select Cost Layer"),

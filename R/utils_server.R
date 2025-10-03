@@ -20,10 +20,10 @@ fget_category <- function(Dict) {
 #'
 #' @noRd
 #'
-fget_targets <- function(input, name_check = "sli_") {
+fget_targets <- function(input, name_check = "sli_", dataType = "Feature") {
 
   ft <- Dict %>%
-    dplyr::filter(.data$type == "Feature") %>%
+    dplyr::filter(.data$type %in% dataType) %>%
     dplyr::pull("nameVariable")
 
   targets <- ft %>%

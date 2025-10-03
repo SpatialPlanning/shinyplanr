@@ -2,10 +2,12 @@
 #'
 #' @noRd
 #'
-fcreate_vars <- function(id, Dict = Dict, name_check = "check", categoryOut = FALSE, byCategory = FALSE) {
+fcreate_vars <- function(id, Dict = Dict, name_check = "check",
+                         categoryOut = FALSE, byCategory = FALSE,
+                         dataType = "Feature") {
 
   vars <- Dict %>%
-    dplyr::filter(.data$type == "Feature") %>%
+    dplyr::filter(.data$type == dataType) %>%
     dplyr::select(-c("justification", "includeApp", "includeJust", "type")) %>%
     dplyr::mutate(
       id = id,
@@ -89,7 +91,10 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 
   shiny::sliderInput(
     inputId = shiny::NS(namespace = id, id = id_in),
-    label = shiny::h5(nameCommon),
+    label = shiny::div(
+      shiny::h5(nameCommon),
+      style = "word-wrap: break-word; overflow-wrap: break-word; white-space: normal; width: 100%;"
+    ),
     min = targetMin,
     max = targetMax,
     step = 5,
@@ -103,7 +108,8 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #'
 #' @noRd
 #'
-fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE) {
+fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCategory = TRUE) {
+
   ctgs <- unique(varsIn$category)
 
   if (isFALSE(byCategory)){
@@ -117,8 +123,12 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE) {
 
       shinyList[ctg * 2] <- # times as many entries as you want to have for one category per list: here: title and sliders (=2); for example with gap between = 3
         list(purrr::pmap(feats, fcustom_slider))
-      shinyList[ctg * 2 - 1] <-
-        list(shiny::h3(paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
+
+      if (isTRUE(labelCategory)){ # Show category label
+        shinyList[ctg * 2 - 1] <- list(shiny::h3(paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
+      } else { # Don't show category label (ie for 2 column of comparison)
+        shinyList[ctg * 2 - 1] <- list(shiny::HTML("<h3>&nbsp;</h3>"))
+      }
     }
 
   } else {

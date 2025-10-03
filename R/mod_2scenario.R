@@ -25,6 +25,13 @@ mod_2scenario_ui <- function(id) {
                               categoryOut = TRUE,
                               byCategory = FALSE)
 
+  # Reformat varsIn for the category sliders
+  slider_varsBioR <- fcreate_vars(id = id,
+                                  Dict = Dict,
+                                  name_check = "sli_",
+                                  categoryOut = TRUE,
+                                  byCategory = TRUE,
+                                  dataType = "Bioregion")
 
   # Reformat varsIn for the category sliders
   slider_varsCat <- fcreate_vars(id = id,
@@ -78,8 +85,13 @@ mod_2scenario_ui <- function(id) {
 
       shinyjs::hidden(div(
         id = ns("switchIndividualTargets"),
-        shiny::h2("1. Select Individual Targets"),
+        shiny::h2("1. Select Targets"),
         fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
+
+        # TODO Add a conditional here to account for yes/no bioregions
+        shiny::h3(paste0("1.", length(unique(slider_vars$category)) + 1, " Bioregions")),
+        fcustom_sliderCategory(slider_varsBioR, labelNum = 1, byCategory = TRUE),
+
       )),
 
       shiny::hr(style = "border-top: 1px solid #000000;"),
@@ -297,6 +309,15 @@ mod_2scenario_server <- function(id) {
 
 
     # Reformat varsIn for the category sliders
+    slider_varsBioR <- fcreate_vars(id = id,
+                                    Dict = Dict,
+                                    name_check = "sli_",
+                                    categoryOut = TRUE,
+                                    byCategory = TRUE,
+                                    dataType = "Bioregion")
+
+
+    # Reformat varsIn for the category sliders
     slider_varsCat <- fcreate_vars(id = id,
                                    Dict = Dict,
                                    name_check = "sli_",
@@ -305,6 +326,7 @@ mod_2scenario_server <- function(id) {
 
 
 
+    # Observe Event for categories - Updates individual sliders
     shiny::observeEvent({
       purrr::map(slider_varsCat$id_in, \(x) input[[x]]) # All category slider inputs
     }, {
@@ -341,6 +363,7 @@ mod_2scenario_server <- function(id) {
     }, ignoreInit = TRUE)
 
 
+    # Observe Event for master slider. This updates the individual sliders.
     observeEvent(input$masterSli, {
       inps <- names(input) %>%
         stringr::str_subset("sli_")
@@ -349,9 +372,41 @@ mod_2scenario_server <- function(id) {
 
 
 
+    # Observe events from individual targets
     # Return targets and names for all features from sliders ---------------------------------------------------
     targetData <- shiny::reactive({
-      targets <- fget_targets(input)
+      targets <- fget_targets(input, dataType = "Feature")
+      # targets <- fget_targets(input, dataType = c("Feature", "Bioregion"))
+
+      # This is where I need to add something about bioregions
+      # TODO This needs to be moved into a function and possible merged with fget_targets
+
+      # Now find the Bioregions features
+      name_check = "master_sli_"
+
+      # Get the features
+      ft <- Dict %>%
+        dplyr::filter(.data$type %in% "Bioregion") %>%
+        dplyr::select(feature = "nameVariable", "categoryID")
+
+      cats <- ft %>%
+        dplyr::pull("categoryID") %>%
+        unique()
+
+      targets2 <- cats %>%
+        purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(name_check, x))))) %>%
+        tibble::enframe() %>%
+        tidyr::unnest(cols = .data$value) %>%
+        dplyr::rename(categoryID = "name", target = "value") %>%
+        dplyr::mutate(categoryID = cats) %>%
+        dplyr::mutate(target = .data$target / 100) %>% # requires number between 0-1
+        dplyr::left_join(ft, ., by = "categoryID") %>%
+        dplyr::select(-"categoryID")
+
+      targets = dplyr::bind_rows(targets, targets2)
+
+
+
       return(targets)
     })
 
