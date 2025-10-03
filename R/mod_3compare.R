@@ -18,6 +18,8 @@ mod_3compare_ui <- function(id) {
     LI_num <- "3"
   }
 
+  # TODO I need to look at the slider_ variables at the top of mod2 and work our
+  #  how to implement that here. Then I need to implement the bioregions stuff
 
   Vars <- fcreate_vars(id = id, Dict = Dict, name_check = "sli_", categoryOut = TRUE)
   Vars2 <- fcreate_vars(id = id, Dict = Dict, name_check = "sli2_", categoryOut = TRUE)
@@ -306,11 +308,65 @@ mod_3compare_server <- function(id) {
     # Get Target Data
     targetData1 <- shiny::reactive({
       targets <- fget_targets(input)
+
+      # TODO Make function for Bioregions
+      # Now find the Bioregions features
+      name_check = "master_sli_"
+
+      # Get the features
+      ft <- Dict %>%
+        dplyr::filter(.data$type %in% "Bioregion") %>%
+        dplyr::select(feature = "nameVariable", "categoryID")
+
+      cats <- ft %>%
+        dplyr::pull("categoryID") %>%
+        unique()
+
+      targets2 <- cats %>%
+        purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(name_check, x))))) %>%
+        tibble::enframe() %>%
+        tidyr::unnest(cols = .data$value) %>%
+        dplyr::rename(categoryID = "name", target = "value") %>%
+        dplyr::mutate(categoryID = cats) %>%
+        dplyr::mutate(target = .data$target / 100) %>% # requires number between 0-1
+        dplyr::left_join(ft, ., by = "categoryID") %>%
+        dplyr::select(-"categoryID")
+
+      targets = dplyr::bind_rows(targets, targets2)
+
+
       return(targets)
     })
 
     targetData2 <- shiny::reactive({
       targets <- fget_targets(input, name_check = "sli2_")
+
+      # TODO Make function for Bioregions
+      # Now find the Bioregions features
+      name_check = "master_sli2_"
+
+      # Get the features
+      ft <- Dict %>%
+        dplyr::filter(.data$type %in% "Bioregion") %>%
+        dplyr::select(feature = "nameVariable", "categoryID")
+
+      cats <- ft %>%
+        dplyr::pull("categoryID") %>%
+        unique()
+
+      targets2 <- cats %>%
+        purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(name_check, x))))) %>%
+        tibble::enframe() %>%
+        tidyr::unnest(cols = .data$value) %>%
+        dplyr::rename(categoryID = "name", target = "value") %>%
+        dplyr::mutate(categoryID = cats) %>%
+        dplyr::mutate(target = .data$target / 100) %>% # requires number between 0-1
+        dplyr::left_join(ft, ., by = "categoryID") %>%
+        dplyr::select(-"categoryID")
+
+      targets = dplyr::bind_rows(targets, targets2)
+
+
       return(targets)
     })
 
