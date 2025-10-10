@@ -18,7 +18,6 @@ options <- list(
 
   nav_title = "Kosrae Spatial Planning", # Navbar title
 
-  theme = "sandstone", # https://bootswatch.com/
   navbar = list(theme = "dark"), # light or dark or auto - determines colour of text
   ## File locations
   file_logo = file.path(data_dir, "logos", "WaittSquareLogo_invert.png"),
@@ -213,6 +212,11 @@ bar_theme <- ggplot2::theme_bw(base_size = 14) +
     # legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
+
+file.copy(file.path("data-raw", "Kosrae", "custom.css"),
+          file.path("inst", "app", "www", "custom.css"),
+          overwrite = TRUE)
+
 
 usethis::use_data(options,
                   map_theme,

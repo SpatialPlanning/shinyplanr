@@ -18,7 +18,7 @@ Several decision-support tools are available for spatial planning (Moilanen et a
 - Provides a reproducible workflow in R (Beyer et al., 2016); and 
 - Links easily with Shiny Apps for stakeholder engagement.
 
-The spatial prioritization in Kosrae uses four main inputs:
+The spatial prioritization uses four main inputs:
 
 - The planning region and planning units;
 - Conservation features (species, habitats, cultural areas), each with a representation target; and 
@@ -26,20 +26,8 @@ The spatial prioritization in Kosrae uses four main inputs:
 - An objective function (here, the *minimum set objective*, which ensures all targets are met while minimizing the cost - i.e., minimizing overlap between the solution and the cost layer).
 
 ### The planning region and planning units
-The planning region is Kosrae state waters. The planning units are 1 km\2 in size.
+The planning region is Fijian national waters between 12 and 200 nautical miles offshore. The planning units are 100 km² in size.
 
-### Feature layers
-
-**Shallow reefs:** We used the Allen Coral Atlas, which provides 9 geomorphic and 5 benthic classes for Kosrae. Key conservation interest lies in coral/algae and seagrass, which were intersected with geomorphic classes to define 15 habitats. These may be given higher conservation targets, while lower-value classes (e.g., sand, rubble) may have lower targets.
-
-The primary interest for conservation is habitat that has high associated biodiversity and can be impacted by human use (e.g., coral and seagrass). To ensure that biodiversity in these habitats is fully represented, the coral/algae and seagrass classes were intersected with the 8 geomorphic zones, creating a total of 14 key habitats for protection (seagrass is not present in all geomorphic zones). These habitats can be assigned higher protection targets than the remaining benthic classes, if desired.
-
-**Deeper waters:** Because detailed benthic habitat data is only available for the shallow water reefs around Kosrae, we classified deeper benthic habitats into two depth zones using the GEBCO 2024 grid (via the oceandatr R package; Ceccarelli et al., 2021):
-
-- Shelf (0–200 m)
-- Slope (200–1000 m)
-
-This framework ensures both shallow and deep ecosystems are represented in the planning process.
 
 ### Climate-smart planning
 

@@ -18,7 +18,6 @@ options <- list(
 
   nav_title = "Fiji Spatial Planning", # Navbar title
 
-  theme = "sandstone", # https://bootswatch.com/
   navbar = list(theme = "dark"), # light or dark or auto - determines colour of text
 
   ## File locations
@@ -35,7 +34,6 @@ options <- list(
   mod_4features = TRUE, #switch modules on/off
   mod_6help = TRUE, #switch modules on/off
   mod_7credit = FALSE, #switch modules on/off
-
 
 
   #TODO These options need to be updated. Probably into a list as we need specific
@@ -215,7 +213,7 @@ bar_theme <- ggplot2::theme_bw(base_size = 14) +
     axis.title = ggplot2::element_blank()
   )
 
-file.copy(file.path("data-raw", "Fiji", "FijiData", "custom.css"),
+file.copy(file.path("data-raw", "Fiji", "custom.css"),
           file.path("inst", "app", "www", "custom.css"),
           overwrite = TRUE)
 

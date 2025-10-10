@@ -20,7 +20,7 @@ app_ui <- function(request) {
 
     # Theme completely handled by inst/app/www/custom.css
     theme = bslib::bs_theme(version = 5),
-    selected = "Scenario",
+    selected = "Welcome",
     if (options$mod_1welcome == TRUE) {
       shiny::tabPanel(
         "Welcome",
@@ -82,7 +82,7 @@ golem_add_external_resources <- function() {
     favicon(ext = "png"),
     bundle_resources(
       path = app_sys("app/www"),
-      app_title = "shinyplanr"
+      app_title = options$app_title
     )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()

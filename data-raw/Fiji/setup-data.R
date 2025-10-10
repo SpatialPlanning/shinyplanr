@@ -83,7 +83,7 @@ ggplot() +
 
 # Planning Units ------
 
-pgrid <- sf::st_make_grid(Fiji_eez, cellsize = 10000) %>% # cellsize in m
+pgrid <- sf::st_make_grid(Fiji_eez, cellsize = c(10000, 10000)) %>% # cellsize in m (10 km x 10km)
   sf::st_sf()
 
 ggplot(data = pgrid) + geom_sf()
@@ -129,6 +129,46 @@ pgrid4326 <- pgrid %>%
 #   sf::st_transform(fiji_crs)
 # ggplot() + geom_sf(data = benthic, aes(fill = DeepSpCoun))
 
+
+# Geomorphology
+
+geomorph <- get_geomorphology(spatial_grid = pgrid, raw = FALSE, antimeridian = TRUE) %>%
+  dplyr::mutate(Abyss = Abyssal_Plains + Abyssal_Hills,
+                Basins = Basins_perched_on_the_shelf +
+                  Basins_perched_on_the_slope +
+                  Major_ocean_basins +
+                  Large_basins_of_seas_and_oceans +
+                  Small_basins_of_seas_and_oceans,
+                Canyons = Canyons_blind + Canyons_shelf_incising,
+                Shelf_valley = Small_shelf_valley +
+                  Large_shelf_valleys_and_glacial_troughs +
+                  Moderate_size_shelf_valley) %>%
+  dplyr::select(cellID,
+                Abyss,
+                Basins,
+                  Bridges,
+                  Canyons,
+                  Escarpments,
+                  Guyots,
+                  Plateaus,
+                  Ridges,
+                  Rift_valleys,
+                  Shelf_valley,
+                  Spreading_ridges,
+                  Trenches) %>%
+  mutate(across(where(is.numeric) & !any_of("cellID"), ~pmin(.x, 1))) # Make 1 the max in case there were some double up
+
+
+# EBSA ------
+
+
+EBSA <- sf::st_read(file.path(data_path, "EBSARegions_20170307", "EBSARegions_20170307.shp")) %>%
+  sf::st_as_sf() %>%
+  sf::st_make_valid() %>%
+  sf::st_transform(fiji_crs) %>%
+  spatialgridr::get_data_in_grid(spatial_grid = pgrid, dat = ., cutoff = 0.1, name = "EBSA")
+
+ggplot(data = EBSA, aes(fill = EBSA)) + geom_sf()
 
 # Special and Unique Marine Areas -----
 
@@ -201,6 +241,15 @@ seamounts <- pgrid4326 %>%
 ggplot() + geom_sf(data = seamounts, aes(fill = seamounts), colour = NA, show.legend = TRUE)
 
 
+# Knolls ------
+
+knolls <- get_knolls(spatial_grid = pgrid, raw = FALSE, name = "knolls", antimeridian = NULL)
+
+ggplot() + geom_sf(data = knolls, aes(fill = knolls), colour = NA, show.legend = TRUE) +
+  geom_sf(data = seamounts, aes(fill = seamounts), colour = NA, show.legend = TRUE, alpha = 0.2)
+
+
+
 # Deepwater Bioregions -----
 
 # I need to write code for the app for bioregionalisation
@@ -219,16 +268,33 @@ ggplot() + geom_sf(data = bioregions %>%
 
 
 # Depth zones ------
-depth_zones <- oceandatr::get_bathymetry(spatial_grid = pgrid4326,
-                                         classify_bathymetry = TRUE,
-                                         above_sea_level_isNA = FALSE,
-                                         keep = TRUE) %>%
-  sf::st_transform(fiji_crs)
+# Having a problem with what is dowloaded using oceandatr so using an older version
+# load FijiData
+# dat <- dat_sf %>%
+#   select("cellID", "epipelagic", "mesopelagic", "bathypelagic", "abyssopelagic")
+# write_rds(dat, file.path(data_path, "SavedDepthRegions.rds"))
 
+depth_zones <- read_rds(file.path(data_path, "SavedDepthRegions.rds"))
 
+# depth_zones <- oceandatr::get_bathymetry(spatial_grid = pgrid4326,
+#                                          classify_bathymetry = TRUE,
+#                                          above_sea_level_isNA = FALSE,
+#                                          keep = FALSE,
+#                                          antimeridian = TRUE) %>%
+#   sf::st_transform(fiji_crs)
+#
+# # Code to check the loaded dat_sf which seems correct
+# dat <- dat %>%
+#   # select("epipelagic", "mesopelagic", "bathypelagic", "abyssopelagic") %>%
+#   pivot_longer(cols = !"geometry") %>%
+#   filter(value == 1)
+#
+# ggplot(data = dat) +
+#   geom_sf(aes(fill = name))
+# #
 
 ggplot() + geom_sf(data = depth_zones %>%
-                     pivot_longer(cols = !tidyselect::contains("geometry")) %>%
+                     pivot_longer(cols = !c("geometry", "cellID")) %>%
                      dplyr::filter(value > 0),
                    aes(fill = name))
 
@@ -253,6 +319,9 @@ dat_sf <- seamounts %>% sf::st_drop_geometry() %>%
   left_join(ISRA %>% sf::st_drop_geometry(), by = "cellID") %>%
   left_join(IBA %>% sf::st_drop_geometry(), by = "cellID") %>%
   left_join(bioregions %>% sf::st_drop_geometry(), by = "cellID") %>%
+  left_join(knolls %>% sf::st_drop_geometry(), by = "cellID") %>%
+  left_join(EBSA %>% sf::st_drop_geometry(), by = "cellID") %>%
+  left_join(geomorph %>% sf::st_drop_geometry(), by = "cellID") %>%
   left_join(pgrid, by = "cellID") %>%
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
   mutate(across(where(is.logical), as.numeric)) %>%
@@ -267,6 +336,22 @@ PUs <- dat_sf %>%
   dplyr::select(geometry)
 
 
+# # Define the coordinates for the bounding box
+# xmin <- 170
+# xmax <- 180
+# ymin <- -25
+# ymax <- -10
+#
+# # Create the extent object
+# new_extent <- terra::ext(xmin, xmax, ymin, ymax)
+#
+# # Crop the raster
+# gfwCROP <- rast(list.files(file.path(data_path, "GFW"), full.names = TRUE)) %>%
+#   terra::project("EPSG:4326") %>%
+#   terra::crop(new_extent)
+#
+
+
 gfw <- rast(list.files(file.path(data_path, "GFW"), full.names = TRUE)) %>%
   mean(na.rm = TRUE) %>%
   spatialgridr::get_data_in_grid(spatial_grid = pgrid4326, dat = .) %>% # Need an option to fill NAs
@@ -278,7 +363,13 @@ gfw <- gfw %>%
   dplyr::mutate(mean = dplyr::if_else(is.na(mean), gfw_min, mean)) %>%
   dplyr::rename(GlobalFishingWatch = mean)
 
-ggplot(data = gfw) + geom_sf(aes(fill = log10(GlobalFishingWatch)))
+ggplot(data = gfw) +
+  geom_sf(aes(fill = log10(GlobalFishingWatch)))
+
+
+ggplot(data = gfw) +
+  geom_sf(aes(fill = (mean))) +
+  scale_fill_viridis_c(option = "magma", limits = c(0, 3))
 
 
 # I need to modify Fiji_cntry as some land is outside the 12nm at the moment
