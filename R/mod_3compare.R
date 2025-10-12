@@ -266,6 +266,7 @@ mod_3compare_ui <- function(id) {
 mod_3compare_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    . <- NULL
 
     if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchClimSmart")
@@ -316,7 +317,7 @@ mod_3compare_server <- function(id) {
       # Get the features
       ft <- Dict %>%
         dplyr::filter(.data$type %in% "Bioregion") %>%
-        dplyr::select(feature = "nameVariable", "categoryID")
+        dplyr::select("feature" = "nameVariable", "categoryID")
 
       cats <- ft %>%
         dplyr::pull("categoryID") %>%
@@ -348,7 +349,7 @@ mod_3compare_server <- function(id) {
       # Get the features
       ft <- Dict %>%
         dplyr::filter(.data$type %in% "Bioregion") %>%
-        dplyr::select(feature = "nameVariable", "categoryID")
+        dplyr::select("feature" = "nameVariable", "categoryID")
 
       cats <- ft %>%
         dplyr::pull("categoryID") %>%
@@ -685,7 +686,9 @@ mod_3compare_server <- function(id) {
 
           # TODO Remove this when we fix spatialplanr as in mod_2
           targetPlotData1 <- targetPlotData1 %>%
-            dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
+            dplyr::filter(.data$feature %in% (Dict %>%
+                                                dplyr::filter(.data$type == "Feature") %>%
+                                                dplyr::pull(.data$nameVariable)))
 
           ## DATA FOR PLOT 2
 
@@ -708,7 +711,9 @@ mod_3compare_server <- function(id) {
 
           # TODO Remove this when we fix spatialplanr as in mod_2
           targetPlotData2 <- targetPlotData2 %>%
-            dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
+            dplyr::filter(.data$feature %in% (Dict %>%
+                                          dplyr::filter(.data$type == "Feature") %>%
+                                          dplyr::pull(.data$nameVariable)))
 
 
           ggr_target <- patchwork::wrap_plots(
@@ -971,7 +976,9 @@ mod_3compare_server <- function(id) {
 
           # TODO Remove this when we fix spatialplanr as in mod_2
           targetPlotData1 <- targetPlotData1 %>%
-            dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
+            dplyr::filter(.data$feature %in% (Dict %>%
+                                          dplyr::filter(.data$type == "Feature") %>%
+                                          dplyr::pull(.data$nameVariable)))
 
           if (input$climateid2 == TRUE) {
             targets <- targetData2()
@@ -995,14 +1002,16 @@ mod_3compare_server <- function(id) {
 
           # TODO Remove this when we fix spatialplanr as in mod_2
           targetPlotData2 <- targetPlotData2 %>%
-            dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
+            dplyr::filter(.data$feature %in% (Dict %>%
+                                                dplyr::filter(.data$type == "Feature") %>%
+                                                dplyr::pull(.data$nameVariable)))
 
 
           # Create named vector to do the replacement
           rpl <- Dict %>%
             dplyr::filter(.data$nameVariable %in% unique(c(targetPlotData1$feature, targetPlotData2$feature))) %>%
             dplyr::select("nameVariable", "nameCommon") %>%
-            dplyr::mutate(nameVariable = stringr::str_c("^", nameVariable, "$")) %>%
+            dplyr::mutate(nameVariable = stringr::str_c("^", .data$nameVariable, "$")) %>%
             tibble::deframe()
 
           # TODO Add category to spatialplanr::splnr_get_featureRep and remove from splnr_plot_featureRep

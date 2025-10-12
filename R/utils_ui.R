@@ -25,13 +25,13 @@ fcreate_vars <- function(id, Dict = Dict, name_check = "check",
 
   if (isTRUE(byCategory) & isTRUE(categoryOut)){
     vars <- vars %>%
-      dplyr::summarise(id = dplyr::first(id),
-                       id_in = paste0("master_sli_", dplyr::first(categoryID)),
-                       nameCommon = dplyr::first(category),
-                       targetMin = min(targetMin),
-                       targetMax = min(targetMax),
-                       targetInitial = round(mean(targetInitial, na.rm = TRUE)),
-                       .by = category)
+      dplyr::summarise(id = dplyr::first(.data$id),
+                       id_in = paste0("master_sli_", dplyr::first(.data$categoryID)),
+                       nameCommon = dplyr::first(.data$category),
+                       targetMin = min(.data$targetMin),
+                       targetMax = min(.data$targetMax),
+                       targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),
+                       .by = "category")
   }
 
 

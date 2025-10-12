@@ -139,6 +139,8 @@ fCheckFeatureNo <- function(dat) {
 #'
 get_lockIn <- function(input, num = "") {
 
+  . <- NULL
+
   # Are there locked in areas in the app
   inps <- names(input) %>%
     stringr::str_subset(paste0("check",num,"LI_")) %>%
@@ -159,6 +161,8 @@ get_lockIn <- function(input, num = "") {
 #' @noRd
 #'
 get_lockOut <- function(input, num = "") {
+
+  . <- NULL
 
   # Are there locked in areas in the app
   inps <- names(input) %>%

@@ -105,7 +105,9 @@ mod_2scenario_ui <- function(id) {
         shiny::h2("3. Climate-smart"),
         shiny::p("Should the spatial plan be made climate-smart?"),
         shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
-        create_fancy_dropdown(id = id,  id_in = "climateid", Dict = Dict %>%
+        create_fancy_dropdown(id = id,
+                              id_in = "climateid",
+                              Dict = Dict %>%
                                 dplyr::filter(.data$type == "Climate") %>%
                                 dplyr::add_row(nameCommon = "Don't consider",
                                                category = "Climate", .before = 1)),
@@ -255,6 +257,8 @@ mod_2scenario_server <- function(id) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    . <- NULL
+
     if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
 
       # browser()
@@ -333,7 +337,7 @@ mod_2scenario_server <- function(id) {
 
       inps <- slider_vars %>%
         # dplyr::filter(category) %>% # TODO I can't filter by category yet. Need to identify changes by category
-        dplyr::pull(id_in)
+        dplyr::pull(.data$id_in)
 
       targ <- slider_varsCat %>%
         dplyr::select("category") %>%
@@ -387,7 +391,7 @@ mod_2scenario_server <- function(id) {
       # Get the features
       ft <- Dict %>%
         dplyr::filter(.data$type %in% "Bioregion") %>%
-        dplyr::select(feature = "nameVariable", "categoryID")
+        dplyr::select("feature" = "nameVariable", "categoryID")
 
       cats <- ft %>%
         dplyr::pull("categoryID") %>%
@@ -572,9 +576,9 @@ mod_2scenario_server <- function(id) {
           # columns that are not features. The code below is just a workaround.
 
           targetPlotData <- targetPlotData %>%
-            dplyr::filter(feature %in% (Dict %>%
-                                          dplyr::filter(type == "Feature") %>%
-                                          dplyr::pull(nameVariable)))
+            dplyr::filter(.data$feature %in% (Dict %>%
+                                          dplyr::filter(.data$type == "Feature") %>%
+                                          dplyr::pull(.data$nameVariable)))
 
           gg_Target <- spatialplanr::splnr_plot_featureRep(targetPlotData,
                                                            category = fget_category(Dict = Dict),
@@ -757,14 +761,16 @@ mod_2scenario_server <- function(id) {
 
           # TODO Remove this when we fix spatialplanr as above
           targetPlotData <- targetPlotData %>%
-            dplyr::filter(feature %in% (Dict %>% dplyr::filter(type == "Feature") %>% dplyr::pull(nameVariable)))
+            dplyr::filter(.data$feature %in% (Dict %>%
+                                                dplyr::filter(.data$type == "Feature") %>%
+                                                dplyr::pull(.data$nameVariable)))
 
           # TODO I think I can clean up this code and make it into a function
           # Create named vector to do the replacement
           rpl <- Dict %>%
             dplyr::filter(.data$nameVariable %in% targetPlotData$feature) %>%
             dplyr::select("nameVariable", "nameCommon") %>%
-            dplyr::mutate(nameVariable = stringr::str_c("^", nameVariable, "$")) %>%
+            dplyr::mutate(nameVariable = stringr::str_c("^", .data$nameVariable, "$")) %>%
             tibble::deframe()
 
           # TODO Add category to spatialplanr::splnr_get_featureRep and remove from splnr_plot_featureRep

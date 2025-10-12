@@ -14,6 +14,8 @@
 
 fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_", clim_input = FALSE, compare_id = "") {
 
+  . <- NULL
+
   #TODO Still need to check on how clim_input is being used here in this function.
   # Many commands expect NA or T/F but it seems like we pass in the input$climateid
 
@@ -83,8 +85,9 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
     # Create p_dat and add cost column back in.
     # TODO Might need to add lock in columns in as well.
     p_dat <- CS_Approach$Features %>%
-      sf::st_join(raw_sf %>% dplyr::select(rlang::eval_tidy(rlang::parse_expr(paste0("input$costid", compare_id))),
-                                           rlang::eval_tidy(rlang::parse_expr(paste0("input$climateid", compare_id)))),
+      sf::st_join(raw_sf %>%
+                    dplyr::select(rlang::eval_tidy(rlang::parse_expr(paste0("input$costid", compare_id))),
+                                  rlang::eval_tidy(rlang::parse_expr(paste0("input$climateid", compare_id)))),
                   join = sf::st_equals)
   }
 
