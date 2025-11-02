@@ -87,7 +87,9 @@ mod_2scenario_ui <- function(id) {
         id = ns("switchIndividualTargets"),
         shiny::h2("1. Select Targets"),
         fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
-
+      )),
+      shinyjs::hidden(div(
+        id = ns("switchBioregions"),
         # TODO Add a conditional here to account for yes/no bioregions
         shiny::h3(paste0("1.", length(unique(slider_vars$category)) + 1, " Bioregions")),
         fcustom_sliderCategory(slider_varsBioR, labelNum = 1, byCategory = TRUE),
@@ -99,6 +101,22 @@ mod_2scenario_ui <- function(id) {
       shiny::h2("2. Select Cost Layer"),
       create_fancy_dropdown(id, "costid", Dict %>%
                               dplyr::filter(.data$type == "Cost")),
+
+      # SHOULD THIS BE A PERCENTAGE OR A VALUE?
+
+      shinyjs::hidden(div(
+        id = ns("switchMinShortfall"),
+        shiny::p("Total budget amount for scenario."),
+        shiny::numericInput(
+          inputId = id,
+          label = NULL,
+          value = 100,
+          min = 0,
+          max = 1000,
+        )
+      )),
+
+
 
       shinyjs::hidden(div(
         id = ns("switchClimSmart"),
@@ -259,18 +277,31 @@ mod_2scenario_server <- function(id) {
 
     . <- NULL
 
-    if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
-
-      # browser()
-      shinyjs::show(id = "switchClimSmart")
+    # dont make observeEvent because it's a global variable
+    if (options$obj_func == "min_shortfall") {
+      shinyjs::show(id = "switchMinShortfall")
     } else {
-      # browser()
-      shinyjs::hide(id = "switchClimSmart")
-      # Hide the Climate tab if climate change is not enabled
-      shiny::hideTab(inputId = "tabs", target = 6, session = session)
+      shinyjs::hide(id = "switchMinShortfall")
     }
 
-    if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
+
+    if (isTRUE(options$include_bioregion)) {
+      shinyjs::show(id = "switchBioregions")
+    }
+
+
+    # dont make observeEvent because it's a global variable
+    if (isTRUE(options$include_climateChange)) {
+      shinyjs::show(id = "switchClimSmart")
+    } else {
+      shinyjs::hide(id = "switchClimSmart")
+
+       # Hide the Climate tab if climate change is not enabled
+      shiny::hideTab(inputId = "tabs", target = "6", session = session)
+    }
+
+    # dont make observeEvent because it's a global variable
+    if (isTRUE(options$include_lockedArea)) {
       shinyjs::show(id = "switchConstraints")
     }
 
@@ -346,7 +377,6 @@ mod_2scenario_server <- function(id) {
 
       purrr::map2(inps, targ$targetCurrent, \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y))
 
-
     })
 
 
@@ -357,6 +387,7 @@ mod_2scenario_server <- function(id) {
 
 
     # TODO This needs to be made generic.... somehow....
+    # I should be able to use the list of lock in (like the sliders) and loop through them to check.....
     observeEvent(input$checkLI_aquaculture, {
       shinyjs::toggleState("checkLO_aquaculture")
     }, ignoreInit = TRUE)
@@ -365,6 +396,17 @@ mod_2scenario_server <- function(id) {
     observeEvent(input$checkLO_aquaculture, {
       shinyjs::toggleState("checkLI_aquaculture")
     }, ignoreInit = TRUE)
+
+
+    observeEvent(input$checkLI_mpas, {
+      shinyjs::toggleState("checkLO_mpas")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$checkLO_mpas, {
+      shinyjs::toggleState("checkLI_mpas")
+    }, ignoreInit = TRUE)
+
 
 
     # Observe Event for master slider. This updates the individual sliders.
@@ -432,11 +474,15 @@ mod_2scenario_server <- function(id) {
 
       }, error = function(err) {
 
+        # Log the reason to the server logs, but don't change solver logic
+        warning(sprintf("Solve error: %s", conditionMessage(err)))
+
         shinyalert::shinyalert("Error", "Can't find a solution! This is because it is impossible to meet the currently selected targets, budgets, or constraints. Try decreasing the targets or removing locked-out areas.",
                                type = "error",
                                callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
         )
 
+        return(NULL)
       })
 
     }) %>% shiny::bindEvent(input$analyse)
@@ -459,6 +505,11 @@ mod_2scenario_server <- function(id) {
       {
         # Solution plotting reactive
         plot_data1 <- shiny::reactive({
+
+          # Guard: only attempt to plot if a solution exists
+          if (!inherits(selectedData(), "sf")) {
+            return(NULL)
+          }
 
           # TODO Add better error tracking in here so I can change soln_text to provide a useful error when a solution can't be found.
 
@@ -510,6 +561,7 @@ mod_2scenario_server <- function(id) {
 
         output$gg_soln <- shiny::renderPlot({
           if (analysisRun()) {
+            req(inherits(selectedData(), "sf"))
             plot_data1()
           }
         }, bg = "transparent")
@@ -527,6 +579,9 @@ mod_2scenario_server <- function(id) {
 
 
         output$txt_soln <- shiny::renderText({
+          if (!inherits(selectedData(), "sf")) {
+            return("No solution could be generated with the current settings. Try lowering targets or adjusting constraints.")
+          }
           soln_text <- fSolnText(input, selectedData(), input$costid)
           if (input$costid != "Cost_None") {
             paste(tx_2solution, soln_text[[1]], soln_text[[2]])
@@ -552,6 +607,11 @@ mod_2scenario_server <- function(id) {
       {
         gg_Target <- shiny::reactive({
 
+          # TODO selectedData() is missing features where the target is set to 0.
+          # I need to put those back in, in order to get the incidental targets in the plot
+          # I can't remeber how we previously did it. Perhaps with raw_data?
+          # Need to check the WSMPA2 code? Or did we do it for Waitt?
+
           if (input$climateid == "NA"){
             targetPlotData <- spatialplanr::splnr_get_featureRep(
               soln = selectedData(),
@@ -569,6 +629,7 @@ mod_2scenario_server <- function(id) {
               climsmartApproach = options$climate_change,
               targets = targets
             )
+
           }
 
           # TODO splnr_get_featureRep needs a rewrite. Now that we don't always use
@@ -577,8 +638,8 @@ mod_2scenario_server <- function(id) {
 
           targetPlotData <- targetPlotData %>%
             dplyr::filter(.data$feature %in% (Dict %>%
-                                          dplyr::filter(.data$type == "Feature") %>%
-                                          dplyr::pull(.data$nameVariable)))
+                                                dplyr::filter(.data$type == "Feature") %>%
+                                                dplyr::pull(.data$nameVariable)))
 
           gg_Target <- spatialplanr::splnr_plot_featureRep(targetPlotData,
                                                            category = fget_category(Dict = Dict),
@@ -675,9 +736,7 @@ mod_2scenario_server <- function(id) {
       }
     ) # end observeEvent 3
 
-    ## Climate Resilience Plot -------------------------------------------------
-
-
+    ## Climate Tab -------------------------------------------------
     observeEvent(
       {
         input$tabs == 6

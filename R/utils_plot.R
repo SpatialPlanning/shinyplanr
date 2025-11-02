@@ -29,9 +29,19 @@ create_climDataPlot <- function(df) {
 #' @noRd
 fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
 
-  sDat <- sDat %>%
-    sf::st_drop_geometry() %>%
-    dplyr::select(cost_name, col_name)
+  # Guard: must be an sf/data-frame with required columns
+  if (is.null(sDat) || !inherits(sDat, "sf")) {
+    return(list("No solution could be generated for the current settings.", NULL))
+  }
+
+  s_no_geom <- sDat %>% sf::st_drop_geometry()
+
+  if (!all(c(cost_name, col_name) %in% names(s_no_geom))) {
+    return(list("No solution text available.", NULL))
+  }
+
+  sDat <- s_no_geom %>%
+    dplyr::select(dplyr::all_of(c(cost_name, col_name)))
 
   totalCost <- sDat %>%
     dplyr::pull(cost_name) %>%

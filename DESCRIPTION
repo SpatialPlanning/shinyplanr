@@ -28,6 +28,7 @@ Imports:
     magrittr,
     patchwork,
     prioritizr,
+    rcbc,
     purrr,
     rlang,
     sf,

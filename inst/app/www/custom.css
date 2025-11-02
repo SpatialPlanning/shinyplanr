@@ -6,37 +6,37 @@
 /* CSS Custom Properties (Variables) for theme consistency */
 :root {
   /* Primary Colors */
-  --primary-1: #3E8DD2;
+  --primary-1: #3B7592;
   --primary-2: #191919;
-  --primary-3: #D2E8F5;
-  --primary-4: #D2E8F5;
-
+  --primary-3: #B3E1E9;
+  --primary-4: #D9F0F4;
+  
   /* Secondary Colors */
   --secondary-1: #3899EC;
-
+  
   /* State Colors */
   --state-complete: #88C057;
   --state-warning: #E9C46A;
   --state-error: #E76F51;
   --state-info: #3A86FF;
-
+  
   /* Text Colors */
   --text-1: #2A2929;
   --text-2: #090C02;
   --text-3: #FFFFFF;
-
+  
   /* Background Colors */
   --background: #F7F7F7;
-
+  
   /* Grey Scale */
   --grey-100: #FAFAFA;
   --grey-300: #F0F0F0;
   --grey-500: #BFBFBF;
   --grey-700: #595959;
-
+  
   /* Bootstrap compatibility - map to new primary */
   --bs-primary: var(--primary-1);
-
+  
   /* Typography Scale */
   --bs-h1-font-size: 2rem;
   --bs-h2-font-size: 1.8rem;
@@ -44,14 +44,14 @@
   --bs-h4-font-size: 1.4rem;
   --bs-h5-font-size: 1.2rem;
   --bs-h6-font-size: 1rem;
-
+  
   /* Font Weights */
   --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-
+  
   /* Spacing Variables */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -59,14 +59,14 @@
   --spacing-lg: 1.25rem;
   --spacing-xl: 1.5rem;
   --spacing-xxl: 2rem;
-
+  
   /* Pixel spacing for specific cases */
   --spacing-2px: 2px;
   --spacing-5px: 5px;
   --spacing-8px: 8px;
   --spacing-50px: 50px;
   --spacing-120px: 120px;
-
+  
   /* Heading Font Weights */
   --bs-h1-font-weight: var(--font-weight-bold);
   --bs-h2-font-weight: var(--font-weight-semibold);
@@ -74,17 +74,17 @@
   --bs-h4-font-weight: var(--font-weight-medium);
   --bs-h5-font-weight: var(--font-weight-medium);
   --bs-h6-font-weight: var(--font-weight-normal);
-
+  
   /* Line Heights */
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
-
+  
   /* Layout */
   --bs-navbar-padding-y: 0.5rem;
   --bs-border-radius: 0.75rem; /* More rounded corners */
   --bs-font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-
+  
   /* Navbar styling variables */
   --bs-navbar-font-size: var(--bs-h6-font-size);
   --bs-navbar-title-font-size: var(--bs-h4-font-size);

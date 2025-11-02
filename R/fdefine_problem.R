@@ -12,7 +12,8 @@
 #' @noRd
 #'
 
-fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_", clim_input = FALSE, compare_id = "") {
+fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_",
+                            clim_input = FALSE, compare_id = "") {
 
   . <- NULL
 
@@ -20,7 +21,11 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   # Many commands expect NA or T/F but it seems like we pass in the input$climateid
 
   # Get features used in prioritisation -------------------------------------
+
   # usedFeatures <- targets$feature[targets$target > 0]
+  # TODO Can I remove this? It causes trouble with the targets plot....
+  # I'm not sure why I do this as we didn't have to before. Surely I can keep
+  # it in there but filter out the zeros when getting a list of features
   targets <- targets[targets$target > 0, ]
 
 
@@ -45,7 +50,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
         dplyr::select("metric" = rlang::eval_tidy(rlang::parse_expr(paste0("input$climateid", compare_id))))
     }
 
-    # TODO Update these functions in spatialplanr to remove climate_sf
+    # TODO Update these functions in spatialplanr to remove climate_sf and instead pass a column name....
     if (options$climate_change == 1) { # CPA approach
 
       CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
@@ -92,15 +97,9 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   }
 
 
-  # End climate data analysis -----------------------------------------------
-
-
+  # End climate data analysis
 
   f_no <- fCheckFeatureNo(p_dat) # Check number of features
-
-
-
-  # browser()
 
 
   ## Set up problem -------------------------------------------------
@@ -136,17 +135,24 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       prioritizr::add_cbc_solver(verbose = TRUE)
 
   } else if (options$obj_func == "min_shortfall") {
-    # Add new objective functions
+
+    p1 <- prioritizr::problem(x = p_dat,
+                              features = targets$feature,
+                              cost_column = eval(parse(text = paste0("input$costid", compare_id)))) %>%
+      prioritizr::add_min_shortfall_objective(budget = input$budget) %>%
+      prioritizr::add_relative_targets(targets$target) %>%
+      prioritizr::add_binary_decisions() %>%
+      prioritizr::add_cbc_solver(verbose = TRUE)
+
   } # End objective function selection
 
 
   ## Do Locked In Regions ----------------------------------------------------
 
-  LI <- get_lockIn(input)
-
+  LI <- get_lockIn(input, num = compare_id)
 
   if (length(LI) > 0) {
-    for (idx in 1:length(LI)){
+  for (idx in 1:length(LI)){
       p1 <- p1 %>%
         prioritizr::add_locked_in_constraints(as.logical(
           rlang::eval_tidy(rlang::parse_expr(paste0("raw_sf$",LI[idx])))
@@ -158,26 +164,15 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   ## Do Locked Out Regions ----------------------------------------------------
 
-  # Are there locked out areas in the app
-  inps <- names(input) %>%
-    stringr::str_subset("checkLO_") %>%
-    stringr::str_c("input$", .)
+  LO <- get_lockOut(input, num = compare_id)
 
-  # Are any of them selected?
-  n_inps <- purrr::map_vec(inps, \(x) rlang::eval_tidy(rlang::parse_expr(x)))
-
-  if(sum(n_inps) > 0) {
-    # Which ones are selected
-    LO <- inps[n_inps] %>%
-      stringr::str_remove_all("input\\$checkLO_")
-
+  if (length(LO) > 0) {
     for (idx in 1:length(LO)){
       p1 <- p1 %>%
         prioritizr::add_locked_out_constraints(as.logical(
           rlang::eval_tidy(rlang::parse_expr(paste0("raw_sf$",LO[idx])))
         ))
     } # End loop
-
   } # End Lock In
 
 
@@ -186,3 +181,5 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   return(p1)
 
 }
+
+

@@ -270,6 +270,11 @@ mod_3compare_server <- function(id) {
 
     if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchClimSmart")
+    } else {
+      shinyjs::hide(id = "switchClimSmart")
+
+      # Hide the Climate tab if climate change is not enabled
+      shiny::hideTab(inputId = "tabs", target = "7", session = session)
     }
 
     if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
@@ -299,6 +304,51 @@ mod_3compare_server <- function(id) {
     shiny::observeEvent(input$analyse, {
       shinyjs::runjs("window.scrollTo(0, 0)")
     })
+
+
+    # TODO This needs to be made generic.... somehow....
+    # I should be able to use the list of lock in (like the sliders) and loop through them to check.....
+    observeEvent(input$check1LI_aquaculture, {
+      shinyjs::toggleState("check1LO_aquaculture")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$check1LO_aquaculture, {
+      shinyjs::toggleState("check1LI_aquaculture")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$check1LI_mpas, {
+      shinyjs::toggleState("check1LO_mpas")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$check1LO_mpas, {
+      shinyjs::toggleState("check1LI_mpas")
+    }, ignoreInit = TRUE)
+
+    observeEvent(input$check2LI_aquaculture, {
+      shinyjs::toggleState("check2LO_aquaculture")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$check2LO_aquaculture, {
+      shinyjs::toggleState("check2LI_aquaculture")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$check2LI_mpas, {
+      shinyjs::toggleState("check2LO_mpas")
+    }, ignoreInit = TRUE)
+
+
+    observeEvent(input$check2LO_mpas, {
+      shinyjs::toggleState("check2LI_mpas")
+    }, ignoreInit = TRUE)
+
+
+
+
 
     # Track when analysis has been run
     analysisRun <- shiny::reactiveVal(FALSE)
@@ -490,13 +540,13 @@ mod_3compare_server <- function(id) {
           ## PLOT 1 -----
 
           plot_soln1 <- spatialplanr::splnr_plot_solution(
-            soln = selectedData2(),
+            soln = selectedData1(),
             plotTitle = ""
           ) +
             spatialplanr::splnr_gg_add(
               Bndry = bndry,
               overlay = overlay,
-              cropOverlay = selectedData2(),
+              cropOverlay = selectedData1(),
               ggtheme = map_theme
             )
 
@@ -574,15 +624,24 @@ mod_3compare_server <- function(id) {
 
           ## COMBINE PLOTS
 
-          ggr_soln <- patchwork::wrap_plots(plot_soln1,
-                                            plot_soln2,
-                                            nrow = 1, guides = "collect"
+          ggr_soln <- patchwork::wrap_plots(
+            plot_soln1,
+            plot_soln2,
+            nrow = 1, 
+            guides = "collect"
           ) &
-            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
-                           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           legend.box = "horizontal") &
-            ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+            ggplot2::theme(
+              legend.position = "bottom", 
+              legend.direction = "horizontal",
+              plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+              legend.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+              legend.box = "horizontal"
+            ) &
+            ggplot2::guides(
+              fill = ggplot2::guide_legend(nrow = 2, byrow = TRUE, title.position = "top", title.hjust = 0.5),
+              colour = ggplot2::guide_legend(nrow = 2, byrow = TRUE, title.position = "top", title.hjust = 0.5),
+              linetype = ggplot2::guide_legend(nrow = 2, byrow = TRUE, title.position = "top", title.hjust = 0.5)
+            )
 
           return(ggr_soln)
 
@@ -648,7 +707,6 @@ mod_3compare_server <- function(id) {
           }
         }) %>%
           shiny::bindEvent(input$analyse)
-
 
 
         output$dlPlot2 <- fDownloadPlotServer(input, gg_id = ggr_soln(), gg_prefix = "Solution", time_date = analysisTime()) # Download figure

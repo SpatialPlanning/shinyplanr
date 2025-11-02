@@ -35,10 +35,11 @@ options <- list(
   mod_7credit = FALSE, #switch modules on/off
 
 
+  include_bioregion = FALSE,
 
   #TODO These options need to be updated. Probably into a list as we need specific
   # options (e.g. direction) for the number of layers we have in case they are different
-  include_climateChange = TRUE,
+  include_climateChange = FALSE,
   climate_change = 1, #switch climate change on/off; 0 = not clim-smart; 1 = CPA; 2 = Feature; 3 = Percentile
   percentile = 5,  # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions
   direction = -1,
@@ -74,7 +75,7 @@ file.copy(options$file_logo3, file.path("inst", "app", "www", "logo3.png"), over
 # A dictionary of all data and feature-specific set up values
 Dict <- readr::read_csv(file.path(data_dir, "Dict_Feature.csv")) %>%
   dplyr::filter(includeApp) %>% # Only those features to be included
-  dplyr::arrange(.data$type, .data$category, .data$nameCommon)
+  dplyr::arrange(.data$type, .data$categoryID, .data$nameCommon)
 
 
 vars <- Dict %>%

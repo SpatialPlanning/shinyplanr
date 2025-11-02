@@ -1,7 +1,12 @@
+
+# First reinstall spatialplanr from github
+# remotes::install_github('spatialplanning/spatialplanr')
+
 library(tidyverse)
 
 # Set packrat option (as in original code)
 options(rsconnect.packrat = TRUE)
+
 
 # 1. Get a comprehensive list of all files recursively in the current directory.
 # We include all.files = TRUE to capture dotfiles (like .Rprofile or .gitignore),
@@ -27,6 +32,6 @@ files_to_deploy <- all_files %>%
 
 # 3. Deploy the application using the curated file list
 rsconnect::deployApp(
-  appName = "Fiji",
+  appName = "Kosrae",
   appFiles = files_to_deploy
 )
