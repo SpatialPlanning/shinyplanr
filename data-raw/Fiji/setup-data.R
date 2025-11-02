@@ -4,18 +4,18 @@ library(oceandatr)
 library(sf)
 library(terra)
 
-# Monkey patch httr2 to disable SSL verification
-original_req_perform <- httr2::req_perform
-assignInNamespace("req_perform", function(req, ...) {
-  req <- httr2::req_options(req, ssl_verifypeer = 0L, ssl_verifyhost = 0L)
-  original_req_perform(req, ...)
-}, ns = "httr2")
-
-# Temporarily disable SSL verification - set multiple options to ensure it works
-Sys.setenv(CURL_SSL_VERIFYPEER = "0")
-Sys.setenv(CURL_SSL_VERIFYHOST = "0")
-options(download.file.method = "curl", download.file.extra = "-k")
-
+# # Monkey patch httr2 to disable SSL verification
+# original_req_perform <- httr2::req_perform
+# assignInNamespace("req_perform", function(req, ...) {
+#   req <- httr2::req_options(req, ssl_verifypeer = 0L, ssl_verifyhost = 0L)
+#   original_req_perform(req, ...)
+# }, ns = "httr2")
+#
+# # Temporarily disable SSL verification - set multiple options to ensure it works
+# Sys.setenv(CURL_SSL_VERIFYPEER = "0")
+# Sys.setenv(CURL_SSL_VERIFYHOST = "0")
+# options(download.file.method = "curl", download.file.extra = "-k")
+#
 
 # The basics -------
 data_path <- file.path("data-raw", "Fiji", "FijiData")
@@ -35,7 +35,9 @@ Fiji_eez <- oceandatr::get_boundary(name = "Fiji", type = "eez") %>%
 #   sf::st_shift_longitude() %>%
 #   sf::st_transform(fiji_crs)
 
-Fiji_12nm <- sf::st_read(file.path(data_path, "Fiji_12nm", "Fiji_12nm.shp")) %>%
+Fiji_12nm <- sf::st_read(file.path(data_path,
+                                   "12NM (Lau Islands Fixed)",
+                                   "12NM (Lau Islands Fixed).shp")) %>%
   sf::st_transform(fiji_crs) %>%
   sf::st_union() %>%
   sf::st_cast(to = "POLYGON")
@@ -83,7 +85,10 @@ ggplot() +
 
 # Planning Units ------
 
-pgrid <- sf::st_make_grid(Fiji_eez, cellsize = c(10000, 10000)) %>% # cellsize in m (10 km x 10km)
+Diam = c(10000, 10000)
+PU_Area <- Diam[1]/1e3 * Diam[2]/1e3 # In km2
+
+pgrid <- sf::st_make_grid(Fiji_eez, cellsize = Diam) %>% # cellsize in m (10 km x 10km)
   sf::st_sf()
 
 ggplot(data = pgrid) + geom_sf()
@@ -129,6 +134,12 @@ pgrid4326 <- pgrid %>%
 #   sf::st_transform(fiji_crs)
 # ggplot() + geom_sf(data = benthic, aes(fill = DeepSpCoun))
 
+
+# Deepwater Corals -----
+
+corals <- oceandatr::get_coral_habitat(spatial_grid = pgrid,
+                                       raw = FALSE,
+                                       antimeridian = NULL)
 
 # Geomorphology
 
@@ -322,6 +333,7 @@ dat_sf <- seamounts %>% sf::st_drop_geometry() %>%
   left_join(knolls %>% sf::st_drop_geometry(), by = "cellID") %>%
   left_join(EBSA %>% sf::st_drop_geometry(), by = "cellID") %>%
   left_join(geomorph %>% sf::st_drop_geometry(), by = "cellID") %>%
+  left_join(corals %>% sf::st_drop_geometry(), by = "cellID") %>%
   left_join(pgrid, by = "cellID") %>%
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
   mutate(across(where(is.logical), as.numeric)) %>%
@@ -367,9 +379,9 @@ ggplot(data = gfw) +
   geom_sf(aes(fill = log10(GlobalFishingWatch)))
 
 
-ggplot(data = gfw) +
-  geom_sf(aes(fill = (mean))) +
-  scale_fill_viridis_c(option = "magma", limits = c(0, 3))
+# ggplot(data = gfw) +
+#   geom_sf(aes(fill = (mean))) +
+#   scale_fill_viridis_c(option = "magma", limits = c(0, 3))
 
 
 # I need to modify Fiji_cntry as some land is outside the 12nm at the moment
@@ -392,7 +404,7 @@ cost <- gfw %>%
   splnr_get_distCoast(custom_coast = Fiji_cntry12) %>%  # Distance to nearest coast
   dplyr::mutate(coastDistance_km = if_else(coastDistance_km == 0, .Machine$double.eps, coastDistance_km),
                 Cost_Distance = 1/coastDistance_km,
-                Cost_None = 0.1,
+                Cost_Area = PU_Area,
                 # Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001),
                 # Cost_FishingHrs = dplyr::if_else(Cost_FishingHrs == 0, 0.00001, Cost_FishingHrs),
   ) %>%
@@ -446,8 +458,6 @@ ggplot(data = climate_sf) + geom_sf(aes(
   colour = tos_slpTrend_ensemble_ssp585_r1i1p1f1_rg_recent_term)) +
   scale_fill_viridis_c(option = "magma") +
   scale_colour_viridis_c(option = "magma")
-
-
 
 # Save raw data -----------------------------------------------------------
 
