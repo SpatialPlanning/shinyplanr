@@ -50,7 +50,7 @@ mod_3compare_ui <- function(id) {
 
 
 
-  
+
 
   # tagList(
   shiny::sidebarLayout(
@@ -142,6 +142,7 @@ mod_3compare_ui <- function(id) {
         right = "71%", bottom = "1%", left = "5%"
       ),
     ),
+
     shiny::mainPanel(
       shinydisconnect::disconnectMessage(
         text = "Your session timed out, reload the application.",
@@ -152,16 +153,20 @@ mod_3compare_ui <- function(id) {
         overlayOpacity = 0.3,
         refreshColour = "brown"
       ),
-      
+
       tabsetPanel(
         id = ns("tabs"),
         type = "pills",
         tabPanel("Comparison",
                  value = 1,
                  shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.=
-                   shiny::downloadButton(ns("dlPlot1"), "Download Plot",
-                                         style = "float: right; padding:4px; font-size:120%"
+                   style = "z-index:100", # To force the buttons above all plots.
+                   shiny::div(
+                     style = "display:flex; gap:10px; justify-content:flex-end; align-items:center;",
+                     shiny::downloadButton(ns("dlSpatialComp"), "Download Spatial File",
+                                           style = "padding:4px; font-size:120%"),
+                     shiny::downloadButton(ns("dlPlot1"), "Download Plot",
+                                           style = "padding:4px; font-size:120%")
                    ),
                    right = "1%", bottom = "1%", left = "34%"
                  ),
@@ -172,9 +177,15 @@ mod_3compare_ui <- function(id) {
         tabPanel("Scenario",
                  value = 2,
                  shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.=
-                   shiny::downloadButton(ns("dlPlot2"), "Download Plot",
-                                         style = "float: right; padding:4px; font-size:120%"
+                   style = "z-index:100", # To force the buttons above all plots.
+                   shiny::div(
+                     style = "display:flex; gap:10px; justify-content:flex-end; align-items:center;",
+                     shiny::downloadButton(ns("dlSpatial1"), "Download Scenario 1 Spatial",
+                                           style = "padding:4px; font-size:110%"),
+                     shiny::downloadButton(ns("dlSpatial2"), "Download Scenario 2 Spatial",
+                                           style = "padding:4px; font-size:110%"),
+                     shiny::downloadButton(ns("dlPlot2"), "Download Plot",
+                                           style = "padding:4px; font-size:120%")
                    ),
                    right = "1%", bottom = "1%", left = "34%"
                  ),
@@ -211,20 +222,7 @@ mod_3compare_ui <- function(id) {
                                                 "Representation" = "representation",
                                                 "Difference from Target" = "difference"),
                                     selected = "category",  multiple = FALSE),
-                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_target"), height = "700px")),
-        ),
-        tabPanel("Cost",
-                 value = 4,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.=
-                   shiny::downloadButton(ns("dlPlot4"), "Download Plot",
-                                         style = "float: right; padding:4px; font-size:120%"
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_cost")))),
-                 shiny::span(shiny::p(shiny::textOutput(ns("txt_cost")))),
-                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_cost"), height = "700px")),
+                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_target"), height = "700px"))
         ),
         tabPanel("Climate",
                  value = 7,
@@ -238,6 +236,34 @@ mod_3compare_ui <- function(id) {
                  shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
                  shiny::textOutput(ns("txt_clim")),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "600px"))
+        ),
+        tabPanel("Details",
+                 value = 8,
+                 shiny::fixedPanel(
+                   style = "z-index:100", # To force the button above all plots.=
+                   shiny::downloadButton(ns("dlPlot8"), "Download Table",
+                                         style = "float: right; padding:4px; font-size:120%"
+                   ),
+                   right = "1%", bottom = "1%", left = "34%"
+                 ),
+                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsSummary")))),
+                 shiny::br(),
+                 shiny::tableOutput(ns("SummaryTable")),
+                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
+                 shiny::tableOutput(ns("DataTable")),
+        ),
+        tabPanel("Report",
+                 value = 10,
+                 shiny::span(shiny::h2("Generate Comparison Report")),
+                 shiny::p("Download a comprehensive HTML report comparing both scenarios: maps, targets, costs, climate, details, and logs."),
+                 shiny::br(),
+                 shiny::downloadButton(ns("downloadReportCompare"), "Generate HTML Report",
+                                       class = "btn btn-primary btn-lg",
+                                       style = "padding:10px 20px; font-size:120%"),
+                 shiny::br(),
+                 shiny::br(),
+                 shiny::p(shiny::em("Note: Report generation may take a few moments. The file will download automatically when ready."),
+                          style = "color: #666;")
         ),
         tabPanel("Log",
                  value = 9,
@@ -258,26 +284,10 @@ mod_3compare_ui <- function(id) {
                    )
                  )
         ),
-        tabPanel("Details",
-                 value = 8,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.=
-                   shiny::downloadButton(ns("dlPlot8"), "Download Table",
-                                         style = "float: right; padding:4px; font-size:120%"
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsSummary")))),
-                 shiny::br(),
-                 shiny::tableOutput(ns("SummaryTable")),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
-                 shiny::tableOutput(ns("DataTable")),
-        ),
       )
     )
-  )
-  # ) # tagList
-}
+  )}
+
 
 #' 3compare Server Functions
 #'
@@ -287,30 +297,30 @@ mod_3compare_server <- function(id) {
     ns <- session$ns
     . <- NULL
 
-  # Recreate lock-in/out objects for server logic
-  check_lockIn <- fcreate_check(id = id,
-                  Dict = Dict,
-                  idType = "LockIn",
-                  name_check = "check1LI_",
-                  categoryOut = TRUE)
+    # Recreate lock-in/out objects for server logic
+    check_lockIn <- fcreate_check(id = id,
+                                  Dict = Dict,
+                                  idType = "LockIn",
+                                  name_check = "check1LI_",
+                                  categoryOut = TRUE)
 
-  check_lockIn2 <- fcreate_check(id = id,
-                   Dict = Dict,
-                   idType = "LockIn",
-                   name_check = "check2LI_",
-                   categoryOut = TRUE)
+    check_lockIn2 <- fcreate_check(id = id,
+                                   Dict = Dict,
+                                   idType = "LockIn",
+                                   name_check = "check2LI_",
+                                   categoryOut = TRUE)
 
-  check_lockOut <- fcreate_check(id = id,
-                   Dict = Dict,
-                   idType = "LockOut",
-                   name_check = "check1LO_",
-                   categoryOut = TRUE)
+    check_lockOut <- fcreate_check(id = id,
+                                   Dict = Dict,
+                                   idType = "LockOut",
+                                   name_check = "check1LO_",
+                                   categoryOut = TRUE)
 
-  check_lockOut2 <- fcreate_check(id = id,
-                  Dict = Dict,
-                  idType = "LockOut",
-                  name_check = "check2LO_",
-                  categoryOut = TRUE)
+    check_lockOut2 <- fcreate_check(id = id,
+                                    Dict = Dict,
+                                    idType = "LockOut",
+                                    name_check = "check2LO_",
+                                    categoryOut = TRUE)
 
     if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchClimSmart")
@@ -393,12 +403,6 @@ mod_3compare_server <- function(id) {
 
 
 
-    # Track when analysis has been run
-    analysisRun <- shiny::reactiveVal(FALSE)
-    shiny::observeEvent(input$analyse, {
-      analysisRun(TRUE)
-    })
-
     # Get Target Data
     targetData1 <- shiny::reactive({
       targets <- fget_targets_with_bioregions(input, name_check = "sli_", Dict = Dict)
@@ -426,6 +430,14 @@ mod_3compare_server <- function(id) {
       analysisTime <- format(Sys.time(), "%Y%m%d%H%M%S")
     }) %>% shiny::bindEvent(input$analyse)
 
+    # Expose scoped reactives for report generation (populated inside observeEvent blocks)
+    ggr_comp <- NULL
+    ggr_soln <- NULL
+    ggr_target <- NULL
+    ggr_cost <- NULL
+    ggr_clim <- NULL
+    DataTabler <- NULL
+
     # Solve the problems and capture logs -------------------------------------------------------
     solveLog1 <- shiny::reactiveVal(character(0))
     solveLog2 <- shiny::reactiveVal(character(0))
@@ -446,10 +458,10 @@ mod_3compare_server <- function(id) {
     #### Comparison Plot ####
     observeEvent(
       {
-        input$tabsComp == 1
+        input$tabs == 1 | input$tabs == 10 | input$analyse > 0
       },
       {
-        ggr_comp <- shiny::reactive({
+        ggr_comp <<- shiny::reactive({
 
           area1 <- solution1() %>%
             dplyr::filter(.data$solution_1 == 1) %>%
@@ -490,12 +502,48 @@ mod_3compare_server <- function(id) {
         })
 
         output$gg_comp <- shiny::renderPlot({
-          if (analysisRun()) {
-            ggr_comp()
-          }
+          ggr_comp()
         }, bg = "transparent")
 
         output$dlPlot1 <- fDownloadPlotServer(input, gg_id = ggr_comp(), gg_prefix = "Compare", time_date = analysisTime()) # Download figure
+
+        # Download comparison spatial data (GeoJSON) showing which areas are in which scenario
+        output$dlSpatialComp <- shiny::downloadHandler(
+          filename = function() {
+            paste0("Comparison_Spatial_", analysisTime(), ".geojson")
+          },
+          content = function(file) {
+            sol1 <- solution1()
+            sol2 <- solution2()
+            if (!inherits(sol1, "sf") || !inherits(sol2, "sf")) {
+              shiny::showNotification(
+                "Please run an analysis before downloading the spatial file.",
+                type = "error", duration = 5
+              )
+              stop("No solutions available.")
+            }
+
+            # Create comparison layer showing: only in scenario 1, only in scenario 2, in both
+            sol1_selected <- sol1$solution_1 == 1
+            sol2_selected <- sol2$solution_1 == 1
+
+            comp_sf <- sol1
+            comp_sf$comparison <- dplyr::case_when(
+              sol1_selected & sol2_selected ~ "Both scenarios",
+              sol1_selected & !sol2_selected ~ "Scenario 1 only",
+              !sol1_selected & sol2_selected ~ "Scenario 2 only",
+              TRUE ~ "Neither scenario"
+            )
+
+            # Only keep planning units that are in at least one scenario
+            comp_out <- comp_sf %>%
+              dplyr::filter(.data$comparison != "Neither scenario") %>%
+              dplyr::select("comparison")
+
+            # Write GeoJSON
+            sf::st_write(comp_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
+          }
+        )
 
       }
     ) # end observeEvent 1
@@ -504,11 +552,11 @@ mod_3compare_server <- function(id) {
 
     observeEvent(
       {
-        input$tabs == 2
+        input$tabs == 2 | input$tabs == 10 | input$analyse > 0
       },
       {
         # Solution plotting reactive
-        ggr_soln <- shiny::reactive({
+        ggr_soln <<- shiny::reactive({
 
           ## PLOT 1 - Use consolidated helper function
           plot_soln1 <- fplot_solution_with_constraints(
@@ -536,11 +584,11 @@ mod_3compare_server <- function(id) {
           ggr_soln <- patchwork::wrap_plots(
             plot_soln1,
             plot_soln2,
-            nrow = 1, 
+            nrow = 1,
             guides = "collect"
           ) &
             ggplot2::theme(
-              legend.position = "bottom", 
+              legend.position = "bottom",
               legend.direction = "horizontal",
               plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
               legend.background = ggplot2::element_rect(fill = "transparent", colour = NA),
@@ -557,9 +605,7 @@ mod_3compare_server <- function(id) {
         })
 
         output$gg_soln <- shiny::renderPlot({
-          if (analysisRun()) {
-            ggr_soln()
-          }
+          ggr_soln()
         }, bg = "transparent")
 
         hdrr_soln1 <- shiny::reactive({
@@ -620,6 +666,64 @@ mod_3compare_server <- function(id) {
 
         output$dlPlot2 <- fDownloadPlotServer(input, gg_id = ggr_soln(), gg_prefix = "Solution", time_date = analysisTime()) # Download figure
 
+        # Download spatial data for Scenario 1
+        output$dlSpatial1 <- shiny::downloadHandler(
+          filename = function() {
+            paste0("Scenario1_Spatial_", analysisTime(), ".geojson")
+          },
+          content = function(file) {
+            sol <- solution1()
+            if (!inherits(sol, "sf")) {
+              shiny::showNotification(
+                "Please run an analysis before downloading the spatial file.",
+                type = "error", duration = 5
+              )
+              stop("No solution available.")
+            }
+
+            # Ensure a 'solution' column exists
+            if (!("solution" %in% names(sol))) {
+              if ("solution_1" %in% names(sol)) {
+                names(sol)[names(sol) == "solution_1"] <- "solution"
+              } else {
+                sol <- dplyr::mutate(sol, solution = NA_integer_)
+              }
+            }
+
+            sol_out <- dplyr::select(sol, "solution")
+            sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
+          }
+        )
+
+        # Download spatial data for Scenario 2
+        output$dlSpatial2 <- shiny::downloadHandler(
+          filename = function() {
+            paste0("Scenario2_Spatial_", analysisTime(), ".geojson")
+          },
+          content = function(file) {
+            sol <- solution2()
+            if (!inherits(sol, "sf")) {
+              shiny::showNotification(
+                "Please run an analysis before downloading the spatial file.",
+                type = "error", duration = 5
+              )
+              stop("No solution available.")
+            }
+
+            # Ensure a 'solution' column exists
+            if (!("solution" %in% names(sol))) {
+              if ("solution_1" %in% names(sol)) {
+                names(sol)[names(sol) == "solution_1"] <- "solution"
+              } else {
+                sol <- dplyr::mutate(sol, solution = NA_integer_)
+              }
+            }
+
+            sol_out <- dplyr::select(sol, "solution")
+            sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
+          }
+        )
+
       }
     ) # end observeEvent 2
 
@@ -628,10 +732,10 @@ mod_3compare_server <- function(id) {
 
     observeEvent(
       {
-        input$tabs == 3
+        input$tabs == 3 | input$tabs == 10 | input$analyse > 0
       },
       {
-        ggr_target <- shiny::reactive({
+        ggr_target <<- shiny::reactive({
 
           ## DATA FOR PLOT 1 - Use consolidated helper function
           targetPlotData1 <- fget_feature_representation(
@@ -696,9 +800,7 @@ mod_3compare_server <- function(id) {
 
 
         output$gg_target <- shiny::renderPlot({
-          if (analysisRun()) {
-            ggr_target()
-          }
+          ggr_target()
         }, bg = "transparent")
 
         output$hdr_target <- shiny::renderText({
@@ -722,10 +824,10 @@ mod_3compare_server <- function(id) {
 
     observeEvent(
       {
-        input$tabs == 4
+        input$tabs == 4 | input$tabs == 10 | input$analyse > 0
       },
       {
-        ggr_cost <- shiny::reactive({
+        ggr_cost <<- shiny::reactive({
 
           gg_cost1 <- spatialplanr::splnr_plot_costOverlay(soln = solution1(),
                                                            cost = NA,
@@ -775,9 +877,7 @@ mod_3compare_server <- function(id) {
 
 
         output$gg_cost <- shiny::renderPlot({
-          if (analysisRun()) {
-            ggr_cost()
-          }
+          ggr_cost()
         }, bg = "transparent")
 
         output$hdr_cost <- shiny::renderText({
@@ -814,10 +914,10 @@ mod_3compare_server <- function(id) {
 
     observeEvent(
       {
-        input$tabs == 7
+        input$tabs == 7 | input$tabs == 10 | input$analyse > 0
       },
       {
-        ggr_clim <- shiny::reactive({
+        ggr_clim <<- shiny::reactive({
 
           # Use consolidated helper function for climate plotting
           ggClimDens <- fplot_climate_density(
@@ -831,7 +931,7 @@ mod_3compare_server <- function(id) {
           shiny::bindEvent(input$analyse)
 
         output$gg_clim <- shiny::renderPlot({
-          if (analysisRun() && (input$climateid1 != "NA" | input$climateid2 != "NA")) {
+          if (input$climateid1 != "NA" | input$climateid2 != "NA") {
             ggr_clim()
           }
         }, bg = "transparent")
@@ -867,11 +967,11 @@ mod_3compare_server <- function(id) {
 
     observeEvent(
       {
-        input$tabs == 8
+        input$tabs == 8 | input$tabs == 10 | input$analyse > 0
       },
       {
         # for saving data/ data next to plot
-        DataTabler <- shiny::reactive({
+        DataTabler <<- shiny::reactive({
 
           # Use consolidated helper function for feature representation - Scenario 1
           targetPlotData1 <- fget_feature_representation(
@@ -990,18 +1090,10 @@ mod_3compare_server <- function(id) {
     ) # End observe event 8
 
     ## Log Tab -----------------------------------------------------------------
-    # Track when analysis has been run for log display
-    analysisRun <- shiny::reactiveVal(FALSE)
-    shiny::observeEvent(input$analyse, {
-      analysisRun(TRUE)
-    })
-
     # Render log text for Scenario 1
     output$logText1 <- shiny::renderText({
-      if (analysisRun()) {
-        solution1()  # Trigger the solve
-      }
-      
+      solution1()  # Trigger the solve
+
       log <- solveLog1()
       if (is.null(log) || length(log) == 0 || nchar(log) == 0) {
         "No logs yet. Click 'Run Analysis' to generate output."
@@ -1012,10 +1104,8 @@ mod_3compare_server <- function(id) {
 
     # Render log text for Scenario 2
     output$logText2 <- shiny::renderText({
-      if (analysisRun()) {
-        solution2()  # Trigger the solve
-      }
-      
+      solution2()  # Trigger the solve
+
       log <- solveLog2()
       if (is.null(log) || length(log) == 0 || nchar(log) == 0) {
         "No logs yet. Click 'Run Analysis' to generate output."
@@ -1027,6 +1117,118 @@ mod_3compare_server <- function(id) {
     output$txt_log_hint <- shiny::renderText({
       "This tab displays the problem setup and solve summary for each scenario. Switch between tabs to view logs for Scenario 1 and Scenario 2."
     })
+
+    ## Report Generation -------------------------------------------------------
+    # Bind the report generation on analysis so it can access scoped reactives without visiting tabs
+    observeEvent(input$analyse, {
+      output$downloadReportCompare <- shiny::downloadHandler(
+        filename = function() {
+          paste0("Comparison_Report_", analysisTime(), ".html")
+        },
+        content = function(file) {
+          # Show progress notification
+          shiny::showNotification(
+            "Generating comparison report... This may take a moment.",
+            duration = NULL,
+            closeButton = FALSE,
+            id = "report_progress_compare",
+            type = "message"
+          )
+
+          # Resolve template path
+
+          # Resolve template path
+          template_path <- system.file("app", "report_compare.qmd", package = "shinyplanr")
+          if (template_path == "" || !file.exists(template_path)) {
+            template_path <- "inst/app/report_compare.qmd"
+          }
+          if (!file.exists(template_path)) {
+            shiny::removeNotification("report_progress_compare")
+            shiny::showNotification(
+              "Comparison report template not found (report_compare.qmd).",
+              type = "error",
+              duration = 10
+            )
+            return(NULL)
+          }
+
+          # Evaluate existing reactives and save to files
+          ts <- analysisTime()
+          out_dir <- tempdir()
+          comp_plot <- tryCatch({ if (is.function(ggr_comp)) ggr_comp() else NULL }, error = function(e) NULL)
+          soln_plot <- tryCatch({ if (is.function(ggr_soln)) ggr_soln() else NULL }, error = function(e) NULL)
+          target_plot <- tryCatch({ if (is.function(ggr_target)) ggr_target() else NULL }, error = function(e) NULL)
+          cost_plot <- tryCatch({ if (is.function(ggr_cost)) ggr_cost() else NULL }, error = function(e) NULL)
+          climate_plot <- tryCatch({ if (is.function(ggr_clim)) ggr_clim() else NULL }, error = function(e) NULL)
+          details_tbl <- tryCatch({ if (is.function(DataTabler)) DataTabler() else NULL }, error = function(e) NULL)
+
+          comp_path <- if (!is.null(comp_plot)) file.path(out_dir, paste0("compare_", ts, ".png")) else NULL
+          soln_path <- if (!is.null(soln_plot)) file.path(out_dir, paste0("solutions_", ts, ".png")) else NULL
+          target_path <- if (!is.null(target_plot)) file.path(out_dir, paste0("targets_", ts, ".png")) else NULL
+          cost_path <- if (!is.null(cost_plot)) file.path(out_dir, paste0("cost_", ts, ".png")) else NULL
+          climate_path <- if (!is.null(climate_plot)) file.path(out_dir, paste0("climate_", ts, ".png")) else NULL
+          details_path <- if (!is.null(details_tbl)) file.path(out_dir, paste0("details_", ts, ".csv")) else NULL
+
+          # Save plots/tables
+          try({ if (!is.null(comp_path)) ggplot2::ggsave(comp_path, plot = comp_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
+          try({ if (!is.null(soln_path)) ggplot2::ggsave(soln_path, plot = soln_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
+          try({ if (!is.null(target_path)) ggplot2::ggsave(target_path, plot = target_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
+          try({ if (!is.null(cost_path)) ggplot2::ggsave(cost_path, plot = cost_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
+          try({ if (!is.null(climate_path)) ggplot2::ggsave(climate_path, plot = climate_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
+          try({ if (!is.null(details_path)) utils::write.csv(details_tbl, details_path, row.names = FALSE) }, silent = TRUE)
+
+          # Solver logs
+          solver_log1_txt <- tryCatch({ paste0(solveLog1(), collapse = "\n") }, error = function(e) "")
+          solver_log2_txt <- tryCatch({ paste0(solveLog2(), collapse = "\n") }, error = function(e) "")
+
+          # Render in temp dir
+          tryCatch({
+            tmp_dir <- file.path(tempdir(), paste0("qrender_compare_", ts))
+            if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE)
+            tmp_qmd <- file.path(tmp_dir, "report_compare.qmd")
+            file.copy(template_path, tmp_qmd, overwrite = TRUE)
+
+            quarto::quarto_render(
+              input = tmp_qmd,
+              output_file = "report.html",
+              execute_params = list(
+                comp_plot_path   = comp_path,
+                soln_plot_path   = soln_path,
+                target_plot_path = target_path,
+                cost_plot_path   = cost_path,
+                climate_plot_path = climate_path,
+                details_table_path = details_path,
+                solver_log1 = solver_log1_txt,
+                solver_log2 = solver_log2_txt,
+                cost_id1 = input$costid1,
+                cost_id2 = input$costid2,
+                climate_id1 = input$climateid1,
+                climate_id2 = input$climateid2,
+                timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+              )
+            )
+
+            out_html <- file.path(tmp_dir, "report.html")
+            if (!file.exists(out_html)) stop("Rendered comparison report not found at ", out_html)
+            file.copy(out_html, file, overwrite = TRUE)
+
+            shiny::removeNotification("report_progress_compare")
+            shiny::showNotification(
+              "Comparison report generated successfully!",
+              type = "message",
+              duration = 3
+            )
+          }, error = function(e) {
+            shiny::removeNotification("report_progress_compare")
+            shiny::showNotification(
+              paste("Error generating comparison report:", e$message),
+              type = "error",
+              duration = 10
+            )
+          })
+        }
+      )
+    }, ignoreInit = TRUE)
 
   })
 }

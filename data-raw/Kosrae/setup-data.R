@@ -281,7 +281,6 @@ ous_cost <- c(
   sf::st_interpolate_aw(ous_lock, to = PUs, extensive = TRUE, keep_NA = TRUE)
 
 
-
 ous_cost <- ous_cost %>%
   mutate(cellID = row_number())
 
@@ -301,7 +300,13 @@ ous_cost <- impute_nearest(ous_cost, "bottom_fishing")
 ous_cost <- impute_nearest(ous_cost, "trolling")
 
 
-
+# Replace zeroes in bottom_fishing and trolling with small value to avoid zero cost
+# The small nnumber should be half the minimum non-zero value in each column
+ous_cost <- ous_cost %>%
+  mutate( 
+    bottom_fishing = if_else(bottom_fishing == 0, min(bottom_fishing[bottom_fishing > 0]) / 2, bottom_fishing),
+    trolling = if_else(trolling == 0, min(trolling[trolling > 0]) / 2, trolling)
+  ) 
 
 
 # There is a lot of missing data in the region

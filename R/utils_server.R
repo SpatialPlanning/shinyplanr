@@ -482,6 +482,14 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
         paste(gg_prefix, "_", time_date, ".png", sep = "")
       },
       content = function(file) {
+        # Guard: ensure a plot exists (analysis has been run and plot created)
+        if (is.null(gg_id)) {
+          shiny::showNotification(
+            "Please run an analysis and generate the plot before downloading.",
+            type = "error", duration = 5
+          )
+          stop("No plot available to download.")
+        }
         ggplot2::ggsave(file,
                         plot = gg_id,
                         device = "png", width = width, height = height, units = "in", dpi = 400
@@ -508,6 +516,12 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
         paste(gg_prefix,"_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv", sep="")
       },
       content = function(file){
+        # If you later pass a data frame here, add similar guards and write.csv
+        shiny::showNotification(
+          "No data available to download yet. Please run an analysis first.",
+          type = "error", duration = 5
+        )
+        stop("No data available to download.")
       })
   }
 }
