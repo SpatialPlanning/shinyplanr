@@ -1,0 +1,166 @@
+---
+title: "Comparison Analysis Report"
+subtitle: "Side-by-side Scenario Comparison"
+date: "`r format(Sys.time(), '%d %B %Y, %H:%M')`"
+format:
+  html:
+    self-contained: true
+    theme: cosmo
+    toc: true
+    toc-depth: 2
+    code-fold: true
+    df-print: paged
+    embed-resources: true
+params:
+  comp_plot_path: NULL
+  soln_plot_path: NULL
+  target_plot_path: NULL
+  cost_plot_path: NULL
+  climate_plot_path: NULL
+  details_table_path: NULL
+  solver_log1: NULL
+  solver_log2: NULL
+  cost_id1: NULL
+  cost_id2: NULL
+  climate_id1: NULL
+  climate_id2: NULL
+  timestamp: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 10,
+  fig.height = 8
+)
+```
+
+**Generated:** `r params$timestamp`
+**Cost Layers:** `r paste(params$cost_id1, 'vs', params$cost_id2)`
+**Climate Layers:** `r paste(if (is.null(params$climate_id1) || params$climate_id1=='NA') 'None' else params$climate_id1, 'vs', if (is.null(params$climate_id2) || params$climate_id2=='NA') 'None' else params$climate_id2)`
+
+---
+
+# Comparison Map
+
+Overlay of Scenario 1 and Scenario 2 selections.
+
+```{r comp-plot, fig.height=8}
+if (!is.null(params$comp_plot_path) && file.exists(params$comp_plot_path)) {
+  knitr::include_graphics(params$comp_plot_path)
+} else {
+  cat("No comparison plot available.")
+}
+```
+
+---
+
+# Scenario Maps
+
+Side-by-side maps for the two scenarios.
+
+```{r soln-plot, fig.height=10}
+if (!is.null(params$soln_plot_path) && file.exists(params$soln_plot_path)) {
+  knitr::include_graphics(params$soln_plot_path)
+} else {
+  cat("No scenario maps available.")
+}
+```
+
+---
+
+# Target Achievement
+
+```{r target-plot, fig.height=8}
+if (!is.null(params$target_plot_path) && file.exists(params$target_plot_path)) {
+  knitr::include_graphics(params$target_plot_path)
+} else {
+  cat("No target plot available.")
+}
+```
+
+---
+
+# Cost Analysis
+
+```{r cost-plot, fig.height=10}
+if (!is.null(params$cost_plot_path) && file.exists(params$cost_plot_path)) {
+  knitr::include_graphics(params$cost_plot_path)
+} else {
+  cat("No cost plot available.")
+}
+```
+
+---
+
+# Climate Resilience
+
+```{r climate-section, results='asis'}
+if (!is.null(params$climate_plot_path) && file.exists(params$climate_plot_path) && !(is.null(params$climate_id1) && is.null(params$climate_id2)) && !(params$climate_id1=='NA' && params$climate_id2=='NA')) {
+  cat("Kernel density estimates for the climate-resilience metric for each scenario. Higher values represent areas likely to warm less and where biodiversity is more likely to be retained.\n\n")
+} else {
+  cat("Climate-smart planning was not applied in either scenario or no climate plot available.\n\n")
+}
+```
+
+```{r climate-plot, fig.height=8}
+if (!is.null(params$climate_plot_path) && file.exists(params$climate_plot_path)) {
+  knitr::include_graphics(params$climate_plot_path)
+}
+```
+
+---
+
+# Feature Details
+
+```{r details-table}
+if (!is.null(params$details_table_path) && file.exists(params$details_table_path)) {
+  dt <- utils::read.csv(params$details_table_path, check.names = FALSE)
+  knitr::kable(dt, format = "html") |>
+    kableExtra::kable_styling(
+      bootstrap_options = c("striped", "hover", "condensed"),
+      full_width = FALSE,
+      position = "left"
+    )
+} else {
+  cat("No details table available.")
+}
+```
+
+---
+
+# Solver Logs
+
+## Scenario 1
+
+```{r solver-log-1}
+if (!is.null(params$solver_log1)) {
+  cat("````\n")
+  cat(params$solver_log1)
+  cat("\n````")
+} else {
+  cat("No solver log available for Scenario 1.")
+}
+```
+
+## Scenario 2
+
+```{r solver-log-2}
+if (!is.null(params$solver_log2)) {
+  cat("````\n")
+  cat(params$solver_log2)
+  cat("\n````")
+} else {
+  cat("No solver log available for Scenario 2.")
+}
+```
+
+---
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

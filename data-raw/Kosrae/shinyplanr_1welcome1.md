@@ -11,6 +11,3 @@ The scenarios used in this tool are informed by the goals and objectives that th
 
 By using this tool, you are contributing to a transparent, evidence-based process where stakeholders can work together to shape the marine future of Kosrae.
 
-For further information, please contact:
-* General MSP queries: [Emily Stokes](https://www.waittinstitute.org/team)
-* App-specific questions and issues: [Jason Everett](https://jaseeverett.github.io)

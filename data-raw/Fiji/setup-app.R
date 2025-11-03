@@ -4,7 +4,7 @@ library(tidyverse)
 library(sf)
 library(terra)
 
-data_dir <- file.path("data-raw", "Kosrae")
+data_dir <- file.path("data-raw", "Fiji")
 
 # TODO Write function to load default options
 # Especially different colours for the plotting etc
@@ -14,46 +14,44 @@ data_dir <- file.path("data-raw", "Kosrae")
 options <- list(
 
   ## General Options
-  app_title = "Kosrae: shinyplanr",
+  app_title = "Fiji: shinyplanr",
 
-  nav_title = "Kosrae Spatial Planning", # Navbar title
+  nav_title = "Fiji Spatial Planning", # Navbar title
 
   navbar = list(theme = "dark"), # light or dark or auto - determines colour of text
+
   ## File locations
   file_logo = file.path(data_dir, "logos", "WaittSquareLogo_invert.png"),
-  file_logo2 = file.path(data_dir, "logos", "BPM_logo.png"),
+  file_logo2 = file.path(data_dir, "logos", "BP_Fiji_Logo.png"),
   file_logo3 = file.path(data_dir, "logos", "WaittSquareLogo.png"),
 
-  file_data = file.path(data_dir, "Kosrae_RawData.rda"),
+  file_data = file.path(data_dir, "Fiji_RawData.rda"),
 
   ## App Setup Options
   mod_1welcome = TRUE, #switch modules on/off
   mod_2scenario = TRUE, #switch modules on/off
-  mod_3compare = TRUE, #switch modules on/off
+  mod_3compare = FALSE, #switch modules on/off
   mod_4features = TRUE, #switch modules on/off
   mod_6help = TRUE, #switch modules on/off
   mod_7credit = FALSE, #switch modules on/off
 
-  include_report = TRUE,
-
-  include_bioregion = FALSE,
 
   #TODO These options need to be updated. Probably into a list as we need specific
   # options (e.g. direction) for the number of layers we have in case they are different
-  include_climateChange = FALSE,
+  include_climateChange = TRUE,
   climate_change = 1, #switch climate change on/off; 0 = not clim-smart; 1 = CPA; 2 = Feature; 3 = Percentile
   percentile = 5,  # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions
   direction = -1,
   refugiaTarget = 1,
 
 
-  include_lockedArea = TRUE, # Includes locked in/out areas
+  include_lockedArea = FALSE, # Includes locked in/out areas
 
   targetsBy = "individual", # How to group the targets. Options are c("individual", "category", "master")
 
   ## Which objective function module are we using
   obj_func = "min_set", # Minimum set objective
-  # obj_func = min_shortfall # Minimum shortfall objective
+  # obj_func = "min_shortfall", # Minimum shortfall objective
 
   ## Geographic Options
   cCRS = "ESRI:54009"
@@ -76,7 +74,7 @@ file.copy(options$file_logo3, file.path("inst", "app", "www", "logo3.png"), over
 # A dictionary of all data and feature-specific set up values
 Dict <- readr::read_csv(file.path(data_dir, "Dict_Feature.csv")) %>%
   dplyr::filter(includeApp) %>% # Only those features to be included
-  dplyr::arrange(.data$type, .data$categoryID, .data$nameCommon)
+  dplyr::arrange(.data$type, .data$category, .data$nameCommon)
 
 
 vars <- Dict %>%
@@ -113,8 +111,8 @@ if (length(unique(vars)) != dim(raw_sf)[2]-1){
 
 # Plotting Overlays -------------------------------------------------------
 
-bndry <- bndry
-overlay <- coast
+bndry <- Fiji_eez
+overlay <- Fiji_cntry
 
 # TODO Work out how to add options here without having to define all.
 # Change to a list called plot_options()? that is passed to the function.
@@ -215,10 +213,9 @@ bar_theme <- ggplot2::theme_bw(base_size = 14) +
     axis.title = ggplot2::element_blank()
   )
 
-file.copy(file.path("data-raw", "Kosrae", "custom.css"),
+file.copy(file.path("data-raw", "Fiji", "custom.css"),
           file.path("inst", "app", "www", "custom.css"),
           overwrite = TRUE)
-
 
 usethis::use_data(options,
                   map_theme,

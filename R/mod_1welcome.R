@@ -73,7 +73,7 @@ mod_1welcome_ui <- function(id) {
           width = 4,
           shiny::div(class = "contact-section",
                      shiny::p("This shiny application was developed by researchers at The University of Queensland."),
-                     shiny::p("© 2025"),
+                     shiny::p("\u00A9 2025"),
           )
         ),
         shiny::column(

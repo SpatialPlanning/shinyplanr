@@ -1,0 +1,164 @@
+---
+title: "Scenario Analysis Report"
+subtitle: "Spatial Planning Analysis"
+date: "`r format(Sys.time(), '%d %B %Y, %H:%M')`"
+format: 
+  html:
+    self-contained: true
+    theme: cosmo
+    toc: true
+    toc-depth: 2
+    code-fold: true
+    df-print: paged
+    embed-resources: true
+params:
+  solution_plot: NULL
+  solution_plot_path: NULL
+  target_plot: NULL
+  target_plot_path: NULL
+  cost_plot: NULL
+  cost_plot_path: NULL
+  climate_plot: NULL
+  climate_plot_path: NULL
+  details_table: NULL
+  details_table_path: NULL
+  solver_log: NULL
+  cost_id: NULL
+  climate_id: NULL
+  timestamp: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 10,
+  fig.height = 8
+)
+```
+
+**Report Generated:** `r params$timestamp`
+
+**Cost Layer:** `r params$cost_id`
+
+**Climate Layer:** `r if(params$climate_id == "NA" || is.null(params$climate_id)) "Not applied" else params$climate_id`
+
+---
+
+# Solution Map
+
+This map shows the optimal planning scenario for the study area that meets the selected conservation targets while minimizing cost. Planning units selected for protection are shown in dark blue, while unselected units are shown in light blue.
+
+```{r solution-map, fig.height=10}
+if (!is.null(params$solution_plot)) {
+  print(params$solution_plot)
+} else if (!is.null(params$solution_plot_path) && file.exists(params$solution_plot_path)) {
+  knitr::include_graphics(params$solution_plot_path)
+} else {
+  cat("No solution plot available.")
+}
+```
+
+---
+
+# Target Achievement
+
+This plot shows the proportion of suitable habitat/area for each conservation feature that is included in the selected planning units. The dashed line represents the set target for each feature. Hollow bars with a black border indicate incidental protection of features not explicitly targeted in this analysis.
+
+```{r targets-plot, fig.height=8}
+if (!is.null(params$target_plot)) {
+  print(params$target_plot)
+} else if (!is.null(params$target_plot_path) && file.exists(params$target_plot_path)) {
+  knitr::include_graphics(params$target_plot_path)
+} else {
+  cat("No target plot available.")
+}
+```
+
+---
+
+# Cost Analysis
+
+This plot shows the spatial plan overlaid with the cost layer, illustrating how the chosen cost metric influences the selection of planning units.
+
+```{r cost-plot, fig.height=10}
+if (!is.null(params$cost_plot)) {
+  print(params$cost_plot)
+} else if (!is.null(params$cost_plot_path) && file.exists(params$cost_plot_path)) {
+  knitr::include_graphics(params$cost_plot_path)
+} else {
+  cat("No cost plot available.")
+}
+```
+
+---
+
+# Climate Resilience {.conditional}
+
+```{r climate-section, results='asis'}
+if (!is.null(params$climate_plot) && params$climate_id != "NA" && !is.null(params$climate_id)) {
+  cat("Kernel density estimates for the climate-resilience metric. Higher values represent areas likely to warm less and where biodiversity is more likely to be retained. The dark blue distribution shows the climate-resilience metric in selected planning units, while the light blue shows unselected areas.\n\n")
+} else {
+  cat("Climate-smart planning was not applied in this analysis.\n\n")
+}
+```
+
+```{r climate-plot, fig.height=8}
+if (!is.null(params$climate_plot) && params$climate_id != "NA" && !is.null(params$climate_id)) {
+  print(params$climate_plot)
+} else if (!is.null(params$climate_plot_path) && params$climate_id != "NA" && !is.null(params$climate_id) && file.exists(params$climate_plot_path)) {
+  knitr::include_graphics(params$climate_plot_path)
+}
+```
+
+---
+
+# Feature Details
+
+Summary table showing the target and achieved protection level for each conservation feature.
+
+```{r details-table}
+if (!is.null(params$details_table)) {
+  knitr::kable(params$details_table, format = "html") |>
+    kableExtra::kable_styling(
+      bootstrap_options = c("striped", "hover", "condensed"),
+      full_width = FALSE,
+      position = "left"
+    )
+} else if (!is.null(params$details_table_path) && file.exists(params$details_table_path)) {
+  dt <- utils::read.csv(params$details_table_path, check.names = FALSE)
+  knitr::kable(dt, format = "html") |>
+    kableExtra::kable_styling(
+      bootstrap_options = c("striped", "hover", "condensed"),
+      full_width = FALSE,
+      position = "left"
+    )
+} else {
+  cat("No details table available.")
+}
+```
+
+---
+
+# Solver Log
+
+Complete log of the problem setup and solving process, including runtime, planning units selected, area covered, and cost metrics.
+
+```{r solver-log}
+if (!is.null(params$solver_log)) {
+  cat("```\n")
+  cat(params$solver_log)
+  cat("\n```")
+} else {
+  cat("No solver log available.")
+}
+```
+
+---
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

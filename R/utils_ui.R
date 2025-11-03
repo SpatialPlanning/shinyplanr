@@ -2,36 +2,41 @@
 #'
 #' @noRd
 #'
-fcreate_vars <- function(id, Dict = Dict, name_check = "check", categoryOut = FALSE, byCategory = FALSE) {
+fcreate_vars <- function(id, Dict = Dict, name_check = "check",
+                         categoryOut = FALSE, byCategory = FALSE,
+                         dataType = "Feature") {
 
   vars <- Dict %>%
-    dplyr::filter(.data$type == "Feature") %>%
+    dplyr::filter(.data$type == dataType) %>%
     dplyr::select(-c("justification", "includeApp", "includeJust", "type")) %>%
     dplyr::mutate(
       id = id,
       id_in = paste(name_check, .data$nameVariable, sep = "")
     )
 
-  if (categoryOut == TRUE) {
-    vars <- vars %>%
-      dplyr::select("id", "id_in", "nameCommon", "category", "categoryID", "targetMin", "targetMax", "targetInitial")
-  } else {
-    vars <- vars %>%
-      dplyr::select("id", "id_in", "nameCommon", "targetMin", "targetMax", "targetInitial")
+  if (nrow(vars) > 0){ # If dataType doesn't exist, vars will be 0 here. Just return
+
+    if (categoryOut == TRUE) {
+      vars <- vars %>%
+        dplyr::select("id", "id_in", "nameCommon", "category", "categoryID", "targetMin", "targetMax", "targetInitial")
+    } else {
+      vars <- vars %>%
+        dplyr::select("id", "id_in", "nameCommon", "targetMin", "targetMax", "targetInitial")
+    }
+
+
+    if (isTRUE(byCategory) & isTRUE(categoryOut)){
+
+      vars <- vars %>%
+        dplyr::summarise(id = dplyr::first(.data$id),
+                         id_in = paste0("master_sli_", dplyr::first(.data$categoryID)),
+                         nameCommon = dplyr::first(.data$category),
+                         targetMin = min(.data$targetMin, na.rm = TRUE),
+                         targetMax = min(.data$targetMax, na.rm = TRUE),
+                         targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),
+                         .by = "category")
+    }
   }
-
-
-  if (isTRUE(byCategory) & isTRUE(categoryOut)){
-    vars <- vars %>%
-      dplyr::summarise(id = dplyr::first(id),
-                       id_in = paste0("master_sli_", dplyr::first(categoryID)),
-                       nameCommon = dplyr::first(category),
-                       targetMin = min(targetMin),
-                       targetMax = min(targetMax),
-                       targetInitial = round(mean(targetInitial, na.rm = TRUE)),
-                       .by = category)
-  }
-
 
   return(vars)
 }
@@ -89,7 +94,10 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 
   shiny::sliderInput(
     inputId = shiny::NS(namespace = id, id = id_in),
-    label = shiny::h5(nameCommon),
+    label = shiny::div(
+      shiny::h5(nameCommon),
+      style = "word-wrap: break-word; overflow-wrap: break-word; white-space: normal; width: 100%;"
+    ),
     min = targetMin,
     max = targetMax,
     step = 5,
@@ -103,7 +111,8 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #'
 #' @noRd
 #'
-fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE) {
+fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCategory = TRUE) {
+
   ctgs <- unique(varsIn$category)
 
   if (isFALSE(byCategory)){
@@ -117,8 +126,12 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE) {
 
       shinyList[ctg * 2] <- # times as many entries as you want to have for one category per list: here: title and sliders (=2); for example with gap between = 3
         list(purrr::pmap(feats, fcustom_slider))
-      shinyList[ctg * 2 - 1] <-
-        list(shiny::h3(paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
+
+      if (isTRUE(labelCategory)){ # Show category label
+        shinyList[ctg * 2 - 1] <- list(shiny::h3(paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
+      } else { # Don't show category label (ie for 2 column of comparison)
+        shinyList[ctg * 2 - 1] <- list(shiny::HTML("<h3>&nbsp;</h3>"))
+      }
     }
 
   } else {

@@ -20,10 +20,10 @@ fget_category <- function(Dict) {
 #'
 #' @noRd
 #'
-fget_targets <- function(input, name_check = "sli_") {
+fget_targets <- function(input, name_check = "sli_", dataType = "Feature") {
 
   ft <- Dict %>%
-    dplyr::filter(.data$type == "Feature") %>%
+    dplyr::filter(.data$type %in% dataType) %>%
     dplyr::pull("nameVariable")
 
   targets <- ft %>%
@@ -35,6 +35,283 @@ fget_targets <- function(input, name_check = "sli_") {
     dplyr::mutate(target = .data$target / 100) # requires number between 0-1
 
   return(targets)
+}
+
+
+#' Calculate targets including bioregions
+#'
+#' Consolidates the logic for getting both feature and bioregion targets.
+#' This replaces ~30 lines of duplicated code in both Scenario and Compare modules.
+#'
+#' @param input Shiny input object
+#' @param name_check Prefix for slider inputs (e.g., "sli_", "sli2_")
+#' @param Dict The data dictionary
+#'
+#' @noRd
+#'
+fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
+
+  # Get feature targets
+  targets <- fget_targets(input, name_check = name_check, dataType = "Feature")
+
+  # Get bioregion targets if they exist
+  ft_bioregion <- Dict %>%
+    dplyr::filter(.data$type %in% "Bioregion") %>%
+    dplyr::select("feature" = "nameVariable", "categoryID")
+
+  # If no bioregions, return just features
+  if (nrow(ft_bioregion) == 0) {
+    return(targets)
+  }
+
+  # Build bioregion name_check (e.g., "sli_" -> "master_sli_", "sli2_" -> "master_sli2_")
+  bioregion_name_check <- paste0("master_", name_check)
+
+  # Get unique categories
+  cats <- ft_bioregion %>%
+    dplyr::pull("categoryID") %>%
+    unique()
+
+  # Get bioregion targets from inputs
+  targets_bioregion <- cats %>%
+    purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(bioregion_name_check, x))))) %>%
+    tibble::enframe() %>%
+    tidyr::unnest(cols = .data$value) %>%
+    dplyr::rename(categoryID = "name", target = "value") %>%
+    dplyr::mutate(categoryID = cats) %>%
+    dplyr::mutate(target = .data$target / 100) %>% # requires number between 0-1
+    dplyr::left_join(ft_bioregion, ., by = "categoryID") %>%
+    dplyr::select(-"categoryID")
+
+  # Combine feature and bioregion targets
+  targets_combined <- dplyr::bind_rows(targets, targets_bioregion)
+
+  return(targets_combined)
+}
+
+
+#' Solve prioritization problem with error handling
+#'
+#' Wraps the solve() call with standardized error handling and alerts.
+#' This replaces ~15 lines of duplicated tryCatch code across modules.
+#'
+#' @param problem_data The prioritizr problem object to solve
+#'
+#' @return sf object with solution, or NULL if solve fails
+#'
+#' @noRd
+#'
+fsolve_problem <- function(problem_data) {
+
+  result <- tryCatch({
+
+    sD <- solve(problem_data, run_checks = FALSE) %>%
+      sf::st_as_sf()
+
+    return(sD)
+
+  }, error = function(err) {
+
+    # Log the reason to the server logs
+    warning(sprintf("Solve error: %s", conditionMessage(err)))
+
+    # Show user-friendly alert
+    shinyalert::shinyalert(
+      "Error",
+      "Can't find a solution! This is because it is impossible to meet the currently selected targets, budgets, or constraints. Try decreasing the targets or removing locked-out areas.",
+      type = "error",
+      callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+    )
+
+    return(NULL)
+  })
+
+  return(result)
+}
+
+
+#' Solve problem and build log
+#'
+#' Runs a full solve cycle while capturing a clean textual summary of the
+#' prioritizr problem (summary(prob)) and a solve summary including runtime,
+#' planning units selected, total/selected area (km^2), and total/selected cost.
+#'
+#' @param problem_data prioritizr problem object
+#' @param cost_id name of the cost column to summarize (e.g., "Cost_X" or "Cost_None")
+#'
+#' @return list(solution = sf or NULL, log = single character string)
+#'
+#' @noRd
+fsolve_with_log <- function(problem_data, cost_id = "Cost_None") {
+
+  solve_start <- Sys.time()
+
+  # Header
+  log_lines <- character(0)
+  log_lines <- c(log_lines, "========================================")
+  log_lines <- c(log_lines, "PRIORITIZR PROBLEM SETUP")
+  log_lines <- c(log_lines, "========================================")
+  log_lines <- c(log_lines, paste("Timestamp:", format(solve_start, "%Y-%m-%d %H:%M:%S")))
+  log_lines <- c(log_lines, "")
+
+  # Capture summary(problem_data) to a temporary file and clean ANSI
+  problem_summary <- tryCatch({
+    tmp <- tempfile()
+    withr::with_options(
+      list(crayon.enabled = FALSE, cli.num_colors = 1),
+      {
+        withr::with_output_sink(tmp, {
+          withr::with_message_sink(tmp, {
+            summary(problem_data)
+          })
+        })
+      }
+    )
+    captured <- readLines(tmp, warn = FALSE)
+    unlink(tmp)
+
+    # Strip ANSI/escape sequences and artifacts
+    captured <- gsub("\033\\[[0-9;?]*[ -/]*[@-~]", "", captured)   # CSI
+    captured <- gsub("\\x1b\\[[0-9;?]*[ -/]*[@-~]", "", captured)   # CSI (hex)
+    captured <- gsub("\033.", "", captured)                            # ESC + char
+    captured <- gsub("\\x1b.", "", captured)                            # ESC + char (hex)
+    captured <- gsub("^\u001bG[0-9]+;", "", captured)                  # ESC G3;
+    captured <- gsub("^\u001b?[A-Z][0-9]+;", "", captured)             # G3;
+    captured <- gsub("^[0-9]+;", "", captured)                          # Leading digit sequences like "3;"
+    captured <- gsub("\u001bg$", "", captured)                          # ESC g
+    captured <- gsub("(^|\n)g$", "\\1", captured)                      # lone g lines
+    captured <- gsub("\r", "", captured)                                 # CR
+    captured <- trimws(captured, which = "both")
+    captured <- captured[captured != ""]
+
+    captured
+  }, error = function(e) {
+    c("Could not capture problem output.", paste("Error:", e$message))
+  })
+
+  log_lines <- c(log_lines, problem_summary)
+  log_lines <- c(log_lines, "")
+
+  # Solve
+  sol <- fsolve_problem(problem_data)
+
+  # Runtime
+  solve_end <- Sys.time()
+  runtime_secs <- as.numeric(difftime(solve_end, solve_start, units = "secs"))
+
+  # Solve summary footer
+  log_lines <- c(log_lines, "========================================")
+  log_lines <- c(log_lines, "SOLVE SUMMARY")
+  log_lines <- c(log_lines, "========================================")
+  log_lines <- c(log_lines, paste("Runtime:", round(runtime_secs, 2), "seconds"))
+
+  if (inherits(sol, "sf")) {
+    log_lines <- c(log_lines, "Status: Solution found")
+
+    # PU selection counts
+    n_selected <- sum(sol$solution_1 == 1, na.rm = TRUE)
+    n_total <- nrow(sol)
+    pct_selected <- round(100 * n_selected / max(n_total, 1), 2)
+    log_lines <- c(log_lines, paste("Planning units selected:", n_selected, "of", n_total, paste0("(", pct_selected, "%)")))
+
+    # Area (km^2)
+    total_area_all_km2 <- tryCatch({
+      sum(as.numeric(sf::st_area(sol)), na.rm = TRUE) / 1e6
+    }, error = function(e) NA_real_)
+    total_area_sel_km2 <- tryCatch({
+      sum(as.numeric(sf::st_area(sol[sol$solution_1 == 1, ])), na.rm = TRUE) / 1e6
+    }, error = function(e) NA_real_)
+    if (is.finite(total_area_all_km2) && total_area_all_km2 > 0 && is.finite(total_area_sel_km2)) {
+      pct_area <- round(100 * total_area_sel_km2 / total_area_all_km2, 2)
+      log_lines <- c(
+        log_lines,
+        paste0(
+          "Area selected: ", format(round(total_area_sel_km2, 2), big.mark = ","), " km^2 of ",
+          format(round(total_area_all_km2, 2), big.mark = ","), " km^2 (", pct_area, "%)"
+        )
+      )
+    }
+
+    # Cost
+    if (!identical(cost_id, "Cost_None") && cost_id %in% names(sol)) {
+      total_cost_all <- sum(sol[[cost_id]], na.rm = TRUE)
+      total_cost_sel <- sum(sol[[cost_id]][sol$solution_1 == 1], na.rm = TRUE)
+      if (is.finite(total_cost_all) && total_cost_all > 0) {
+        pct_cost <- round(100 * total_cost_sel / total_cost_all, 2)
+        log_lines <- c(
+          log_lines,
+          paste0(
+            "Cost selected (", cost_id, "): ", format(round(total_cost_sel, 2), big.mark = ","),
+            " of ", format(round(total_cost_all, 2), big.mark = ","), " (", pct_cost, "%)"
+          )
+        )
+      } else {
+        log_lines <- c(log_lines, paste0("Cost selected (", cost_id, "): ", round(total_cost_sel, 2)))
+      }
+    }
+
+    log_lines <- c(log_lines, "Feasibility: Feasible solution returned")
+  } else {
+    log_lines <- c(log_lines, "Status: No solution found")
+    log_lines <- c(log_lines, "Feasibility: Infeasible or solver error")
+  }
+
+  log_lines <- c(log_lines, "")
+  log_lines <- c(log_lines, "========================================")
+
+  list(solution = sol, log = paste(log_lines, collapse = "\n"))
+}
+
+
+#' Get feature representation data with climate handling
+#'
+#' Consolidates the logic for getting feature representation data,
+#' handling both climate-smart and regular approaches, and filtering
+#' to only Feature type (not Cost columns).
+#'
+#' @param soln Solution sf object
+#' @param problem_data Problem object
+#' @param targets Targets data frame
+#' @param climate_id Climate input ID (or "NA" if not using climate)
+#' @param options App options list
+#' @param Dict Data dictionary
+#'
+#' @return Data frame with feature representation
+#'
+#' @noRd
+#'
+fget_feature_representation <- function(soln, problem_data, targets, climate_id, options, Dict) {
+
+  # Check if solution is valid
+  if (!inherits(soln, "sf")) {
+    return(NULL)
+  }
+
+  # Get feature representation based on climate approach
+  if (climate_id == "NA") {
+    targetPlotData <- spatialplanr::splnr_get_featureRep(
+      soln = soln,
+      pDat = problem_data,
+      climsmart = FALSE
+    )
+  } else {
+    targetPlotData <- spatialplanr::splnr_get_featureRep(
+      soln = soln,
+      pDat = problem_data,
+      climsmart = TRUE,
+      climsmartApproach = options$climate_change,
+      targets = targets
+    )
+  }
+
+  # Filter to only include actual features (not cost or other columns)
+  # TODO: This filtering should eventually be moved into spatialplanr::splnr_get_featureRep
+  targetPlotData <- targetPlotData %>%
+    dplyr::filter(.data$feature %in% (Dict %>%
+                                        dplyr::filter(.data$type == "Feature") %>%
+                                        dplyr::pull(.data$nameVariable)))
+
+  return(targetPlotData)
 }
 
 
@@ -139,6 +416,8 @@ fCheckFeatureNo <- function(dat) {
 #'
 get_lockIn <- function(input, num = "") {
 
+  . <- NULL
+
   # Are there locked in areas in the app
   inps <- names(input) %>%
     stringr::str_subset(paste0("check",num,"LI_")) %>%
@@ -159,6 +438,8 @@ get_lockIn <- function(input, num = "") {
 #' @noRd
 #'
 get_lockOut <- function(input, num = "") {
+
+  . <- NULL
 
   # Are there locked in areas in the app
   inps <- names(input) %>%
@@ -201,6 +482,14 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
         paste(gg_prefix, "_", time_date, ".png", sep = "")
       },
       content = function(file) {
+        # Guard: ensure a plot exists (analysis has been run and plot created)
+        if (is.null(gg_id)) {
+          shiny::showNotification(
+            "Please run an analysis and generate the plot before downloading.",
+            type = "error", duration = 5
+          )
+          stop("No plot available to download.")
+        }
         ggplot2::ggsave(file,
                         plot = gg_id,
                         device = "png", width = width, height = height, units = "in", dpi = 400
@@ -227,6 +516,12 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
         paste(gg_prefix,"_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv", sep="")
       },
       content = function(file){
+        # If you later pass a data frame here, add similar guards and write.csv
+        shiny::showNotification(
+          "No data available to download yet. Please run an analysis first.",
+          type = "error", duration = 5
+        )
+        stop("No data available to download.")
       })
   }
 }

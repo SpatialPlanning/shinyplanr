@@ -108,7 +108,7 @@ mod_4features_server <- function(id) {
       dens <- raw_sf %>%
         dplyr::mutate(DummyVar = 0) %>% # Create a dummy variable so it will still plot 0 when nothing selected
         dplyr::mutate(FeatureSum = rowSums(dplyr::across(tidyselect::all_of(c(ftd, "DummyVar"))), na.rm = TRUE)) %>%
-        dplyr::select(FeatureSum)
+        dplyr::select("FeatureSum")
 
       gg <- spatialplanr::splnr_plot(df = dens,
                                      colNames = "FeatureSum",
@@ -150,7 +150,7 @@ mod_4features_server <- function(id) {
     plotFeature <- shiny::reactive({
 
       type <- Dict %>%
-        dplyr::filter(nameVariable == input$checkFeat) %>%
+        dplyr::filter(.data$nameVariable == input$checkFeat) %>%
         dplyr::pull(type)
 
       # TODO I have fudged this it only returns a single type (e.g. when a feature is both lock in and lock out). Are there situations where this will be a problem?
