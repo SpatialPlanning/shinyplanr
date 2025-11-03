@@ -34,6 +34,7 @@ options <- list(
   mod_6help = TRUE, #switch modules on/off
   mod_7credit = FALSE, #switch modules on/off
 
+  include_report = TRUE,
 
   include_bioregion = FALSE,
 

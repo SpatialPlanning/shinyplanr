@@ -331,6 +331,11 @@ mod_3compare_server <- function(id) {
       shiny::hideTab(inputId = "tabs", target = "7", session = session)
     }
 
+      # Hide the Report tab if include_report is FALSE
+      if (!isTRUE(options$include_report)) {
+        shiny::hideTab(inputId = "tabs", target = "10", session = session)
+      }
+
     if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchConstraints")
     }
