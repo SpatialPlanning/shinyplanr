@@ -14,26 +14,29 @@ fcreate_vars <- function(id, Dict = Dict, name_check = "check",
       id_in = paste(name_check, .data$nameVariable, sep = "")
     )
 
-  if (categoryOut == TRUE) {
-    vars <- vars %>%
-      dplyr::select("id", "id_in", "nameCommon", "category", "categoryID", "targetMin", "targetMax", "targetInitial")
-  } else {
-    vars <- vars %>%
-      dplyr::select("id", "id_in", "nameCommon", "targetMin", "targetMax", "targetInitial")
+  if (nrow(vars) > 0){ # If dataType doesn't exist, vars will be 0 here. Just return
+
+    if (categoryOut == TRUE) {
+      vars <- vars %>%
+        dplyr::select("id", "id_in", "nameCommon", "category", "categoryID", "targetMin", "targetMax", "targetInitial")
+    } else {
+      vars <- vars %>%
+        dplyr::select("id", "id_in", "nameCommon", "targetMin", "targetMax", "targetInitial")
+    }
+
+
+    if (isTRUE(byCategory) & isTRUE(categoryOut)){
+
+      vars <- vars %>%
+        dplyr::summarise(id = dplyr::first(.data$id),
+                         id_in = paste0("master_sli_", dplyr::first(.data$categoryID)),
+                         nameCommon = dplyr::first(.data$category),
+                         targetMin = min(.data$targetMin, na.rm = TRUE),
+                         targetMax = min(.data$targetMax, na.rm = TRUE),
+                         targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),
+                         .by = "category")
+    }
   }
-
-
-  if (isTRUE(byCategory) & isTRUE(categoryOut)){
-    vars <- vars %>%
-      dplyr::summarise(id = dplyr::first(.data$id),
-                       id_in = paste0("master_sli_", dplyr::first(.data$categoryID)),
-                       nameCommon = dplyr::first(.data$category),
-                       targetMin = min(.data$targetMin),
-                       targetMax = min(.data$targetMax),
-                       targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),
-                       .by = "category")
-  }
-
 
   return(vars)
 }

@@ -24,10 +24,8 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   # usedFeatures <- targets$feature[targets$target > 0]
   # TODO Can I remove this? It causes trouble with the targets plot....
-  # I'm not sure why I do this as we didn't have to before. Surely I can keep
-  # it in there but filter out the zeros when getting a list of features
-  targets <- targets[targets$target > 0, ]
-
+  # I have commented it and all seems ok - 3/11/25
+  # targets <- targets[targets$target > 0, ]
 
   # Create sf object with features/cost -------------------------------------
   out_sf <- raw_sf %>%

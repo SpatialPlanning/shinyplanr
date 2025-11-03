@@ -6,20 +6,17 @@
 #' @noRd
 app_ui <- function(request) {
   shiny::navbarPage(
-    shinyjs::useShinyjs(),
-
-    # Leave this function for adding external resources
-    golem_add_external_resources(),
-
+    id = "navbar",
     title = shiny::a(shiny::img(src = "www/logo.png",
                                 height = 40,
                                 class = "navbar-logo"),
                      options$nav_title
     ),
-    id = "navbar",
-
-    # Theme completely handled by inst/app/www/custom.css
-    theme = bslib::bs_theme(version = 5),
+    header = shiny::tagList(
+      golem_add_external_resources(), # fn() for adding external resources
+      shinyjs::useShinyjs()
+    ),
+    theme = bslib::bs_theme(version = 5), # Theme handled by custom.css
     selected = "Welcome",
     if (options$mod_1welcome == TRUE) {
       shiny::tabPanel(

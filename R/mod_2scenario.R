@@ -46,14 +46,13 @@ mod_2scenario_ui <- function(id) {
                                 name_check = "checkLI_",
                                 categoryOut = TRUE)
 
-
   check_lockOut <- fcreate_check(id = id,
                                  Dict = Dict,
                                  idType = "LockOut",
                                  name_check = "checkLO_",
                                  categoryOut = TRUE)
 
-  shinyjs::useShinyjs()
+
 
   # shiny::tagList(
   # shiny::fluidPage(
@@ -88,12 +87,12 @@ mod_2scenario_ui <- function(id) {
         shiny::h2("1. Select Targets"),
         fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
       )),
+
       shinyjs::hidden(div(
         id = ns("switchBioregions"),
         # TODO Add a conditional here to account for yes/no bioregions
         shiny::h3(paste0("1.", length(unique(slider_vars$category)) + 1, " Bioregions")),
         fcustom_sliderCategory(slider_varsBioR, labelNum = 1, byCategory = TRUE),
-
       )),
 
       shiny::hr(style = "border-top: 1px solid #000000;"),
@@ -162,7 +161,7 @@ mod_2scenario_ui <- function(id) {
         overlayOpacity = 0.3,
         refreshColour = "brown"
       ),
-      shinyjs::useShinyjs(),
+
       tabsetPanel(
         id = ns("tabs"),
         type = "pills",
@@ -248,6 +247,14 @@ mod_2scenario_ui <- function(id) {
                  shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
                  shiny::textOutput(ns("txt_clim")),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "700px"))
+        ),
+        tabPanel("Log",
+                 value = 8,
+                 shiny::span(shiny::h2("Solver Log")),
+                 shiny::textOutput(ns("txt_log_hint")),
+                 shinycssloaders::withSpinner(
+                   shiny::verbatimTextOutput(ns("logText"), placeholder = TRUE)
+                 )
         ),
         tabPanel("Details",
                  value = 7,
@@ -336,28 +343,40 @@ mod_2scenario_server <- function(id) {
 
 
 
-    slider_vars <- fcreate_vars(id = id,
-                                Dict = Dict,
-                                name_check = "sli_",
-                                categoryOut = TRUE,
-                                byCategory = FALSE)
 
+  slider_vars <- fcreate_vars(id = id,
+                Dict = Dict,
+                name_check = "sli_",
+                categoryOut = TRUE,
+                byCategory = FALSE)
 
-    # Reformat varsIn for the category sliders
-    slider_varsBioR <- fcreate_vars(id = id,
-                                    Dict = Dict,
-                                    name_check = "sli_",
-                                    categoryOut = TRUE,
-                                    byCategory = TRUE,
-                                    dataType = "Bioregion")
+  # Recreate lock-in/out objects for server logic
+  check_lockIn <- fcreate_check(id = id,
+                  Dict = Dict,
+                  idType = "LockIn",
+                  name_check = "checkLI_",
+                  categoryOut = TRUE)
 
+  check_lockOut <- fcreate_check(id = id,
+                   Dict = Dict,
+                   idType = "LockOut",
+                   name_check = "checkLO_",
+                   categoryOut = TRUE)
 
-    # Reformat varsIn for the category sliders
-    slider_varsCat <- fcreate_vars(id = id,
-                                   Dict = Dict,
-                                   name_check = "sli_",
-                                   categoryOut = TRUE,
-                                   byCategory = TRUE)
+  # Reformat varsIn for the category sliders
+  slider_varsBioR <- fcreate_vars(id = id,
+                  Dict = Dict,
+                  name_check = "sli_",
+                  categoryOut = TRUE,
+                  byCategory = TRUE,
+                  dataType = "Bioregion")
+
+  # Reformat varsIn for the category sliders
+  slider_varsCat <- fcreate_vars(id = id,
+                   Dict = Dict,
+                   name_check = "sli_",
+                   categoryOut = TRUE,
+                   byCategory = TRUE)
 
 
 
@@ -385,27 +404,28 @@ mod_2scenario_server <- function(id) {
       fresetSlider(session, input, output)
     }, ignoreInit = TRUE)
 
+    # Generic lock-in/lock-out toggling for all features
+    # Pair lock-in/lock-out toggling only for matching features
+    lockIn_ids <- check_lockIn$id_in
+    lockOut_ids <- check_lockOut$id_in
 
-    # TODO This needs to be made generic.... somehow....
-    # I should be able to use the list of lock in (like the sliders) and loop through them to check.....
-    observeEvent(input$checkLI_aquaculture, {
-      shinyjs::toggleState("checkLO_aquaculture")
-    }, ignoreInit = TRUE)
+    # Extract feature names from input IDs (assumes format 'checkLI_feature')
+    get_feature <- function(id, prefix) stringr::str_remove(id, prefix)
+    lockIn_features <- purrr::map_chr(lockIn_ids, get_feature, prefix = "checkLI_")
+    lockOut_features <- purrr::map_chr(lockOut_ids, get_feature, prefix = "checkLO_")
 
-
-    observeEvent(input$checkLO_aquaculture, {
-      shinyjs::toggleState("checkLI_aquaculture")
-    }, ignoreInit = TRUE)
-
-
-    observeEvent(input$checkLI_mpas, {
-      shinyjs::toggleState("checkLO_mpas")
-    }, ignoreInit = TRUE)
-
-
-    observeEvent(input$checkLO_mpas, {
-      shinyjs::toggleState("checkLI_mpas")
-    }, ignoreInit = TRUE)
+    # For each feature present in both lock-in and lock-out, set up paired observers
+    shared_features <- intersect(lockIn_features, lockOut_features)
+    purrr::walk(shared_features, function(feat) {
+      lockInId <- paste0("checkLI_", feat)
+      lockOutId <- paste0("checkLO_", feat)
+      shiny::observeEvent(input[[lockInId]], {
+        shinyjs::toggleState(lockOutId)
+      }, ignoreInit = TRUE)
+      shiny::observeEvent(input[[lockOutId]], {
+        shinyjs::toggleState(lockInId)
+      }, ignoreInit = TRUE)
+    })
 
 
 
@@ -421,38 +441,7 @@ mod_2scenario_server <- function(id) {
     # Observe events from individual targets
     # Return targets and names for all features from sliders ---------------------------------------------------
     targetData <- shiny::reactive({
-      targets <- fget_targets(input, dataType = "Feature")
-      # targets <- fget_targets(input, dataType = c("Feature", "Bioregion"))
-
-      # This is where I need to add something about bioregions
-      # TODO This needs to be moved into a function and possible merged with fget_targets
-
-      # Now find the Bioregions features
-      name_check = "master_sli_"
-
-      # Get the features
-      ft <- Dict %>%
-        dplyr::filter(.data$type %in% "Bioregion") %>%
-        dplyr::select("feature" = "nameVariable", "categoryID")
-
-      cats <- ft %>%
-        dplyr::pull("categoryID") %>%
-        unique()
-
-      targets2 <- cats %>%
-        purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(name_check, x))))) %>%
-        tibble::enframe() %>%
-        tidyr::unnest(cols = .data$value) %>%
-        dplyr::rename(categoryID = "name", target = "value") %>%
-        dplyr::mutate(categoryID = cats) %>%
-        dplyr::mutate(target = .data$target / 100) %>% # requires number between 0-1
-        dplyr::left_join(ft, ., by = "categoryID") %>%
-        dplyr::select(-"categoryID")
-
-      targets = dplyr::bind_rows(targets, targets2)
-
-
-
+      targets <- fget_targets_with_bioregions(input, name_check = "sli_", Dict = Dict)
       return(targets)
     })
 
@@ -465,27 +454,44 @@ mod_2scenario_server <- function(id) {
 
 
     # Solve the problem -------------------------------------------------------
-    selectedData <- shiny::reactive({
+    # Build custom log with problem summary and solve statistics
+    solveLog <- shiny::reactiveVal(character(0))
 
-      result <- tryCatch({
+    solution <- shiny::reactive({
 
-        sD <- solve(p1Data(), run_checks = FALSE) %>%
-          sf::st_as_sf()
+      # Get the problem object
+      prob <- p1Data()
 
-      }, error = function(err) {
+      # Use consolidated helper that solves and builds a clean log
+      res <- fsolve_with_log(prob, cost_id = input$costid)
 
-        # Log the reason to the server logs, but don't change solver logic
-        warning(sprintf("Solve error: %s", conditionMessage(err)))
+      # Update log
+      solveLog(res$log)
 
-        shinyalert::shinyalert("Error", "Can't find a solution! This is because it is impossible to meet the currently selected targets, budgets, or constraints. Try decreasing the targets or removing locked-out areas.",
-                               type = "error",
-                               callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
-        )
-
-        return(NULL)
-      })
-
+      # Return solution
+      return(res$solution)
     }) %>% shiny::bindEvent(input$analyse)
+
+    # Render the log tab contents
+    # Don't use bindEvent - let it update reactively whenever solveLog changes
+    output$logText <- shiny::renderText({
+      # Force solution() to run when on log tab by accessing it
+      # This ensures the solve happens even when viewing the log tab
+      if (analysisRun()) {
+        solution()  # Trigger the solve
+      }
+
+      log <- solveLog()
+      if (is.null(log) || length(log) == 0 || nchar(log) == 0) {
+        "No logs yet. Click 'Run Analysis' to generate output."
+      } else {
+        log
+      }
+    })
+
+    output$txt_log_hint <- shiny::renderText({
+      "This tab displays the problem setup and solve summary for the last analysis run."
+    })
 
 
     analysisTime <- shiny::reactive({
@@ -507,61 +513,27 @@ mod_2scenario_server <- function(id) {
         plot_data1 <- shiny::reactive({
 
           # Guard: only attempt to plot if a solution exists
-          if (!inherits(selectedData(), "sf")) {
+          if (!inherits(solution(), "sf")) {
             return(NULL)
           }
 
-          # TODO Add better error tracking in here so I can change soln_text to provide a useful error when a solution can't be found.
-
-          LI <- get_lockIn(input)
-          LO <- get_lockOut(input)
-
-          plot1 <- spatialplanr::splnr_plot_solution(
-            soln = selectedData(),
-            plotTitle = ""
-          ) +
-            spatialplanr::splnr_gg_add(
-              Bndry = bndry,
-              overlay = overlay,
-              cropOverlay = selectedData(),
-              ggtheme = map_theme
-            )
-
-          if (length(LI) > 0){
-            plot1 <- plot1 +
-              spatialplanr::splnr_gg_add(
-                lockIn = raw_sf,
-                nameLockIn = LI,
-                legendLockIn = "Locked In Areas",
-                ggtheme = FALSE
-              )
-          }
-
-          if (length(LO) > 0) {
-            plot1 <- plot1 +
-              spatialplanr::splnr_gg_add(
-                lockOut = raw_sf,
-                nameLockOut = LO,
-                legendLockOut = "Locked Out Areas",
-                ggtheme = FALSE
-              )
-          }
-
-          plot1 <- plot1 +
-            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           legend.position = "bottom", legend.direction = "horizontal",
-                           legend.box = "horizontal")
-          # + ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-
-          plot1 <- plot1
+          # Use consolidated helper function
+          plot1 <- fplot_solution_with_constraints(
+            soln = solution(),
+            input = input,
+            raw_sf = raw_sf,
+            bndry = bndry,
+            overlay = overlay,
+            map_theme = map_theme,
+            num = ""
+          )
 
           return(plot1)
         })
 
         output$gg_soln <- shiny::renderPlot({
           if (analysisRun()) {
-            req(inherits(selectedData(), "sf"))
+            req(inherits(solution(), "sf"))
             plot_data1()
           }
         }, bg = "transparent")
@@ -579,10 +551,10 @@ mod_2scenario_server <- function(id) {
 
 
         output$txt_soln <- shiny::renderText({
-          if (!inherits(selectedData(), "sf")) {
+          if (!inherits(solution(), "sf")) {
             return("No solution could be generated with the current settings. Try lowering targets or adjusting constraints.")
           }
-          soln_text <- fSolnText(input, selectedData(), input$costid)
+          soln_text <- fSolnText(input, solution(), input$costid)
           if (input$costid != "Cost_None") {
             paste(tx_2solution, soln_text[[1]], soln_text[[2]])
           } else {
@@ -607,39 +579,20 @@ mod_2scenario_server <- function(id) {
       {
         gg_Target <- shiny::reactive({
 
-          # TODO selectedData() is missing features where the target is set to 0.
-          # I need to put those back in, in order to get the incidental targets in the plot
-          # I can't remeber how we previously did it. Perhaps with raw_data?
-          # Need to check the WSMPA2 code? Or did we do it for Waitt?
+          # Use consolidated helper function for feature representation
+          targetPlotData <- fget_feature_representation(
+            soln = solution(),
+            problem_data = p1Data(),
+            targets = targetData(),
+            climate_id = input$climateid,
+            options = options,
+            Dict = Dict
+          )
 
-          if (input$climateid == "NA"){
-            targetPlotData <- spatialplanr::splnr_get_featureRep(
-              soln = selectedData(),
-              pDat = p1Data(),
-              climsmart = FALSE
-            )
-
-          } else {
-
-            targets <- targetData()
-            targetPlotData <- spatialplanr::splnr_get_featureRep(
-              soln = selectedData(),
-              pDat = p1Data(),
-              climsmart = TRUE,
-              climsmartApproach = options$climate_change,
-              targets = targets
-            )
-
+          # Return NULL if no data
+          if (is.null(targetPlotData)) {
+            return(NULL)
           }
-
-          # TODO splnr_get_featureRep needs a rewrite. Now that we don't always use
-          # "Cost_" as a cost, we need to work out a better way (The Dict) to remove
-          # columns that are not features. The code below is just a workaround.
-
-          targetPlotData <- targetPlotData %>%
-            dplyr::filter(.data$feature %in% (Dict %>%
-                                                dplyr::filter(.data$type == "Feature") %>%
-                                                dplyr::pull(.data$nameVariable)))
 
           gg_Target <- spatialplanr::splnr_plot_featureRep(targetPlotData,
                                                            category = fget_category(Dict = Dict),
@@ -654,7 +607,7 @@ mod_2scenario_server <- function(id) {
 
           return(gg_Target)
         }) %>%
-          shiny::bindCache(input$analyse, input$checkSort) # TODO Check all caching and ensure I am caching correctly. E.g. the plot or the reactive or both?
+          shiny::bindCache(input$analyse, input$checkSort)
 
 
         output$gg_targetPlot <- shiny::renderPlot({
@@ -691,7 +644,7 @@ mod_2scenario_server <- function(id) {
         costPlotData <- shiny::reactive({
 
           #TODO Need to scale the cost data to look better on the plot.
-          spatialplanr::splnr_plot_costOverlay(soln = selectedData(),
+          spatialplanr::splnr_plot_costOverlay(soln = solution(),
                                                cost = NA,
                                                costName = input$costid,
                                                legendTitle = "Cost",
@@ -700,7 +653,7 @@ mod_2scenario_server <- function(id) {
             spatialplanr::splnr_gg_add(
               Bndry = bndry,
               overlay = overlay,
-              cropOverlay = selectedData(),
+              cropOverlay = solution(),
               ggtheme = map_theme
             ) +
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
@@ -744,19 +697,12 @@ mod_2scenario_server <- function(id) {
       {
         ggr_clim <- shiny::reactive({
 
-          ggClimDens <- spatialplanr::splnr_plot_climKernelDensity(
-            soln = list(selectedData()),
-            solution_names = "solution_1",
-            climate_names = input$climateid,
-            type = "Normal",
-            legendTitle = "Climate resilience metric",
-            xAxisLab = "Climate resilience metric"
-          ) +
-            ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-                           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
-            )
+          # Use consolidated helper function for climate plotting
+          ggClimDens <- fplot_climate_density(
+            soln_list = list(solution()),
+            climate_ids = c(input$climateid),
+            solution_names = c("solution_1")
+          )
 
           return(ggClimDens)
         }) %>%
@@ -800,31 +746,22 @@ mod_2scenario_server <- function(id) {
       },
       {
         DataTabler <- shiny::reactive({
-          if (input$climateid != "NA") {
-            targets <- targetData()
 
-            targetPlotData <- spatialplanr::splnr_get_featureRep(
-              soln = selectedData(),
-              pDat = p1Data(),
-              climsmart = TRUE,
-              climsmartApproach = options$climate_change,
-              targets = targets
-            )
-          } else {
-            targetPlotData <- spatialplanr::splnr_get_featureRep(
-              soln = selectedData(),
-              pDat = p1Data(),
-              climsmart = FALSE
-            )
+          # Use consolidated helper function for feature representation
+          targetPlotData <- fget_feature_representation(
+            soln = solution(),
+            problem_data = p1Data(),
+            targets = targetData(),
+            climate_id = input$climateid,
+            options = options,
+            Dict = Dict
+          )
+
+          # Return NULL if no data
+          if (is.null(targetPlotData)) {
+            return(NULL)
           }
 
-          # TODO Remove this when we fix spatialplanr as above
-          targetPlotData <- targetPlotData %>%
-            dplyr::filter(.data$feature %in% (Dict %>%
-                                                dplyr::filter(.data$type == "Feature") %>%
-                                                dplyr::pull(.data$nameVariable)))
-
-          # TODO I think I can clean up this code and make it into a function
           # Create named vector to do the replacement
           rpl <- Dict %>%
             dplyr::filter(.data$nameVariable %in% targetPlotData$feature) %>%
