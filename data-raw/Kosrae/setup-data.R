@@ -301,12 +301,12 @@ ous_cost <- impute_nearest(ous_cost, "trolling")
 
 
 # Replace zeroes in bottom_fishing and trolling with small value to avoid zero cost
-# The small nnumber should be half the minimum non-zero value in each column
+# The small number should be half the minimum non-zero value in each column
 ous_cost <- ous_cost %>%
-  mutate( 
+  mutate(
     bottom_fishing = if_else(bottom_fishing == 0, min(bottom_fishing[bottom_fishing > 0]) / 2, bottom_fishing),
     trolling = if_else(trolling == 0, min(trolling[trolling > 0]) / 2, trolling)
-  ) 
+  )
 
 
 # There is a lot of missing data in the region
@@ -323,18 +323,19 @@ ous_cost <- ous_cost %>%
 #   sf::st_interpolate_aw(., to = PUs, extensive = FALSE, na.rm = TRUE)
 
 
-PU_Area <- as.numeric(st_area(PUs)[1])
+PU_Area <- as.numeric(units::set_units(st_area(PUs)[1], km^2)) %>%
+  round(2)
 
 cost <- ous_cost %>%
   splnr_get_distCoast(custom_coast = coast) %>%   # Distance to nearest coast
   dplyr::mutate(
-    coastDistance_km = if_else(coastDistance_km < 0.1, 0.1, coastDistance_km),
-    Cost_Distance = 1/coastDistance_km,
+    # coastDistance_km = if_else(coastDistance_km < 0.1, 0.1, coastDistance_km),
+    # Cost_Distance = 1/coastDistance_km,
     Cost_Area = PU_Area,
     # Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001),
     # Cost_FishingHrs = dplyr::if_else(Cost_FishingHrs == 0, 0.00001, Cost_FishingHrs),
   ) %>%
-  dplyr::select(-coastDistance_km) %>%
+  # dplyr::select(-coastDistance_km) %>%
   dplyr::relocate(geometry, .after = tidyselect::last_col())
 
 

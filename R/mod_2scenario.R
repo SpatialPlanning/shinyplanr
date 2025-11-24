@@ -101,11 +101,39 @@ mod_2scenario_ui <- function(id) {
       create_fancy_dropdown(id, "costid", Dict %>%
                               dplyr::filter(.data$type == "Cost")),
 
-      # SHOULD THIS BE A PERCENTAGE OR A VALUE?
+
+      # Define Objective Function -----
+
+      shiny::h3("Objective Function"),
+
+      # TODO Add a short 2-3 sentence description here of the selected objective function. Even for
+      # the default min_set. THis can be found on the prioritizr website (https://prioritizr.net)
+
+      shinyjs::hidden(div(
+        id = ns("switchMinSet"),
+        shiny::p("The objective function used here is ......."),
+        shiny::h4("Minimum Set"),
+        shiny::p("All targets will be met for the smallest possible cost.")
+      )),
 
       shinyjs::hidden(div(
         id = ns("switchMinShortfall"),
-        shiny::p("Total budget amount for scenario."),
+        shiny::p("The objective function used here is ......."),
+        shiny::h4("Minimum Shortfall"),
+        shiny::p("Choose the total budget (% of cost layer) for scenario."),
+        shiny::numericInput(
+          inputId = ns("budget"),
+          label = NULL,
+          value = 30,
+          min = 0,
+          max = 100,
+        )
+      )),
+
+      shinyjs::hidden(div(
+        id = ns("switchBoundaryPenalty"),
+        shiny::h4("Boundary Penalty"),
+        shiny::p("The boundary penalty tries to......"),
         shiny::numericInput(
           inputId = id,
           label = NULL,
@@ -197,21 +225,11 @@ mod_2scenario_ui <- function(id) {
                  shiny::selectInput(inputId = ns("checkSort"),
                                     label = "Sort plot by:",
                                     choices = c("Category" = "category",
-                                                # "Feature" = "feature",
                                                 "Target" = "target",
                                                 "Representation" = "representation",
                                                 "Difference from Target" = "difference"),
                                     selected = "category",  multiple = FALSE),
 
-                 # shinyWidgets::prettyCheckboxGroup(inputId = ns("checkSort"),
-                 #                                   label = "Sort plot by:",
-                 #                                   choiceValues = c("category", "feature", "target",  "representation", "difference"),
-                 #                                   choiceNames = c("Category", "Feature", "Target",  "Representation", "Difference from Target"),
-                 #                                   selected = "category",
-                 #                                   inline = TRUE,
-                 #                                   thick = TRUE,
-                 #                                   animation = "pulse",
-                 #                                   status = "info"),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_targetPlot"), height = "600px"))
         ),
         tabPanel("Cost",
@@ -227,18 +245,7 @@ mod_2scenario_ui <- function(id) {
                  shiny::textOutput(ns("txt_cost")),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_cost"), height = "700px"))
         ),
-        # tabPanel("Selection Frequency", value = 5,
-        #          shiny::fixedPanel(style="z-index:100", # To force the button above all plots.
-        #                            shiny::downloadButton(ns("dlPlot5"), "Download Plot",
-        #                                                  style = "float: right; padding:4px; font-size:120%"),
-        #                            right = '1%', bottom = '1%', left = '34%'),
-        #          shiny::br(),
-        #          shiny::actionButton(ns("plotSelFreq"), "Show Selection Frequency", align = "center",
-        #                              style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"),
-        #          shiny::p("WARNING: This will take 1-5 minutes to run. Please don't press the button several times or navigate away from this page while the analysis is running.", align = "center"),
-        #          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_selFreq")))),
-        #          shiny::textOutput(ns("txt_selFreq")),
-        #          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_selFreq"), height = "700px"))),
+
         tabPanel("Climate",
                  value = 6,
                  shiny::fixedPanel(
@@ -275,11 +282,16 @@ mod_2scenario_ui <- function(id) {
                    shiny::tags$li("Target achievement chart"),
                    shiny::tags$li("Cost analysis visualization"),
                    shiny::tags$li("Climate resilience analysis (if enabled)"),
+                   shiny::tags$li(shiny::tagList(shiny::em("prioritizr"), " log")),
                  ),
                  shiny::br(),
                  shiny::downloadButton(ns("dlReport"), "Download Report",
-                                      style = "padding:4px; font-size:120%"),
-                 shiny::uiOutput(ns("reportStatus"))
+                                       style = "padding:4px; font-size:120%"),
+                 shiny::uiOutput(ns("reportStatus")),
+                 shiny::br(),
+                 shiny::br(),
+                 shiny::p(shiny::em("Note: Report generation may take a few moments. The file will download automatically when ready."),
+                          style = "color: #666;")
         ),
         tabPanel("Log",
                  value = 8,
@@ -304,35 +316,50 @@ mod_2scenario_server <- function(id) {
 
     . <- NULL
 
-    # dont make observeEvent because it's a global variable
+    # Define all switches ----
+    # I wonder if I can move these to a function as I can use the same
+    # switches in mod3 as well.
+
+    ## Define objective function
     if (options$obj_func == "min_shortfall") {
       shinyjs::show(id = "switchMinShortfall")
     } else {
       shinyjs::hide(id = "switchMinShortfall")
     }
 
+    if (options$obj_func == "min_set") {
+      shinyjs::show(id = "switchMinSet")
+    } else {
+      shinyjs::hide(id = "switchMinSet")
+    }
 
+
+    ## Turn on Boundary Penalty -----
+    if (isTRUE(options$switchBoundaryPenalty)) {
+      shinyjs::show(id = "switchBoundaryPenalty")
+    }
+
+    ## Turn on Bioregions -----
     if (isTRUE(options$include_bioregion)) {
       shinyjs::show(id = "switchBioregions")
     }
 
-
-    # dont make observeEvent because it's a global variable
+    ## Turn on Climate Smart -----
     if (isTRUE(options$include_climateChange)) {
       shinyjs::show(id = "switchClimSmart")
     } else {
       shinyjs::hide(id = "switchClimSmart")
 
-       # Hide the Climate tab if climate change is not enabled
+      # Hide the Climate tab if climate change is not enabled
       shiny::hideTab(inputId = "tabs", target = "6", session = session)
     }
 
-      # Hide the Report tab if include_report is FALSE
-      if (!isTRUE(options$include_report)) {
-        shiny::hideTab(inputId = "tabs", target = "10", session = session)
-      }
+    ## Turn off Report tab ----
+    if (!isTRUE(options$include_report)) {
+      shiny::hideTab(inputId = "tabs", target = "10", session = session)
+    }
 
-    # dont make observeEvent because it's a global variable
+    ## Turn on Locked In/Out Constraints ----
     if (isTRUE(options$include_lockedArea)) {
       shinyjs::show(id = "switchConstraints")
     }
@@ -354,8 +381,6 @@ mod_2scenario_server <- function(id) {
     })
 
 
-
-
     switch(options$targetsBy,
            "master" = shinyjs::show(id = "switchMasterTargets"), # Hide Individual targets,
            "category" = shinyjs::show(id = "switchCategoryTargets"), # Show Category targets
@@ -365,39 +390,39 @@ mod_2scenario_server <- function(id) {
 
 
 
-  slider_vars <- fcreate_vars(id = id,
-                Dict = Dict,
-                name_check = "sli_",
-                categoryOut = TRUE,
-                byCategory = FALSE)
+    slider_vars <- fcreate_vars(id = id,
+                                Dict = Dict,
+                                name_check = "sli_",
+                                categoryOut = TRUE,
+                                byCategory = FALSE)
 
-  # Recreate lock-in/out objects for server logic
-  check_lockIn <- fcreate_check(id = id,
-                  Dict = Dict,
-                  idType = "LockIn",
-                  name_check = "checkLI_",
-                  categoryOut = TRUE)
+    # Recreate lock-in/out objects for server logic
+    check_lockIn <- fcreate_check(id = id,
+                                  Dict = Dict,
+                                  idType = "LockIn",
+                                  name_check = "checkLI_",
+                                  categoryOut = TRUE)
 
-  check_lockOut <- fcreate_check(id = id,
-                   Dict = Dict,
-                   idType = "LockOut",
-                   name_check = "checkLO_",
-                   categoryOut = TRUE)
+    check_lockOut <- fcreate_check(id = id,
+                                   Dict = Dict,
+                                   idType = "LockOut",
+                                   name_check = "checkLO_",
+                                   categoryOut = TRUE)
 
-  # Reformat varsIn for the category sliders
-  slider_varsBioR <- fcreate_vars(id = id,
-                  Dict = Dict,
-                  name_check = "sli_",
-                  categoryOut = TRUE,
-                  byCategory = TRUE,
-                  dataType = "Bioregion")
+    # Reformat varsIn for the category sliders
+    slider_varsBioR <- fcreate_vars(id = id,
+                                    Dict = Dict,
+                                    name_check = "sli_",
+                                    categoryOut = TRUE,
+                                    byCategory = TRUE,
+                                    dataType = "Bioregion")
 
-  # Reformat varsIn for the category sliders
-  slider_varsCat <- fcreate_vars(id = id,
-                   Dict = Dict,
-                   name_check = "sli_",
-                   categoryOut = TRUE,
-                   byCategory = TRUE)
+    # Reformat varsIn for the category sliders
+    slider_varsCat <- fcreate_vars(id = id,
+                                   Dict = Dict,
+                                   name_check = "sli_",
+                                   categoryOut = TRUE,
+                                   byCategory = TRUE)
 
 
 
@@ -436,6 +461,7 @@ mod_2scenario_server <- function(id) {
     lockOut_features <- purrr::map_chr(lockOut_ids, get_feature, prefix = "checkLO_")
 
     # For each feature present in both lock-in and lock-out, set up paired observers
+    # so they can't both be enabled at the same time
     shared_features <- intersect(lockIn_features, lockOut_features)
     purrr::walk(shared_features, function(feat) {
       lockInId <- paste0("checkLI_", feat)
@@ -588,7 +614,7 @@ mod_2scenario_server <- function(id) {
         }) %>%
           shiny::bindEvent(input$analyse)
 
-  output$dlPlot1 <- fDownloadPlotServer(input, gg_id = plot_data1(), gg_prefix = "Solution", time_date = analysisTime()) # Download figure
+        output$dlPlot1 <- fDownloadPlotServer(input, gg_id = plot_data1(), gg_prefix = "Solution", time_date = analysisTime()) # Download figure
 
         # Download spatial data (GeoJSON) containing only 'solution' attribute
         output$dlSpatial1 <- shiny::downloadHandler(
@@ -615,7 +641,10 @@ mod_2scenario_server <- function(id) {
               }
             }
 
-            sol_out <- dplyr::select(sol, "solution")
+            sol_out <- sol %>%
+              dplyr::select("solution") %>%
+              sf::st_transform("EPSG:4326")
+
             # Write GeoJSON
             sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
           }
@@ -866,15 +895,12 @@ mod_2scenario_server <- function(id) {
            BBCC"
 
           ggr_DataPlot <- patchwork::wrap_plots(
-            # gridExtra::tableGrob(SummaryTabler(), rows = NULL, theme = gridExtra::ttheme_default(base_size = 12)),
             gridExtra::tableGrob(dat[[1]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 8)),
             gridExtra::tableGrob(dat[[2]], rows = NULL, theme = gridExtra::ttheme_default(base_size = 8)),
             design = design
           ) &
             ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                           # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
                            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-                           # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
             )
 
           return(ggr_DataPlot)
@@ -888,28 +914,36 @@ mod_2scenario_server <- function(id) {
     ## Report Generation -------------------------------------------------------
     # Bind the report generation on analysis so it can access scoped reactives without visiting tabs
     observeEvent(input$analyse, {
-  output$dlReport <- shiny::downloadHandler(
+      output$dlReport <- shiny::downloadHandler(
         filename = function() {
           paste0("Scenario_Report_", analysisTime(), ".html")
         },
         content = function(file) {
           # Show progress notification
           shiny::showNotification(
-            "Generating report... This may take a moment.",
+            "Generating report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
             duration = NULL,
             closeButton = FALSE,
             id = "report_progress",
             type = "message"
           )
-          
+
+          # Update UI status while generating
+          output$reportStatus <- shiny::renderUI({
+            shiny::tagList(
+              shiny::icon("spinner", class = "fa-spin"),
+              shiny::span(" Generating report…")
+            )
+          })
+
           # Get the template path
           template_path <- system.file("app", "report_scenario.qmd", package = "shinyplanr")
-          
+
           # If not found in installed package, try local inst/ directory
           if (template_path == "" || !file.exists(template_path)) {
             template_path <- "inst/app/report_scenario.qmd"
           }
-          
+
           # Check if template exists
           if (!file.exists(template_path)) {
             shiny::removeNotification("report_progress")
@@ -920,7 +954,7 @@ mod_2scenario_server <- function(id) {
             )
             return(NULL)
           }
-          
+
           # Prepare assets (plots/tables) as files to avoid passing complex objects across sessions
           # Evaluate reactives to obtain objects
           sol_plot <- tryCatch({ if (is.function(plot_data1)) plot_data1() else NULL }, error = function(e) NULL)
@@ -980,13 +1014,21 @@ mod_2scenario_server <- function(id) {
             out_html <- file.path(tmp_dir, "report.html")
             if (!file.exists(out_html)) stop("Rendered report not found at ", out_html)
             file.copy(out_html, file, overwrite = TRUE)
-            
+
             shiny::removeNotification("report_progress")
             shiny::showNotification(
               "Report generated successfully!",
               type = "message",
               duration = 3
             )
+
+            # Update UI with success message
+            output$reportStatus <- shiny::renderUI({
+              shiny::tagList(
+                shiny::icon("check-circle"),
+                shiny::span(paste(" Report generated at", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
+              )
+            })
           }, error = function(e) {
             shiny::removeNotification("report_progress")
             shiny::showNotification(
@@ -994,6 +1036,14 @@ mod_2scenario_server <- function(id) {
               type = "error",
               duration = 10
             )
+
+            # Update UI with error
+            output$reportStatus <- shiny::renderUI({
+              shiny::tagList(
+                shiny::icon("exclamation-triangle"),
+                shiny::span(paste(" Error generating report:", e$message))
+              )
+            })
           })
         }
       )

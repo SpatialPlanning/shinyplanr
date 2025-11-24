@@ -53,7 +53,7 @@ options <- list(
 
   ## Which objective function module are we using
   obj_func = "min_set", # Minimum set objective
-  # obj_func = min_shortfall # Minimum shortfall objective
+  # obj_func = "min_shortfall", # Minimum shortfall objective
 
   ## Geographic Options
   cCRS = "ESRI:54009"
@@ -215,8 +215,8 @@ bar_theme <- ggplot2::theme_bw(base_size = 14) +
     axis.title = ggplot2::element_blank()
   )
 
-file.copy(file.path("data-raw", "Kosrae", "custom.css"),
-          file.path("inst", "app", "www", "custom.css"),
+file.copy(file.path("data-raw", "Kosrae", "custom.css"), # From
+          file.path("inst", "app", "www", "custom.css"), # To
           overwrite = TRUE)
 
 
