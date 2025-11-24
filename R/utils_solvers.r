@@ -1,7 +1,6 @@
 #' Solve prioritization problem with error handling
 #'
 #' Wraps the solve() call with standardized error handling and alerts.
-#' This replaces ~15 lines of duplicated tryCatch code across modules.
 #'
 #' @param problem_data The prioritizr problem object to solve
 #'
