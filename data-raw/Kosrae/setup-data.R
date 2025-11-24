@@ -204,6 +204,7 @@ reefscores <- c(terra::rast(file.path(data_path, "reefmonitoringJF", "fish_score
                                    cutoff = 0.1))
 names(reefscores) <- c("fish_scores", "benthic_scores")
 
+reefscores <- (reefscores > 0) * 1
 
 
 # Spawning aggregations ---------------------------------------------------

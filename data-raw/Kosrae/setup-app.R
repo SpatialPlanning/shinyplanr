@@ -52,8 +52,8 @@ options <- list(
   targetsBy = "individual", # How to group the targets. Options are c("individual", "category", "master")
 
   ## Which objective function module are we using
-  obj_func = "min_set", # Minimum set objective
-  # obj_func = "min_shortfall", # Minimum shortfall objective
+  # obj_func = "min_set", # Minimum set objective
+  obj_func = "min_shortfall", # Minimum shortfall objective
 
   ## Geographic Options
   cCRS = "ESRI:54009"
