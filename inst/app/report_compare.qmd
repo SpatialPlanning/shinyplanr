@@ -38,7 +38,9 @@ knitr::opts_chunk$set(
 ```
 
 **Generated:** `r params$timestamp`
+
 **Cost Layers:** `r paste(params$cost_id1, 'vs', params$cost_id2)`
+
 **Climate Layers:** `r paste(if (is.null(params$climate_id1) || params$climate_id1=='NA') 'None' else params$climate_id1, 'vs', if (is.null(params$climate_id2) || params$climate_id2=='NA') 'None' else params$climate_id2)`
 
 ---

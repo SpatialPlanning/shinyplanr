@@ -254,12 +254,21 @@ mod_3compare_ui <- function(id) {
         ),
         tabPanel("Report",
                  value = 10,
-                 shiny::span(shiny::h2("Generate Comparison Report")),
-                 shiny::p("Download a comprehensive HTML report comparing both scenarios: maps, targets, costs, climate, details, and logs."),
+                 shiny::span(shiny::h2("Generate Analysis Report")),
+                 shiny::p("Download a comprehensive HTML report containing all analysis results from this scenario."),
+                 shiny::p("The report includes:"),
+                 shiny::tags$ul(
+                   shiny::tags$li("Comparison map"),
+                   shiny::tags$li("Solution map with constraints"),
+                   shiny::tags$li("Target achievement chart"),
+                   shiny::tags$li("Cost analysis visualization"),
+                   shiny::tags$li("Climate resilience analysis (if enabled)"),
+                   shiny::tags$li(shiny::tagList(shiny::em("prioritizr"), " log")),
+                 ),
                  shiny::br(),
-                 shiny::downloadButton(ns("downloadReportCompare"), "Generate HTML Report",
-                                       class = "btn btn-primary btn-lg",
+                 shiny::downloadButton(ns("downloadReportCompare"), "Download Report",
                                        style = "padding:10px 20px; font-size:120%"),
+                 shiny::uiOutput(ns("reportStatus")),
                  shiny::br(),
                  shiny::br(),
                  shiny::p(shiny::em("Note: Report generation may take a few moments. The file will download automatically when ready."),
@@ -543,7 +552,8 @@ mod_3compare_server <- function(id) {
             # Only keep planning units that are in at least one scenario
             comp_out <- comp_sf %>%
               dplyr::filter(.data$comparison != "Neither scenario") %>%
-              dplyr::select("comparison")
+              dplyr::select("comparison") %>%
+              sf::st_transform("EPSG:4326")
 
             # Write GeoJSON
             sf::st_write(comp_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
@@ -695,7 +705,10 @@ mod_3compare_server <- function(id) {
               }
             }
 
-            sol_out <- dplyr::select(sol, "solution")
+            sol_out <- sol %>%
+              dplyr::select("solution") %>%
+              sf::st_transform("EPSG:4326")
+
             sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
           }
         )
@@ -724,7 +737,10 @@ mod_3compare_server <- function(id) {
               }
             }
 
-            sol_out <- dplyr::select(sol, "solution")
+            sol_out <- sol %>%
+              dplyr::select("solution") %>%
+              sf::st_transform("EPSG:4326")
+
             sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
           }
         )
@@ -1133,12 +1149,20 @@ mod_3compare_server <- function(id) {
         content = function(file) {
           # Show progress notification
           shiny::showNotification(
-            "Generating comparison report... This may take a moment.",
+            "Generating comparison report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
             duration = NULL,
             closeButton = FALSE,
             id = "report_progress_compare",
             type = "message"
           )
+
+          # Update UI status while generating
+          output$reportStatus <- shiny::renderUI({
+            shiny::tagList(
+              shiny::icon("spinner", class = "fa-spin"),
+              shiny::span(" Generating comparison report…")
+            )
+          })
 
           # Resolve template path
 
@@ -1223,6 +1247,14 @@ mod_3compare_server <- function(id) {
               type = "message",
               duration = 3
             )
+
+            # Update UI with success message
+            output$reportStatus <- shiny::renderUI({
+              shiny::tagList(
+                shiny::icon("check-circle"),
+                shiny::span(paste(" Report generated at", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
+              )
+            })
           }, error = function(e) {
             shiny::removeNotification("report_progress_compare")
             shiny::showNotification(
@@ -1230,6 +1262,14 @@ mod_3compare_server <- function(id) {
               type = "error",
               duration = 10
             )
+
+            # Update UI with error
+            output$reportStatus <- shiny::renderUI({
+              shiny::tagList(
+                shiny::icon("exclamation-triangle"),
+                shiny::span(paste(" Error generating comparison report:", e$message))
+              )
+            })
           })
         }
       )
