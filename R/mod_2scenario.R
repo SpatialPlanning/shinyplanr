@@ -104,29 +104,28 @@ mod_2scenario_ui <- function(id) {
 
       # Define Objective Function -----
 
-      shiny::h3("Objective Function"),
-
-      # TODO Add a short 2-3 sentence description here of the selected objective function. Even for
-      # the default min_set. THis can be found on the prioritizr website (https://prioritizr.net)
-
-      shinyjs::hidden(div(
-        id = ns("switchMinSet"),
-        shiny::p("The objective function used here is ......."),
-        shiny::h4("Minimum Set"),
-        shiny::p("All targets will be met for the smallest possible cost.")
-      )),
+      # shinyjs::hidden(div(
+      #   id = ns("switchMinSet"),
+      #   shiny::p("The objective function used here is ......."),
+      #   shiny::h4("Minimum Set"),
+      #   shiny::p("All targets will be met for the smallest possible cost.")
+      # )),
 
       shinyjs::hidden(div(
         id = ns("switchMinShortfall"),
-        shiny::p("The objective function used here is ......."),
-        shiny::h4("Minimum Shortfall"),
-        shiny::p("Choose the total budget (% of cost layer) for scenario."),
+        shiny::h3("Choose a Budget"),
+        shiny::p("This analysis will use the minimum shortfall objective which aims to find the set of
+                 planning units that minimize the overall shortfall for the targets for as many features
+                 as possible while staying within a fixed budget."),
+        shiny::br(),
+        shiny::p("Choose the total budget (% of cost layer) for your analysis."),
         shiny::numericInput(
           inputId = ns("budget"),
           label = NULL,
           value = 30,
           min = 0,
           max = 100,
+          width = "50%"
         )
       )),
 
@@ -320,18 +319,20 @@ mod_2scenario_server <- function(id) {
     # I wonder if I can move these to a function as I can use the same
     # switches in mod3 as well.
 
-    ## Define objective function
+    ## Define objective function ----
     if (options$obj_func == "min_shortfall") {
       shinyjs::show(id = "switchMinShortfall")
     } else {
       shinyjs::hide(id = "switchMinShortfall")
     }
 
-    if (options$obj_func == "min_set") {
-      shinyjs::show(id = "switchMinSet")
-    } else {
-      shinyjs::hide(id = "switchMinSet")
-    }
+    # I have turned this off. I don't think we want a description of the min_set
+    # unless specifically asked for
+    # if (options$obj_func == "min_set") {
+    #   shinyjs::show(id = "switchMinSet")
+    # } else {
+    #   shinyjs::hide(id = "switchMinSet")
+    # }
 
 
     ## Turn on Boundary Penalty -----

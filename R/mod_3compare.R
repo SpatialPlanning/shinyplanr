@@ -86,6 +86,33 @@ mod_3compare_ui <- function(id) {
                                 dplyr::filter(.data$type == "Cost")),
       ),
 
+      shinyjs::hidden(div(
+        id = ns("switchMinShortfall"),
+        shiny::h3("Choose a Budget"),
+        shiny::p("This analysis will use the minimum shortfall objective which aims to find the set of
+                 planning units that minimize the overall shortfall for the targets for as many features
+                 as possible while staying within a fixed budget."),
+        shiny::br(),
+        shiny::p("Choose the total budget (% of cost layer) for your analysis."),
+        shiny::splitLayout(
+          shiny::numericInput(
+            inputId = ns("budget1"),
+            label = "Budget 1 (%)",
+            value = 30,
+            min = 0,
+            max = 100
+          ),
+          shiny::numericInput(
+            inputId = ns("budget2"),
+            label = "Budget 2 (%)",
+            value = 30,
+            min = 0,
+            max = 100
+          ),
+        ),
+      )),
+
+
 
       shinyjs::hidden(div(
         id = ns("switchClimSmart"),
@@ -340,10 +367,23 @@ mod_3compare_server <- function(id) {
       shiny::hideTab(inputId = "tabs", target = "7", session = session)
     }
 
-      # Hide the Report tab if include_report is FALSE
-      if (!isTRUE(options$include_report)) {
-        shiny::hideTab(inputId = "tabs", target = "10", session = session)
-      }
+    ## Define objective function
+    if (options$obj_func == "min_shortfall") {
+      shinyjs::show(id = "switchMinShortfall")
+    } else {
+      shinyjs::hide(id = "switchMinShortfall")
+    }
+
+    if (options$obj_func == "min_set") {
+      shinyjs::show(id = "switchMinSet")
+    } else {
+      shinyjs::hide(id = "switchMinSet")
+    }
+
+    # Hide the Report tab if include_report is FALSE
+    if (!isTRUE(options$include_report)) {
+      shiny::hideTab(inputId = "tabs", target = "10", session = session)
+    }
 
     if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchConstraints")
@@ -363,7 +403,8 @@ mod_3compare_server <- function(id) {
                         },ignoreInit = TRUE
     )
 
-    # # Go back to the first tab when analyse is clicked.
+    # Go back to the first tab when analyse is clicked.
+    # TODO is this working?
     shiny::observeEvent(input$analyse, {
       shiny::updateTabsetPanel(session, "tabs", selected = 1)
     })
@@ -374,7 +415,7 @@ mod_3compare_server <- function(id) {
     })
 
 
-    # TODO This needs to be made generic.... somehow....
+    # TODO I would like to turn this into a function
 
     # Generic lock-in/lock-out toggling for all features (Scenario 1)
     # Pair lock-in/lock-out toggling only for matching features (Scenario 1)
@@ -419,6 +460,7 @@ mod_3compare_server <- function(id) {
 
     # Get Target Data
     targetData1 <- shiny::reactive({
+
       targets <- fget_targets_with_bioregions(input, name_check = "sli_", Dict = Dict)
       return(targets)
     })

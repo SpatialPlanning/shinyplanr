@@ -24,7 +24,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   out_sf <- raw_sf %>%
     dplyr::select(
       tidyselect::all_of(c(targets$feature,
-                           rlang::eval_tidy(rlang::parse_expr(paste0("input$costid", compare_id))))))
+                           input[[paste0("costid", compare_id)]])))
 
   # Create options for climate-smart ----
   if (clim_input == "NA") { # Not Climate-smart
@@ -36,10 +36,10 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
     # TODO Rewrite the functions to allow other names of climate columns
     # Rename column based on user selection
-    if (rlang::eval_tidy(rlang::parse_expr(paste0("input$climateid", compare_id))) != "NA") {
+    if (input[[paste0("climateid", compare_id)]] != "NA") {
 
       climate_sf <- raw_sf %>%
-        dplyr::select("metric" = rlang::eval_tidy(rlang::parse_expr(paste0("input$climateid", compare_id))))
+        dplyr::select("metric" = input[[paste0("climateid", compare_id)]])
     }
 
     # TODO Update these functions in spatialplanr to remove climate_sf and instead pass a column name....
@@ -48,7 +48,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
       CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
         features = out_sf %>%
-          dplyr::select(-rlang::eval_tidy(rlang::parse_expr(paste0("input$costid", compare_id)))), # out_sf without cost
+          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
         metric = climate_sf,
         percentile = options$percentile,
         targets = targets,
@@ -59,7 +59,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
       CS_Approach <- spatialplanr::splnr_climate_featureApproach(
         features = out_sf %>%
-          dplyr::select(-rlang::eval_tidy(rlang::parse_expr(paste0("input$costid", compare_id)))), # out_sf without cost
+          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
         metric = climate_sf,
         percentile = options$percentile,
         targets = targets,
@@ -70,7 +70,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
       CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
         features = out_sf %>%
-          dplyr::select(-rlang::eval_tidy(rlang::parse_expr(paste0("input$costid", compare_id)))), # out_sf without cost
+          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
         metric = climate_sf,
         percentile = options$percentile,
         targets = targets,
@@ -84,8 +84,8 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
     # Create p_dat and add cost column back in.
     p_dat <- CS_Approach$Features %>%
       sf::st_join(raw_sf %>%
-                    dplyr::select(rlang::eval_tidy(rlang::parse_expr(paste0("input$costid", compare_id))),
-                                  rlang::eval_tidy(rlang::parse_expr(paste0("input$climateid", compare_id)))),
+                    dplyr::select(input[[paste0("costid", compare_id)]],
+                                  input[[paste0("climateid", compare_id)]]),
                   join = sf::st_equals)
   } # End climate data analysis
 
@@ -119,7 +119,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
     p1 <- prioritizr::problem(x = p_dat,
                               features = targets$feature,
-                              cost_column = eval(parse(text = paste0("input$costid", compare_id)))) %>%
+                              cost_column = input[[paste0("costid", compare_id)]]) %>%
       prioritizr::add_min_set_objective() %>%
       prioritizr::add_relative_targets(targets$target) %>%
       prioritizr::add_binary_decisions() %>%
@@ -127,18 +127,23 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   } else if (options$obj_func == "min_shortfall") {
 
+
     # Calculate total value of current cost layer
     # TODO make this a reactive and then this only needs to be done when cost layer changes
     total_cost <- p_dat %>%
       sf::st_drop_geometry() %>%
-      dplyr::select(input$costid) %>%
+      dplyr::select(input[[paste0("costid", compare_id)]]) %>%
       dplyr::pull() %>%
       sum()
 
+    # Get budget value - use budget1/budget2 for comparison module, budget for scenario module
+    budget_id <- if (compare_id == "") "budget" else paste0("budget", compare_id)
+    budget_value <- input[[budget_id]]
+
     p1 <- prioritizr::problem(x = p_dat,
                               features = targets$feature,
-                              cost_column = eval(parse(text = paste0("input$costid", compare_id)))) %>%
-      prioritizr::add_min_shortfall_objective(budget = (input$budget/100) * total_cost) %>% # Create budget from total_cost and %
+                              cost_column = input[[paste0("costid", compare_id)]]) %>%
+      prioritizr::add_min_shortfall_objective(budget = (budget_value/100) * total_cost) %>% # Create budget from total_cost and %
       prioritizr::add_relative_targets(targets$target) %>%
       prioritizr::add_binary_decisions() %>%
       prioritizr::add_cbc_solver(verbose = TRUE)
