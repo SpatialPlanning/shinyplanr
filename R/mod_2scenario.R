@@ -209,6 +209,29 @@ mod_2scenario_ui <- function(id) {
                  shiny::textOutput(ns("txt_soln")),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_soln"), height = "700px"))
         ),
+        tabPanel("Explore",
+                 value = 4,
+                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_map")))),
+                 shiny::textOutput(ns("txt_map")),
+                 shiny::br(),
+                 shiny::div(
+                   style = "position: relative;",
+                   shinycssloaders::withSpinner(
+                     leaflet::leafletOutput(ns("leaflet_map"), height = "650px")
+                   ),
+                   shiny::absolutePanel(
+                                      id = ns("featurePanel"),
+                                      class = "panel panel-default",
+                                      fixed = FALSE,
+                                      draggable = TRUE,
+                                      top = "5%",
+                                      right = "10px",
+                                      width = "250px",
+                                      style = "background-color: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; max-height: 600px; overflow-y: auto; z-index: 1000;",
+                                      shiny::uiOutput(ns("featurePanelContent"))
+                                    )
+                 )
+        ),
         tabPanel("Targets",
                  value = 2,
                  shiny::fixedPanel(
@@ -1049,6 +1072,272 @@ mod_2scenario_server <- function(id) {
         }
       )
     }, ignoreInit = TRUE)
+
+    ## Interactive Map Tab -----------------------------------------------------
+
+    # Store the current solution sf transformed to WGS84 for Leaflet
+    map_solution_sf <- shiny::reactiveVal(NULL)
+
+    # Store the ID of the currently highlighted planning unit
+    highlighted_pu <- shiny::reactiveVal(NULL)
+
+    # Store panel content as a reactiveVal to avoid nested renderUI issues
+    panel_content <- shiny::reactiveVal(NULL)
+
+    # Flag to track if map has been initialized with solution
+    map_initialized <- shiny::reactiveVal(FALSE)
+
+    # Initialize the base leaflet map (runs once) - empty until solution is available
+    output$leaflet_map <- leaflet::renderLeaflet({
+      leaflet::leaflet() %>%
+        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron)
+    })
+
+    # Render feature panel content from reactiveVal
+    output$featurePanelContent <- shiny::renderUI({
+      content <- panel_content()
+      if (is.null(content)) {
+        shiny::p("Click a planning unit on the map to see the features it contains.",
+                 style = "color: #666; font-style: italic;")
+      } else {
+        content
+      }
+    })
+
+    # Header and description text for Map tab
+    output$hdr_map <- shiny::renderText({
+      "Interactive Solution Map"
+    }) %>%
+      shiny::bindEvent(input$analyse)
+
+    output$txt_map <- shiny::renderText({
+      "Click on a planning unit to see which features are driving its selection."
+    }) %>%
+      shiny::bindEvent(input$analyse)
+
+    # Store the last analysis count to detect when new analysis is run
+    last_analysis_count <- shiny::reactiveVal(0)
+
+    # Update map when Map tab is selected OR when analysis is run while on Map tab
+    # This pattern matches other tabs and ensures leafletProxy works (requires rendered output)
+    shiny::observeEvent(
+      {
+        # Trigger when Map tab (value 4) is selected OR analysis is run
+        input$tabs == 4 | input$analyse > 0
+      },
+      {
+        # Only proceed if we have a valid solution
+        shiny::req(inherits(solution(), "sf"))
+
+        # Check if we're on the Map tab - proxy only works when output is rendered
+        if (input$tabs != 4) {
+          return()
+        }
+
+        # Transform solution to WGS84 for Leaflet
+        soln_wgs84 <- solution() %>%
+          dplyr::mutate(pu_id = dplyr::row_number()) %>%
+          sf::st_transform("EPSG:4326")
+
+        # Store for click handler
+        map_solution_sf(soln_wgs84)
+
+        # Get bounding box for map view
+        bbox <- sf::st_bbox(soln_wgs84)
+
+        # Create color palette for solution
+        pal <- leaflet::colorFactor(
+          palette = c("lightgrey", "#2ca02c"),
+          domain = c(0, 1),
+          na.color = "transparent"
+        )
+
+        # Update map with polygons using leafletProxy
+        leaflet::leafletProxy("leaflet_map", session = session) %>%
+          leaflet::clearShapes() %>%
+          leaflet::clearControls() %>%
+          leaflet::clearGroup("highlight") %>%
+          leaflet::fitBounds(
+            lng1 = as.numeric(bbox["xmin"]),
+            lat1 = as.numeric(bbox["ymin"]),
+            lng2 = as.numeric(bbox["xmax"]),
+            lat2 = as.numeric(bbox["ymax"])
+          ) %>%
+          leaflet::addPolygons(
+            data = soln_wgs84,
+            layerId = ~pu_id,
+            fillColor = ~pal(solution_1),
+            fillOpacity = 0.7,
+            color = "#444444",
+            weight = 0.5,
+            highlightOptions = leaflet::highlightOptions(
+              weight = 3,
+              color = "#666666",
+              fillOpacity = 0.9,
+              bringToFront = TRUE
+            ),
+            group = "solution_polygons"
+          ) %>%
+          leaflet::addLegend(
+            position = "bottomleft",
+            colors = c("#2ca02c", "lightgrey"),
+            labels = c("Selected", "Not Selected"),
+            title = "Solution",
+            opacity = 0.7
+          )
+
+        # Reset highlighted PU and panel content when new solution is loaded
+        highlighted_pu(NULL)
+        panel_content(NULL)
+        map_initialized(TRUE)
+      }
+    )
+
+    # Handle polygon click events
+    shiny::observeEvent(input$leaflet_map_shape_click, {
+      tryCatch({
+        click <- input$leaflet_map_shape_click
+
+        # Guard against NULL clicks or clicks on highlight layer
+        if (is.null(click) || is.null(click$id)) {
+          return()
+        }
+
+        # Skip if clicking on highlight polygon (layerId starts with "highlight_")
+        if (is.character(click$id) && grepl("^highlight_", click$id)) {
+          return()
+        }
+
+        pu_id <- click$id
+
+        # Use isolate to prevent reactive dependency on map_solution_sf
+        soln_sf <- shiny::isolate(map_solution_sf())
+
+        # Guard against missing solution data
+        if (is.null(soln_sf)) {
+          return()
+        }
+
+        # Get the clicked planning unit row using base R for better performance
+        pu_idx <- which(soln_sf$pu_id == pu_id)
+        if (length(pu_idx) == 0) {
+          return()
+        }
+
+        pu_row <- sf::st_drop_geometry(soln_sf[pu_idx[1], , drop = FALSE])
+
+        # Get feature names from targetData (only features with target > 0)
+        # Use isolate to prevent reactive loop
+        target_features <- shiny::isolate(targetData()$feature)
+
+        # Find features present in this planning unit (value == 1)
+        # Pre-filter to only columns that exist in pu_row for efficiency
+        available_features <- intersect(target_features, names(pu_row))
+        features_present <- available_features[
+          vapply(available_features, function(feat) {
+            val <- pu_row[[feat]]
+            !is.na(val) && as.numeric(val) == 1
+          }, logical(1))
+        ]
+
+        # Create lookup for common names and categories from Dict
+        feature_info <- Dict[Dict$nameVariable %in% features_present,
+                             c("nameVariable", "nameCommon", "category"),
+                             drop = FALSE]
+
+        # Update highlight using clearGroup for reliable removal
+        # This clears ALL polygons in the "highlight" group, avoiding accumulation
+        proxy <- leaflet::leafletProxy("leaflet_map", session = session) %>%
+          leaflet::clearGroup("highlight")
+
+        # Add new highlight polygon
+        highlight_data <- soln_sf[pu_idx[1], , drop = FALSE]
+        proxy %>%
+          leaflet::addPolygons(
+            data = highlight_data,
+            layerId = paste0("highlight_", pu_id),
+            fillColor = "yellow",
+            fillOpacity = 0.5,
+            color = "#FF6600",
+            weight = 3,
+            group = "highlight"
+          )
+
+        # Update tracked highlighted PU (use isolate to avoid triggering reactivity)
+        shiny::isolate(highlighted_pu(pu_id))
+
+        # Extract selection status and cost value
+        is_selected <- if ("solution_1" %in% names(pu_row)) {
+          as.logical(pu_row[["solution_1"]])
+        } else {
+          NA
+        }
+
+        # Get cost column name from input and extract value
+        cost_col <- shiny::isolate(input$costid)
+        cost_value <- if (!is.null(cost_col) && cost_col %in% names(pu_row)) {
+          round(as.numeric(pu_row[[cost_col]]), 2)
+        } else {
+          NA
+        }
+
+        # Get cost display name from Dict
+        cost_name <- if (!is.null(cost_col) && cost_col != "Cost_None") {
+          cost_info <- Dict[Dict$nameVariable == cost_col, "nameCommon", drop = TRUE]
+          if (length(cost_info) > 0) cost_info[1] else cost_col
+        } else {
+          "Cost"
+        }
+
+        # Generate panel content grouped by category
+        new_content <- if (nrow(feature_info) == 0) {
+          shiny::tagList(
+            shiny::h4(shiny::strong(paste0("Planning Unit #", pu_id))),
+            shiny::hr(style = "margin: 5px 0;"),
+            shiny::p("No features with targets found in this planning unit.",
+                     style = "color: #666; font-style: italic;")
+          )
+        } else {
+          # Group features by category using base R for performance
+          categories <- unique(feature_info$category)
+          category_list <- lapply(categories, function(cat) {
+            feats <- feature_info$nameCommon[feature_info$category == cat]
+            shiny::tagList(
+              shiny::p(shiny::strong(cat), style = "margin-bottom: 2px;"),
+              shiny::p(paste(feats, collapse = ", "),
+                       style = "margin-left: 10px; margin-top: 0; margin-bottom: 8px;")
+            )
+          })
+
+          shiny::tagList(
+            shiny::h4(paste0("Planning Unit")),
+            shiny::p(shiny::strong(paste0("Number: ", pu_id))),
+            shiny::p(
+              shiny::strong("Selected: "),
+              if (is.na(is_selected)) "N/A" else if (is_selected) "TRUE" else "FALSE",
+              style = "margin-bottom: 2px;"
+            ),
+            shiny::hr(style = "margin: 5px 0;"),
+            shiny::h5("Cost Value"),
+            shiny::p(
+              shiny::strong(paste0(cost_name, ": ")),
+              if (is.na(cost_value)) "N/A" else format(cost_value, big.mark = ","),
+              style = "margin-bottom: 2px;"
+            ),
+            shiny::hr(style = "margin: 5px 0;"),
+            shiny::h5("Feature List"),
+            category_list
+          )
+        }
+
+        # Update panel content
+        panel_content(new_content)
+
+      }, error = function(e) {
+        # Log error but don't crash the observer
+        message("Map click handler error: ", e$message)
+      })
+    }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
   })
 }

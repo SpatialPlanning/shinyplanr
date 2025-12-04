@@ -18,15 +18,16 @@ Authors@R: c(
     )
 Description: A generic app package to facilitate spatial planning in prioritizr and Shiny.
 License: MIT + file LICENSE
-Imports: 
+Imports:
     bslib,
     config (>= 0.3.1),
     dplyr,
-    ggplot2, 
+    ggplot2,
     gridExtra,
     golem (>= 0.4.1),
     kableExtra,
     knitr,
+    leaflet,
     magrittr,
     patchwork,
     prioritizr,

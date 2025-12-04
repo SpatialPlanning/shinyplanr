@@ -753,3 +753,29 @@ div.shiny-table-output {
   background-color: transparent !important;
   background: transparent !important;
 }
+
+/* Leaflet map responsive height - extends to bottom of visible screen */
+/* Target the leaflet output container specifically */
+.leaflet-container,
+.leaflet,
+#mod_2scenario_ui_1-leaflet_map,
+[id$="-leaflet_map"] {
+  min-height: 500px !important;
+  /* Calculate height: viewport height minus navbar (~60px), header text (~120px), and footer (~120px) */
+  height: calc(100vh - 300px) !important;
+  max-height: calc(100vh - 200px) !important;
+}
+
+/* Target the Shiny leaflet output wrapper */
+.shiny-html-output .leaflet,
+.html-widget.leaflet,
+div[id$="-leaflet_map"].leaflet.html-widget {
+  min-height: 500px !important;
+  height: calc(100vh - 300px) !important;
+}
+
+/* Ensure the parent container also expands */
+div[style*="position: relative"] > .shiny-html-output,
+div[style*="position: relative"]:has([id$="-leaflet_map"]) {
+  min-height: 500px;
+}
