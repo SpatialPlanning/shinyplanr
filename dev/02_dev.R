@@ -24,7 +24,7 @@ golem::add_module(name = "1welcome", with_test = TRUE) # Name of the module
 golem::add_module(name = "2scenario", with_test = TRUE) # Name of the module
 golem::add_module( name = "3compare", with_test = TRUE) # Name of the module
 # golem::add_module( name = "4features", with_test = TRUE) # Name of the module
-# golem::add_module( name = "5candidate", with_test = TRUE) # Name of the module
+golem::add_module( name = "5coverage", with_test = TRUE) # Name of the module
 # golem::add_module( name = "6help", with_test = TRUE) # Name of the module
 # golem::add_module( name = "7credit", with_test = TRUE) # Name of the module
 

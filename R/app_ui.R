@@ -49,6 +49,14 @@ app_ui <- function(request) {
         )
       )
     },
+    if (options$mod_5coverage == TRUE) {
+      shiny::tabPanel(
+        "Check Coverage",
+        shiny::fluidPage(
+          value = "coverage", mod_5coverage_ui("5coverage_1")
+        )
+      )
+    },
     if (options$mod_6help == TRUE) {
       shiny::tabPanel(
         "Help",

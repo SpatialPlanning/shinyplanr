@@ -3,6 +3,7 @@ library(spatialplanr)
 library(oceandatr)
 library(sf)
 library(terra)
+library(tidyterra)
 
 # TODO Add check that all names in Dict are unique. Or change target plotting to
 # use variable name rather than the common name. It would be good to have the
@@ -12,15 +13,18 @@ data_path <- file.path("data-raw", "Kosrae", "KosraeData")
 
 name <- "Kosrae"
 
+# Set up geospatial data ------
+
 #kosrae equal area projection from projection wizard, found using bbox of 12nm limits
 kos_crs <- "+proj=cea +lon_0=163 +lat_ts=2.8 +datum=WGS84 +units=m +no_defs"
 
-# Kosrae Coastline --------------------------------------------------------
+
+## Kosrae Coastline --------------------------------------------------------
 
 coast <-  sf::st_read(file.path(data_path, "kos_shoreline_IslAt", "kos_shoreline.shp")) %>%
   sf::st_transform(crs = kos_crs)
 
-# Outer boundary ----------------------------------------------------------
+## Outer boundary ----------------------------------------------------------
 
 # contour_500 has inner and outer boundaries. Need to isolate the outer (larger) one.
 bndry <- sf::st_read(file.path(data_path, "contour_500.gpkg")) %>%
@@ -36,8 +40,7 @@ bndry <- rings[1] %>%
   sf::st_sf(crs = kos_crs)
 
 
-
-# Planning Units ----------------------------------------------------------
+## Planning Units ----------------------------------------------------------
 
 # First get all the cells wtihin the bndry
 pgrid <- get_grid(boundary = bndry,
@@ -57,8 +60,10 @@ ggplot() +
   tidyterra::geom_spatvector(data = terra::vect(coast), colour = "red")
 
 
+# Do features -----
 
-# Allen Coral Atlas -------------------------------------------------------
+
+## Allen Coral Atlas -------------------------------------------------------
 
 benthic_allen <- read_sf(file.path(data_path, "benthic.geojson")) %>%
   filter(class %in% c("Seagrass", "Coral/Algae")) %>%
@@ -71,7 +76,7 @@ benthic_allen <- read_sf(file.path(data_path, "benthic.geojson")) %>%
 
 
 
-# Ocean Use Survey --------------------------------------------------------
+## Ocean Use Survey --------------------------------------------------------
 
 # Features: Tourism, Community and recreational use (you can use binary values)
 # Cost: OUS fisheries data (you already have in the app), maybe also include bottom fishing and trolling (have values across most of the planning area)
@@ -105,6 +110,12 @@ ous <- read_sf(file.path(data_path, "aquaculture_ous_polygons.gpkg")) %>%
 
 
 files <- list.files(file.path(data_path, "ocean-use-survey", "subsectors"), recursive = TRUE, pattern = ".tif$", full.names = TRUE)
+
+x <- files[1]
+
+
+terra::rast(x) %>% get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE)
+
 ous_ss <- purrr::map(files, \(x) terra::rast(x) %>% get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE)) %>%
   terra::rast()
 
@@ -113,7 +124,7 @@ ous_ss[ous_ss<1] <- 0 # Cutoff of 1
 
 
 
-# Depth Zones from GEBCO Bathymetry -------
+## Depth Zones from GEBCO Bathymetry -------
 depth_zones <- sf::st_read(file.path(data_path, "depth_zones.geojson")) %>%
   sf::st_as_sf() %>%
   dplyr::mutate(zone = janitor::make_clean_names(zone, case = "snake")) %>%
@@ -135,7 +146,7 @@ depth_zones <- sf::st_read(file.path(data_path, "depth_zones.geojson")) %>%
 
 
 
-# Geomorphology -----------------------------------------------------------
+## Geomorphology -----------------------------------------------------------
 geomorph <- sf::st_read(file.path(data_path, "reef_geomorph_complete.geojson")) %>%
   filter(class %in% c("Reef flat", "Forereef", "Diffuse fringing")) %>%
   sf::st_as_sf() %>%
@@ -159,7 +170,7 @@ geomorph <- sf::st_read(file.path(data_path, "reef_geomorph_complete.geojson")) 
 
 
 
-# Mangroves ---------------------------------------------------------------
+## Mangroves ---------------------------------------------------------------
 
 mangroves <- sf::st_read(file.path(data_path, "mangroves_usgs.geojson")) %>%
   sf::st_as_sf() %>%
@@ -174,7 +185,7 @@ mangroves <- sf::st_read(file.path(data_path, "mangroves_usgs.geojson")) %>%
 
 
 
-# # Fisheries Attraction Device (FAD) ---------------------------------------
+## Fisheries Attraction Device (FAD) ---------------------------------------
 #
 # fad <- sf::st_read(file.path(data_path, "fad_buffer.geojson")) %>%
 #   sf::st_as_sf() %>%
@@ -188,7 +199,7 @@ mangroves <- sf::st_read(file.path(data_path, "mangroves_usgs.geojson")) %>%
 
 
 
-# Reef monitoring data ----------------------------------------------------
+## Reef monitoring data ----------------------------------------------------
 
 reefscores <- c(terra::rast(file.path(data_path, "reefmonitoringJF", "fish_scores_interp_upper_quant.tif")) %>%
                   get_data_in_grid(spatial_grid = pgrid,
@@ -207,7 +218,7 @@ names(reefscores) <- c("fish_scores", "benthic_scores")
 reefscores <- (reefscores > 0) * 1
 
 
-# Spawning aggregations ---------------------------------------------------
+## Spawning aggregations ---------------------------------------------------
 
 spawning <- sf::st_read(file.path(data_path, "spawning_aggs_by_species.gpkg")) %>%
   sf::st_as_sf() %>%
@@ -221,7 +232,7 @@ spawning <- sf::st_read(file.path(data_path, "spawning_aggs_by_species.gpkg")) %
 
 
 
-# Locked in areas ---------------------------------------------------------
+## Locked in areas ---------------------------------------------------------
 
 # ous_lock <- c(terra::rast(file.path(data_path, "ocean-use-survey", "kosrae_ous_heatmaps", "aquaculture.tif")) %>%
 #                 get_data_in_grid(spatial_grid = pgrid, dat = ., meth = "average", antimeridian = FALSE),
@@ -231,8 +242,17 @@ spawning <- sf::st_read(file.path(data_path, "spawning_aggs_by_species.gpkg")) %
 # ous[ous>=1] <- 1 # Cutoff of 1
 
 
+# Make test polygon file for category testing
 
-# Marine Protected Areas --------------------------------------------------
+sf::st_read(file.path(data_path, "kos_protected_areas.geojson")) %>%
+  sf::st_as_sf() %>%
+  sf::st_make_valid() %>%
+  sf::st_write(file.path(data_path,"KosraeMPA.gpkg"))
+
+
+
+
+## Marine Protected Areas --------------------------------------------------
 
 mpas <- sf::st_read(file.path(data_path, "kos_protected_areas.geojson")) %>%
   sf::st_as_sf() %>%
@@ -392,6 +412,35 @@ cost <- ous_cost %>%
 
 
 
+
+
+# Ecosystem Services ----
+
+ES <- terra::mosaic(
+  terra::rast("~/Nextcloud/MME1DATA-Q1215/WAITT_ES/Maxwell_2020_SOC_mangroves_2020/163E_05N/sol_soc.tha_mangroves.typology_m_30m_s0..100cm_2020_global_v1.1.tif"),
+  terra::rast("~/Nextcloud/MME1DATA-Q1215/WAITT_ES/Maxwell_2020_SOC_mangroves_2020/162E_05N/sol_soc.tha_mangroves.typology_m_30m_s0..100cm_2020_global_v1.1.tif")) %>%
+  get_data_in_grid(spatial_grid = PUs, dat = ., meth = "mean", antimeridian = FALSE, name = "soilOrganicCarbon_tPU") %>%
+  dplyr::mutate(across(everything(), ~replace_na(., 0)),
+                soilOrganicCarbon_tPU = soilOrganicCarbon_tPU * 1.00635) # Convert to total carbon per PU CellARea = 1.00635 ha
+
+
+ES2 <- sf::st_read("~/Nextcloud/MME1DATA-Q1215/WAITT_ES/Beck_2018_CoralReef_CoastalProtection/AEB_Coral.gdb") %>%
+  get_data_in_grid(spatial_grid = PUs, dat = .)
+
+
+
+
+
+# This is just seagrass extent. Not sure there is any point using this at the moment.
+# gmw <- terra::rast("/Users/jason/Nextcloud/MME1DATA-Q1215/WAITT_ES/gmw_mng_2020_v4019_gtiff/GMW_N06E163_v4019_mng.tif")
+# ggplot() + geom_spatraster(data = gmw)
+
+# Nothing for Kosrae
+# tourism <- sf::st_read("/Users/jason/Nextcloud/MME1DATA-Q1215/WAITT_ES/Spalding_2017_CoralReef_TourismValue_OnReef/Coral_Reef_Tourism_Global_On_Reef_Tourism.shp") %>%
+#   sf::st_transform(crs = st_crs(bndry)) %>%
+#   sf::st_crop(bndry)
+
+
 # Check for NAs
 if (any(is.na(dat_sf))){
   dat_sf <- dat_sf %>%
@@ -404,6 +453,7 @@ dat_sf <- bind_cols(dat_sf,
                     # lock_in %>% sf::st_drop_geometry(),
                     cost %>% sf::st_drop_geometry(),
                     # climate_sf %>% sf::st_drop_geometry(),
+                    ES %>% sf::st_drop_geometry(),
 ) %>%
   dplyr::relocate(geometry, .after = tidyselect::everything())
 

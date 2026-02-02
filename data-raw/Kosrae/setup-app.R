@@ -31,6 +31,7 @@ options <- list(
   mod_2scenario = TRUE, #switch modules on/off
   mod_3compare = TRUE, #switch modules on/off
   mod_4features = TRUE, #switch modules on/off
+  mod_5coverage = TRUE, #switch modules on/off
   mod_6help = TRUE, #switch modules on/off
   mod_7credit = FALSE, #switch modules on/off
 
