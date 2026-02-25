@@ -247,7 +247,7 @@ spawning <- sf::st_read(file.path(data_path, "spawning_aggs_by_species.gpkg")) %
 sf::st_read(file.path(data_path, "kos_protected_areas.geojson")) %>%
   sf::st_as_sf() %>%
   sf::st_make_valid() %>%
-  sf::st_write(file.path(data_path,"KosraeMPA.gpkg"))
+  sf::st_write(file.path(data_path,"KosraeMPA.gpkg"), append = TRUE)
 
 
 
@@ -272,6 +272,8 @@ dat_sf <- c(benthic_allen, depth_zones, geomorph, mangroves, mpas, ous, ous_ss, 
   sf::st_as_sf() %>%
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
   janitor::clean_names() %>%
+  tibble::as_tibble() %>%
+  sf::st_as_sf() %>%
   sf::st_transform(kos_crs)
 
 
@@ -424,8 +426,8 @@ ES <- terra::mosaic(
                 soilOrganicCarbon_tPU = soilOrganicCarbon_tPU * 1.00635) # Convert to total carbon per PU CellARea = 1.00635 ha
 
 
-ES2 <- sf::st_read("~/Nextcloud/MME1DATA-Q1215/WAITT_ES/Beck_2018_CoralReef_CoastalProtection/AEB_Coral.gdb") %>%
-  get_data_in_grid(spatial_grid = PUs, dat = .)
+#ES2 <- sf::st_read("~/Nextcloud/MME1DATA-Q1215/WAITT_ES/Beck_2018_CoralReef_CoastalProtection/AEB_Coral.gdb") %>%
+#  get_data_in_grid(spatial_grid = PUs, dat = .)
 
 
 

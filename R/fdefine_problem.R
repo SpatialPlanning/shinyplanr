@@ -30,6 +30,10 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   if (clim_input == "NA") { # Not Climate-smart
     p_dat <- out_sf # Create the problem data. Nothing more needed if not climate-smart
 
+    print(dim(p_dat))
+
+    print(dim(out_sf))
+
   } else { # Climate-smart
 
     # Add climate data and run climate approach --------------------------------------------------------
@@ -117,8 +121,9 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   if (options$obj_func == "min_set") {
 
+
     p1 <- prioritizr::problem(x = p_dat,
-                              features = targets$feature,
+                              features = targets$feature, # targets ensures the features are in the correct order
                               cost_column = input[[paste0("costid", compare_id)]]) %>%
       prioritizr::add_min_set_objective() %>%
       prioritizr::add_relative_targets(targets$target) %>%
@@ -126,7 +131,6 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       prioritizr::add_cbc_solver(verbose = TRUE)
 
   } else if (options$obj_func == "min_shortfall") {
-
 
     # Calculate total value of current cost layer
     # TODO make this a reactive and then this only needs to be done when cost layer changes
@@ -141,7 +145,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
     budget_value <- input[[budget_id]]
 
     p1 <- prioritizr::problem(x = p_dat,
-                              features = targets$feature,
+                              features = targets$feature, # targets ensures the features are in the correct order
                               cost_column = input[[paste0("costid", compare_id)]]) %>%
       prioritizr::add_min_shortfall_objective(budget = (budget_value/100) * total_cost) %>% # Create budget from total_cost and %
       prioritizr::add_relative_targets(targets$target) %>%

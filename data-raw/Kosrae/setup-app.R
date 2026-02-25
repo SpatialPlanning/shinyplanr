@@ -157,8 +157,10 @@ tx_2solution <- readr::read_file(file.path(data_dir, "shinyplanr_2solution.md"))
 tx_2targets <- readr::read_file(file.path(data_dir, "shinyplanr_2targets.md"))
 tx_2cost <- readr::read_file(file.path(data_dir, "shinyplanr_2cost.md"))
 tx_2climate <- readr::read_file(file.path(data_dir, "shinyplanr_2climate.md"))
+tx_2ess <- readr::read_file(file.path(data_dir, "shinyplanr_2ecosystemServices.md"))
 
 # MODULE 3 - COMPARISON ------------------------------------------------------
+
 
 
 
@@ -234,6 +236,7 @@ usethis::use_data(options,
                   tx_2targets,
                   tx_2cost,
                   tx_2climate,
+                  tx_2ess,
                   tx_6faq,
                   tx_6technical,
                   tx_6changelog,

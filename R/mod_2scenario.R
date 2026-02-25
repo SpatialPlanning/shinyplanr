@@ -281,6 +281,13 @@ mod_2scenario_ui <- function(id) {
                  shiny::textOutput(ns("txt_clim")),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "700px"))
         ),
+        tabPanel("Ecosystem Services",
+                  value = 5,
+                  shiny::htmlOutput(ns("txt_ess")),
+                  shiny::htmlOutput(ns("soln_ess"))
+          ),
+
+
         tabPanel("Details",
                  value = 7,
                  shiny::fixedPanel(
@@ -593,6 +600,8 @@ mod_2scenario_server <- function(id) {
           if (!inherits(solution(), "sf")) {
             return(NULL)
           }
+
+          print(dim(solution()))
 
           # Use consolidated helper function
           plot1 <- fplot_solution_with_constraints(
@@ -934,6 +943,66 @@ mod_2scenario_server <- function(id) {
         output$dlPlot7 <- fDownloadPlotServer(input, gg_id = DataTabler(), gg_prefix = "DataSummary", time_date = analysisTime(), width = 16, height = 10) # Download figure
       }
     ) # End observe event 7
+
+
+    # Ecosystem Services Tab -------------------------------------------------
+observeEvent(
+      {
+        input$tabs == 5 | input$tabs == 10 | input$analyse > 0
+      },
+      {
+
+
+# Header and description text for ESS tab from markdown
+
+output$txt_ess <- shiny::renderText(
+      shiny::markdown(tx_2ess)
+        ) %>%
+          shiny::bindEvent(input$analyse)
+
+
+        ess_para <<- shiny::reactive({
+
+          if (!inherits(solution(), "sf")) {
+            return("No solution could be generated with the current settings. Try lowering targets or adjusting constraints.")
+          }
+
+          ess_layers <- Dict %>%
+            dplyr::filter(.data$type == "EcosystemServices") %>%
+            dplyr::pull("nameVariable") %>%
+            c("geometry")
+
+      # Join ess layers into solution
+          ess_values <- sf::st_join(raw_sf %>% dplyr::select(dplyr::all_of(ess_layers)),
+                             solution(),
+             join = sf::st_equals) %>%
+            dplyr::filter(.data$solution_1 == 1) %>% # Filter to selected solution
+            dplyr::select(dplyr::all_of(ess_layers)) %>% # Keep only ESS layers
+            sf::st_drop_geometry() %>%
+            tidyr::pivot_longer(cols = everything(), names_to = "ESS", values_to = "Value") %>%
+            dplyr::left_join(Dict %>% dplyr::select(nameVariable, nameCommon), by = c("ESS" = "nameVariable")) %>%
+            dplyr::summarise(dotpoint = paste0("* ", dplyr::first(.data$nameCommon), ": ", round(sum(.data$Value), 2), " T"), .by = "ESS") %>%
+            dplyr::pull("dotpoint") %>%
+            paste(collapse = "\n")
+
+          return(ess_values)
+
+        }) %>%
+          shiny::bindEvent(input$analyse)
+
+
+        output$soln_ess <- shiny::renderText(
+      shiny::markdown(ess_para())
+        ) %>%
+          shiny::bindEvent(input$analyse)
+
+      }
+      ) # End observe event 5
+
+
+
+
+
 
     ## Report Generation -------------------------------------------------------
     # Bind the report generation on analysis so it can access scoped reactives without visiting tabs
