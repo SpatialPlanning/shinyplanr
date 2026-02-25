@@ -33,6 +33,10 @@ app_server <- function(input, output, session) {
       mod_2scenario_server("2scenario_ui_1")
     }
 
+    if (shiny::req(input$navbar) == "Multi-Objective Optimisation") {
+      mod_7multiobj_server("7multiobj_ui_1")
+    }
+
     if (options$mod_3compare == TRUE && shiny::req(input$navbar) == "Comparison") {
       mod_3compare_server("3compare_ui_1")
     }

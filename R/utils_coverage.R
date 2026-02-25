@@ -31,12 +31,12 @@ fread_uploaded_spatial <- function(file_input) {
 file_ext <- tolower(tools::file_ext(file_name))
 
   # Validate file extension
-  if (!file_ext %in% c("gpkg", "gdb")) {
+  if (!file_ext %in% c("gpkg", "gdb", "geojson")) {
     return(list(
       success = FALSE,
       data = NULL,
       message = paste0("Unsupported file format: .", file_ext,
-                       ". Please upload a GeoPackage (.gpkg) or File Geodatabase (.gdb).")
+                       ". Please upload a GeoPackage (.gpkg), GeoJSON (.geojson) or File Geodatabase (.gdb).")
     ))
   }
 

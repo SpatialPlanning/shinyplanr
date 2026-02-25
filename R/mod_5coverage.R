@@ -13,18 +13,18 @@ mod_5coverage_ui <- function(id) {
 
   shiny::sidebarLayout(
     shiny::sidebarPanel(
-      shiny::h2("Upload Protected Area"),
+      shiny::h2("Upload Spatial File"),
       shiny::p("Upload a spatial file containing polygons to evaluate how well they conserve the features in the planning domain."),
       shiny::br(),
 
       shiny::fileInput(
         inputId = ns("uploadFile"),
         label = "Choose a spatial file",
-        accept = c(".gpkg", ".gdb"),
+        accept = c(".gpkg", ".gdb", ".geojson"),
         multiple = FALSE
       ),
 
-      shiny::helpText("Accepted formats: GeoPackage (.gpkg), File Geodatabase (.gdb)"),
+      shiny::helpText("Accepted formats: GeoPackage (.gpkg), File Geodatabase (.gdb), GeoJSON (.geojson)."),
 
       shiny::br(),
       shiny::uiOutput(ns("uploadStatus")),

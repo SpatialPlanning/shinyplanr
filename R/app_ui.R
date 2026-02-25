@@ -33,6 +33,12 @@ app_ui <- function(request) {
         value = "soln", mod_2scenario_ui("2scenario_ui_1")
       )
     ),
+    # shiny::tabPanel(
+    #   "Multi-Objective Optimisation",
+    #   shiny::fluidPage(
+    #     value = "moo", mod_7multiobj_ui("mod_7multiobj_ui_1")
+    #   )
+    # ),
     if (options$mod_3compare == TRUE) {
       shiny::tabPanel(
         "Comparison",
