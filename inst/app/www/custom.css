@@ -753,3 +753,77 @@ div.shiny-table-output {
   background-color: transparent !important;
   background: transparent !important;
 }
+
+/* ==========================================================================
+   Ecosystem Services Progress Bar (Reactable)
+   ========================================================================== */
+
+.ess-progress-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: var(--bs-font-family);
+}
+
+.ess-progress-bar {
+  display: flex;
+  height: 24px;
+  width: 100%;
+  border-radius: var(--spacing-xs);
+  overflow: hidden;
+  border: 1px solid var(--grey-500);
+}
+
+.ess-progress-selected {
+  /* Gradient scales to full 100% width so same % always shows same color */
+  /* --pct is passed via inline style from R */
+  background: linear-gradient(90deg, var(--primary-3) 0%, var(--primary-1) 100%);
+  background-size: calc(10000% / var(--pct, 100)) 100%;
+  background-position: left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-weight: var(--font-weight-medium);
+  font-size: 0.6875rem; /* 11px */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.ess-progress-unselected {
+  background: linear-gradient(90deg, var(--grey-100) 0%, var(--grey-300) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--grey-700);
+  font-size: 0.6875rem; /* 11px */
+}
+
+.ess-progress-legend {
+  font-size: 0.625rem; /* 10px */
+  color: var(--grey-700);
+  margin-top: var(--spacing-xs);
+  text-align: center;
+}
+
+.ess-legend-selected {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: var(--primary-1);
+  border: 1px solid var(--grey-500);
+  border-radius: var(--spacing-2px);
+  vertical-align: middle;
+  margin-right: var(--spacing-2px);
+}
+
+.ess-legend-unselected {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: var(--grey-300);
+  border: 1px solid var(--grey-500);
+  border-radius: var(--spacing-2px);
+  vertical-align: middle;
+  margin-right: var(--spacing-2px);
+  margin-left: var(--spacing-8px);
+}

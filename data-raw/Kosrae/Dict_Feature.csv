@@ -1,39 +1,39 @@
-nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,justification
-Coral / Algae,coral_algae,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,"The Coral/Algae class in the deep lagoon. The Coral/Algae class has a hard underlying framework (usually limestone) with a covering of coral (including soft coral) and/or seaweeds (including macroalgae and turf algae). Coral/Algae is topographically complex and supports high animal diversity and biomass. Both corals and algae are photosynthetic and have similar spectral signatures, making them difficult to distinguish by remote sensing."
-Seagrass,seagrass,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,A Seagrass dominated habitat on a soft bottom in the deep lagoon. From the Allen Coral Atlas.
-Distance to Coast,Cost_Distance,Other: Cost,Cost,Cost,NA,NA,NA,FALSE,FALSE,"Uses the distance from the coast as the cost layer, with distances further from the coast having higher cost. This mirrors the extra fuel consumption, longer travel time, and greater wear on the engine."
-Equal Area Cost,Cost_Area,Other: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,"No cost layer is used. In this instance, the size of the planning units is used as the cost, but because (usually) all planning units have the same size, the cost of selecting any planning unit is the same."
-Continental Shelf,shelf,Depth Zones,Depth,Feature,30,0,85,FALSE,FALSE,"The upper 0-200 m in the ocean. It contains all primary producers in the ocean, and most of the marine life is restricted to this depth or vertically migrates into this depth zone (e.g. seabirds, sea turtles, tuna)."
-Continental Slope,slope,Depth Zones,Depth,Feature,30,0,85,FALSE,FALSE,Between 200-1000 m deep. Also known as the twilight zone because of the dim light conditions. Contains unique biodiversity.
-Aquaculture,aquaculture,Ocean Use Survey,OUS,LockOut,NA,NA,NA,TRUE,TRUE,"Aquaculture is the farming of marine and freshwater finfish, shellfish, aquatic plants, algae and other organisms. It is an important source of revenue in many nations in the Global South."
-Fisheries: Bottom Fishing,bottom_fishing,Fisheries: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,The areas used for Bottom Fishing. This data is derived from the Ocean Use Survey.
-Fisheries: Trolling,trolling,Fisheries: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,The areas used for Trolling Fisheries. This data is derived from the Ocean Use Survey.
-Fisheries: Vertical Longline,vertical_longline,Ocean Use Survey,Fishing,Feature,30,0,85,FALSE,FALSE,The areas used for Vertical Longline Fishing. This data is derived from the Ocean Use Survey.
-0 - 30m: Altiphotic,x0_30m_altiphotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-130 - 320m: Rariphotic,x30_130m_mesophotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-30 - 130m: Mesophotic,x130_320m_rariphotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-320 - 800m: Upper bathyal,x320_800m_upper_bathyal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-800 - 3500m: Lower bathyal,x800_3500m_lower_bathyal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-3500 - 6500m: Abyssal,x3500_6500m_abyssal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-Aquatic land features,aquatic_land_features,Reef Geomorphology,Geomorph,Feature,30,0,85,FALSE,FALSE,Millenium Coral Reef Geomorphology
-Diffuse fringing,diffuse_fringing,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,Millenium Coral Reef Geomorphology
-Forereef,forereef,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,Millenium Coral Reef Geomorphology
-Reef flat,reef_flat,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,Millenium Coral Reef Geomorphology
-Fish Health Score,fish_scores,High Reef-Health Areas,Health,Feature,30,0,85,TRUE,TRUE,"The fish assemblage health score is derived from reef monitoring data on: fish biomass, size structure, heterogeneity, evenness and predcator biomass. More details on the monitoring website: https://micronesiareefmonitoring.com"
-Benthic Health Score,benthic_scores,High Reef-Health Areas,Health,Feature,30,0,85,TRUE,TRUE,"The benthic substrate health score is derived from reef monitoring data on: coral cover, coral evenness, substrate ratio, and macroalgae cover. More details on the monitoring website: https://micronesiareefmonitoring.com"
-Mangrove Forest,mangroves,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,Mangrove distribution data subset from the full vegetation map created by USGS in 2008 derived from high resolution QuickBird pansharpened-natural color image.
-Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,Kosrae marine protected area network compiled from data and information provided by Moses and Bond
-Marine Protected Areas,mpas,Protected Areas,MPAs,LockOut,NA,NA,NA,TRUE,TRUE,Kosrae marine protected area network compiled from data and information provided by Moses and Bond
-Barracuda,barracuda,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Black jack,black_jack,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Blacktail snapper,blacktail_snapper,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Emperor sp.,emperor_sp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Lowfin rudderfish,lowfin_rudderfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Mullet fringelip,mullet_fringelip,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Mullet sp.,mullet_sp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-One spot snapper,one_spot_snapper,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Orange spine unicorn fish,orange_spine_unicorn_fish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Rabbitfish spp.,rabbitfish_spp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Randall's rabbitfish,randalls_rabbitfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Scribbled rabbitfish,scribbled_rabbitfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Organic Soil Carbon,soilOrganicCarbon_tPU,Organic Soil Carbon,organicSoilCarbon,EcosystemServices,NA,NA,NA,TRUE,TRUE,Soil Organic Carbon conserved by mangrove protection
+nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Coral / Algae,coral_algae,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,,"The Coral/Algae class in the deep lagoon. The Coral/Algae class has a hard underlying framework (usually limestone) with a covering of coral (including soft coral) and/or seaweeds (including macroalgae and turf algae). Coral/Algae is topographically complex and supports high animal diversity and biomass. Both corals and algae are photosynthetic and have similar spectral signatures, making them difficult to distinguish by remote sensing."
+Seagrass,seagrass,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,,A Seagrass dominated habitat on a soft bottom in the deep lagoon. From the Allen Coral Atlas.
+Distance to Coast,Cost_Distance,Other: Cost,Cost,Cost,NA,NA,NA,FALSE,FALSE,,"Uses the distance from the coast as the cost layer, with distances further from the coast having higher cost. This mirrors the extra fuel consumption, longer travel time, and greater wear on the engine."
+Equal Area Cost,Cost_Area,Other: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"No cost layer is used. In this instance, the size of the planning units is used as the cost, but because (usually) all planning units have the same size, the cost of selecting any planning unit is the same."
+Continental Shelf,shelf,Depth Zones,Depth,Feature,30,0,85,FALSE,FALSE,,"The upper 0-200 m in the ocean. It contains all primary producers in the ocean, and most of the marine life is restricted to this depth or vertically migrates into this depth zone (e.g. seabirds, sea turtles, tuna)."
+Continental Slope,slope,Depth Zones,Depth,Feature,30,0,85,FALSE,FALSE,,Between 200-1000 m deep. Also known as the twilight zone because of the dim light conditions. Contains unique biodiversity.
+Aquaculture,aquaculture,Ocean Use Survey,OUS,LockOut,NA,NA,NA,TRUE,TRUE,,"Aquaculture is the farming of marine and freshwater finfish, shellfish, aquatic plants, algae and other organisms. It is an important source of revenue in many nations in the Global South."
+Fisheries: Bottom Fishing,bottom_fishing,Fisheries: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,The areas used for Bottom Fishing. This data is derived from the Ocean Use Survey.
+Fisheries: Trolling,trolling,Fisheries: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,The areas used for Trolling Fisheries. This data is derived from the Ocean Use Survey.
+Fisheries: Vertical Longline,vertical_longline,Ocean Use Survey,Fishing,Feature,30,0,85,FALSE,FALSE,,The areas used for Vertical Longline Fishing. This data is derived from the Ocean Use Survey.
+0 - 30m: Altiphotic,x0_30m_altiphotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
+130 - 320m: Rariphotic,x30_130m_mesophotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
+30 - 130m: Mesophotic,x130_320m_rariphotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
+320 - 800m: Upper bathyal,x320_800m_upper_bathyal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
+800 - 3500m: Lower bathyal,x800_3500m_lower_bathyal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
+3500 - 6500m: Abyssal,x3500_6500m_abyssal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
+Aquatic land features,aquatic_land_features,Reef Geomorphology,Geomorph,Feature,30,0,85,FALSE,FALSE,,Millenium Coral Reef Geomorphology
+Diffuse fringing,diffuse_fringing,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,,Millenium Coral Reef Geomorphology
+Forereef,forereef,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,,Millenium Coral Reef Geomorphology
+Reef flat,reef_flat,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,,Millenium Coral Reef Geomorphology
+Fish Health Score,fish_scores,High Reef-Health Areas,Health,Feature,30,0,85,TRUE,TRUE,,"The fish assemblage health score is derived from reef monitoring data on: fish biomass, size structure, heterogeneity, evenness and predcator biomass. More details on the monitoring website: https://micronesiareefmonitoring.com"
+Benthic Health Score,benthic_scores,High Reef-Health Areas,Health,Feature,30,0,85,TRUE,TRUE,,"The benthic substrate health score is derived from reef monitoring data on: coral cover, coral evenness, substrate ratio, and macroalgae cover. More details on the monitoring website: https://micronesiareefmonitoring.com"
+Mangrove Forest,mangroves,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,,Mangrove distribution data subset from the full vegetation map created by USGS in 2008 derived from high resolution QuickBird pansharpened-natural color image.
+Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,Kosrae marine protected area network compiled from data and information provided by Moses and Bond
+Marine Protected Areas,mpas,Protected Areas,MPAs,LockOut,NA,NA,NA,TRUE,TRUE,,Kosrae marine protected area network compiled from data and information provided by Moses and Bond
+Barracuda,barracuda,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Black jack,black_jack,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Blacktail snapper,blacktail_snapper,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Emperor sp.,emperor_sp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Lowfin rudderfish,lowfin_rudderfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Mullet fringelip,mullet_fringelip,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Mullet sp.,mullet_sp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+One spot snapper,one_spot_snapper,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Orange spine unicorn fish,orange_spine_unicorn_fish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Rabbitfish spp.,rabbitfish_spp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Randall's rabbitfish,randalls_rabbitfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Scribbled rabbitfish,scribbled_rabbitfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
+Organic Soil Carbon,soilOrganicCarbon_tPU,Organic Soil Carbon,organicSoilCarbon,EcosystemServices,NA,NA,NA,TRUE,TRUE,Tonnes,Soil Organic Carbon conserved by mangrove protection

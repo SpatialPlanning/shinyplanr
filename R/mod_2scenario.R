@@ -284,7 +284,7 @@ mod_2scenario_ui <- function(id) {
         tabPanel("Ecosystem Services",
                   value = 5,
                   shiny::htmlOutput(ns("txt_ess")),
-                  shiny::htmlOutput(ns("soln_ess"))
+                  shinycssloaders::withSpinner(reactable::reactableOutput(ns("soln_ess")))
           ),
 
 
@@ -964,26 +964,45 @@ output$txt_ess <- shiny::renderText(
         ess_para <<- shiny::reactive({
 
           if (!inherits(solution(), "sf")) {
-            return("No solution could be generated with the current settings. Try lowering targets or adjusting constraints.")
+            return(NULL)
           }
 
           ess_layers <- Dict %>%
             dplyr::filter(.data$type == "EcosystemServices") %>%
-            dplyr::pull("nameVariable") %>%
-            c("geometry")
+            dplyr::pull("nameVariable")
 
-      # Join ess layers into solution
-          ess_values <- sf::st_join(raw_sf %>% dplyr::select(dplyr::all_of(ess_layers)),
+          # Return NULL if no ESS layers
+          if (length(ess_layers) == 0) {
+            return(NULL)
+          }
+
+          # Calculate total value per ESS layer across all planning units
+          total_values <- raw_sf %>%
+            dplyr::select(dplyr::all_of(ess_layers)) %>%
+            sf::st_drop_geometry() %>%
+            tidyr::pivot_longer(cols = dplyr::everything(), names_to = "nameVariable", values_to = "Value") %>%
+            dplyr::summarise(TotalValue = sum(.data$Value, na.rm = TRUE), .by = "nameVariable")
+
+          # Calculate value in selected planning units (solution)
+          ess_values <- sf::st_join(raw_sf %>% dplyr::select(dplyr::all_of(c(ess_layers, "geometry"))),
                              solution(),
              join = sf::st_equals) %>%
-            dplyr::filter(.data$solution_1 == 1) %>% # Filter to selected solution
-            dplyr::select(dplyr::all_of(ess_layers)) %>% # Keep only ESS layers
+            dplyr::filter(.data$solution_1 == 1) %>%
+            dplyr::select(dplyr::all_of(ess_layers)) %>%
             sf::st_drop_geometry() %>%
-            tidyr::pivot_longer(cols = everything(), names_to = "ESS", values_to = "Value") %>%
-            dplyr::left_join(Dict %>% dplyr::select(nameVariable, nameCommon), by = c("ESS" = "nameVariable")) %>%
-            dplyr::summarise(dotpoint = paste0("* ", dplyr::first(.data$nameCommon), ": ", round(sum(.data$Value), 2), " T"), .by = "ESS") %>%
-            dplyr::pull("dotpoint") %>%
-            paste(collapse = "\n")
+            tidyr::pivot_longer(cols = dplyr::everything(), names_to = "nameVariable", values_to = "Value") %>%
+            dplyr::summarise(SelectedValue = sum(.data$Value, na.rm = TRUE), .by = "nameVariable") %>%
+            dplyr::left_join(total_values, by = "nameVariable") %>%
+            dplyr::left_join(Dict %>% dplyr::select(nameVariable, nameCommon, justification, units),
+                             by = "nameVariable") %>%
+            dplyr::mutate(
+              Name = .data$nameCommon,
+              Description = .data$justification,
+              Value = paste0(round(.data$SelectedValue, 0), " ", .data$units),
+              pct_selected = round((.data$SelectedValue / .data$TotalValue) * 100, 1),
+              pct_unselected = 100 - .data$pct_selected
+            ) %>%
+            dplyr::select(Name, Description, Value, pct_selected, pct_unselected)
 
           return(ess_values)
 
@@ -991,9 +1010,67 @@ output$txt_ess <- shiny::renderText(
           shiny::bindEvent(input$analyse)
 
 
-        output$soln_ess <- shiny::renderText(
-      shiny::markdown(ess_para())
-        ) %>%
+        output$soln_ess <- reactable::renderReactable({
+          ess_data <- ess_para()
+
+          if (is.null(ess_data)) {
+            return(NULL)
+          }
+
+          reactable::reactable(
+            ess_data,
+            columns = list(
+              Name = reactable::colDef(name = "Name", align = "left", minWidth = 120),
+              Description = reactable::colDef(name = "Description", align = "left", minWidth = 250),
+              Value = reactable::colDef(name = "Value", align = "right", minWidth = 80),
+              pct_selected = reactable::colDef(
+                name = "% of Value in Solution",
+                align = "center",
+                minWidth = 200,
+                cell = function(value, index) {
+                  pct_sel <- ess_data$pct_selected[index]
+                  pct_unsel <- ess_data$pct_unselected[index]
+
+                  # Create progress bar using CSS classes from custom.css
+                  # Pass --pct variable for consistent gradient scaling across rows
+                  htmltools::div(
+                    class = "ess-progress-container",
+                    htmltools::div(
+                      class = "ess-progress-bar",
+                      htmltools::div(
+                        class = "ess-progress-selected",
+                        style = sprintf("width: %.1f%%; --pct: %.1f;", pct_sel, pct_sel),
+                        if (pct_sel >= 12) sprintf("%.1f%%", pct_sel) else ""
+                      ),
+                      htmltools::div(
+                        class = "ess-progress-unselected",
+                        style = sprintf("width: %.1f%%;", pct_unsel),
+                        if (pct_unsel >= 12) sprintf("%.1f%%", pct_unsel) else ""
+                      )
+                    ),
+                    htmltools::div(
+                      class = "ess-progress-legend",
+                      htmltools::span(class = "ess-legend-selected"),
+                      "In Solution",
+                      htmltools::span(class = "ess-legend-unselected"),
+                      "Not Selected"
+                    )
+                  )
+                },
+                html = TRUE
+              ),
+              pct_unselected = reactable::colDef(show = FALSE)
+            ),
+            defaultColDef = reactable::colDef(
+              headerStyle = list(background = "#f7f7f8", fontWeight = "600")
+            ),
+            bordered = TRUE,
+            striped = TRUE,
+            highlight = TRUE,
+            compact = FALSE,
+            fullWidth = TRUE
+          )
+        }) %>%
           shiny::bindEvent(input$analyse)
 
       }
