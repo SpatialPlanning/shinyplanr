@@ -30,10 +30,6 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   if (clim_input == "NA") { # Not Climate-smart
     p_dat <- out_sf # Create the problem data. Nothing more needed if not climate-smart
 
-    print(dim(p_dat))
-
-    print(dim(out_sf))
-
   } else { # Climate-smart
 
     # Add climate data and run climate approach --------------------------------------------------------

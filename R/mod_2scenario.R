@@ -601,8 +601,6 @@ mod_2scenario_server <- function(id) {
             return(NULL)
           }
 
-          print(dim(solution()))
-
           # Use consolidated helper function
           plot1 <- fplot_solution_with_constraints(
             soln = solution(),
