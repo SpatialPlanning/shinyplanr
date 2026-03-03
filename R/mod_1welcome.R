@@ -47,51 +47,33 @@ mod_1welcome_ui <- function(id) {
       class = "home-footer",
       shiny::fluidRow(
         shiny::column(
-          width = 3,
+          width = 4,
           div(
             class = "contact-section",
-            shiny::h5("Further information:", class = "funding-title"),
-            shiny::p(
-              "General Enquiries: ",
-              a("Emily Stokes",
-                href = "https://www.waittinstitute.org/team",
-                target = "_blank",
-                class = "contact-link"),
-              shiny::br(),
-              "About the app: ",
-              a("Jason Everett",
-                href = "https://jaseeverett.github.io",
-                target = "_blank",
-                class = "contact-link")
-            )
+            shiny::markdown(tx_1footer)
           )
         ),
-        shiny::column(
-          width = 1),
-
         shiny::column(
           width = 4,
           shiny::div(class = "contact-section",
-                     shiny::p("This shiny application was developed by researchers at The University of Queensland."),
-                     shiny::p("\u00A9 2025"),
+                     shiny::p("This application was developed by researchers at The University of Queensland."),
+                     shiny::p(paste0("\u00A9 ", format(Sys.Date(), "%Y"))),
           )
         ),
         shiny::column(
-          width = 1),
-        shiny::column(
-          width = 3,
+          width = 4,
           div(
             class = "funding-section",
             shiny::h5("Funded by:", class = "funding-title"),
             div(
               class = "funding-logos",
-              a(img(src = "www/logo.png",
-                    alt = "Waitt Institute Logo"),
-                href = "https://waittinstitute.org",
+              a(img(src = "www/logo_funder.png",
+                    alt = "Funder Logo"),
+                href = options$funder_url,
                 target = "_blank"),
               a(img(src = "www/uq-logo-white.png",
                     alt = "UQ Logo"),
-                href = "https://www.uq.edu.au",
+                href = "https://spatialplanning.github.io",
                 target = "_blank")
             )
           )

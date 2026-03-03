@@ -1,0 +1,2 @@
+These bar plot shows the level of protection (% of total area selected) for each feature in the solution. The lower lighter portion of each bar represents the target set for each feature. Hollow bars with a black border show incidental protection — features not specifically chosen but overlapping with selected planning units.
+

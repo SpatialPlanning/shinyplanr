@@ -1,0 +1,43 @@
+nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Continental Shelf (0-200m),continental_shelf,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,The shallow ocean zone from the coast to 200m depth.
+Upper Bathyal (200-800m),upper_bathyal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,The upper slope zone from 200-800m depth.
+Lower Bathyal (800-3500m),lower_bathyal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,The lower slope zone from 800-3500m depth.
+Abyssal (3500-6500m),abyssal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,,The abyssal zone found on abyssal plains from 3500-6500m.
+Hadal (>6500m),hadal,Depth Zones,Depth,Feature,30,0,85,FALSE,TRUE,,The deepest ocean zone found in trenches below 6500m.
+Abyssal Hills,Abyssal_Hills,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Small elevations on the abyssal plain.
+Abyssal Plains,Abyssal_Plains,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Flat areas of the deep ocean floor.
+Bridges,Bridges,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Seafloor features connecting elevated areas.
+Canyons (Blind),Canyons_blind,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Submarine canyons that do not incise the continental shelf.
+Canyons (Shelf-incising),Canyons_shelf_incising,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Submarine canyons that cut into the continental shelf.
+Escarpments,Escarpments,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Long cliff-like features on the seafloor.
+Guyots,Guyots,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Flat-topped seamounts (tablemounts).
+Large Basins,Large_basins_of_seas_and_oceans,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Large enclosed or semi-enclosed depressions on the seafloor.
+Major Ocean Basins,Major_ocean_basins,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,The main structural basins of the ocean floor.
+Plateaus,Plateaus,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Flat elevated areas of the seafloor.
+Ridges,Ridges,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Elongated elevated features on the seafloor.
+Rift Valleys,Rift_valleys,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Linear depressions associated with tectonic spreading.
+Sills,Sills,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Shallow ridges separating basins.
+Small Basins,Small_basins_of_seas_and_oceans,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Smaller enclosed depressions on the seafloor.
+Spreading Ridges,Spreading_ridges,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Mid-ocean ridges where new seafloor is created.
+Terraces,Terraces,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Step-like features on the seafloor.
+Trenches,Trenches,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Deep linear depressions at subduction zones.
+Troughs,Troughs,Geomorphology,GeoMorph,Feature,30,0,85,TRUE,TRUE,,Long narrow depressions on the seafloor.
+Shelf Basins (Perched),Basins_perched_on_the_shelf,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Basins located on the continental shelf.
+Slope Basins (Perched),Basins_perched_on_the_slope,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Basins located on the continental slope.
+Fans,Fans,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Submarine fan deposits at canyon mouths.
+Glacial Troughs,Glacial_troughs,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,U-shaped valleys carved by glaciers.
+Large Shelf Valleys,Large_shelf_valleys_and_glacial_troughs,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Major valleys crossing the continental shelf.
+Moderate Shelf Valleys,Moderate_size_shelf_valley,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Medium-sized valleys on the continental shelf.
+Rises,Rises,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Gradual elevations of the seafloor.
+Small Shelf Valleys,Small_shelf_valley,Geomorphology,GeoMorph,Feature,30,0,85,FALSE,TRUE,,Minor valleys on the continental shelf.
+Seamounts,seamounts,Seamounts,Seamounts,Feature,30,0,85,TRUE,TRUE,,Underwater mountains rising >1000m from the seafloor.
+Knolls,knolls,Knolls,Knolls,Feature,30,0,85,TRUE,TRUE,,Smaller underwater hills rising 500-1000m from the seafloor.
+Environmental Zone 1,enviro_zone_1,Environmental Zones,EnviroZone,Feature,30,0,85,TRUE,TRUE,,Data-driven environmental classification zone.
+Environmental Zone 2,enviro_zone_2,Environmental Zones,EnviroZone,Feature,30,0,85,TRUE,TRUE,,Data-driven environmental classification zone.
+Environmental Zone 3,enviro_zone_3,Environmental Zones,EnviroZone,Feature,30,0,85,TRUE,TRUE,,Data-driven environmental classification zone.
+Antipatharia (Black Coral),antipatharia,Deep-sea Corals,Corals,Feature,30,0,85,TRUE,TRUE,,Predicted habitat suitability for black corals.
+Cold-water Corals,cold_corals,Deep-sea Corals,Corals,Feature,30,0,85,TRUE,TRUE,,Predicted habitat suitability for cold-water corals.
+Octocorals,octocorals,Deep-sea Corals,Corals,Feature,30,0,85,TRUE,TRUE,,Predicted habitat suitability for soft corals.
+Equal Area Cost,Cost_Area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,All planning units have equal cost based on their area.
+Distance to Coast,Cost_Distance,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,Cost based on distance from the coast.
+Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas.

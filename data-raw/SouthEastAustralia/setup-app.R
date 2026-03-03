@@ -127,23 +127,23 @@ tx <- list(
   welcome = list(
     list(
       title = "Welcome",
-      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome1.md"))
+      text = readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1welcome1.md"))
     ),
     list(
       title = "Terminology",
-      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome2.md"))
+      text = readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1welcome2.md"))
     ),
     list(
       title = "Instructions",
-      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome3.md"))
+      text = readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1welcome3.md"))
     ),
     list(
       title = "C.A.R.E.",
-      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome4.md"))
+      text = readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1welcome4.md"))
     ),
     list(
       title = "Credit",
-      text = readr::read_file(file.path(data_dir, "shinyplanr_1welcome5.md"))
+      text = readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1welcome5.md"))
     )
   )
 )
@@ -153,23 +153,23 @@ tx <- list(
 
 #TODO Add all these to the tx list above.
 # MODULE 2 - SCENARIO ------------------------------------------------------
-tx_2solution <- readr::read_file(file.path(data_dir, "shinyplanr_2solution.md"))
-tx_2targets <- readr::read_file(file.path(data_dir, "shinyplanr_2targets.md"))
-tx_2cost <- readr::read_file(file.path(data_dir, "shinyplanr_2cost.md"))
-tx_2climate <- readr::read_file(file.path(data_dir, "shinyplanr_2climate.md"))
+tx_2solution <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2solution.md"))
+tx_2targets <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2targets.md"))
+tx_2cost <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2cost.md"))
+tx_2climate <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2climate.md"))
 
 # MODULE 3 - COMPARISON ------------------------------------------------------
 
 
 
 # MODULE 6 - HELP ------------------------------------------------------
-tx_6faq <- readr::read_file(file.path(data_dir, "shinyplanr_6faq.md"))
-tx_6changelog <- readr::read_file(file.path(data_dir, "shinyplanr_6changelog.md"))
-tx_6technical <- readr::read_file(file.path(data_dir, "shinyplanr_6technical.md"))
+tx_6faq <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_6faq.md"))
+tx_6changelog <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_6changelog.md"))
+tx_6technical <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_6technical.md"))
 
 
 # MODULE 7 - CREDIT ------------------------------------------------------
-# tx_7credit <- readr::read_file(file.path(data_dir, "shinyplanr_7credit.md"))
+# tx_7credit <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_7credit.md"))
 
 
 
