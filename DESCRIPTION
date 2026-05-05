@@ -9,12 +9,25 @@ Authors@R: c(
       role = c('cre', 'aut'), 
       comment = c(ORCID = "0000-0002-6681-8054")),
     person(
+      given = "Anthony J.",
+      family = "Richardson",
+      role = c("aut"),
+      email = "a.richardson1@uq.edu.au",
+      comment = c(ORCID = "0000-0002-9289-7366")
+      ),
+    person(
       given = "Sandra",
       family = "Neubert",
       role = c("aut"),
       email = "sandra.neubert97@gmail.com",
       comment = c(ORCID = "0000-0002-3112-4116")
-      )
+      ),
+    person(
+      given = "Daniel C.",
+      family = "Dunn", 
+      role = "aut",
+      email = "daniel.dunn@uq.edu.au", 
+      comment = c(ORCID = "0000-0001-8932-0681"))
     )
 Description: A generic app package to facilitate spatial planning in prioritizr and Shiny.
 License: MIT + file LICENSE

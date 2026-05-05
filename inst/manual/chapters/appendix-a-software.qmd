@@ -1,0 +1,443 @@
+# Software Setup {#sec-appendix-software}
+
+This appendix provides detailed instructions for setting up the software environment required to run and develop *shinyplanr* applications.
+
+## R and RStudio
+
+### Installing R
+
+Download and install R from CRAN:
+
+1. Visit [https://cran.r-project.org/](https://cran.r-project.org/)
+2. Select your operating system (Linux, macOS, or Windows)
+3. Download the latest version (R 4.3.0 or later recommended)
+4. Run the installer and follow the prompts
+
+::: {.callout-note}
+## R Version
+*shinyplanr* requires R version 4.1.0 or later. We recommend using the latest stable release for best compatibility.
+:::
+
+### Installing RStudio
+
+RStudio provides an integrated development environment for R:
+
+1. Visit [https://posit.co/download/rstudio-desktop/](https://posit.co/download/rstudio-desktop/)
+2. Download the free RStudio Desktop version for your operating system
+3. Run the installer
+
+[IMAGE: RStudio download page showing operating system options]
+
+## Required R Packages
+
+### Core Packages
+
+Install the core packages required for *shinyplanr*:
+
+```r
+# CRAN packages
+install.packages(c(
+  "shiny",
+  "golem",
+  "shinyjs",
+  "shinycssloaders",
+  "shinyWidgets",
+  "bslib",
+  "sf",
+  "terra",
+  "dplyr",
+  "tidyr",
+  "ggplot2",
+  "leaflet",
+  "DT",
+  "htmltools"
+))
+```
+
+### prioritizr
+
+Install *prioritizr* from CRAN or the development version:
+
+```r
+# From CRAN (stable)
+install.packages("prioritizr")
+
+# Development version (latest features)
+install.packages(
+  "prioritizr",
+  repos = c(
+    "https://prioritizr.r-universe.dev",
+    "https://cloud.r-project.org"
+  )
+)
+```
+
+### spatialplanr
+
+Install *spatialplanr* from GitHub:
+
+```r
+if (!require(remotes)) install.packages("remotes")
+remotes::install_github("SpatialPlanning/spatialplanr")
+```
+
+::: {.callout-warning}
+## Minimum Version
+*shinyplanr* requires *spatialplanr* version 0.6.9 or later. Check your version with `packageVersion("spatialplanr")`.
+:::
+
+### oceandatr
+
+Install *oceandatr* from GitHub:
+
+```r
+options(timeout = 9999)  # Extended timeout for large package
+remotes::install_github("emlab-ucsb/oceandatr")
+```
+
+### spatialgridr
+
+Usually installed automatically as a dependency, but can be installed manually:
+
+```r
+remotes::install_github("emlab-ucsb/spatialgridr")
+```
+
+### Complete Installation Script
+
+Run this script to install all required packages:
+  
+```r
+# Function to install if not present
+install_if_missing <- function(pkg, ...) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, ...)
+  }
+}
+
+# Install CRAN packages
+cran_packages <- c(
+  "shiny", "golem", "shinyjs", "shinycssloaders", 
+  "shinyWidgets", "bslib", "sf", "terra", "dplyr", 
+  "tidyr", "ggplot2", "leaflet", "DT", "htmltools",
+  "remotes", "rsconnect"
+)
+
+for (pkg in cran_packages) {
+  install_if_missing(pkg)
+}
+
+# Install prioritizr
+install_if_missing(
+  "prioritizr",
+  repos = c(
+    "https://prioritizr.r-universe.dev",
+    "https://cloud.r-project.org"
+  )
+)
+
+# Set timeout for large GitHub packages
+options(timeout = 9999)
+
+# Install GitHub packages
+if (!requireNamespace("spatialplanr", quietly = TRUE) || 
+    packageVersion("spatialplanr") < "0.6.9") {
+  remotes::install_github("SpatialPlanning/spatialplanr")
+}
+
+if (!requireNamespace("oceandatr", quietly = TRUE)) {
+  remotes::install_github("emlab-ucsb/oceandatr")
+}
+
+message("All packages installed successfully!")
+```
+
+## Optimisation Solvers
+
+*prioritizr* requires a mathematical programming solver. Several options are available.
+
+### HiGHS (Recommended for Most Users)
+
+*HiGHS* is a high-performance open-source solver that works well for most problems:
+
+```r
+# Install the highs R package
+install.packages("highs")
+
+# Verify installation
+library(highs)
+```
+
+*HiGHS* is automatically detected by *prioritizr* when installed.
+
+### CBC (Alternative Open-Source)
+
+CBC (COIN-OR Branch and Cut) is another open-source option:
+
+```r
+# Install Rcbc
+install.packages("Rcbc", repos = "https://cloud.r-project.org")
+```
+
+### Gurobi (Best Performance)
+
+*Gurobi* provides the best performance for large problems but requires a licence. Free academic licences are available.
+
+#### Obtaining Gurobi
+
+1. Visit [https://www.gurobi.com/](https://www.gurobi.com/)
+2. Create an account
+3. Apply for an academic licence (free for qualifying institutions)
+4. Download and install *Gurobi* for your operating system
+
+#### Installing the R Interface
+
+After installing *Gurobi*:
+
+```r
+# Find the R package in your Gurobi installation
+# (adjust path based on your Gurobi version and OS)
+
+# On macOS:
+install.packages("/Library/gurobi1100/macos_universal2/R/gurobi_11.0-0.tar.gz", 
+                 type = "source", repos = NULL)
+
+# On Windows:
+install.packages("C:/gurobi1100/win64/R/gurobi_11.0-0.tar.gz", 
+                 type = "source", repos = NULL)
+
+# On Linux:
+install.packages("/opt/gurobi1100/linux64/R/gurobi_11.0-0.tar.gz", 
+                 type = "source", repos = NULL)
+```
+
+#### Verifying Gurobi
+
+```r
+library(gurobi)
+
+# Check licence
+gurobi_version()
+```
+
+### Solver Comparison
+
+| Solver | Performance | Licence | Best For |
+|--------|------------|---------|----------|
+| *HiGHS* | Good | Open source | Most users |
+| CBC | Moderate | Open source | Basic problems |
+| *Gurobi* | Excellent | Commercial (free academic) | Large, complex problems |
+
+### Checking Available Solvers
+
+```r
+library(prioritizr)
+
+# List installed solvers
+available_solvers <- list(
+  HiGHS = requireNamespace("highs", quietly = TRUE),
+  CBC = requireNamespace("Rcbc", quietly = TRUE),
+  Gurobi = requireNamespace("gurobi", quietly = TRUE)
+)
+
+print(available_solvers)
+```
+
+## Spatial Libraries
+
+### GDAL, GEOS, and PROJ
+
+The sf and terra packages require system libraries for spatial operations.
+
+#### macOS
+
+Using Homebrew:
+
+```bash
+brew install gdal geos proj
+```
+
+Or use the pre-compiled binaries that come with the CRAN sf package.
+
+#### Windows
+
+Windows users generally do not need to install these separately - they are bundled with the sf package.
+
+#### Linux (Ubuntu/Debian)
+
+```bash
+sudo apt update
+sudo apt install libgdal-dev libgeos-dev libproj-dev
+```
+
+#### Linux (Fedora/CentOS)
+
+```bash
+sudo dnf install gdal-devel geos-devel proj-devel
+```
+
+### Verifying Spatial Setup
+
+```r
+library(sf)
+sf::sf_extSoftVersion()
+
+library(terra)
+terra::gdal()
+```
+
+## Development Dependencies
+
+For developing *shinyplanr* applications:
+
+### golem
+
+The *golem* package provides the framework for *shinyplanr*:
+
+```r
+install.packages("golem")
+```
+
+### devtools
+
+For package development:
+
+```r
+install.packages("devtools")
+```
+
+### usethis
+
+For project setup:
+
+```r
+install.packages("usethis")
+```
+
+### testthat
+
+For testing:
+
+```r
+install.packages("testthat")
+```
+
+## Quarto (Optional)
+
+For rendering this manual and other documentation:
+
+1. Visit [https://quarto.org/docs/get-started/](https://quarto.org/docs/get-started/)
+2. Download and install Quarto for your operating system
+3. Restart RStudio after installation
+
+Verify installation:
+
+```bash
+quarto --version
+```
+
+## Troubleshooting
+
+### Package Installation Fails
+
+If a package fails to install:
+
+1. **Check R version**: Ensure R is up-to-date
+2. **Update existing packages**: `update.packages(ask = FALSE)`
+3. **Clear package cache**: Restart R and try again
+4. **Check system dependencies**: Some packages require system libraries
+
+### sf Installation Issues
+
+If sf fails to install on Linux:
+
+```bash
+# Ubuntu/Debian
+sudo apt install libudunits2-dev libsqlite3-dev
+
+# Fedora/CentOS
+sudo dnf install udunits2-devel sqlite-devel
+```
+
+### GitHub Package Timeout
+
+For large GitHub packages:
+
+```r
+options(timeout = 9999)  # Increase timeout
+remotes::install_github("package/repo")
+```
+
+### Solver Not Found
+
+If *prioritizr* cannot find a solver:
+
+```r
+# Ensure solver package is loaded
+library(highs)
+
+# Or specify solver explicitly in add_default_solver()
+```
+
+### Memory Issues
+
+For large planning problems:
+
+```r
+# Increase memory limit (Windows)
+memory.limit(size = 16000)
+
+# Use 64-bit R for larger datasets
+```
+
+## Verifying Installation
+
+Run this script to verify your installation:
+
+```r
+# Check core packages
+packages <- c(
+  "shiny", "golem", "sf", "terra", "prioritizr", 
+  "spatialplanr", "leaflet", "dplyr"
+)
+
+check_packages <- function(pkgs) {
+  results <- sapply(pkgs, function(pkg) {
+    if (requireNamespace(pkg, quietly = TRUE)) {
+      paste("OK -", as.character(packageVersion(pkg)))
+    } else {
+      "MISSING"
+    }
+  })
+  data.frame(Package = names(results), Status = results, row.names = NULL)
+}
+
+print(check_packages(packages))
+
+# Check solver
+if (requireNamespace("highs", quietly = TRUE)) {
+  message("HiGHS solver: Available")
+} else if (requireNamespace("gurobi", quietly = TRUE)) {
+  message("Gurobi solver: Available")
+} else {
+  message("WARNING: No solver found")
+}
+
+# Check spatial libraries
+message("\nSpatial library versions:")
+print(sf::sf_extSoftVersion())
+```
+
+Expected output should show all packages as "OK" with version numbers, and at least one solver available.
+
+## Summary
+
+To run *shinyplanr*, you need:
+
+1. **R** (version 4.1.0 or later)
+2. **RStudio** (recommended)
+3. **Core R packages** (*shiny*, *sf*, *terra*, *prioritizr*, *spatialplanr*, etc.)
+4. **A solver** (*HiGHS* recommended for most users)
+5. **Spatial system libraries** (GDAL, GEOS, PROJ)
+
+Once these are installed, you can proceed to set up your *shinyplanr* application.
