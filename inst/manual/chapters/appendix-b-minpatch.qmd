@@ -1,0 +1,215 @@
+# MinPatch: Minimum Patch Size Planning {#sec-appendix-minpatch}
+
+This appendix describes MinPatch, a minimum patch size approach to spatial conservation planning. While MinPatch is not currently implemented in *shinyplanr*, it represents an important methodological advance that may be incorporated in future versions.
+
+## Overview
+
+MinPatch is a spatial planning tool developed to address a common limitation of systematic conservation planning: the tendency to produce spatially fragmented solutions. Standard prioritisation algorithms often select scattered planning units, which may not be ecologically meaningful or practically implementable as protected areas.
+
+MinPatch addresses this by enforcing minimum contiguous area requirements during the prioritisation process.
+
+## The Fragmentation Problem
+
+Traditional minimum set approaches (such as those used in *prioritizr* and *Marxan*) select the smallest set of planning units that meet conservation targets. While mathematically optimal, this can lead to:
+
+- **Scattered selections**: Small, disconnected patches across the planning region
+- **Edge effects**: High perimeter-to-area ratios reducing habitat quality
+- **Management challenges**: Difficulty enforcing protection across many small sites
+- **Ecological limitations**: Insufficient area for species with large home ranges
+
+[IMAGE: Example comparison of fragmented vs clustered solutions]
+
+### Standard Approaches to Fragmentation
+
+Several methods exist to reduce fragmentation:
+
+| Approach | Mechanism | Limitation |
+|----------|-----------|------------|
+| Boundary penalties | Penalise solutions with long edges | Requires tuning penalty weight |
+| Contiguity constraints | Require all selections to be connected | Often computationally infeasible |
+| Spatial clustering | Post-hoc clustering of solutions | Does not guarantee minimum sizes |
+
+## MinPatch Methodology
+
+MinPatch takes a different approach by iteratively solving the prioritisation problem while requiring that selected patches meet a minimum size threshold.
+
+### Algorithm Overview
+
+```{mermaid}
+flowchart TD
+    A[Initial problem] --> B[Solve prioritisation]
+    B --> C{All patches >= minimum size?}
+    C -->|Yes| D[Return solution]
+    C -->|No| E[Identify small patches]
+    E --> F[Expand or merge patches]
+    F --> G[Update constraints]
+    G --> B
+```
+
+The key steps are:
+
+1. **Initial solve**: Run standard prioritisation to identify candidate areas
+2. **Patch identification**: Identify spatially contiguous groups of selected planning units
+3. **Size check**: Flag patches below the minimum size threshold
+4. **Iterative refinement**: Expand small patches or merge with neighbours
+5. **Constraint update**: Lock in valid patches, constrain expansion direction
+6. **Re-solve**: Repeat until all patches meet size requirements
+
+### Key Parameters
+
+| Parameter | Description | Typical Values |
+|-----------|-------------|----------------|
+| Minimum patch size | Smallest acceptable contiguous area | 50-500 km² |
+| Expansion method | How to grow small patches | Nearest neighbour, lowest cost |
+| Maximum iterations | Stopping criterion | 10-100 |
+
+## Ecological Rationale
+
+Minimum patch sizes are ecologically justified based on:
+
+### Species Area Requirements
+
+Many species require minimum habitat areas to maintain viable populations:
+
+- **Large predators**: May need 100+ km² for a single territory
+- **Migratory species**: Require connected corridors
+- **Metapopulations**: Need patches large enough for source populations
+
+### Edge Effects
+
+Smaller patches have proportionally more edge habitat:
+
+$$
+\text{Edge ratio} = \frac{\text{Perimeter}}{\text{Area}}
+$$
+
+For a circular patch, this ratio increases as patch size decreases. Edge habitats often experience:
+
+- Altered microclimate
+- Increased predation
+- Invasive species incursion
+- Reduced habitat quality
+
+### Management Efficiency
+
+Larger, fewer patches generally mean:
+
+- Lower monitoring costs per unit area
+- Easier enforcement
+- Reduced edge management requirements
+
+## Applications
+
+MinPatch is particularly useful for:
+
+### Marine Protected Areas
+
+MPAs benefit from minimum sizes because:
+
+- Fish populations need sufficient area for recruitment
+- Larval dispersal requires connected habitat
+- Enforcement is more practical for larger areas
+- Spillover effects increase with MPA size
+
+### Terrestrial Reserves
+
+For land-based conservation:
+
+- Wildlife corridors need minimum widths
+- Core habitat areas should exceed edge zones
+- Land acquisition is more practical for contiguous areas
+
+### Multiple-Use Zoning
+
+When creating zoned management plans:
+
+- Activity-based zones need practical minimum sizes
+- Buffer zones require adequate width
+- Core protection areas should be ecologically meaningful
+
+## Comparison with *prioritizr* Approaches
+
+*prioritizr* offers several related features:
+
+### Boundary Penalties
+
+```r
+problem %>%
+  add_boundary_penalties(penalty = 0.001)
+```
+
+**Pros**: Encourages clumping, mathematically tractable
+
+**Cons**: Does not guarantee minimum sizes, requires penalty tuning
+
+### Contiguity Constraints
+
+```r
+problem %>%
+  add_contiguity_constraints()
+```
+
+**Pros**: Ensures single connected solution
+
+**Cons**: Very computationally expensive for large problems, only ensures connectivity (not size)
+
+### Linear Penalties
+
+```r
+problem %>%
+  add_linear_penalties(penalty = 1, data = size_penalty_layer)
+```
+
+**Pros**: Flexible penalty structure
+
+**Cons**: Still does not guarantee minimums
+
+### How MinPatch Differs
+
+MinPatch guarantees that every selected patch meets the minimum size requirement, rather than using penalties that encourage (but do not require) larger patches.
+
+## Implementation Status
+
+::: {.callout-important}
+## Not Yet Implemented
+MinPatch is not currently implemented in *shinyplanr*. The functionality described here represents planned future development.
+:::
+
+### Current Workarounds
+
+Until MinPatch is integrated, users can:
+
+1. **Use boundary penalties**: Increase the penalty parameter in the scenario builder to encourage clustering
+
+2. **Post-process solutions**: Filter solutions to remove patches below minimum sizes, then re-run with locked-in constraints
+
+3. **Manual refinement**: Use the comparison module to iteratively adjust scenarios
+
+### Planned Integration
+
+Future versions of *shinyplanr* may include:
+
+- Minimum patch size parameter in the scenario builder
+- Automatic patch size reporting in solution summaries
+- Visual highlighting of patches below threshold
+- Iterative refinement workflow
+
+## Further Reading
+
+For more information on spatial connectivity in conservation planning:
+
+- **Contiguity in *prioritizr***: [prioritizr.net/reference/add_contiguity_constraints.html](https://prioritizr.net/reference/add_contiguity_constraints.html)
+- **Boundary penalties**: [prioritizr.net/reference/add_boundary_penalties.html](https://prioritizr.net/reference/add_boundary_penalties.html)
+- **Reserve design principles**: Margules and Pressey [-@margules2000systematic]
+
+## Summary
+
+MinPatch offers a promising approach to ensuring that conservation solutions are not only mathematically optimal but also ecologically and practically viable. By enforcing minimum contiguous area requirements, MinPatch can produce solutions better suited to real-world implementation.
+
+While not yet available in *shinyplanr*, users interested in this functionality should:
+
+1. Use boundary penalties as a current alternative
+2. Review solutions for patch size distributions
+3. Consider manual refinement for critical areas
+
+Future updates to *shinyplanr* will incorporate MinPatch capabilities as they become available.

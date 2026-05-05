@@ -86,6 +86,33 @@ mod_3compare_ui <- function(id) {
                                 dplyr::filter(.data$type == "Cost")),
       ),
 
+      shinyjs::hidden(div(
+        id = ns("switchMinShortfall"),
+        shiny::h3("Choose a Budget"),
+        shiny::p("This analysis will use the minimum shortfall objective which aims to find the set of
+                 planning units that minimize the overall shortfall for the targets for as many features
+                 as possible while staying within a fixed budget."),
+        shiny::br(),
+        shiny::p("Choose the total budget (% of cost layer) for your analysis."),
+        shiny::splitLayout(
+          shiny::numericInput(
+            inputId = ns("budget1"),
+            label = "Budget 1 (%)",
+            value = 30,
+            min = 0,
+            max = 100
+          ),
+          shiny::numericInput(
+            inputId = ns("budget2"),
+            label = "Budget 2 (%)",
+            value = 30,
+            min = 0,
+            max = 100
+          ),
+        ),
+      )),
+
+
 
       shinyjs::hidden(div(
         id = ns("switchClimSmart"),
@@ -254,12 +281,21 @@ mod_3compare_ui <- function(id) {
         ),
         tabPanel("Report",
                  value = 10,
-                 shiny::span(shiny::h2("Generate Comparison Report")),
-                 shiny::p("Download a comprehensive HTML report comparing both scenarios: maps, targets, costs, climate, details, and logs."),
+                 shiny::span(shiny::h2("Generate Analysis Report")),
+                 shiny::p("Download a comprehensive HTML report containing all analysis results from this scenario."),
+                 shiny::p("The report includes:"),
+                 shiny::tags$ul(
+                   shiny::tags$li("Comparison map"),
+                   shiny::tags$li("Solution map with constraints"),
+                   shiny::tags$li("Target achievement chart"),
+                   shiny::tags$li("Cost analysis visualization"),
+                   shiny::tags$li("Climate resilience analysis (if enabled)"),
+                   shiny::tags$li(shiny::tagList(shiny::em("prioritizr"), " log")),
+                 ),
                  shiny::br(),
-                 shiny::downloadButton(ns("downloadReportCompare"), "Generate HTML Report",
-                                       class = "btn btn-primary btn-lg",
+                 shiny::downloadButton(ns("downloadReportCompare"), "Download Report",
                                        style = "padding:10px 20px; font-size:120%"),
+                 shiny::uiOutput(ns("reportStatus")),
                  shiny::br(),
                  shiny::br(),
                  shiny::p(shiny::em("Note: Report generation may take a few moments. The file will download automatically when ready."),
@@ -331,10 +367,23 @@ mod_3compare_server <- function(id) {
       shiny::hideTab(inputId = "tabs", target = "7", session = session)
     }
 
-      # Hide the Report tab if include_report is FALSE
-      if (!isTRUE(options$include_report)) {
-        shiny::hideTab(inputId = "tabs", target = "10", session = session)
-      }
+    ## Define objective function
+    if (options$obj_func == "min_shortfall") {
+      shinyjs::show(id = "switchMinShortfall")
+    } else {
+      shinyjs::hide(id = "switchMinShortfall")
+    }
+
+    if (options$obj_func == "min_set") {
+      shinyjs::show(id = "switchMinSet")
+    } else {
+      shinyjs::hide(id = "switchMinSet")
+    }
+
+    # Hide the Report tab if include_report is FALSE
+    if (!isTRUE(options$include_report)) {
+      shiny::hideTab(inputId = "tabs", target = "10", session = session)
+    }
 
     if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchConstraints")
@@ -354,7 +403,8 @@ mod_3compare_server <- function(id) {
                         },ignoreInit = TRUE
     )
 
-    # # Go back to the first tab when analyse is clicked.
+    # Go back to the first tab when analyse is clicked.
+    # TODO is this working?
     shiny::observeEvent(input$analyse, {
       shiny::updateTabsetPanel(session, "tabs", selected = 1)
     })
@@ -365,7 +415,7 @@ mod_3compare_server <- function(id) {
     })
 
 
-    # TODO This needs to be made generic.... somehow....
+    # TODO I would like to turn this into a function
 
     # Generic lock-in/lock-out toggling for all features (Scenario 1)
     # Pair lock-in/lock-out toggling only for matching features (Scenario 1)
@@ -410,6 +460,7 @@ mod_3compare_server <- function(id) {
 
     # Get Target Data
     targetData1 <- shiny::reactive({
+
       targets <- fget_targets_with_bioregions(input, name_check = "sli_", Dict = Dict)
       return(targets)
     })
@@ -543,7 +594,8 @@ mod_3compare_server <- function(id) {
             # Only keep planning units that are in at least one scenario
             comp_out <- comp_sf %>%
               dplyr::filter(.data$comparison != "Neither scenario") %>%
-              dplyr::select("comparison")
+              dplyr::select("comparison") %>%
+              sf::st_transform("EPSG:4326")
 
             # Write GeoJSON
             sf::st_write(comp_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
@@ -695,7 +747,10 @@ mod_3compare_server <- function(id) {
               }
             }
 
-            sol_out <- dplyr::select(sol, "solution")
+            sol_out <- sol %>%
+              dplyr::select("solution") %>%
+              sf::st_transform("EPSG:4326")
+
             sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
           }
         )
@@ -724,7 +779,10 @@ mod_3compare_server <- function(id) {
               }
             }
 
-            sol_out <- dplyr::select(sol, "solution")
+            sol_out <- sol %>%
+              dplyr::select("solution") %>%
+              sf::st_transform("EPSG:4326")
+
             sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
           }
         )
@@ -1133,12 +1191,20 @@ mod_3compare_server <- function(id) {
         content = function(file) {
           # Show progress notification
           shiny::showNotification(
-            "Generating comparison report... This may take a moment.",
+            "Generating comparison report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
             duration = NULL,
             closeButton = FALSE,
             id = "report_progress_compare",
             type = "message"
           )
+
+          # Update UI status while generating
+          output$reportStatus <- shiny::renderUI({
+            shiny::tagList(
+              shiny::icon("spinner", class = "fa-spin"),
+              shiny::span(" Generating comparison report…")
+            )
+          })
 
           # Resolve template path
 
@@ -1223,6 +1289,14 @@ mod_3compare_server <- function(id) {
               type = "message",
               duration = 3
             )
+
+            # Update UI with success message
+            output$reportStatus <- shiny::renderUI({
+              shiny::tagList(
+                shiny::icon("check-circle"),
+                shiny::span(paste(" Report generated at", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
+              )
+            })
           }, error = function(e) {
             shiny::removeNotification("report_progress_compare")
             shiny::showNotification(
@@ -1230,6 +1304,14 @@ mod_3compare_server <- function(id) {
               type = "error",
               duration = 10
             )
+
+            # Update UI with error
+            output$reportStatus <- shiny::renderUI({
+              shiny::tagList(
+                shiny::icon("exclamation-triangle"),
+                shiny::span(paste(" Error generating comparison report:", e$message))
+              )
+            })
           })
         }
       )

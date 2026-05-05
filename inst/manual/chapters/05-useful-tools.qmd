@@ -1,0 +1,576 @@
+# Useful Tools for Spatial Planning {#sec-useful-tools}
+
+This chapter provides an overview of R packages that are useful for building *shinyplanr* applications and conducting spatial prioritisation analyses. We cover data acquisition with *oceandatr*, planning workflows with *spatialplanr*, and optimisation with *prioritizr*.
+
+## Overview
+
+The *shinyplanr* ecosystem relies on several interconnected packages:
+
+```{mermaid}
+flowchart LR
+    A[oceandatr] -->|Data| B[spatialgridr]
+    B -->|Grid| C[spatialplanr]
+    C -->|Climate-smart<br>features| D[prioritizr]
+    D -->|Solutions| E[shinyplanr]
+```
+
+| Package | Purpose | Website |
+|---------|---------|---------|
+| *oceandatr* | Download marine spatial data | [emlab-ucsb.github.io/oceandatr](https://emlab-ucsb.github.io/oceandatr/) |
+| *spatialgridr* | Create and manipulate spatial grids | [emlab-ucsb.github.io/spatialgridr](https://emlab-ucsb.github.io/spatialgridr/) |
+| *spatialplanr* | Climate-smart planning utilities | [spatialplanning.github.io/spatialplanr](https://spatialplanning.github.io/spatialplanr/) |
+| *prioritizr* | Conservation prioritisation | [prioritizr.net](https://prioritizr.net/) |
+
+## oceandatr {#sec-oceandatr}
+
+The *oceandatr* package provides simple functions for acquiring, processing, and gridding ocean data. It is particularly useful for creating initial data layers when setting up *shinyplanr* for a new region.
+
+### Installation
+
+```r
+if (!require(remotes)) install.packages("remotes")
+options(timeout = 9999)  # Large package, may need extended timeout
+remotes::install_github("emlab-ucsb/oceandatr")
+```
+
+### Getting Boundaries
+
+Use `get_boundary()` to obtain EEZ or land boundaries:
+
+```r
+library(oceandatr)
+
+# Get Exclusive Economic Zone
+fiji_eez <- get_boundary(name = "Fiji", type = "eez")
+
+# Get land boundary
+fiji_land <- get_boundary(name = "Fiji", type = "land")
+
+# Plot to verify
+plot(fiji_eez[1], col = "lightblue")
+```
+
+[IMAGE: Example of EEZ boundary plot for a Pacific island nation]
+
+::: {.callout-tip}
+## Finding Country Names
+Country names must match the [Marine Regions](https://www.marineregions.org/gazetteer.php) database. Search there if your country name is not recognised.
+:::
+
+### Creating Spatial Grids
+
+Use `get_grid()` to create planning unit grids:
+
+```r
+# Define projection (equal-area for spatial planning)
+fiji_projection <- "+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84 +units=m +no_defs"
+
+# Create hexagonal grid
+fiji_grid <- get_grid(
+  boundary = fiji_eez,
+  resolution = 10000,  # 10 km resolution
+  crs = fiji_projection
+)
+
+# Plot the grid
+terra::plot(fiji_grid, col = "gold3", legend = FALSE)
+```
+
+Grid output options:
+
+- `"terra"`: SpatRaster object (default)
+- `"sf_hex"`: Hexagonal sf polygons
+- `"sf_square"`: Square sf polygons
+
+### Bathymetry
+
+Download bathymetry data from GEBCO:
+
+```r
+# Raw bathymetry (depth values)
+bathymetry <- get_bathymetry(
+  spatial_grid = fiji_grid,
+  classify_bathymetry = FALSE
+)
+
+# Classified depth zones
+depth_zones <- get_bathymetry(
+  spatial_grid = fiji_grid,
+  classify_bathymetry = TRUE
+)
+```
+
+Classified depth zones include:
+
+| Zone | Depth Range |
+|------|-------------|
+| Continental Shelf | 0 - 200 m |
+| Upper Bathyal | 200 - 800 m |
+| Lower Bathyal | 800 - 3,500 m |
+| Abyssal | 3,500 - 6,500 m |
+| Hadal | > 6,500 m |
+
+[IMAGE: Example bathymetry map with depth zones]
+
+### Geomorphology
+
+Download seafloor geomorphological features:
+
+```r
+geomorphology <- get_geomorphology(spatial_grid = fiji_grid)
+
+# Remove empty layers (features not present in your area)
+geomorphology <- remove_empty_layers(geomorphology)
+```
+
+Features include ridges, canyons, plateaus, escarpments, trenches, and more (from Harris et al. 2014).
+
+### Seamounts and Knolls
+
+```r
+# Seamounts: peaks > 1000m above seafloor
+seamounts <- get_seamounts(
+  spatial_grid = fiji_grid,
+  buffer = 30000  # 30 km buffer around peaks
+)
+
+# Knolls: smaller features (200-1000m)
+knolls <- get_knolls(spatial_grid = fiji_grid)
+```
+
+### Deep-Sea Coral Habitat
+
+```r
+coral_habitat <- get_coral_habitat(spatial_grid = fiji_grid)
+```
+
+Returns habitat suitability for:
+
+- **Antipatharia (Black Coral)**: Associated with increased biodiversity
+- **Cold-water Corals**: Important habitats and nursery areas
+- **Octocorals**: Important for invertebrates and fish
+
+### Environmental Zones
+
+Create data-driven bioregions based on environmental clustering:
+
+```r
+enviro_zones <- get_enviro_zones(
+  spatial_grid = fiji_grid,
+  num_clusters = 5,      # Number of zones
+  show_plots = TRUE      # Show diagnostic plots
+)
+```
+
+Environmental variables used include sea surface temperature, salinity, chlorophyll, nutrients, and more from Bio-ORACLE.
+
+### Distance Calculations
+
+```r
+# Distance to coastline
+dist_coast <- get_dist2coast(spatial_grid = fiji_grid)
+
+# Distance to any polygon
+dist_mpas <- get_dist2poly(
+  spatial_grid = fiji_grid,
+  polygon = my_mpas
+)
+```
+
+### Combining Data
+
+Combine all *oceandatr* outputs into a single dataset:
+
+```r
+# Download all layers
+bathy <- get_bathymetry(fiji_grid, classify_bathymetry = TRUE)
+geom <- get_geomorphology(fiji_grid) %>% remove_empty_layers()
+seamounts <- get_seamounts(fiji_grid, buffer = 30000)
+knolls <- get_knolls(fiji_grid)
+corals <- get_coral_habitat(fiji_grid)
+enviro <- get_enviro_zones(fiji_grid, num_clusters = 4)
+
+# Convert grid to sf and combine
+fiji_sf <- terra::as.polygons(fiji_grid) %>% 
+  sf::st_as_sf() %>%
+  dplyr::bind_cols(
+    bathy %>% terra::values() %>% as.data.frame(),
+    geom %>% terra::values() %>% as.data.frame(),
+    seamounts %>% terra::values() %>% as.data.frame(),
+    knolls %>% terra::values() %>% as.data.frame(),
+    corals %>% terra::values() %>% as.data.frame(),
+    enviro %>% terra::values() %>% as.data.frame()
+  )
+```
+
+## spatialplanr {#sec-spatialplanr}
+
+The *spatialplanr* package provides tools for streamlined spatial conservation prioritisation, with a focus on climate-smart planning.
+
+### Installation
+
+```r
+remotes::install_github("SpatialPlanning/spatialplanr")
+```
+
+### Key Functions
+
+#### Getting MPAs
+
+Download marine protected areas from the World Database on Protected Areas:
+
+```r
+library(spatialplanr)
+
+mpas <- splnr_get_MPAs(
+  PlanUnits = fiji_sf,
+  Countries = "Fiji"
+)
+```
+
+#### Distance to Coast
+
+Calculate distance from each planning unit to the coastline:
+
+```r
+fiji_sf <- fiji_sf %>%
+  splnr_get_distCoast(custom_coast = fiji_land)
+```
+
+This adds a `coastDistance_km` column useful for cost layers.
+
+#### Climate-Smart Features
+
+*spatialplanr* provides functions for incorporating climate change:
+
+```r
+# Add climate projections to features
+# (specific functions depend on your climate data source)
+```
+
+#### Applying Features to Grid
+
+Transfer data from polygons or rasters to planning units:
+
+```r
+# From polygon data
+habitat_in_grid <- splnr_apply_polygons(
+  PUs = fiji_sf,
+  data = habitat_polygons,
+  field = "habitat_type"
+)
+
+# From raster data  
+sst_in_grid <- splnr_apply_raster(
+  PUs = fiji_sf,
+  raster = sst_raster,
+  method = "mean"
+)
+```
+
+### Climate-Smart Planning Workflow
+
+A typical climate-smart workflow with *spatialplanr*:
+
+```r
+library(spatialplanr)
+library(prioritizr)
+
+# 1. Prepare features with current and future distributions
+features_current <- ...
+features_future <- ...
+
+# 2. Create climate-weighted features
+# Higher weights for climate refugia
+
+# 3. Build prioritizr problem incorporating climate
+problem <- problem(PUs, features) %>%
+  add_min_shortfall_objective(budget) %>%
+  add_relative_targets(0.3) %>%
+  # Add climate-smart constraints/weights
+  ...
+
+# 4. Solve
+solution <- solve(problem)
+```
+
+## prioritizr {#sec-prioritizr}
+
+The *prioritizr* package is the core optimisation engine for spatial conservation planning. *shinyplanr* uses *prioritizr* internally to solve planning problems.
+
+### Installation
+
+```r
+# From CRAN
+install.packages("prioritizr")
+
+# Development version
+install.packages(
+  "prioritizr",
+  repos = c(
+    "https://prioritizr.r-universe.dev",
+    "https://cloud.r-project.org"
+  )
+)
+```
+
+### Core Concepts
+
+#### Building Problems
+
+Every *prioritizr* analysis starts with a `problem()`:
+
+```r
+library(prioritizr)
+
+# Create a problem
+p <- problem(
+  x = planning_units,    # sf or raster
+  features = features    # Layer names or raster stack
+)
+```
+
+#### Adding Objectives
+
+Objectives define what you're trying to achieve:
+
+```r
+# Minimum set: smallest area meeting targets
+p <- p %>% add_min_set_objective()
+
+# Minimum shortfall: best outcome within budget
+p <- p %>% add_min_shortfall_objective(budget = 1000)
+
+# Maximum coverage: most representation within budget
+p <- p %>% add_max_cover_objective(budget = 1000)
+```
+
+#### Setting Targets
+
+Targets specify required representation:
+
+```r
+# Same target for all features
+p <- p %>% add_relative_targets(0.3)  # 30% of each
+
+# Different targets per feature
+p <- p %>% add_relative_targets(c(0.2, 0.3, 0.5))
+
+# Absolute targets
+p <- p %>% add_absolute_targets(c(1000, 500, 2000))  # km²
+```
+
+#### Adding Constraints
+
+Constraints restrict which solutions are valid:
+
+```r
+# Lock in existing protected areas
+p <- p %>% add_locked_in_constraints(locked_in_layer)
+
+# Lock out unavailable areas
+p <- p %>% add_locked_out_constraints(locked_out_layer)
+
+# Require contiguous selections
+p <- p %>% add_contiguity_constraints()
+```
+
+#### Adding Penalties
+
+Penalties discourage certain solution characteristics:
+
+```r
+# Boundary penalty (reduce fragmentation)
+p <- p %>% add_boundary_penalties(penalty = 0.001)
+
+# Linear penalties
+p <- p %>% add_linear_penalties(penalty = 1, data = penalty_layer)
+```
+
+#### Selecting Solvers
+
+Choose an optimisation solver:
+
+```r
+# Default: use best available
+p <- p %>% add_default_solver()
+
+# Specific solver
+p <- p %>% add_gurobi_solver(gap = 0.01)
+p <- p %>% add_highs_solver(gap = 0.01)
+p <- p %>% add_cbc_solver()
+```
+
+#### Solving
+
+Generate a solution:
+  
+```r
+solution <- solve(p)
+```
+
+### Evaluating Solutions
+
+After solving, evaluate the solution:
+
+```r
+# Number of selected planning units
+eval_n_summary(p, solution)
+
+# Total cost
+eval_cost_summary(p, solution)
+
+# Target achievement
+eval_target_coverage_summary(p, solution)
+
+# Feature representation
+eval_feature_representation_summary(p, solution)
+```
+
+### Complete Example
+
+```r
+library(prioritizr)
+library(sf)
+
+# Load data
+data(sim_pu_sf)        # Planning units
+data(sim_features)     # Feature rasters
+
+# Build problem
+p <- problem(sim_pu_sf, sim_features, cost_column = "cost") %>%
+  add_min_shortfall_objective(budget = 1000) %>%
+  add_relative_targets(0.2) %>%
+  add_locked_in_constraints("locked_in") %>%
+  add_locked_out_constraints("locked_out") %>%
+  add_boundary_penalties(penalty = 0.001) %>%
+  add_default_solver(gap = 0.1)
+
+# Print problem summary
+print(p)
+
+# Solve
+solution <- solve(p)
+
+# Evaluate
+eval_target_coverage_summary(p, solution)
+
+# Plot
+plot(solution["solution_1"])
+```
+
+### Management Zones
+
+For multiple-use planning, *prioritizr* supports management zones:
+
+```r
+# Define zones
+zones <- zones(
+  "no_take",        # Full protection
+  "restricted_use", # Limited activities
+  "general_use"     # Minimal restrictions
+)
+
+# Build zoned problem
+p <- problem(
+  x = planning_units,
+  features = features,
+  zones = zones
+)
+
+# Add zone-specific targets
+p <- p %>% add_relative_targets(
+  matrix(c(
+    0.2, 0.1, 0,     # Feature 1 targets per zone
+    0.3, 0.1, 0,     # Feature 2
+    0.1, 0.2, 0      # Feature 3
+  ), ncol = 3, byrow = TRUE)
+)
+```
+
+## spatialgridr
+
+The *spatialgridr* package (a dependency of *oceandatr*) provides grid creation and data extraction utilities.
+
+### Installation
+
+```r
+remotes::install_github("emlab-ucsb/spatialgridr")
+```
+
+### Key Functions
+
+#### Creating Grids
+
+```r
+library(spatialgridr)
+
+grid <- get_grid(
+  boundary = my_boundary,
+  resolution = 10000,
+  crs = my_projection,
+  output = "sf_hex"  # or "sf_square", "terra"
+)
+```
+
+#### Extracting Data to Grid
+
+```r
+# From polygon data
+habitat_data <- get_data_in_grid(
+  spatial_grid = grid,
+  dat = habitat_polygons,
+  feature_names = "habitat_type",
+  meth = "average",       # or "binary", "sum"
+  cutoff = 0.1            # Minimum proportion to include
+)
+
+# From raster data
+raster_data <- get_data_in_grid(
+  spatial_grid = grid,
+  dat = my_raster,
+  meth = "average"
+)
+```
+
+## Package Versions and Compatibility
+
+For consistent results, document package versions:
+
+```r
+# Check installed versions
+packageVersion("prioritizr")
+packageVersion("spatialplanr")
+packageVersion("oceandatr")
+
+# Session info
+sessionInfo()
+```
+
+::: {.callout-important}
+## Version Compatibility
+If you encounter errors, ensure packages are up-to-date:
+
+```r
+remotes::install_github("SpatialPlanning/spatialplanr")
+remotes::install_github("emlab-ucsb/oceandatr")
+```
+:::
+
+## Summary
+
+| Package | Use For |
+|---------|---------|
+| *oceandatr* | Downloading initial marine data layers |
+| *spatialgridr* | Creating planning unit grids |
+| *spatialplanr* | Climate-smart utilities, MPA data, helper functions |
+| *prioritizr* | Building and solving optimisation problems |
+
+These packages work together to support the full *shinyplanr* workflow from data acquisition to deployment.
+
+## Further Resources
+
+- [*prioritizr* tutorials](https://prioritizr.net/articles/)
+- [*prioritizr* workshop materials](https://prioritizr.github.io/workshop/)
+- [*oceandatr* vignettes](https://emlab-ucsb.github.io/oceandatr/articles/)
+- [*spatialplanr* documentation](https://spatialplanning.github.io/spatialplanr/reference/)

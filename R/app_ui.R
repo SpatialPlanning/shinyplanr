@@ -33,6 +33,12 @@ app_ui <- function(request) {
         value = "soln", mod_2scenario_ui("2scenario_ui_1")
       )
     ),
+    # shiny::tabPanel(
+    #   "Multi-Objective Optimisation",
+    #   shiny::fluidPage(
+    #     value = "moo", mod_7multiobj_ui("mod_7multiobj_ui_1")
+    #   )
+    # ),
     if (options$mod_3compare == TRUE) {
       shiny::tabPanel(
         "Comparison",
@@ -46,6 +52,14 @@ app_ui <- function(request) {
         "Layer Information",
         shiny::fluidPage(
           value = "features", mod_4features_ui("4features_ui_1")
+        )
+      )
+    },
+    if (options$mod_5coverage == TRUE) {
+      shiny::tabPanel(
+        "Check Coverage",
+        shiny::fluidPage(
+          value = "coverage", mod_5coverage_ui("5coverage_1")
         )
       )
     },

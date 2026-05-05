@@ -1,0 +1,476 @@
+# Deploying to Posit Connect {#sec-deployment}
+
+This chapter covers deploying your *shinyplanr* application to Posit Connect. We cover prerequisites, server configuration, deployment methods, and troubleshooting.
+
+## Overview
+
+Once you have tested your *shinyplanr* application locally (@sec-setting-up), you can deploy it to Posit Connect so stakeholders can access it via a web browser.
+
+Posit Connect is an enterprise publishing platform that allows you to host Shiny applications, R Markdown documents, Quarto projects, APIs, and more. It provides robust access control, scaling, and monitoring capabilities suitable for production deployments.
+
+## Prerequisites
+
+### 1. Posit Connect Server
+
+Deployment requires access to a Posit Connect server. This may be:
+
+- A server administered by your organisation
+- A cloud-hosted Posit Connect instance
+
+Contact your IT department or system administrator if you do not have access. You will need:
+
+- The server URL (e.g., `https://connect.yourorganisation.com/`)
+- A user account with publishing permissions
+
+### 2. rsconnect Package
+
+Install the *rsconnect* package:
+
+```r
+install.packages("rsconnect")
+```
+
+### 3. Server Configuration
+
+Connect your R session to your Posit Connect server. There are two methods:
+
+#### Method A: RStudio IDE
+
+1. In RStudio, go to **Tools** > **Global Options** > **Publishing**
+2. Click **Connect...**
+3. Select **Posit Connect**
+4. Enter your server URL
+5. Follow the authentication prompts
+
+[IMAGE: Screenshot of RStudio publishing accounts configuration dialog]
+
+#### Method B: Command Line
+
+```r
+rsconnect::connectApiUser(
+  account = "your_username",
+  server = "connect.yourorganisation.com",
+  apiKey = "your_api_key"
+)
+```
+
+::: {.callout-note}
+## API Keys
+Obtain your API key from your Posit Connect dashboard under **Settings** > **API Keys**. Keep this key secure and do not commit it to version control.
+:::
+
+### 4. Local Testing
+
+Ensure your application runs locally without errors before deploying:
+
+```r
+pkgload::load_all()
+shinyplanr::run_app()
+```
+
+## Pre-Deployment Checklist
+
+Before deploying, verify:
+
+- [ ] `setup-data.R` has been run successfully
+- [ ] `setup-app.R` has been run successfully
+- [ ] All logos are in `inst/app/www/`
+- [ ] The app runs locally without errors
+- [ ] All required packages are listed in `DESCRIPTION`
+- [ ] `R/sysdata.rda` has been generated
+
+## Deployment Methods
+
+### Method 1: RStudio Deploy Button
+
+The simplest method uses RStudio's built-in deployment:
+
+1. Open `app.R` in RStudio
+2. Click the **Publish** button (blue icon, top right of the editor pane)
+3. Select your Posit Connect server
+4. Choose an app name (or accept the default)
+5. Review the files to be included
+6. Click **Publish**
+
+[IMAGE: Screenshot of RStudio publish button and deployment dialog]
+
+RStudio will bundle your application and upload it to Posit Connect. Progress is shown in the Deploy tab.
+
+### Method 2: Command Line Deployment
+
+For greater control, use `rsconnect::deployApp()`:
+
+```r
+rsconnect::deployApp(
+  appDir = ".",
+  appName = "MyRegion_shinyplanr",
+  server = "connect.yourorganisation.com",
+  account = "your_username"
+)
+```
+
+### Method 3: Custom Deployment Script (Recommended)
+
+For production deployments, create a script that excludes unnecessary files. This reduces deployment size and avoids uploading sensitive development files.
+
+Create or modify `data-raw/ShinyAppsDeploy.R`:
+
+```r
+# Deployment script for shinyplanr
+# Excludes development files to reduce deployment size
+
+library(tidyverse)
+library(rsconnect)
+
+# Enable packrat mode for dependency management
+options(rsconnect.packrat = TRUE)
+
+# Get all files in the project
+all_files <- list.files(
+  path = ".",
+  recursive = TRUE,
+  all.files = TRUE,
+  include.dirs = FALSE
+)
+
+# Exclude directories that should not be deployed
+files_to_deploy <- all_files %>%
+  stringr::str_subset(pattern = "^data-raw/", negate = TRUE) %>%
+  stringr::str_subset(pattern = "^.git/", negate = TRUE) %>%
+  stringr::str_subset(pattern = "^tests/", negate = TRUE) %>%
+  stringr::str_subset(pattern = "^.Rproj.user/", negate = TRUE) %>%
+  stringr::str_subset(pattern = "^man/", negate = TRUE) %>%
+  stringr::str_subset(pattern = "^inst/manual/", negate = TRUE) %>%
+  stringr::str_subset(pattern = "ShinyAppsUpdate", negate = TRUE) %>%
+  stringr::str_subset(pattern = "ShinyAppsDeploy", negate = TRUE)
+
+# Deploy the application
+rsconnect::deployApp(
+  appName = "MyRegion",
+  appFiles = files_to_deploy,
+  server = "connect.yourorganisation.com",
+  account = "your_username"
+)
+```
+
+Run this script to deploy:
+
+```r
+source("data-raw/ShinyAppsDeploy.R")
+```
+
+## App Configuration
+
+### Naming Your App
+
+Choose a meaningful, descriptive name:
+
+- Use the region name (e.g., "Fiji_SpatialPlanning", "Kosrae_MSP")
+- Avoid spaces and special characters
+- Names must be unique within your account
+
+```r
+rsconnect::deployApp(
+  appName = "Fiji_SpatialPlanning"
+)
+```
+
+### Access Control
+
+Posit Connect provides flexible access control options:
+
+1. Navigate to your app in the Posit Connect dashboard
+2. Go to **Access** settings
+3. Configure who can view the application:
+
+| Access Level | Description |
+|--------------|-------------|
+| **Anyone** | No login required (public access) |
+| **All users** | Anyone with a Posit Connect account |
+| **Specific users/groups** | Only named users or groups |
+
+For stakeholder consultations, you may want time-limited access. Configure this through the **Scheduled** settings.
+
+[IMAGE: Screenshot of Posit Connect access control settings]
+
+### Runtime Settings
+
+Configure runtime settings for optimal performance:
+
+1. Navigate to your app in the Posit Connect dashboard
+2. Go to **Runtime** settings
+
+Key settings include:
+
+| Setting | Description | Recommendation |
+|---------|-------------|----------------|
+| **Min processes** | Minimum concurrent instances | 0-1 for low traffic |
+| **Max processes** | Maximum concurrent instances | 2-5 depending on expected load |
+| **Max connections per process** | Concurrent users per instance | 5-20 |
+| **Idle timeout** | Time before idle process terminates | 5-15 minutes |
+| **Initial timeout** | Max time for app to start | 300+ seconds for large apps |
+
+::: {.callout-important}
+## Memory Requirements
+*shinyplanr* runs *prioritizr* optimisation in real-time. Larger regions with more features require more memory. If analyses fail or time out, increase the worker memory allocation.
+:::
+
+### Environment Variables
+
+If your application requires API keys or other secrets:
+
+1. Go to your app's **Vars** settings in Posit Connect
+2. Add environment variables as key-value pairs
+3. Access them in R with `Sys.getenv("VARIABLE_NAME")`
+
+Never commit secrets to version control. Use environment variables instead.
+
+## Understanding the Deployment Process
+
+### What Gets Deployed
+
+The deployment includes:
+
+- **R/**: All R code (modules, utilities, functions)
+- **inst/app/**: App resources (CSS, images, logos)
+- **DESCRIPTION**: Package metadata and dependencies
+- **NAMESPACE**: Package exports
+- **app.R**: Entry point for the application
+- **R/sysdata.rda**: Internal data (created by `setup-app.R`)
+
+### What Gets Excluded
+
+Using the custom deployment script, these are excluded:
+
+- **data-raw/**: Raw data and setup scripts
+- **tests/**: Test files
+- **man/**: Documentation
+- **inst/manual/**: This manual
+- **.git/**: Version control
+- **.Rproj.user/**: RStudio project files
+
+### Dependency Management
+
+Posit Connect automatically:
+
+1. Reads package dependencies from `DESCRIPTION`
+2. Installs required packages on the server
+3. Handles GitHub packages listed in `Remotes:`
+
+Ensure all dependencies are listed in `DESCRIPTION`:
+
+```
+Imports:
+    shiny,
+    prioritizr,
+    spatialplanr,
+    sf,
+    terra,
+    ...
+Remotes:
+    github::SpatialPlanning/spatialplanr
+```
+
+## Updating an Existing Deployment
+
+To update a deployed application:
+
+### Full Re-deployment
+
+Run the deployment script again. This overwrites the existing app:
+
+```r
+source("data-raw/ShinyAppsDeploy.R")
+```
+
+### Quick Update
+
+For code-only changes (no data updates), use `forceUpdate`:
+
+```r
+rsconnect::deployApp(
+  appName = "MyRegion",
+  forceUpdate = TRUE
+)
+```
+
+### Version History
+
+Posit Connect maintains a history of deployments. To revert to a previous version:
+
+1. Navigate to your app in the dashboard
+2. Go to **Info** > **Source versions**
+3. Select a previous version
+4. Click **Activate**
+
+## Monitoring and Logs
+
+### Viewing Logs
+
+Access application logs through the Posit Connect dashboard:
+
+1. Navigate to your application
+2. Click the **Logs** tab
+3. View real-time logs or filter by time period
+
+Use the log level dropdown to filter by severity (Error, Warning, Info, etc.).
+
+### Common Log Messages
+
+```
+Shiny application starting up...
+Listening on http://127.0.0.1:XXXX
+```
+Normal startup - application loaded successfully.
+
+```
+Error: object 'xyz' not found
+```
+A required object is missing. Check that `setup-app.R` ran correctly and `R/sysdata.rda` exists.
+
+```
+Error in solve...
+```
+Solver error. Check that the solver (*highs* or *gurobi*) is available and working.
+
+### Usage Metrics
+
+Posit Connect tracks usage metrics including:
+
+- Number of active users
+- Session duration
+- Resource utilisation
+
+Access these through **Metrics** in your app's dashboard.
+
+## Troubleshooting
+
+### Deployment Fails
+
+**Error: Unable to determine package source**
+
+Ensure all packages are available from CRAN or listed in `Remotes:` in DESCRIPTION.
+
+```
+Remotes:
+    github::SpatialPlanning/spatialplanr,
+    github::emlab-ucsb/oceandatr
+```
+
+**Error: Object not found**
+
+Run `setup-app.R` locally to regenerate `R/sysdata.rda`, then redeploy.
+
+**Error: Application failed to start**
+
+Check the logs for specific errors. Common causes:
+
+- Missing data files
+- Package installation failures
+- Memory limits exceeded
+- Timeout during startup (increase initial timeout)
+
+### App Runs Slowly
+
+- Increase worker memory in Runtime settings
+- Reduce the number of planning units
+- Consider pre-computing summary statistics
+
+### Analysis Times Out
+
+For long-running optimisations:
+
+- Increase the application timeout in Runtime settings
+- Simplify the problem (fewer features, larger planning units)
+- Pre-compute results where possible
+
+### Session Disconnects
+
+If users experience frequent disconnections:
+
+- Check the idle timeout setting
+- The app includes automatic reconnection handling
+- Consider increasing connection timeout settings
+
+## Best Practices
+
+### Version Control
+
+- Use Git to track all changes
+- Tag releases before major deployments
+- Keep deployment scripts in version control (excluding secrets)
+
+### Documentation
+
+- Document the deployment process for your team
+- Maintain a changelog of deployments
+- Record server-specific configuration
+
+### Testing Workflow
+
+1. Test locally with `shinyplanr::run_app()`
+2. Deploy to a staging environment if available
+3. Verify critical functionality after deployment
+4. Monitor logs for the first few hours
+
+### Security
+
+- Use environment variables for secrets
+- Configure appropriate access controls
+- Review user access periodically
+- Keep packages updated for security patches
+
+## Summary
+
+Deploying *shinyplanr* to Posit Connect involves:
+
+1. **Prerequisites**: Posit Connect access, *rsconnect* package, local testing
+2. **Configuration**: Server connection, app naming
+3. **Deployment**: Custom script recommended for clean deployment
+4. **Settings**: Access control, runtime configuration
+5. **Monitoring**: Check logs, respond to issues
+6. **Updates**: Redeploy when code or data changes
+
+Typical deployment workflow:
+
+```r
+# 1. Test locally
+pkgload::load_all()
+shinyplanr::run_app()
+
+# 2. Deploy
+source("data-raw/ShinyAppsDeploy.R")
+
+# 3. Monitor
+# Check Posit Connect dashboard for logs and metrics
+```
+
+## Quick Reference
+
+### Deployment Commands
+
+```r
+# Configure server (one-time setup via RStudio IDE or API key)
+rsconnect::connectApiUser(account, server, apiKey)
+
+# Simple deployment
+rsconnect::deployApp(appName = "MyApp")
+
+# Custom deployment with file selection
+rsconnect::deployApp(appName = "MyApp", appFiles = files_to_deploy)
+
+# Force update
+rsconnect::deployApp(appName = "MyApp", forceUpdate = TRUE)
+
+# List deployed apps
+rsconnect::applications()
+
+# Terminate an app
+rsconnect::terminateApp("MyApp")
+```
+
+### Useful Links
+
+- [Posit Connect User Guide](https://docs.posit.co/connect/user/)
+- [Posit Connect Admin Guide](https://docs.posit.co/connect/admin/)
+- [*rsconnect* Package Documentation](https://rstudio.github.io/rsconnect/)

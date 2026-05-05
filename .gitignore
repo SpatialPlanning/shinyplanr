@@ -39,9 +39,6 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
-
 # translation temp files
 po/*~
 
@@ -55,3 +52,4 @@ data-raw/Kosrae/KosraeData/*
 Data-raw/Vanuatu/climate_data/*
 data-raw/Fiji/FijiData/geomorphic-crop.fgb
 /data-raw/Fiji/FijiData
+.positai

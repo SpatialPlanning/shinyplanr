@@ -32,6 +32,6 @@ files_to_deploy <- all_files %>%
 
 # 3. Deploy the application using the curated file list
 rsconnect::deployApp(
-  appName = "Kosrae_test",
+  appName = "Kosrae",
   appFiles = files_to_deploy
 )

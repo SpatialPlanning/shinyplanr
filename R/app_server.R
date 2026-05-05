@@ -33,12 +33,20 @@ app_server <- function(input, output, session) {
       mod_2scenario_server("2scenario_ui_1")
     }
 
+    if (shiny::req(input$navbar) == "Multi-Objective Optimisation") {
+      mod_7multiobj_server("7multiobj_ui_1")
+    }
+
     if (options$mod_3compare == TRUE && shiny::req(input$navbar) == "Comparison") {
       mod_3compare_server("3compare_ui_1")
     }
 
     if (options$mod_4features == TRUE && shiny::req(input$navbar) == "Layer Information") {
       mod_4features_server("4features_ui_1")
+    }
+
+    if (options$mod_5coverage == TRUE && shiny::req(input$navbar) == "Check Coverage") {
+      mod_5coverage_server("5coverage_1")
     }
 
     if (options$mod_6help == TRUE && shiny::req(input$navbar) == "Help") {

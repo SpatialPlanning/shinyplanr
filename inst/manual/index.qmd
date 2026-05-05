@@ -1,0 +1,75 @@
+---
+title: "_shinyplanr_ Manual"
+subtitle: "A Guide to spatial prioritisation with _shinyplanr_"
+author: "Jason D. Everett"
+date: last-modified
+date-format: "D MMMM YYYY"
+---
+ 
+<img src="images/logo.png" alt="shinyplanr logo" style="float: left; width: 100px; height: auto; margin-right: 15px; margin-bottom: 10px;">
+
+Welcome to the ***shinyplanr*** manual. This guide provides comprehensive documentation for using and deploying *shinyplanr*, a Shiny application that provides an interactive graphical user interface for spatial prioritisation using the [*prioritizr*](https://prioritizr.net) R package.
+
+<div style="clear: both;"></div>
+
+## What is shinyplanr? {.unnumbered}
+
+*shinyplanr* is a [*golem*](https://thinkr-open.github.io/golem/)-based Shiny application designed to make systematic conservation planning accessible to stakeholders, managers, and researchers. It allows users to:
+
+- **Explore spatial planning scenarios** by adjusting conservation targets for biodiversity features
+- **Compare different prioritisation outcomes** side-by-side
+- **Incorporate real-world constraints** such as existing protected areas and areas unavailable for protection
+- **Consider economic costs** to find efficient solutions
+- **Evaluate climate-smart options** for robust, future-proof conservation networks
+- **Download and share results** for use in reports and decision-making
+
+## Who is this manual for? {.unnumbered}
+
+This manual serves two primary audiences:
+
+1. **End users** who interact with deployed *shinyplanr* applications to explore spatial planning scenarios for their region
+2. **Semi-expert deployers** who set up and customise *shinyplanr* for new regions or new sets of planning options
+
+## How to use this manual {.unnumbered}
+
+- **Chapter 1** provides background on spatial prioritisation, climate-smart planning, multiple-use planning, and ecosystem services
+- **Chapter 2** explains how to use the *shinyplanr* application interface
+- **Chapter 3** guides deployers through creating a new *shinyplanr* instance for a region
+- **Forthcoming:** Chapter 4 covers uploading your app to Posit Connect
+- **Forthcoming:** Chapter 5 introduces helpful R packages for spatial planning workflows
+- **Forthcoming:** Appendix A details software installation requirements
+- **Forthcoming:** Appendix B introduces the MinPatch tool for minimum patch size constraints
+
+## Acknowledgements {.unnumbered}
+
+*shinyplanr* was developed by researchers at The University of Queensland. Development has been supported by various funding bodies and collaborators, in particular The Waitt Foundation.
+
+If you use *shinyplanr* in your work, please cite:
+ 
+> Everett, J.D., Richardson, A.J., Neubert, S. & Dunn, D.C. (2026). shinyplanr: Spatial Planning in Shiny. R package. https://github.com/SpatialPlanning/shinyplanr
+
+## Getting help {.unnumbered}
+
+If you encounter issues or have questions:
+
+- Check the **Help** tab within the *shinyplanr* application
+- Visit the [GitHub repository](https://github.com/SpatialPlanning/shinyplanr) to report bugs or request features
+- Contact the development team
+
+---
+
+{{< include chapters/01-introduction.qmd >}}
+
+{{< include chapters/02-using-shinyplanr.qmd >}}
+
+{{< include chapters/03-setting-up.qmd >}}
+
+<!-- {{< include chapters/04-deployment.qmd >}} -->
+
+<!-- {{< include chapters/05-useful-tools.qmd >}} -->
+
+<!-- {{< include chapters/appendix-a-software.qmd >}} -->
+
+<!-- {{< include chapters/appendix-b-minpatch.qmd >}} -->
+
+# References {.unnumbered}
