@@ -39,16 +39,16 @@ Imports:
     gridExtra,
     golem (>= 0.4.1),
     htmltools,
-    kableExtra,
-    knitr,
     leaflet,
     magrittr,
     patchwork,
     prioritizr,
+    purrr,
     quarto,
     rcbc,
-    purrr,
     reactable,
+    readr,
+    renv,
     rlang,
     sf,
     shiny (>= 1.7.4),
@@ -57,13 +57,13 @@ Imports:
     shinydisconnect,
     shinyjs,
     shinyWidgets,
-    sparkline,
     spatialplanr (>= 0.6.9),
     stringr,
     tibble,
     tidyr,
-    tidyselect
-Suggests: 
+    tidyselect,
+    withr
+Suggests:
     spelling,
     testthat (>= 3.0.0)
 Remotes: 

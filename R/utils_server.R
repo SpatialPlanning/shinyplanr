@@ -88,14 +88,15 @@ fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
     unique()
 
   # Get bioregion targets from inputs
-  targets_bioregion <- cats %>%
+  targets_bioregion_raw <- cats %>%
     purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(bioregion_name_check, x))))) %>%
     tibble::enframe() %>%
     tidyr::unnest(cols = "value") %>%
     dplyr::rename(categoryID = "name", target = "value") %>%
     dplyr::mutate(categoryID = cats) %>%
-    dplyr::mutate(target = .data$target / 100) %>% # requires number between 0-1
-    dplyr::left_join(ft_bioregion, ., by = "categoryID") %>%
+    dplyr::mutate(target = .data$target / 100) # requires number between 0-1
+
+  targets_bioregion <- dplyr::left_join(ft_bioregion, targets_bioregion_raw, by = "categoryID") %>%
     dplyr::select(-"categoryID")
 
   # Combine feature and bioregion targets

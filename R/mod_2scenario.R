@@ -344,6 +344,7 @@ mod_2scenario_server <- function(id) {
     ns <- session$ns
 
     . <- NULL
+    ess_para <- NULL  # declared here; assigned via <<- inside observeEvent
 
     # Define all switches ----
     # I wonder if I can move these to a function as I can use the same
@@ -991,7 +992,7 @@ output$txt_ess <- shiny::renderText(
             tidyr::pivot_longer(cols = dplyr::everything(), names_to = "nameVariable", values_to = "Value") %>%
             dplyr::summarise(SelectedValue = sum(.data$Value, na.rm = TRUE), .by = "nameVariable") %>%
             dplyr::left_join(total_values, by = "nameVariable") %>%
-            dplyr::left_join(Dict %>% dplyr::select(nameVariable, nameCommon, justification, units),
+            dplyr::left_join(Dict %>% dplyr::select("nameVariable", "nameCommon", "justification", "units"),
                              by = "nameVariable") %>%
             dplyr::mutate(
               Name = .data$nameCommon,
@@ -1000,7 +1001,7 @@ output$txt_ess <- shiny::renderText(
               pct_selected = round((.data$SelectedValue / .data$TotalValue) * 100, 1),
               pct_unselected = 100 - .data$pct_selected
             ) %>%
-            dplyr::select(Name, Description, Value, pct_selected, pct_unselected)
+            dplyr::select("Name", "Description", "Value", "pct_selected", "pct_unselected")
 
           return(ess_values)
 
@@ -1100,7 +1101,7 @@ output$txt_ess <- shiny::renderText(
           output$reportStatus <- shiny::renderUI({
             shiny::tagList(
               shiny::icon("spinner", class = "fa-spin"),
-              shiny::span(" Generating report…")
+              shiny::span(" Generating report\u2026")
             )
           })
 

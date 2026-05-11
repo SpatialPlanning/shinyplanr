@@ -45,14 +45,14 @@ runtime.
     which contains \code{title} and \code{text} character fields.
   \item All \code{tx_*} text fields are non-\code{NULL} character strings.
   \item Feature-type Dict rows have \code{targetMin}, \code{targetMax},
-    and \code{targetInitial} values within the 0–100 range.
+    and \code{targetInitial} values within the 0-100 range.
 }
 }
 
 \examples{
 \dontrun{
 # At the end of setup-app.R, before saveRDS():
-validate_shinyplanr_data(config_list)           # strict — stops on failure
+validate_shinyplanr_data(config_list)           # strict -- stops on failure
 validate_shinyplanr_data(config_list, strict = FALSE)  # report mode
 }
 

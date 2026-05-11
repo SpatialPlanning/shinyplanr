@@ -21,7 +21,7 @@
 #'     which contains \code{title} and \code{text} character fields.
 #'   \item All \code{tx_*} text fields are non-\code{NULL} character strings.
 #'   \item Feature-type Dict rows have \code{targetMin}, \code{targetMax},
-#'     and \code{targetInitial} values within the 0–100 range.
+#'     and \code{targetInitial} values within the 0-100 range.
 #' }
 #'
 #' @param config_list A named list. The config object built in
@@ -40,7 +40,7 @@
 #' @examples
 #' \dontrun{
 #' # At the end of setup-app.R, before saveRDS():
-#' validate_shinyplanr_data(config_list)           # strict — stops on failure
+#' validate_shinyplanr_data(config_list)           # strict -- stops on failure
 #' validate_shinyplanr_data(config_list, strict = FALSE)  # report mode
 #' }
 #'
@@ -259,7 +259,7 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   })
 
   # -------------------------------------------------------------------------
-  # 10. Feature-type target values are in 0–100 range
+  # 10. Feature-type target values are in 0-100 range
   # -------------------------------------------------------------------------
   if (is.data.frame(Dict)) {
     feature_dict <- Dict %>%
@@ -280,7 +280,7 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
         length(out_of_range) == 0,
         if (length(out_of_range) > 0)
           paste0(
-            length(out_of_range), " Feature(s) have target values outside 0–100: ",
+            length(out_of_range), " Feature(s) have target values outside 0-100: ",
             paste(out_of_range, collapse = ", ")
           )
       )

@@ -1202,7 +1202,7 @@ mod_3compare_server <- function(id) {
           output$reportStatus <- shiny::renderUI({
             shiny::tagList(
               shiny::icon("spinner", class = "fa-spin"),
-              shiny::span(" Generating comparison report…")
+              shiny::span(" Generating comparison report\u2026")
             )
           })
 
