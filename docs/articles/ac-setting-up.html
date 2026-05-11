@@ -77,17 +77,15 @@
 
 
 
-    <section class="section level2"><h2 id="setting-up-shinyplanr-for-your-region">Setting Up <em>shinyplanr</em> for Your Region<a class="anchor" aria-label="anchor" href="#setting-up-shinyplanr-for-your-region"></a>
-</h2>
-<p>This chapter guides deployers through the process of setting up a new <em>shinyplanr</em> instance for a specific region. We cover the template creation function, data preparation, configuration options, and the feature dictionary. For instructions on deploying the finished app to Posit Connect, see the <a href="ad-deployment.html">Deployment vignette</a>.</p>
+    <p>This chapter guides deployers through the process of setting up a new <em>shinyplanr</em> instance for a specific region. We cover the template creation function, data preparation, configuration options, and the feature dictionary. For instructions on deploying the finished app to Posit Connect, see the <a href="ad-deployment.html">Deployment vignette</a>.</p>
 <div>
 <blockquote>
 <p><strong>Note</strong></p>
 <p>The setup process creates a <strong>standalone deployment project</strong> — a separate R project that holds your region-specific data and configuration. You do not need to modify or fork the shinyplanr package source code.</p>
 </blockquote>
 </div>
-<section class="level2"><h3 id="overview-of-the-setup-process">Overview of the Setup Process<a class="anchor" aria-label="anchor" href="#overview-of-the-setup-process"></a>
-</h3>
+<section class="level2"><h2 id="overview-of-the-setup-process">Overview of the Setup Process<a class="anchor" aria-label="anchor" href="#overview-of-the-setup-process"></a>
+</h2>
 <p>Setting up <em>shinyplanr</em> for a new region involves the following steps:</p>
 <ol type="1">
 <li>
@@ -106,8 +104,8 @@
 <strong>Customise help text</strong> by editing markdown files</li>
 <li>
 <strong>Test locally</strong> before deployment</li>
-</ol></section><section class="level2"><h3 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
-</h3>
+</ol></section><section class="level2"><h2 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
+</h2>
 <p>Before starting, ensure you have:</p>
 <ul>
 <li>R and RStudio installed</li>
@@ -115,11 +113,11 @@
 <li>Other supporting packages installed (e.g. <em>oceandatr</em> and <em>spatialgridr</em>)</li>
 <li>A geographic boundary for your region of interest</li>
 <li>Spatial data for features you wish to include</li>
-</ul></section><section class="level2"><h3 id="sec-create-template">Step 1: Create a Deployment Project<a class="anchor" aria-label="anchor" href="#sec-create-template"></a>
-</h3>
+</ul></section><section class="level2"><h2 id="sec-create-template">Step 1: Create a Deployment Project<a class="anchor" aria-label="anchor" href="#sec-create-template"></a>
+</h2>
 <p>The <code><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template()</a></code> function generates a complete, standalone deployment project for your region.</p>
-<section class="level3"><h4 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
-</h4>
+<section class="level3"><h3 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
+</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://spatialplanning.github.io/shinyplanr">shinyplanr</a></span><span class="op">)</span></span>
 <span></span>
@@ -129,8 +127,8 @@
 <span>  oceandatr <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>This creates the project in a <strong>sibling directory</strong> to your current working directory (e.g. <code>../Fiji/</code>). Open the resulting <code>.Rproj</code> file to work inside the new project.</p>
-</section><section class="level3"><h4 id="function-parameters">Function Parameters<a class="anchor" aria-label="anchor" href="#function-parameters"></a>
-</h4>
+</section><section class="level3"><h3 id="function-parameters">Function Parameters<a class="anchor" aria-label="anchor" href="#function-parameters"></a>
+</h3>
 <table class="table caption-top">
 <colgroup>
 <col style="width: 33%">
@@ -194,8 +192,8 @@
 <td><code>TRUE</code></td>
 </tr>
 </tbody>
-</table></section><section class="level3"><h4 id="finding-an-appropriate-crs">Finding an Appropriate CRS<a class="anchor" aria-label="anchor" href="#finding-an-appropriate-crs"></a>
-</h4>
+</table></section><section class="level3"><h3 id="finding-an-appropriate-crs">Finding an Appropriate CRS<a class="anchor" aria-label="anchor" href="#finding-an-appropriate-crs"></a>
+</h3>
 <p>For spatial planning, you should use an <strong>equal-area projection</strong> centred on your region. This ensures that planning unit areas are correctly calculated.</p>
 <p>To find an appropriate CRS:</p>
 <ol type="1">
@@ -221,8 +219,8 @@
 </ul>
 </blockquote>
 </div>
-</section><section class="level3"><h4 id="generated-project-structure">Generated Project Structure<a class="anchor" aria-label="anchor" href="#generated-project-structure"></a>
-</h4>
+</section><section class="level3"><h3 id="generated-project-structure">Generated Project Structure<a class="anchor" aria-label="anchor" href="#generated-project-structure"></a>
+</h3>
 <p>After running <code><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template()</a></code>, you will have a self-contained project (using Fiji as an example):</p>
 <pre><code>Fiji/                              ← Your deployment project root
 ├── app.R                          ← App entry point (do not edit)
@@ -247,14 +245,14 @@
 </blockquote>
 </div>
 <p>The <code>config/</code> and <code>www/</code> folders are <strong>auto-generated</strong> when you run <code>setup/setup-app.R</code> — do not edit them directly. Everything you need to customise lives inside <code>setup/</code>.</p>
-</section></section><section class="level2"><h3 id="sec-setup-data">Step 2: Prepare Spatial Data<a class="anchor" aria-label="anchor" href="#sec-setup-data"></a>
-</h3>
+</section></section><section class="level2"><h2 id="sec-setup-data">Step 2: Prepare Spatial Data<a class="anchor" aria-label="anchor" href="#sec-setup-data"></a>
+</h2>
 <p>The <code>setup/setup-data.R</code> script processes your raw spatial data into the format required by <em>shinyplanr</em>.</p>
-<section class="level3"><h4 id="understanding-setup-data-r">Understanding setup-data.R<a class="anchor" aria-label="anchor" href="#understanding-setup-data-r"></a>
-</h4>
+<section class="level3"><h3 id="understanding-setup-data-r">Understanding setup-data.R<a class="anchor" aria-label="anchor" href="#understanding-setup-data-r"></a>
+</h3>
 <p>Open <code>setup/setup-data.R</code> in RStudio (from within the deployment project). The script contains several sections:</p>
-<section class="level4"><h5 id="basic-parameters">Basic Parameters<a class="anchor" aria-label="anchor" href="#basic-parameters"></a>
-</h5>
+<section class="level4"><h4 id="basic-parameters">Basic Parameters<a class="anchor" aria-label="anchor" href="#basic-parameters"></a>
+</h4>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">country</span>    <span class="op">&lt;-</span> <span class="st">"Fiji"</span></span>
 <span><span class="va">crs</span>        <span class="op">&lt;-</span> <span class="st">"+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84 +units=m +no_defs"</span></span>
@@ -262,8 +260,8 @@
 <span></span>
 <span><span class="va">setup_dir</span> <span class="op">&lt;-</span> <span class="st">"setup"</span>                           <span class="co"># Location of the setup folder</span></span>
 <span><span class="va">data_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"data"</span><span class="op">)</span>      <span class="co"># Raw spatial data files</span></span></code></pre></div>
-</section><section class="level4"><h5 id="boundaries">Boundaries<a class="anchor" aria-label="anchor" href="#boundaries"></a>
-</h5>
+</section><section class="level4"><h4 id="boundaries">Boundaries<a class="anchor" aria-label="anchor" href="#boundaries"></a>
+</h4>
 <p>If you set <code>oceandatr = TRUE</code>, the template includes code to download your EEZ boundary:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get EEZ boundary from Marine Regions database</span></span>
@@ -275,8 +273,8 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bndry</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="st">"my_boundary.gpkg"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span>crs <span class="op">=</span> <span class="va">crs</span><span class="op">)</span></span></code></pre></div>
-</section><section class="level4"><h5 id="planning-unit-grid">Planning Unit Grid<a class="anchor" aria-label="anchor" href="#planning-unit-grid"></a>
-</h5>
+</section><section class="level4"><h4 id="planning-unit-grid">Planning Unit Grid<a class="anchor" aria-label="anchor" href="#planning-unit-grid"></a>
+</h4>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">PUs</span> <span class="op">&lt;-</span> <span class="fu">spatialgridr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/spatialgridr/reference/get_grid.html" class="external-link">get_grid</a></span><span class="op">(</span></span>
 <span>  boundary <span class="op">=</span> <span class="va">eez</span>,</span>
@@ -292,8 +290,8 @@
 <code>"sf_square"</code>: Square <code>sf</code> polygons</li>
 <li>
 <code>"raster"</code>: Raster (<code>SpatRaster</code>) format</li>
-</ul></section><section class="level4"><h5 id="feature-data">Feature Data<a class="anchor" aria-label="anchor" href="#feature-data"></a>
-</h5>
+</ul></section><section class="level4"><h4 id="feature-data">Feature Data<a class="anchor" aria-label="anchor" href="#feature-data"></a>
+</h4>
 <p>If using <em>oceandatr</em>, the template downloads several data layers:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Bathymetry / Depth zones</span></span>
@@ -315,8 +313,8 @@
 <span>  buffer <span class="op">=</span> <span class="fl">30000</span></span>
 <span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</section><section class="level4"><h5 id="adding-custom-data">Adding Custom Data<a class="anchor" aria-label="anchor" href="#adding-custom-data"></a>
-</h5>
+</section><section class="level4"><h4 id="adding-custom-data">Adding Custom Data<a class="anchor" aria-label="anchor" href="#adding-custom-data"></a>
+</h4>
 <p>To add your own spatial data layers:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example: Load habitat data from shapefile</span></span>
@@ -336,8 +334,8 @@
 <span>    dat <span class="op">=</span> <span class="va">.</span>,</span>
 <span>    meth <span class="op">=</span> <span class="st">"average"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-</section><section class="level4"><h5 id="cost-layers">Cost Layers<a class="anchor" aria-label="anchor" href="#cost-layers"></a>
-</h5>
+</section><section class="level4"><h4 id="cost-layers">Cost Layers<a class="anchor" aria-label="anchor" href="#cost-layers"></a>
+</h4>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate distance to coast</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="va">dat_sf</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
@@ -347,8 +345,8 @@
 <span>    Cost_Area <span class="op">=</span> <span class="va">PU_Area</span>,          <span class="co"># Equal area cost</span></span>
 <span>    Cost_Distance <span class="op">=</span> <span class="va">coastDistance_km</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-</section><section class="level4"><h5 id="locked-in-areas-mpas">Locked-In Areas (MPAs)<a class="anchor" aria-label="anchor" href="#locked-in-areas-mpas"></a>
-</h5>
+</section><section class="level4"><h4 id="locked-in-areas-mpas">Locked-In Areas (MPAs)<a class="anchor" aria-label="anchor" href="#locked-in-areas-mpas"></a>
+</h4>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mpas</span> <span class="op">&lt;-</span> <span class="fu">spatialplanr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/spatialplanr/man/splnr_get_MPAs.html" class="external-link">splnr_get_MPAs</a></span><span class="op">(</span></span>
 <span>  PlanUnits <span class="op">=</span> <span class="va">PUs</span>, </span>
@@ -361,8 +359,8 @@
 <span>    name <span class="op">=</span> <span class="st">"mpas"</span>, </span>
 <span>    cutoff <span class="op">=</span> <span class="fl">0.5</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-</section><section class="level4"><h5 id="saving-the-data">Saving the Data<a class="anchor" aria-label="anchor" href="#saving-the-data"></a>
-</h5>
+</section><section class="level4"><h4 id="saving-the-data">Saving the Data<a class="anchor" aria-label="anchor" href="#saving-the-data"></a>
+</h4>
 <p>The final step combines all data and saves it:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Combine all features</span></span>
@@ -378,8 +376,8 @@
 <span><span class="co"># Save to setup/data/</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/save.html" class="external-link">save</a></span><span class="op">(</span><span class="va">dat_sf</span>, <span class="va">bndry</span>, <span class="va">coast</span>,</span>
 <span>     file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">country</span>, <span class="st">"_RawData.rda"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</section></section><section class="level3"><h4 id="running-setup-data-r">Running setup-data.R<a class="anchor" aria-label="anchor" href="#running-setup-data-r"></a>
-</h4>
+</section></section><section class="level3"><h3 id="running-setup-data-r">Running setup-data.R<a class="anchor" aria-label="anchor" href="#running-setup-data-r"></a>
+</h3>
 <ol type="1">
 <li>Open <code>setup/setup-data.R</code> in RStudio (with the <code>.Rproj</code> open)</li>
 <li>Review and modify as needed for your data</li>
@@ -393,11 +391,11 @@
 <p>The first run of <em>oceandatr</em> functions may download large datasets. Ensure you have a stable internet connection and sufficient disk space.</p>
 </blockquote>
 </div>
-</section></section><section class="level2"><h3 id="sec-setup-app">Step 3: Configure App Options<a class="anchor" aria-label="anchor" href="#sec-setup-app"></a>
-</h3>
+</section></section><section class="level2"><h2 id="sec-setup-app">Step 3: Configure App Options<a class="anchor" aria-label="anchor" href="#sec-setup-app"></a>
+</h2>
 <p>The <code>setup/setup-app.R</code> script configures how the <em>shinyplanr</em> application behaves and generates the config file loaded at runtime.</p>
-<section class="level3"><h4 id="the-options-list">The Options List<a class="anchor" aria-label="anchor" href="#the-options-list"></a>
-</h4>
+<section class="level3"><h3 id="the-options-list">The Options List<a class="anchor" aria-label="anchor" href="#the-options-list"></a>
+</h3>
 <p>The <code>options</code> list controls application settings, allowing you to define text, switch modules on/off and decide on display options:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -443,10 +441,10 @@
 <span>  <span class="co">## Geographic options</span></span>
 <span>  cCRS <span class="op">=</span> <span class="st">"+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-</section><section class="level3"><h4 id="key-options-explained">Key Options Explained<a class="anchor" aria-label="anchor" href="#key-options-explained"></a>
+</section><section class="level3"><h3 id="key-options-explained">Key Options Explained<a class="anchor" aria-label="anchor" href="#key-options-explained"></a>
+</h3>
+<section class="level4"><h4 id="module-switches">Module Switches<a class="anchor" aria-label="anchor" href="#module-switches"></a>
 </h4>
-<section class="level4"><h5 id="module-switches">Module Switches<a class="anchor" aria-label="anchor" href="#module-switches"></a>
-</h5>
 <p>Enable or disable application modules:</p>
 <table class="table caption-top">
 <thead><tr class="header">
@@ -479,8 +477,8 @@
 <td>FAQ and technical help</td>
 </tr>
 </tbody>
-</table></section><section class="level4"><h5 id="target-grouping">Target Grouping<a class="anchor" aria-label="anchor" href="#target-grouping"></a>
-</h5>
+</table></section><section class="level4"><h4 id="target-grouping">Target Grouping<a class="anchor" aria-label="anchor" href="#target-grouping"></a>
+</h4>
 <p>How targets are presented to users:</p>
 <ul>
 <li>
@@ -489,23 +487,23 @@
 <code>"category"</code>: One slider per category (e.g., all habitats together)</li>
 <li>
 <code>"master"</code>: Single slider for all features</li>
-</ul></section><section class="level4"><h5 id="objective-function">Objective Function<a class="anchor" aria-label="anchor" href="#objective-function"></a>
-</h5>
+</ul></section><section class="level4"><h4 id="objective-function">Objective Function<a class="anchor" aria-label="anchor" href="#objective-function"></a>
+</h4>
 <ul>
 <li>
 <code>"min_shortfall"</code>: Minimise shortfall within a budget (shows budget input)</li>
 <li>
 <code>"min_set"</code>: Find minimum cost solution meeting all targets</li>
-</ul></section><section class="level4"><h5 id="climate-options">Climate Options<a class="anchor" aria-label="anchor" href="#climate-options"></a>
-</h5>
+</ul></section><section class="level4"><h4 id="climate-options">Climate Options<a class="anchor" aria-label="anchor" href="#climate-options"></a>
+</h4>
 <p>If climate data is available:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>include_climateChange <span class="ot">=</span> <span class="cn">TRUE</span>,</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>climate_change <span class="ot">=</span> <span class="dv">1</span>,    <span class="co"># 1 = CPA method</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>percentile <span class="ot">=</span> <span class="dv">5</span>,        <span class="co"># For percentile approach</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>direction <span class="ot">=</span> <span class="sc">-</span><span class="dv">1</span>,        <span class="co"># -1 = low values are refugia</span></span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>refugiaTarget <span class="ot">=</span> <span class="dv">1</span></span></code></pre></div>
-</section></section><section class="level3"><h4 id="running-setup-app-r">Running setup-app.R<a class="anchor" aria-label="anchor" href="#running-setup-app-r"></a>
-</h4>
+</section></section><section class="level3"><h3 id="running-setup-app-r">Running setup-app.R<a class="anchor" aria-label="anchor" href="#running-setup-app-r"></a>
+</h3>
 <p>After configuring options:</p>
 <ol type="1">
 <li>Ensure <code>setup-data.R</code> has been run successfully</li>
@@ -527,11 +525,11 @@
 <p>The old approach wrote data into the package source via <code><a href="https://usethis.r-lib.org/reference/use_data.html" class="external-link">usethis::use_data()</a></code>. The new approach saves a single <code>.rds</code> config file that <code><a href="../reference/load_config.html">load_config()</a></code> reads at app startup — no package rebuild required.</p>
 </blockquote>
 </div>
-</section></section><section class="level2"><h3 id="sec-dict-feature">Step 4: The Feature Dictionary<a class="anchor" aria-label="anchor" href="#sec-dict-feature"></a>
-</h3>
+</section></section><section class="level2"><h2 id="sec-dict-feature">Step 4: The Feature Dictionary<a class="anchor" aria-label="anchor" href="#sec-dict-feature"></a>
+</h2>
 <p>The <code>setup/Dict_Feature.csv</code> file defines all data layers and their properties. This is the central configuration for what features, costs, and constraints appear in the application.</p>
-<section class="level3"><h4 id="dictionary-columns">Dictionary Columns<a class="anchor" aria-label="anchor" href="#dictionary-columns"></a>
-</h4>
+<section class="level3"><h3 id="dictionary-columns">Dictionary Columns<a class="anchor" aria-label="anchor" href="#dictionary-columns"></a>
+</h3>
 <table class="table caption-top">
 <colgroup>
 <col style="width: 26%">
@@ -605,8 +603,8 @@
 <td><code>"Important habitat..."</code></td>
 </tr>
 </tbody>
-</table></section><section class="level3"><h4 id="feature-types">Feature Types<a class="anchor" aria-label="anchor" href="#feature-types"></a>
-</h4>
+</table></section><section class="level3"><h3 id="feature-types">Feature Types<a class="anchor" aria-label="anchor" href="#feature-types"></a>
+</h3>
 <table class="table caption-top">
 <thead><tr class="header">
 <th>Type</th>
@@ -642,8 +640,8 @@
 <td>Ecosystem service layer</td>
 </tr>
 </tbody>
-</table></section><section class="level3"><h4 id="example-dictionary-entries">Example Dictionary Entries<a class="anchor" aria-label="anchor" href="#example-dictionary-entries"></a>
-</h4>
+</table></section><section class="level3"><h3 id="example-dictionary-entries">Example Dictionary Entries<a class="anchor" aria-label="anchor" href="#example-dictionary-entries"></a>
+</h3>
 <pre class="csv"><code>nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
 Coral Reef,coral_reef,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
 Seagrass,seagrass,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
@@ -651,8 +649,8 @@ Equal Area Cost,Cost_Area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units
 Fishing Effort,fishing_cost,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,hours,"Higher values indicate more fishing activity."
 Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
 Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."</code></pre>
-</section><section class="level3"><h4 id="common-issues">Common Issues<a class="anchor" aria-label="anchor" href="#common-issues"></a>
-</h4>
+</section><section class="level3"><h3 id="common-issues">Common Issues<a class="anchor" aria-label="anchor" href="#common-issues"></a>
+</h3>
 <div>
 <blockquote>
 <p><strong>Variable Name Matching</strong></p>
@@ -664,11 +662,11 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 </ul>
 </blockquote>
 </div>
-</section></section><section class="level2"><h3 id="sec-content-files">Step 5: Customise Content<a class="anchor" aria-label="anchor" href="#sec-content-files"></a>
-</h3>
+</section></section><section class="level2"><h2 id="sec-content-files">Step 5: Customise Content<a class="anchor" aria-label="anchor" href="#sec-content-files"></a>
+</h2>
 <p>The <code>setup/content/</code> folder contains text and other content files that appear in the application. Markdown (<code>.md</code>) files are the primary format, but you can also store PDFs, images, or other reference material here.</p>
-<section class="level3"><h4 id="welcome-pages">Welcome Pages<a class="anchor" aria-label="anchor" href="#welcome-pages"></a>
-</h4>
+<section class="level3"><h3 id="welcome-pages">Welcome Pages<a class="anchor" aria-label="anchor" href="#welcome-pages"></a>
+</h3>
 <p>Multiple welcome page tabs can be configured:</p>
 <table class="table caption-top">
 <thead><tr class="header">
@@ -701,8 +699,8 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 <td>Footer text (contact info)</td>
 </tr>
 </tbody>
-</table></section><section class="level3"><h4 id="module-help-text">Module help text<a class="anchor" aria-label="anchor" href="#module-help-text"></a>
-</h4>
+</table></section><section class="level3"><h3 id="module-help-text">Module help text<a class="anchor" aria-label="anchor" href="#module-help-text"></a>
+</h3>
 <table class="table caption-top">
 <thead><tr class="header">
 <th>File</th>
@@ -730,8 +728,8 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 <td>Ecosystem services panel</td>
 </tr>
 </tbody>
-</table></section><section class="level3"><h4 id="help-tab-pages">Help tab pages<a class="anchor" aria-label="anchor" href="#help-tab-pages"></a>
-</h4>
+</table></section><section class="level3"><h3 id="help-tab-pages">Help tab pages<a class="anchor" aria-label="anchor" href="#help-tab-pages"></a>
+</h3>
 <table class="table caption-top">
 <thead><tr class="header">
 <th>File</th>
@@ -753,8 +751,8 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 </tbody>
 </table>
 <p>Edit these files with region-specific information before deployment. You can also place additional files (PDFs, images) in <code>setup/content/</code> and reference them from markdown.</p>
-</section></section><section class="level2"><h3 id="step-6-test-locally">Step 6: Test Locally<a class="anchor" aria-label="anchor" href="#step-6-test-locally"></a>
-</h3>
+</section></section><section class="level2"><h2 id="step-6-test-locally">Step 6: Test Locally<a class="anchor" aria-label="anchor" href="#step-6-test-locally"></a>
+</h2>
 <p>Before deploying, test the application locally from within the deployment project:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># app.R does this automatically when you call shiny::runApp()</span></span>
@@ -769,8 +767,8 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 <p>Run <code><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">shiny::runApp()</a></code> from <strong>inside the deployment project</strong> (i.e. with <code>Fiji.Rproj</code> open), not from the shinyplanr package directory.</p>
 </blockquote>
 </div>
-<section class="level3"><h4 id="testing-checklist">Testing Checklist<a class="anchor" aria-label="anchor" href="#testing-checklist"></a>
-</h4>
+<section class="level3"><h3 id="testing-checklist">Testing Checklist<a class="anchor" aria-label="anchor" href="#testing-checklist"></a>
+</h3>
 <ul class="task-list">
 <li><label><input type="checkbox">Application loads without errors</label></li>
 <li><label><input type="checkbox">All modules are visible (if enabled)</label></li>
@@ -781,8 +779,8 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 <li><label><input type="checkbox">Maps display correctly</label></li>
 <li><label><input type="checkbox">Download buttons work</label></li>
 <li><label><input type="checkbox">Help text displays properly</label></li>
-</ul></section></section><section class="level2"><h3 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
-</h3>
+</ul></section></section><section class="level2"><h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+</h2>
 <p>Setting up <em>shinyplanr</em> for a new region involves:</p>
 <ol type="1">
 <li>
@@ -803,10 +801,10 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 </li>
 </ol>
 <p>Once testing is complete, proceed to the <a href="ad-deployment.html">Deployment vignette</a> for instructions on locking package versions and deploying to Posit Connect.</p>
-</section><section class="level2"><h3 id="quick-reference">Quick Reference<a class="anchor" aria-label="anchor" href="#quick-reference"></a>
+</section><section class="level2"><h2 id="quick-reference">Quick Reference<a class="anchor" aria-label="anchor" href="#quick-reference"></a>
+</h2>
+<section class="level3"><h3 id="minimum-required-files">Minimum Required Files<a class="anchor" aria-label="anchor" href="#minimum-required-files"></a>
 </h3>
-<section class="level3"><h4 id="minimum-required-files">Minimum Required Files<a class="anchor" aria-label="anchor" href="#minimum-required-files"></a>
-</h4>
 <p>After running <code>setup/setup-app.R</code>, your deployment project should contain:</p>
 <pre><code>{Country}/
 ├── app.R                         # Auto-generated — do not edit
@@ -824,8 +822,8 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
     │   └── {Country}_RawData.rda # Generated by setup-data.R
     ├── logos/
     └── content/</code></pre>
-</section><section class="level3"><h4 id="common-commands">Common Commands<a class="anchor" aria-label="anchor" href="#common-commands"></a>
-</h4>
+</section><section class="level3"><h3 id="common-commands">Common Commands<a class="anchor" aria-label="anchor" href="#common-commands"></a>
+</h3>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create deployment project (run from any R session with shinyplanr loaded)</span></span>
 <span><span class="fu"><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template</a></span><span class="op">(</span>country <span class="op">=</span> <span class="st">"MyRegion"</span>, crs <span class="op">=</span> <span class="st">"EPSG:32601"</span><span class="op">)</span></span>
@@ -845,7 +843,7 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 <span></span>
 <span><span class="co"># Deploy to Posit Connect</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"deploy.R"</span><span class="op">)</span></span></code></pre></div>
-</section></section></section><script id="quarto-html-after-body" type="application/javascript">
+</section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

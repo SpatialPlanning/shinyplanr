@@ -1,7 +1,5 @@
 # Setting Up shinyplanr for Your Region
 
-## Setting Up *shinyplanr* for Your Region
-
 This chapter guides deployers through the process of setting up a new
 *shinyplanr* instance for a specific region. We cover the template
 creation function, data preparation, configuration options, and the
@@ -16,7 +14,7 @@ vignette](https://spatialplanning.github.io/shinyplanr/articles/ad-deployment.md
 > configuration. You do not need to modify or fork the shinyplanr
 > package source code.
 
-### Overview of the Setup Process
+## Overview of the Setup Process
 
 Setting up *shinyplanr* for a new region involves the following steps:
 
@@ -28,7 +26,7 @@ Setting up *shinyplanr* for a new region involves the following steps:
 5.  **Customise help text** by editing markdown files
 6.  **Test locally** before deployment
 
-### Prerequisites
+## Prerequisites
 
 Before starting, ensure you have:
 
@@ -39,14 +37,14 @@ Before starting, ensure you have:
 - A geographic boundary for your region of interest
 - Spatial data for features you wish to include
 
-### Step 1: Create a Deployment Project
+## Step 1: Create a Deployment Project
 
 The
 [`create_shinyplanr_template()`](https://spatialplanning.github.io/shinyplanr/reference/create_shinyplanr_template.md)
 function generates a complete, standalone deployment project for your
 region.
 
-#### Basic Usage
+### Basic Usage
 
 ``` r
 
@@ -63,7 +61,7 @@ This creates the project in a **sibling directory** to your current
 working directory (e.g. `../Fiji/`). Open the resulting `.Rproj` file to
 work inside the new project.
 
-#### Function Parameters
+### Function Parameters
 
 | Parameter | Description | Default |
 |----|----|----|
@@ -78,7 +76,7 @@ work inside the new project.
 | `use_renv` | Initialise renv to lock package versions for reproducible deployment. | `TRUE` |
 | `create_rproj` | Create an RStudio `.Rproj` file. | `TRUE` |
 
-#### Finding an Appropriate CRS
+### Finding an Appropriate CRS
 
 For spatial planning, you should use an **equal-area projection**
 centred on your region. This ensures that planning unit areas are
@@ -102,7 +100,7 @@ projections used in your country.
 > - **Kosrae**:
 >   `"+proj=cea +lon_0=163 +lat_ts=2.8 +datum=WGS84 +units=m +no_defs"`
 
-#### Generated Project Structure
+### Generated Project Structure
 
 After running
 [`create_shinyplanr_template()`](https://spatialplanning.github.io/shinyplanr/reference/create_shinyplanr_template.md),
@@ -135,17 +133,17 @@ The `config/` and `www/` folders are **auto-generated** when you run
 `setup/setup-app.R` — do not edit them directly. Everything you need to
 customise lives inside `setup/`.
 
-### Step 2: Prepare Spatial Data
+## Step 2: Prepare Spatial Data
 
 The `setup/setup-data.R` script processes your raw spatial data into the
 format required by *shinyplanr*.
 
-#### Understanding setup-data.R
+### Understanding setup-data.R
 
 Open `setup/setup-data.R` in RStudio (from within the deployment
 project). The script contains several sections:
 
-##### Basic Parameters
+#### Basic Parameters
 
 ``` r
 
@@ -157,7 +155,7 @@ setup_dir <- "setup"                           # Location of the setup folder
 data_path <- file.path(setup_dir, "data")      # Raw spatial data files
 ```
 
-##### Boundaries
+#### Boundaries
 
 If you set `oceandatr = TRUE`, the template includes code to download
 your EEZ boundary:
@@ -179,7 +177,7 @@ bndry <- sf::st_read(file.path(data_path, "my_boundary.gpkg")) %>%
   sf::st_transform(crs = crs)
 ```
 
-##### Planning Unit Grid
+#### Planning Unit Grid
 
 ``` r
 
@@ -198,7 +196,7 @@ include:
 - `"sf_square"`: Square `sf` polygons
 - `"raster"`: Raster (`SpatRaster`) format
 
-##### Feature Data
+#### Feature Data
 
 If using *oceandatr*, the template downloads several data layers:
 
@@ -225,7 +223,7 @@ seamounts <- oceandatr::get_seamounts(
   sf::st_drop_geometry()
 ```
 
-##### Adding Custom Data
+#### Adding Custom Data
 
 To add your own spatial data layers:
 
@@ -250,7 +248,7 @@ my_raster <- terra::rast(file.path(data_path, "my_data.tif")) %>%
   )
 ```
 
-##### Cost Layers
+#### Cost Layers
 
 ``` r
 
@@ -264,7 +262,7 @@ cost <- dat_sf %>%
   )
 ```
 
-##### Locked-In Areas (MPAs)
+#### Locked-In Areas (MPAs)
 
 ``` r
 
@@ -281,7 +279,7 @@ mpas <- spatialplanr::splnr_get_MPAs(
   )
 ```
 
-##### Saving the Data
+#### Saving the Data
 
 The final step combines all data and saves it:
 
@@ -302,7 +300,7 @@ save(dat_sf, bndry, coast,
      file = file.path(data_path, paste0(country, "_RawData.rda")))
 ```
 
-#### Running setup-data.R
+### Running setup-data.R
 
 1.  Open `setup/setup-data.R` in RStudio (with the `.Rproj` open)
 2.  Review and modify as needed for your data
@@ -316,12 +314,12 @@ save(dat_sf, bndry, coast,
 > Ensure you have a stable internet connection and sufficient disk
 > space.
 
-### Step 3: Configure App Options
+## Step 3: Configure App Options
 
 The `setup/setup-app.R` script configures how the *shinyplanr*
 application behaves and generates the config file loaded at runtime.
 
-#### The Options List
+### The Options List
 
 The `options` list controls application settings, allowing you to define
 text, switch modules on/off and decide on display options:
@@ -373,9 +371,9 @@ options <- list(
 )
 ```
 
-#### Key Options Explained
+### Key Options Explained
 
-##### Module Switches
+#### Module Switches
 
 Enable or disable application modules:
 
@@ -388,7 +386,7 @@ Enable or disable application modules:
 | `mod_5coverage` | Upload and evaluate spatial files     |
 | `mod_6help`     | FAQ and technical help                |
 
-##### Target Grouping
+#### Target Grouping
 
 How targets are presented to users:
 
@@ -396,13 +394,13 @@ How targets are presented to users:
 - `"category"`: One slider per category (e.g., all habitats together)
 - `"master"`: Single slider for all features
 
-##### Objective Function
+#### Objective Function
 
 - `"min_shortfall"`: Minimise shortfall within a budget (shows budget
   input)
 - `"min_set"`: Find minimum cost solution meeting all targets
 
-##### Climate Options
+#### Climate Options
 
 If climate data is available:
 
@@ -414,7 +412,7 @@ direction = -1,        # -1 = low values are refugia
 refugiaTarget = 1
 ```
 
-#### Running setup-app.R
+### Running setup-app.R
 
 After configuring options:
 
@@ -435,13 +433,13 @@ After configuring options:
 > [`load_config()`](https://spatialplanning.github.io/shinyplanr/reference/load_config.md)
 > reads at app startup — no package rebuild required.
 
-### Step 4: The Feature Dictionary
+## Step 4: The Feature Dictionary
 
 The `setup/Dict_Feature.csv` file defines all data layers and their
 properties. This is the central configuration for what features, costs,
 and constraints appear in the application.
 
-#### Dictionary Columns
+### Dictionary Columns
 
 | Column | Description | Example |
 |----|----|----|
@@ -458,7 +456,7 @@ and constraints appear in the application.
 | `units` | Units for display | `"km²"` |
 | `justification` | Description text shown in app | `"Important habitat..."` |
 
-#### Feature Types
+### Feature Types
 
 | Type                | Description                              |
 |---------------------|------------------------------------------|
@@ -470,7 +468,7 @@ and constraints appear in the application.
 | `Bioregion`         | Bioregion stratification layer           |
 | `EcosystemServices` | Ecosystem service layer                  |
 
-#### Example Dictionary Entries
+### Example Dictionary Entries
 
 ``` csv
 nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
@@ -482,7 +480,7 @@ Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,"Exi
 Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."
 ```
 
-#### Common Issues
+### Common Issues
 
 > **Variable Name Matching**
 >
@@ -493,14 +491,14 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 > - Case sensitivity
 > - Spaces vs underscores
 
-### Step 5: Customise Content
+## Step 5: Customise Content
 
 The `setup/content/` folder contains text and other content files that
 appear in the application. Markdown (`.md`) files are the primary
 format, but you can also store PDFs, images, or other reference material
 here.
 
-#### Welcome Pages
+### Welcome Pages
 
 Multiple welcome page tabs can be configured:
 
@@ -513,7 +511,7 @@ Multiple welcome page tabs can be configured:
 | `shinyplanr_1welcome5.md` | References                 |
 | `shinyplanr_1footer.md`   | Footer text (contact info) |
 
-#### Module help text
+### Module help text
 
 | File                               | Where it appears         |
 |------------------------------------|--------------------------|
@@ -523,7 +521,7 @@ Multiple welcome page tabs can be configured:
 | `shinyplanr_2climate.md`           | Climate panel            |
 | `shinyplanr_2ecosystemServices.md` | Ecosystem services panel |
 
-#### Help tab pages
+### Help tab pages
 
 | File                       | Where it appears    |
 |----------------------------|---------------------|
@@ -535,7 +533,7 @@ Edit these files with region-specific information before deployment. You
 can also place additional files (PDFs, images) in `setup/content/` and
 reference them from markdown.
 
-### Step 6: Test Locally
+## Step 6: Test Locally
 
 Before deploying, test the application locally from within the
 deployment project:
@@ -560,7 +558,7 @@ shinyplanr::run_app()
 > from **inside the deployment project** (i.e. with `Fiji.Rproj` open),
 > not from the shinyplanr package directory.
 
-#### Testing Checklist
+### Testing Checklist
 
 Application loads without errors
 
@@ -580,7 +578,7 @@ Download buttons work
 
 Help text displays properly
 
-### Summary
+## Summary
 
 Setting up *shinyplanr* for a new region involves:
 
@@ -599,9 +597,9 @@ vignette](https://spatialplanning.github.io/shinyplanr/articles/ad-deployment.md
 for instructions on locking package versions and deploying to Posit
 Connect.
 
-### Quick Reference
+## Quick Reference
 
-#### Minimum Required Files
+### Minimum Required Files
 
 After running `setup/setup-app.R`, your deployment project should
 contain:
@@ -623,7 +621,7 @@ contain:
         ├── logos/
         └── content/
 
-#### Common Commands
+### Common Commands
 
 ``` r
 

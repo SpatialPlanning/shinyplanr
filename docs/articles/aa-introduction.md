@@ -1,7 +1,5 @@
 # Introduction to Spatial Planning
 
-## Introduction to Spatial Planning
-
 This chapter provides the conceptual foundation for understanding
 spatial prioritisation for both conservation and multiple-use planning.
 We begin with the rationale for spatial planning, introduce systematic
@@ -9,7 +7,7 @@ approaches, explain how mathematical optimisation is used, and explore
 modern advances including climate-smart planning, multiple-use zoning,
 and ecosystem services.
 
-### Why Spatial Planning?
+## Why Spatial Planning?
 
 The world’s ecosystems face unprecedented pressures from competing human
 demands. Habitat loss, overexploitation, pollution, invasive species,
@@ -52,7 +50,7 @@ ecosystem services. Spatial planning provides a framework for making
 informed, transparent decisions about where to focus conservation
 efforts and how to allocate space among competing uses.
 
-#### The Conservation Challenge
+### The Conservation Challenge
 
 Protected areas remain a cornerstone of conservation strategy. However,
 simply designating more protected areas is not sufficient. We must
@@ -73,7 +71,7 @@ ensure that protected areas:
 Achieving these goals requires moving beyond ad hoc decisions to
 systematic, evidence-based planning.
 
-### What is Spatial Prioritisation?
+## What is Spatial Prioritisation?
 
 Spatial prioritisation is the process of identifying where actions
 should be located to most efficiently achieve specified objectives.
@@ -101,7 +99,7 @@ planning context:
 > (e.g., no-take reserves, sustainable fishing areas, aquaculture zones)
 > to achieve multiple objectives simultaneously?*
 
-#### The Need for Systematic Approaches
+### The Need for Systematic Approaches
 
 Traditional approaches to spatial planning often relied on:
 
@@ -141,9 +139,9 @@ Systematic conservation planning ([Margules and Pressey
 limitations by using quantitative methods to identify priority areas
 based on explicit objectives and constraints.
 
-### Key Concepts
+## Key Concepts
 
-#### Planning Units
+### Planning Units
 
 The planning region is divided into discrete spatial units called
 **planning units**. These can be:
@@ -158,7 +156,7 @@ allocated to different management zones rather than simply selected or
 not. The goal of prioritisation is to determine which planning units to
 select (or which zone to allocate them to).
 
-#### Features
+### Features
 
 **Features** are the spatial elements of interest in the planning
 region. Depending on planning objectives, features can include:
@@ -191,7 +189,7 @@ planning**, features can represent suitability for different
 activities—high values might indicate where fishing, aquaculture, or
 energy generation would be most productive.
 
-#### Targets
+### Targets
 
 **Targets** specify how much of each feature should be represented in
 the spatial plan. Targets can be expressed as:
@@ -212,7 +210,7 @@ by:
 - **Stakeholder input**: Sectoral needs, community priorities, equity
   considerations
 
-#### Cost
+### Cost
 
 **Cost** represents the expense or difficulty of including each planning
 unit in the spatial plan. Cost can include:
@@ -238,7 +236,7 @@ area selected. Note that in multiple-use planning with zoning, different
 zones may have different cost structures, reflecting the varying
 implications of allocating areas to different management regimes.
 
-#### Constraints
+### Constraints
 
 **Constraints** are rules that must be satisfied by any valid solution:
 
@@ -247,13 +245,13 @@ implications of allocating areas to different management regimes.
 - **Locked-out constraints**: Planning units that *cannot* be selected
   (e.g., shipping lanes, urban areas)
 
-### Objective Functions
+## Objective Functions
 
 The **objective function** defines what the prioritisation algorithm is
 trying to achieve. Different objectives suit different planning
 contexts:
 
-#### Minimum Set Objective
+### Minimum Set Objective
 
 The classic conservation planning objective:
 
@@ -266,7 +264,7 @@ also applicable in multiple-use contexts—for example, identifying the
 minimum area needed for aquaculture to meet food security targets while
 minimising conflict with other sectors.
 
-#### Minimum Shortfall Objective
+### Minimum Shortfall Objective
 
 When budgets are fixed:
 
@@ -279,7 +277,7 @@ others. In multiple-use planning, the “budget” might represent the total
 area available for a particular sector, or a financial constraint on
 development.
 
-#### Other Objectives
+### Other Objectives
 
 The *prioritizr* package supports additional objectives including:
 
@@ -297,9 +295,9 @@ The *prioritizr* package supports additional objectives including:
   - *Use case*: Ensure no single species or sector is disproportionately
     impacted
 
-### Mathematical Optimisation
+## Mathematical Optimisation
 
-#### The Integer Linear Programming Approach
+### The Integer Linear Programming Approach
 
 Modern spatial prioritisation uses **integer linear programming (ILP)**
 to find optimal solutions. Unlike heuristic approaches (such as
@@ -316,7 +314,7 @@ supports multiple commercial and open-source solvers including:
 - **HiGHS** (open-source, recommended default)
 - **CBC** (open-source)
 
-#### Advantages Over Heuristic Methods
+### Advantages Over Heuristic Methods
 
 | Aspect          | ILP (*prioritizr*) | Heuristics (*Marxan*) |
 |-----------------|--------------------|-----------------------|
@@ -325,7 +323,7 @@ supports multiple commercial and open-source solvers including:
 | Reproducibility | Deterministic      | Stochastic            |
 | Flexibility     | Highly flexible    | More constrained      |
 
-### Climate-Smart Spatial Planning
+## Climate-Smart Spatial Planning
 
 Climate change poses fundamental challenges to both conservation and
 multiple-use planning. Species distributions are shifting, habitats are
@@ -337,7 +335,7 @@ change considerations into prioritisation to ensure plans remain
 effective under future conditions ([Buenafe et al.
 2025](#ref-buenafe2025climatesmart)).
 
-#### Why Climate-Smart Planning Matters
+### Why Climate-Smart Planning Matters
 
 Traditional spatial planning assumes that features remain static within
 planning units. However:
@@ -379,7 +377,7 @@ Given uncertainty in climate projections, robust planning aims to find
 solutions that perform well across multiple climate scenarios rather
 than optimising for a single projection.
 
-### Multiple-Use Spatial Planning
+## Multiple-Use Spatial Planning
 
 Conservation does not occur in isolation. Marine and terrestrial
 environments support multiple human activities including fishing,
@@ -390,7 +388,7 @@ biodiversity protection with sustainable economic activities, creating
 spatial plans where sectors coexist or are strategically separated based
 on compatibility ([Neubert et al. 2025](#ref-neubert2025multipleuse)).
 
-#### The Marine Context
+### The Marine Context
 
 Marine environments are particularly suited to multiple-use planning due
 to their three-dimensional structure and the potential for compatible
@@ -412,7 +410,7 @@ space:
 - **Traditional uses**: Subsistence fishing, cultural sites, indigenous
   rights and territories
 
-#### The Challenge of Multiple Objectives
+### The Challenge of Multiple Objectives
 
 Different stakeholder groups have competing but often legitimate
 objectives:
@@ -443,13 +441,13 @@ also be:
 **Multiple-use planning addresses these conflicts** through systematic
 allocation that balances ecological, economic, and social goals.
 
-#### Approaches to Multiple-Use Optimisation
+### Approaches to Multiple-Use Optimisation
 
 Following Neubert et al. ([2025](#ref-neubert2025multipleuse)), there
 are four main approaches to incorporating multiple uses in spatial
 optimisation:
 
-##### 1. Composite Costs
+#### 1. Composite Costs
 
 Aggregate multiple uses into a single cost metric that the optimisation
 minimises while meeting conservation targets.
@@ -462,7 +460,7 @@ minimises while meeting conservation targets.
 **Limitations**: Can obscure sector-specific impacts, sensitive to
 weighting choices
 
-##### 2. Constraints
+#### 2. Constraints
 
 Set sector-specific budget limits or exclude certain areas from
 consideration.
@@ -476,7 +474,7 @@ impacts
 **Limitations**: Requires detailed sector-specific data, harder to
 communicate
 
-##### 3. Zoning
+#### 3. Zoning
 
 Allocate planning units to different management zones with distinct
 objectives.
@@ -495,7 +493,7 @@ practice
 **Limitations**: Requires substantial data, complex to configure, high
 computational demands
 
-##### 4. Multi-objective Optimisation
+#### 4. Multi-objective Optimisation
 
 Simultaneously optimise multiple objective functions (e.g., maximise
 conservation AND maximise fishing value).
@@ -511,7 +509,7 @@ configuration of *prioritizr*. Approach 4 (multi-objective optimisation)
 is not currently implemented but represents a future development
 direction.
 
-#### Zoning in Detail
+### Zoning in Detail
 
 **Zoning** is one of the most accessible and widely-used methods for
 multiple-use planning. Rather than binary selection (protect vs. don’t
@@ -544,7 +542,7 @@ functionality. Each zone can have distinct features, targets, costs, and
 constraints, allowing simultaneous optimisation across all zones to find
 the best overall allocation.
 
-#### Balancing Trade-offs
+### Balancing Trade-offs
 
 Multiple-use planning requires explicit consideration of trade-offs:
 
@@ -574,7 +572,7 @@ Multiple-use planning requires explicit consideration of trade-offs:
 - Visualise how parameter changes affect different stakeholder groups
 - Download results for further analysis and stakeholder engagement
 
-#### Data for Multiple-Use Planning
+### Data for Multiple-Use Planning
 
 Understanding current and potential ocean uses requires spatial data on
 human activities:
@@ -600,7 +598,7 @@ human activities:
 - Indigenous marine territories
 - Community resource use patterns
 
-### Ecosystem Services
+## Ecosystem Services
 
 **Ecosystem services** are the benefits that humans derive from
 ecosystems. Incorporating ecosystem services into spatial planning
@@ -608,7 +606,7 @@ allows conservation to contribute to human well-being alongside
 biodiversity protection ([Dabalà et al.
 2023](#ref-dabala2023mangroves)).
 
-#### Categories of Ecosystem Services
+### Categories of Ecosystem Services
 
 1.  **Provisioning services**: Products obtained from ecosystems
     - Fisheries production
@@ -630,7 +628,7 @@ biodiversity protection ([Dabalà et al.
     - Primary production
     - Habitat provision
 
-#### Quantifying Ecosystem Services
+### Quantifying Ecosystem Services
 
 Ecosystem services can be represented spatially through:
 
@@ -655,7 +653,7 @@ fisheries, and biodiversity conservation ([Dabalà et al.
 strengthens the case for conservation by demonstrating tangible value to
 stakeholders.
 
-### Summary
+## Summary
 
 Modern spatial prioritisation for conservation and multiple-use planning
 combines:
@@ -684,7 +682,7 @@ and the [Setting Up
 vignette](https://spatialplanning.github.io/shinyplanr/articles/ac-setting-up.md)
 explains how to set up *shinyplanr* for new regions.
 
-### Further Reading
+## Further Reading
 
 **Systematic conservation planning:**
 

@@ -1,7 +1,5 @@
 # Deploying shinyplanr
 
-## Deploying *shinyplanr*
-
 This chapter explains how to deploy *shinyplanr* for a new region using
 the **Deployment Project** model introduced in shinyplanr v2.0. The key
 design principle is that deployers never need to fork or modify the
@@ -17,7 +15,7 @@ project that holds only their region-specific data and configuration.
 > If you are setting up data for the first time, see the [Setting Up
 > vignette](https://spatialplanning.github.io/shinyplanr/articles/ac-setting-up.md).
 
-### Overview
+## Overview
 
 The deployment workflow has three phases:
 
@@ -51,7 +49,7 @@ fork of shinyplanr. It contains:
     ├── renv.lock                    ← Package version lock (if using renv)
     └── .Rprofile                    ← renv activation (if using renv)
 
-### Step 1: Create the Deployment Project
+## Step 1: Create the Deployment Project
 
 From within an R session (not necessarily inside the shinyplanr
 package), call
@@ -78,7 +76,7 @@ This will:
 - Generate `app.R`, `deploy.R`, and `MyRegion.Rproj`
 - Initialise `renv` (bare mode) if `use_renv = TRUE` (the default)
 
-#### Key parameters
+### Key parameters
 
 | Parameter | Default | Notes |
 |----|----|----|
@@ -93,7 +91,7 @@ This will:
 | `use_renv` | `TRUE` | Initialise renv for reproducible deployment |
 | `create_rproj` | `TRUE` | Create an RStudio `.Rproj` file |
 
-### Step 2: Open the Deployment Project
+## Step 2: Open the Deployment Project
 
 Open the newly created project in RStudio or VSCode:
 
@@ -119,7 +117,7 @@ code ../MyRegion
 > All subsequent steps should be run **from inside the deployment
 > project**, not from the shinyplanr package directory.
 
-### Step 3: Prepare Spatial Data
+## Step 3: Prepare Spatial Data
 
 Edit and run `data-raw/MyRegion/setup-data.R`. This script:
 
@@ -143,7 +141,7 @@ setting. At minimum, you will need to:
 source("data-raw/MyRegion/setup-data.R")
 ```
 
-### Step 4: Configure the App
+## Step 4: Configure the App
 
 Edit and run `setup/setup-app.R`. This script:
 
@@ -155,7 +153,7 @@ Edit and run `setup/setup-app.R`. This script:
 
 Key sections to customise in `setup/setup-app.R`:
 
-#### App options
+### App options
 
 ``` r
 
@@ -188,7 +186,7 @@ options <- list(
 )
 ```
 
-#### Logos
+### Logos
 
 Replace the placeholder files in `setup/logos/` with your own:
 
@@ -199,7 +197,7 @@ Replace the placeholder files in `setup/logos/` with your own:
 | `logo3.png`       | Tertiary logo (shown in navbar)       |
 | `logo_funder.png` | Funder logo (shown in welcome footer) |
 
-#### Content files
+### Content files
 
 Edit the files in `setup/content/` to customise the text shown in each
 panel of the app. The templates contain placeholder text with
@@ -219,7 +217,7 @@ to this folder.
 | `shinyplanr_6technical.md`         | Technical notes tab |
 | `shinyplanr_6changelog.md`         | Changelog tab       |
 
-#### Feature dictionary
+### Feature dictionary
 
 Edit `setup/Dict_Feature.csv` to define which features appear in the
 app, their display names, target ranges, and justification text. Key
@@ -243,7 +241,7 @@ After editing, run:
 source("setup/setup-app.R")
 ```
 
-### Step 5: Test Locally
+## Step 5: Test Locally
 
 Run the app locally to check everything looks correct:
 
@@ -273,7 +271,7 @@ The app should open in your browser. Check that:
 > completed without errors and that `config/shinyplanr_config.rds`
 > exists and is not empty.
 
-### Step 6: Lock Package Versions with renv
+## Step 6: Lock Package Versions with renv
 
 Before deploying, lock the exact versions of all packages used
 (including shinyplanr) to ensure the deployed app is identical to your
@@ -295,7 +293,7 @@ are using git.
 > file. The lock file pins the exact GitHub commit SHA used during local
 > testing.
 
-#### Upgrading shinyplanr
+### Upgrading shinyplanr
 
 When a new version of shinyplanr is released and you want to upgrade:
 
@@ -312,7 +310,7 @@ If the new version has an incompatible config schema,
 [`load_config()`](https://spatialplanning.github.io/shinyplanr/reference/load_config.md)
 will print a clear error message explaining what changed.
 
-### Step 7: Set Up Posit Connect
+## Step 7: Set Up Posit Connect
 
 You only need to do this once per Posit Connect account:
 
@@ -330,7 +328,7 @@ rsconnect::setAccountInfo(
 )
 ```
 
-### Step 8: Deploy to Posit Connect
+## Step 8: Deploy to Posit Connect
 
 Run the deployment script:
 
@@ -359,7 +357,7 @@ with a curated list of files:
 After deployment, Posit Connect will provide a URL for your app. Share
 this with your stakeholders.
 
-### Version Compatibility
+## Version Compatibility
 
 shinyplanr uses a **config schema version** (separate from the package
 version) to detect incompatible config files. The schema version only
@@ -379,9 +377,9 @@ will stop with a clear error:
 The fix is always the same: re-run `setup/setup-app.R` to regenerate the
 config, then re-deploy.
 
-### Troubleshooting
+## Troubleshooting
 
-#### App fails to start on Posit Connect
+### App fails to start on Posit Connect
 
 Check that:
 
@@ -391,24 +389,24 @@ Check that:
 - The shinyplanr package version installed by Posit Connect matches your
   local version
 
-#### “Config schema version mismatch” error
+### “Config schema version mismatch” error
 
 Re-run `setup/setup-app.R` in your deployment project to regenerate the
 config for the current package version.
 
-#### Missing logos
+### Missing logos
 
 Ensure `setup/setup-app.R` ran successfully (logo copy step). Check that
 logo files exist in `setup/logos/` and that `www/` was populated.
 
-#### Local app works but deployed app fails
+### Local app works but deployed app fails
 
 This almost always means a package version mismatch between local and
 Posit Connect. Run
 [`renv::snapshot()`](https://rstudio.github.io/renv/reference/snapshot.html)
 locally and re-deploy.
 
-#### “object ‘Dict’ not found” or similar
+### “object ‘Dict’ not found” or similar
 
 [`load_config()`](https://spatialplanning.github.io/shinyplanr/reference/load_config.md)
 was not called, or failed silently. Check that `app.R` in the project

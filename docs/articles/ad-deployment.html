@@ -77,18 +77,15 @@
 
 
 
-    <section class="section level2"><h2 id="deploying-shinyplanr">Deploying <em>shinyplanr</em>
-<a class="anchor" aria-label="anchor" href="#deploying-shinyplanr"></a>
-</h2>
-<p>This chapter explains how to deploy <em>shinyplanr</em> for a new region using the <strong>Deployment Project</strong> model introduced in shinyplanr v2.0. The key design principle is that deployers never need to fork or modify the shinyplanr package source — they create a small, self-contained R project that holds only their region-specific data and configuration.</p>
+    <p>This chapter explains how to deploy <em>shinyplanr</em> for a new region using the <strong>Deployment Project</strong> model introduced in shinyplanr v2.0. The key design principle is that deployers never need to fork or modify the shinyplanr package source — they create a small, self-contained R project that holds only their region-specific data and configuration.</p>
 <div>
 <blockquote>
 <p><strong>Note</strong></p>
 <p>This chapter is for <strong>deployers</strong> — practitioners who want to run <em>shinyplanr</em> for a new region. If you are looking for user instructions (how to use a running app), see the <a href="ab-using-shinyplanr.html">Using shinyplanr vignette</a>. If you are setting up data for the first time, see the <a href="ac-setting-up.html">Setting Up vignette</a>.</p>
 </blockquote>
 </div>
-<section class="level2"><h3 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
-</h3>
+<section class="level2"><h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h2>
 <p>The deployment workflow has three phases:</p>
 <table class="table caption-top">
 <colgroup>
@@ -140,8 +137,8 @@
 │       └── markdown/            ← Your help text (markdown)
 ├── renv.lock                    ← Package version lock (if using renv)
 └── .Rprofile                    ← renv activation (if using renv)</code></pre>
-</section><section class="level2"><h3 id="sec-deploy-create">Step 1: Create the Deployment Project<a class="anchor" aria-label="anchor" href="#sec-deploy-create"></a>
-</h3>
+</section><section class="level2"><h2 id="sec-deploy-create">Step 1: Create the Deployment Project<a class="anchor" aria-label="anchor" href="#sec-deploy-create"></a>
+</h2>
 <p>From within an R session (not necessarily inside the shinyplanr package), call <code><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template()</a></code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://spatialplanning.github.io/shinyplanr">shinyplanr</a></span><span class="op">)</span></span>
@@ -161,8 +158,8 @@
 </li>
 <li>Initialise <code>renv</code> (bare mode) if <code>use_renv = TRUE</code> (the default)</li>
 </ul>
-<section class="level3"><h4 id="key-parameters">Key parameters<a class="anchor" aria-label="anchor" href="#key-parameters"></a>
-</h4>
+<section class="level3"><h3 id="key-parameters">Key parameters<a class="anchor" aria-label="anchor" href="#key-parameters"></a>
+</h3>
 <table class="table caption-top">
 <thead><tr class="header">
 <th>Parameter</th>
@@ -222,8 +219,8 @@
 <td>Create an RStudio <code>.Rproj</code> file</td>
 </tr>
 </tbody>
-</table></section></section><section class="level2"><h3 id="sec-deploy-open">Step 2: Open the Deployment Project<a class="anchor" aria-label="anchor" href="#sec-deploy-open"></a>
-</h3>
+</table></section></section><section class="level2"><h2 id="sec-deploy-open">Step 2: Open the Deployment Project<a class="anchor" aria-label="anchor" href="#sec-deploy-open"></a>
+</h2>
 <p>Open the newly created project in RStudio or VSCode:</p>
 <div class="panel-tabset">
 <ul id="tabset-1" class="panel-tabset-tabby">
@@ -248,8 +245,8 @@
 <p>All subsequent steps should be run <strong>from inside the deployment project</strong>, not from the shinyplanr package directory.</p>
 </blockquote>
 </div>
-</section><section class="level2"><h3 id="sec-deploy-data">Step 3: Prepare Spatial Data<a class="anchor" aria-label="anchor" href="#sec-deploy-data"></a>
-</h3>
+</section><section class="level2"><h2 id="sec-deploy-data">Step 3: Prepare Spatial Data<a class="anchor" aria-label="anchor" href="#sec-deploy-data"></a>
+</h2>
 <p>Edit and run <code>data-raw/MyRegion/setup-data.R</code>. This script:</p>
 <ol type="1">
 <li>Downloads or loads your spatial data</li>
@@ -267,8 +264,8 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run from inside the deployment project:</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"data-raw/MyRegion/setup-data.R"</span><span class="op">)</span></span></code></pre></div>
-</section><section class="level2"><h3 id="sec-deploy-config">Step 4: Configure the App<a class="anchor" aria-label="anchor" href="#sec-deploy-config"></a>
-</h3>
+</section><section class="level2"><h2 id="sec-deploy-config">Step 4: Configure the App<a class="anchor" aria-label="anchor" href="#sec-deploy-config"></a>
+</h2>
 <p>Edit and run <code>setup/setup-app.R</code>. This script:</p>
 <ol type="1">
 <li>Defines all app options (titles, colours, module switches, CRS)</li>
@@ -281,8 +278,8 @@
 </li>
 </ol>
 <p>Key sections to customise in <code>setup/setup-app.R</code>:</p>
-<section class="level3"><h4 id="app-options">App options<a class="anchor" aria-label="anchor" href="#app-options"></a>
-</h4>
+<section class="level3"><h3 id="app-options">App options<a class="anchor" aria-label="anchor" href="#app-options"></a>
+</h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">setup_dir</span> <span class="op">&lt;-</span> <span class="st">"setup"</span></span>
 <span><span class="va">data_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"data"</span><span class="op">)</span></span>
@@ -311,8 +308,8 @@
 <span>  obj_func <span class="op">=</span> <span class="st">"min_shortfall"</span>,  <span class="co"># or "min_set"</span></span>
 <span>  cCRS     <span class="op">=</span> <span class="st">"EPSG:32757"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-</section><section class="level3"><h4 id="logos">Logos<a class="anchor" aria-label="anchor" href="#logos"></a>
-</h4>
+</section><section class="level3"><h3 id="logos">Logos<a class="anchor" aria-label="anchor" href="#logos"></a>
+</h3>
 <p>Replace the placeholder files in <code>setup/logos/</code> with your own:</p>
 <table class="table caption-top">
 <thead><tr class="header">
@@ -337,8 +334,8 @@
 <td>Funder logo (shown in welcome footer)</td>
 </tr>
 </tbody>
-</table></section><section class="level3"><h4 id="content-files">Content files<a class="anchor" aria-label="anchor" href="#content-files"></a>
-</h4>
+</table></section><section class="level3"><h3 id="content-files">Content files<a class="anchor" aria-label="anchor" href="#content-files"></a>
+</h3>
 <p>Edit the files in <code>setup/content/</code> to customise the text shown in each panel of the app. The templates contain placeholder text with instructions. You can also add PDFs, images, or other reference material to this folder.</p>
 <table class="table caption-top">
 <thead><tr class="header">
@@ -389,8 +386,8 @@
 <td>Changelog tab</td>
 </tr>
 </tbody>
-</table></section><section class="level3"><h4 id="feature-dictionary">Feature dictionary<a class="anchor" aria-label="anchor" href="#feature-dictionary"></a>
-</h4>
+</table></section><section class="level3"><h3 id="feature-dictionary">Feature dictionary<a class="anchor" aria-label="anchor" href="#feature-dictionary"></a>
+</h3>
 <p>Edit <code>setup/Dict_Feature.csv</code> to define which features appear in the app, their display names, target ranges, and justification text. Key columns:</p>
 <table class="table caption-top">
 <thead><tr class="header">
@@ -441,8 +438,8 @@
 <p>After editing, run:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"setup/setup-app.R"</span><span class="op">)</span></span></code></pre></div>
-</section></section><section class="level2"><h3 id="sec-deploy-test">Step 5: Test Locally<a class="anchor" aria-label="anchor" href="#sec-deploy-test"></a>
-</h3>
+</section></section><section class="level2"><h2 id="sec-deploy-test">Step 5: Test Locally<a class="anchor" aria-label="anchor" href="#sec-deploy-test"></a>
+</h2>
 <p>Run the app locally to check everything looks correct:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -463,8 +460,8 @@
 <p>If you see errors about missing objects, check that <code>setup-app.R</code> completed without errors and that <code>config/shinyplanr_config.rds</code> exists and is not empty.</p>
 </blockquote>
 </div>
-</section><section class="level2"><h3 id="sec-deploy-renv">Step 6: Lock Package Versions with renv<a class="anchor" aria-label="anchor" href="#sec-deploy-renv"></a>
-</h3>
+</section><section class="level2"><h2 id="sec-deploy-renv">Step 6: Lock Package Versions with renv<a class="anchor" aria-label="anchor" href="#sec-deploy-renv"></a>
+</h2>
 <p>Before deploying, lock the exact versions of all packages used (including shinyplanr) to ensure the deployed app is identical to your local test:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">snapshot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -475,8 +472,8 @@
 <p><strong>Why this matters:</strong> When you deploy to Posit Connect, it installs packages fresh from GitHub. Without <code>renv.lock</code>, it could install a newer version of shinyplanr that is incompatible with your config file. The lock file pins the exact GitHub commit SHA used during local testing.</p>
 </blockquote>
 </div>
-<section class="level3"><h4 id="upgrading-shinyplanr">Upgrading shinyplanr<a class="anchor" aria-label="anchor" href="#upgrading-shinyplanr"></a>
-</h4>
+<section class="level3"><h3 id="upgrading-shinyplanr">Upgrading shinyplanr<a class="anchor" aria-label="anchor" href="#upgrading-shinyplanr"></a>
+</h3>
 <p>When a new version of shinyplanr is released and you want to upgrade:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/update.html" class="external-link">update</a></span><span class="op">(</span><span class="st">"shinyplanr"</span><span class="op">)</span>    <span class="co"># Install new version</span></span>
@@ -485,8 +482,8 @@
 <span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">snapshot</a></span><span class="op">(</span><span class="op">)</span>              <span class="co"># Update lock file</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"deploy.R"</span><span class="op">)</span>            <span class="co"># Deploy</span></span></code></pre></div>
 <p>If the new version has an incompatible config schema, <code><a href="../reference/load_config.html">load_config()</a></code> will print a clear error message explaining what changed.</p>
-</section></section><section class="level2"><h3 id="sec-deploy-posit-setup">Step 7: Set Up Posit Connect<a class="anchor" aria-label="anchor" href="#sec-deploy-posit-setup"></a>
-</h3>
+</section></section><section class="level2"><h2 id="sec-deploy-posit-setup">Step 7: Set Up Posit Connect<a class="anchor" aria-label="anchor" href="#sec-deploy-posit-setup"></a>
+</h2>
 <p>You only need to do this once per Posit Connect account:</p>
 <ol type="1">
 <li>Go to <a href="https://connect.posit.cloud" class="external-link">Posit Connect Cloud</a> and sign in (or create an account)</li>
@@ -500,8 +497,8 @@
 <span>  token  <span class="op">=</span> <span class="st">"your-token"</span>,</span>
 <span>  secret <span class="op">=</span> <span class="st">"your-secret"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-</section><section class="level2"><h3 id="sec-deploy-deploy">Step 8: Deploy to Posit Connect<a class="anchor" aria-label="anchor" href="#sec-deploy-deploy"></a>
-</h3>
+</section><section class="level2"><h2 id="sec-deploy-deploy">Step 8: Deploy to Posit Connect<a class="anchor" aria-label="anchor" href="#sec-deploy-deploy"></a>
+</h2>
 <p>Run the deployment script:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"deploy.R"</span><span class="op">)</span></span></code></pre></div>
@@ -523,8 +520,8 @@
 </blockquote>
 </div>
 <p>After deployment, Posit Connect will provide a URL for your app. Share this with your stakeholders.</p>
-</section><section class="level2"><h3 id="sec-deploy-versioning">Version Compatibility<a class="anchor" aria-label="anchor" href="#sec-deploy-versioning"></a>
-</h3>
+</section><section class="level2"><h2 id="sec-deploy-versioning">Version Compatibility<a class="anchor" aria-label="anchor" href="#sec-deploy-versioning"></a>
+</h2>
 <p>shinyplanr uses a <strong>config schema version</strong> (separate from the package version) to detect incompatible config files. The schema version only increments when the structure of the config changes (keys added, removed, or renamed).</p>
 <p>If you try to run an app with a mismatched config, <code><a href="../reference/load_config.html">load_config()</a></code> will stop with a clear error:</p>
 <pre><code>Error: Config schema version mismatch.
@@ -533,10 +530,10 @@
   Config path: config/shinyplanr_config.rds
 Re-run setup/setup-app.R to regenerate the config with the current schema.</code></pre>
 <p>The fix is always the same: re-run <code>setup/setup-app.R</code> to regenerate the config, then re-deploy.</p>
-</section><section class="level2"><h3 id="sec-deploy-troubleshoot">Troubleshooting<a class="anchor" aria-label="anchor" href="#sec-deploy-troubleshoot"></a>
+</section><section class="level2"><h2 id="sec-deploy-troubleshoot">Troubleshooting<a class="anchor" aria-label="anchor" href="#sec-deploy-troubleshoot"></a>
+</h2>
+<section class="level3"><h3 id="app-fails-to-start-on-posit-connect">App fails to start on Posit Connect<a class="anchor" aria-label="anchor" href="#app-fails-to-start-on-posit-connect"></a>
 </h3>
-<section class="level3"><h4 id="app-fails-to-start-on-posit-connect">App fails to start on Posit Connect<a class="anchor" aria-label="anchor" href="#app-fails-to-start-on-posit-connect"></a>
-</h4>
 <p>Check that:</p>
 <ul>
 <li>
@@ -544,19 +541,19 @@ Re-run setup/setup-app.R to regenerate the config with the current schema.</code
 <li>
 <code>renv.lock</code> is included and matches your local environment</li>
 <li>The shinyplanr package version installed by Posit Connect matches your local version</li>
-</ul></section><section class="level3"><h4 id="config-schema-version-mismatch-error">“Config schema version mismatch” error<a class="anchor" aria-label="anchor" href="#config-schema-version-mismatch-error"></a>
-</h4>
+</ul></section><section class="level3"><h3 id="config-schema-version-mismatch-error">“Config schema version mismatch” error<a class="anchor" aria-label="anchor" href="#config-schema-version-mismatch-error"></a>
+</h3>
 <p>Re-run <code>setup/setup-app.R</code> in your deployment project to regenerate the config for the current package version.</p>
-</section><section class="level3"><h4 id="missing-logos">Missing logos<a class="anchor" aria-label="anchor" href="#missing-logos"></a>
-</h4>
+</section><section class="level3"><h3 id="missing-logos">Missing logos<a class="anchor" aria-label="anchor" href="#missing-logos"></a>
+</h3>
 <p>Ensure <code>setup/setup-app.R</code> ran successfully (logo copy step). Check that logo files exist in <code>setup/logos/</code> and that <code>www/</code> was populated.</p>
-</section><section class="level3"><h4 id="local-app-works-but-deployed-app-fails">Local app works but deployed app fails<a class="anchor" aria-label="anchor" href="#local-app-works-but-deployed-app-fails"></a>
-</h4>
+</section><section class="level3"><h3 id="local-app-works-but-deployed-app-fails">Local app works but deployed app fails<a class="anchor" aria-label="anchor" href="#local-app-works-but-deployed-app-fails"></a>
+</h3>
 <p>This almost always means a package version mismatch between local and Posit Connect. Run <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code> locally and re-deploy.</p>
-</section><section class="level3"><h4 id="object-dict-not-found-or-similar">“object ‘Dict’ not found” or similar<a class="anchor" aria-label="anchor" href="#object-dict-not-found-or-similar"></a>
-</h4>
+</section><section class="level3"><h3 id="object-dict-not-found-or-similar">“object ‘Dict’ not found” or similar<a class="anchor" aria-label="anchor" href="#object-dict-not-found-or-similar"></a>
+</h3>
 <p><code><a href="../reference/load_config.html">load_config()</a></code> was not called, or failed silently. Check that <code>app.R</code> in the project root calls <code>shinyplanr::load_config("config/shinyplanr_config.rds")</code> before <code><a href="../reference/run_app.html">shinyplanr::run_app()</a></code>.</p>
-</section></section></section><script id="quarto-html-after-body" type="application/javascript">
+</section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

@@ -77,11 +77,9 @@
 
 
 
-    <section class="section level2"><h2 id="using-the-shinyplanr-application">Using the <em>shinyplanr</em> Application<a class="anchor" aria-label="anchor" href="#using-the-shinyplanr-application"></a>
+    <p>This chapter guides you through using the <em>shinyplanr</em> web application. We cover each module (tab) of the application, explaining the available options and how to interpret results.</p>
+<section class="level2"><h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>This chapter guides you through using the <em>shinyplanr</em> web application. We cover each module (tab) of the application, explaining the available options and how to interpret results.</p>
-<section class="level2"><h3 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
-</h3>
 <p>When you open a <em>shinyplanr</em> application, you will see a navigation bar at the top with several tabs. The exact tabs available depend on how the application has been configured for your region, but typically include:</p>
 <ul>
 <li>
@@ -98,8 +96,8 @@
 <strong>Help</strong>: FAQs and technical information</li>
 </ul>
 <p><img src="images/TopBanner.png" style="width:70.0%"></p>
-</section><section class="level2"><h3 id="welcome-tab">Welcome Tab<a class="anchor" aria-label="anchor" href="#welcome-tab"></a>
-</h3>
+</section><section class="level2"><h2 id="welcome-tab">Welcome Tab<a class="anchor" aria-label="anchor" href="#welcome-tab"></a>
+</h2>
 <p>The Welcome tab provides an introduction to the application and its purpose. This typically includes:</p>
 <ul>
 <li>A welcome message from the project lead or organisation</li>
@@ -109,14 +107,14 @@
 </ul>
 <p><img src="images/WelcomePage.png" style="width:70.0%"></p>
 <p>This page is customised for each deployment, so the content will vary depending on your region and project.</p>
-</section><section class="level2"><h3 id="sec-scenario-tab">Scenario Tab<a class="anchor" aria-label="anchor" href="#sec-scenario-tab"></a>
-</h3>
+</section><section class="level2"><h2 id="sec-scenario-tab">Scenario Tab<a class="anchor" aria-label="anchor" href="#sec-scenario-tab"></a>
+</h2>
 <p>The <strong>Scenario</strong> tab is where you run spatial prioritisation analyses. It contains a sidebar with input controls and a main panel displaying results.</p>
-<section class="level3"><h4 id="sidebar-controls">Sidebar Controls<a class="anchor" aria-label="anchor" href="#sidebar-controls"></a>
-</h4>
+<section class="level3"><h3 id="sidebar-controls">Sidebar Controls<a class="anchor" aria-label="anchor" href="#sidebar-controls"></a>
+</h3>
 <p>The sidebar contains several sections for configuring your analysis:</p>
-<section class="level4"><h5 id="setting-targets">1. Setting Targets<a class="anchor" aria-label="anchor" href="#setting-targets"></a>
-</h5>
+<section class="level4"><h4 id="setting-targets">1. Setting Targets<a class="anchor" aria-label="anchor" href="#setting-targets"></a>
+</h4>
 <p>Targets specify how much of each feature should be represented in the conservation solution.</p>
 <p><img src="images/Targets.png" style="width:50.0%"></p>
 <p>Depending on how the application is configured, targets can be set in three ways:</p>
@@ -129,8 +127,8 @@
 <p>For initial exploration, try setting targets around 30% (aligned with 30x30 global conservation commitments). You can then adjust individual features based on their ecological importance or rarity.</p>
 </blockquote>
 </div>
-</section><section class="level4"><h5 id="selecting-a-cost-layer">2. Selecting a Cost Layer<a class="anchor" aria-label="anchor" href="#selecting-a-cost-layer"></a>
-</h5>
+</section><section class="level4"><h4 id="selecting-a-cost-layer">2. Selecting a Cost Layer<a class="anchor" aria-label="anchor" href="#selecting-a-cost-layer"></a>
+</h4>
 <p>The cost layer determines which areas are more or less “expensive” to include in the conservation network.</p>
 <p><img src="images/Costs.png" style="width:70.0%"></p>
 <p>Common cost layer options include:</p>
@@ -143,8 +141,8 @@
 <strong>Fisheries Effort</strong>: Areas with higher fishing activity have higher cost, minimising conflict with fisheries.</li>
 <li>
 <strong>Custom costs</strong>: Region-specific cost layers provided by the data administrator.</li>
-</ul></section><section class="level4"><h5 id="choosing-a-budget-minimum-shortfall-objective">3. Choosing a Budget (Minimum Shortfall Objective)<a class="anchor" aria-label="anchor" href="#choosing-a-budget-minimum-shortfall-objective"></a>
-</h5>
+</ul></section><section class="level4"><h4 id="choosing-a-budget-minimum-shortfall-objective">3. Choosing a Budget (Minimum Shortfall Objective)<a class="anchor" aria-label="anchor" href="#choosing-a-budget-minimum-shortfall-objective"></a>
+</h4>
 <p>If the application uses the <strong>minimum shortfall objective</strong>, you will see a budget input:</p>
 <p><img src="images/MinShortfall.png" style="width:70.0%"></p>
 <p>The budget is expressed as a percentage of the total cost layer. For example:</p>
@@ -159,8 +157,8 @@
 <p>Some deployments use the <strong>minimum set</strong> objective instead, which finds the cheapest solution that meets <em>all</em> targets. In this case, no budget input is shown.</p>
 </blockquote>
 </div>
-</section><section class="level4"><h5 id="climate-smart-options">4. Climate-Smart Options<a class="anchor" aria-label="anchor" href="#climate-smart-options"></a>
-</h5>
+</section><section class="level4"><h4 id="climate-smart-options">4. Climate-Smart Options<a class="anchor" aria-label="anchor" href="#climate-smart-options"></a>
+</h4>
 <p>If climate change considerations are enabled, you will see a dropdown to select climate layers:</p>
 <p><img src="images/Climate.png" style="width:70.0%"></p>
 <p>Options typically include:</p>
@@ -178,8 +176,8 @@
 <p>Enabling climate-smart options increases analysis time. Be patient whilst the analysis runs.</p>
 </blockquote>
 </div>
-</section><section class="level4"><h5 id="constraints">5. Constraints<a class="anchor" aria-label="anchor" href="#constraints"></a>
-</h5>
+</section><section class="level4"><h4 id="constraints">5. Constraints<a class="anchor" aria-label="anchor" href="#constraints"></a>
+</h4>
 <p>Constraints allow you to lock certain areas in or out of the solution:</p>
 <p><img src="images/Constraints.png" style="width:70.0%"></p>
 <p><strong>Locked-In Areas</strong> Areas that <em>must</em> be included in the solution:</p>
@@ -196,8 +194,8 @@
 <li>Areas with incompatible uses</li>
 </ul>
 <p>Select the relevant checkboxes to include these constraints in your analysis.</p>
-</section></section><section class="level3"><h4 id="running-the-analysis">Running the Analysis<a class="anchor" aria-label="anchor" href="#running-the-analysis"></a>
-</h4>
+</section></section><section class="level3"><h3 id="running-the-analysis">Running the Analysis<a class="anchor" aria-label="anchor" href="#running-the-analysis"></a>
+</h3>
 <p>Once you have configured your options, click the <strong>Run Analysis</strong> button at the bottom of the sidebar.</p>
 <p><img src="images/AnalysisButton.png" style="width:70.0%"></p>
 <p>The analysis typically takes 10-60 seconds depending on:</p>
@@ -212,11 +210,11 @@
 <p>Wait for the analysis to complete before clicking Run Analysis again. Multiple rapid clicks can cause the application to become unresponsive.</p>
 </blockquote>
 </div>
-</section><section class="level3"><h4 id="results-tabs">Results Tabs<a class="anchor" aria-label="anchor" href="#results-tabs"></a>
-</h4>
+</section><section class="level3"><h3 id="results-tabs">Results Tabs<a class="anchor" aria-label="anchor" href="#results-tabs"></a>
+</h3>
 <p>After running an analysis, results appear in several tabs in the main panel:</p>
-<section class="level4"><h5 id="scenario-tab">Scenario Tab<a class="anchor" aria-label="anchor" href="#scenario-tab"></a>
-</h5>
+<section class="level4"><h4 id="scenario-tab">Scenario Tab<a class="anchor" aria-label="anchor" href="#scenario-tab"></a>
+</h4>
 <p>Shows the spatial solution map:</p>
 <p><img src="images/ScenarioTab.png" style="width:70.0%"></p>
 <ul>
@@ -231,8 +229,8 @@
 </ul>
 <p>Use the <strong>Download Plot</strong> button to save the map as an image file.</p>
 <p>Use the <strong>Download Spatial File</strong> button to download the solution as a GeoPackage (.gpkg) for use in GIS software.</p>
-</section><section class="level4"><h5 id="explore-tab">Explore Tab<a class="anchor" aria-label="anchor" href="#explore-tab"></a>
-</h5>
+</section><section class="level4"><h4 id="explore-tab">Explore Tab<a class="anchor" aria-label="anchor" href="#explore-tab"></a>
+</h4>
 <p>An interactive Leaflet map allowing you to:</p>
 <ul>
 <li>Zoom and pan around the planning region</li>
@@ -242,8 +240,8 @@
 </ul>
 <p><img src="images/InteractiveTab.png" style="width:70.0%"></p>
 <p>A draggable panel allows you to select which features to display on the map.</p>
-</section><section class="level4"><h5 id="targets-tab">Targets Tab<a class="anchor" aria-label="anchor" href="#targets-tab"></a>
-</h5>
+</section><section class="level4"><h4 id="targets-tab">Targets Tab<a class="anchor" aria-label="anchor" href="#targets-tab"></a>
+</h4>
 <p>Shows a bar chart of target achievement:</p>
 <p><img src="images/TargetsTab.png" style="width:70.0%"></p>
 <p>For each feature, the chart shows:</p>
@@ -261,27 +259,27 @@
 <li>Target value</li>
 <li>Representation achieved</li>
 <li>Difference from target</li>
-</ul></section><section class="level4"><h5 id="cost-tab">Cost Tab<a class="anchor" aria-label="anchor" href="#cost-tab"></a>
-</h5>
+</ul></section><section class="level4"><h4 id="cost-tab">Cost Tab<a class="anchor" aria-label="anchor" href="#cost-tab"></a>
+</h4>
 <p>Shows the spatial distribution of the selected cost layer:</p>
 <p><img src="images/CostTab.png" style="width:70.0%"></p>
 <p>This helps you understand how costs vary across the planning region and where high cost areas are located.</p>
-</section><section class="level4"><h5 id="climate-tab">Climate Tab<a class="anchor" aria-label="anchor" href="#climate-tab"></a>
-</h5>
+</section><section class="level4"><h4 id="climate-tab">Climate Tab<a class="anchor" aria-label="anchor" href="#climate-tab"></a>
+</h4>
 <p>If climate-smart options are enabled, this tab shows:</p>
 <ul>
 <li>The climate layer used in the analysis</li>
 <li>How climate considerations affected planning unit selection</li>
-</ul></section><section class="level4"><h5 id="ecosystem-services-tab">Ecosystem Services Tab<a class="anchor" aria-label="anchor" href="#ecosystem-services-tab"></a>
-</h5>
+</ul></section><section class="level4"><h4 id="ecosystem-services-tab">Ecosystem Services Tab<a class="anchor" aria-label="anchor" href="#ecosystem-services-tab"></a>
+</h4>
 <p>If ecosystem services are configured, this tab displays:</p>
 <ul>
 <li>A table of ecosystem service values</li>
 <li>How much of each service is captured by the solution</li>
 </ul>
 <p><img src="images/EcosystemServices.png" style="width:70.0%"></p>
-</section><section class="level4"><h5 id="details-tab">Details Tab<a class="anchor" aria-label="anchor" href="#details-tab"></a>
-</h5>
+</section><section class="level4"><h4 id="details-tab">Details Tab<a class="anchor" aria-label="anchor" href="#details-tab"></a>
+</h4>
 <p>A detailed table showing:</p>
 <ul>
 <li>All feature representation values</li>
@@ -290,8 +288,8 @@
 </ul>
 <p>Use <strong>Download Table</strong> to export this data as a CSV file.</p>
 <p><img src="images/DetailsTab.png" style="width:70.0%"></p>
-</section><section class="level4"><h5 id="report-tab">Report Tab<a class="anchor" aria-label="anchor" href="#report-tab"></a>
-</h5>
+</section><section class="level4"><h4 id="report-tab">Report Tab<a class="anchor" aria-label="anchor" href="#report-tab"></a>
+</h4>
 <p>Generate a comprehensive HTML report containing all analysis results:</p>
 <p><img src="images/ReportTab.png" style="width:70.0%"></p>
 <p>Click <strong>Download Report</strong> to create a self-contained HTML document including:</p>
@@ -303,17 +301,17 @@
 <li>Solver log</li>
 </ul>
 <p>This report can be shared with stakeholders who do not have access to the application.</p>
-</section><section class="level4"><h5 id="log-tab">Log Tab<a class="anchor" aria-label="anchor" href="#log-tab"></a>
-</h5>
+</section><section class="level4"><h4 id="log-tab">Log Tab<a class="anchor" aria-label="anchor" href="#log-tab"></a>
+</h4>
 <p>Shows the technical output from the <em>prioritizr</em> solver:</p>
 <p><img src="images/LogTab.png" style="width:70.0%"></p>
 <p>This is useful for understanding solver performance and troubleshooting.</p>
-</section></section></section><section class="level2"><h3 id="sec-comparison-tab">Comparison Tab<a class="anchor" aria-label="anchor" href="#sec-comparison-tab"></a>
-</h3>
+</section></section></section><section class="level2"><h2 id="sec-comparison-tab">Comparison Tab<a class="anchor" aria-label="anchor" href="#sec-comparison-tab"></a>
+</h2>
 <p>The <strong>Comparison</strong> tab allows you to run two scenarios side-by-side and compare outcomes.</p>
 <p><img src="images/Comparison.png" style="width:70.0%"></p>
-<section class="level3"><h4 id="setting-up-a-comparison">Setting Up a Comparison<a class="anchor" aria-label="anchor" href="#setting-up-a-comparison"></a>
-</h4>
+<section class="level3"><h3 id="setting-up-a-comparison">Setting Up a Comparison<a class="anchor" aria-label="anchor" href="#setting-up-a-comparison"></a>
+</h3>
 <p>The interface mirrors the Scenario tab but with duplicate controls:</p>
 <ul>
 <li>
@@ -329,11 +327,11 @@
 <li>Different cost layers (equal area vs fisheries effort)</li>
 <li>With vs without climate-smart options</li>
 <li>Different locked-in area configurations</li>
-</ul></section><section class="level3"><h4 id="running-the-comparison">Running the Comparison<a class="anchor" aria-label="anchor" href="#running-the-comparison"></a>
-</h4>
+</ul></section><section class="level3"><h3 id="running-the-comparison">Running the Comparison<a class="anchor" aria-label="anchor" href="#running-the-comparison"></a>
+</h3>
 <p>Click <strong>Run Analysis</strong> to execute both scenarios simultaneously.</p>
-</section><section class="level3"><h4 id="interpreting-comparison-results">Interpreting Comparison Results<a class="anchor" aria-label="anchor" href="#interpreting-comparison-results"></a>
-</h4>
+</section><section class="level3"><h3 id="interpreting-comparison-results">Interpreting Comparison Results<a class="anchor" aria-label="anchor" href="#interpreting-comparison-results"></a>
+</h3>
 <p>The comparison tab shows a direct overlay of the two solutions.</p>
 <p><img src="images/ComparisonOverlay.png" style="width:70.0%"></p>
 <p>Comparison tabs show side-by-side comparisons:</p>
@@ -347,17 +345,17 @@
 </ul>
 <p><img src="images/ComparisonScenario.png" style="width:70.0%"></p>
 <p>This allows direct visual and quantitative comparison of how different choices affect outcomes.</p>
-</section></section><section class="level2"><h3 id="sec-layer-info">Layer Information Tab<a class="anchor" aria-label="anchor" href="#sec-layer-info"></a>
-</h3>
+</section></section><section class="level2"><h2 id="sec-layer-info">Layer Information Tab<a class="anchor" aria-label="anchor" href="#sec-layer-info"></a>
+</h2>
 <p>The <strong>Layer Information</strong> tab allows you to examine the spatial data underlying the analysis.</p>
-<section class="level3"><h4 id="feature-density">Feature Density<a class="anchor" aria-label="anchor" href="#feature-density"></a>
-</h4>
+<section class="level3"><h3 id="feature-density">Feature Density<a class="anchor" aria-label="anchor" href="#feature-density"></a>
+</h3>
 <p>Shows overall feature density across planning units:</p>
 <p><img src="images/FeatureDensity.png" style="width:70.0%"></p>
 <p>Planning units with higher feature density are more likely to be selected because they contribute to multiple targets simultaneously.</p>
 <p>Select which features to include in the density calculation using the checkboxes.</p>
-</section><section class="level3"><h4 id="feature-maps">Feature Maps<a class="anchor" aria-label="anchor" href="#feature-maps"></a>
-</h4>
+</section><section class="level3"><h3 id="feature-maps">Feature Maps<a class="anchor" aria-label="anchor" href="#feature-maps"></a>
+</h3>
 <p>Visualise individual features:</p>
 <ol type="1">
 <li>Select a feature from the dropdown</li>
@@ -365,8 +363,8 @@
 <li>Read the justification text explaining the data source</li>
 </ol>
 <p><img src="images/FeatureDistribution.png" style="width:70.0%"></p>
-</section><section class="level3"><h4 id="layer-information-table">Layer Information Table<a class="anchor" aria-label="anchor" href="#layer-information-table"></a>
-</h4>
+</section><section class="level3"><h3 id="layer-information-table">Layer Information Table<a class="anchor" aria-label="anchor" href="#layer-information-table"></a>
+</h3>
 <p>A comprehensive table listing all data layers with:</p>
 <ul>
 <li>Common name</li>
@@ -376,11 +374,11 @@
 <li>Data source and justification</li>
 </ul>
 <p><img src="images/FeatureInformation.png" style="width:70.0%"></p>
-</section></section><section class="level2"><h3 id="sec-check-coverage">Check Coverage Tab<a class="anchor" aria-label="anchor" href="#sec-check-coverage"></a>
-</h3>
+</section></section><section class="level2"><h2 id="sec-check-coverage">Check Coverage Tab<a class="anchor" aria-label="anchor" href="#sec-check-coverage"></a>
+</h2>
 <p>The <strong>Check Coverage</strong> tab allows you to upload your own spatial file and evaluate how well it conserves the features in the planning domain.</p>
-<section class="level3"><h4 id="uploading-a-file">Uploading a File<a class="anchor" aria-label="anchor" href="#uploading-a-file"></a>
-</h4>
+<section class="level3"><h3 id="uploading-a-file">Uploading a File<a class="anchor" aria-label="anchor" href="#uploading-a-file"></a>
+</h3>
 <ol type="1">
 <li>Click <strong>Choose a spatial file</strong>
 </li>
@@ -388,8 +386,8 @@
 <li>Wait for the file to upload and process</li>
 </ol>
 <p><img src="images/UploadSpatial.png" style="width:70.0%"></p>
-</section><section class="level3"><h4 id="viewing-results">Viewing Results<a class="anchor" aria-label="anchor" href="#viewing-results"></a>
-</h4>
+</section><section class="level3"><h3 id="viewing-results">Viewing Results<a class="anchor" aria-label="anchor" href="#viewing-results"></a>
+</h3>
 <p>After upload, you will see:</p>
 <ul>
 <li>
@@ -404,78 +402,78 @@
 <li>Evaluating existing protected area networks</li>
 <li>Testing proposed zoning schemes</li>
 <li>Comparing stakeholder-proposed areas to optimal solutions</li>
-</ul></section></section><section class="level2"><h3 id="sec-help-tab">Help Tab<a class="anchor" aria-label="anchor" href="#sec-help-tab"></a>
-</h3>
+</ul></section></section><section class="level2"><h2 id="sec-help-tab">Help Tab<a class="anchor" aria-label="anchor" href="#sec-help-tab"></a>
+</h2>
 <p>The <strong>Help</strong> tab provides additional information:</p>
-<section class="level3"><h4 id="frequently-asked-questions">Frequently Asked Questions<a class="anchor" aria-label="anchor" href="#frequently-asked-questions"></a>
-</h4>
+<section class="level3"><h3 id="frequently-asked-questions">Frequently Asked Questions<a class="anchor" aria-label="anchor" href="#frequently-asked-questions"></a>
+</h3>
 <p>Common questions about using the application:</p>
 <ul>
 <li>“Does the app run in real time?”</li>
 <li>“Why is the download button not working?”</li>
 <li>“Can I compare more than two spatial plans?”</li>
-</ul></section><section class="level3"><h4 id="technical-information">Technical Information<a class="anchor" aria-label="anchor" href="#technical-information"></a>
-</h4>
+</ul></section><section class="level3"><h3 id="technical-information">Technical Information<a class="anchor" aria-label="anchor" href="#technical-information"></a>
+</h3>
 <p>Details about:</p>
 <ul>
 <li>The prioritisation algorithm</li>
 <li>Data sources and processing</li>
 <li>Solver specifications</li>
 <li>Version information</li>
-</ul></section></section><section class="level2"><h3 id="tips-for-effective-use">Tips for Effective Use<a class="anchor" aria-label="anchor" href="#tips-for-effective-use"></a>
+</ul></section></section><section class="level2"><h2 id="tips-for-effective-use">Tips for Effective Use<a class="anchor" aria-label="anchor" href="#tips-for-effective-use"></a>
+</h2>
+<section class="level3"><h3 id="start-simple">Start Simple<a class="anchor" aria-label="anchor" href="#start-simple"></a>
 </h3>
-<section class="level3"><h4 id="start-simple">Start Simple<a class="anchor" aria-label="anchor" href="#start-simple"></a>
-</h4>
 <ol type="1">
 <li>Begin with default settings to understand the baseline</li>
 <li>Change one parameter at a time to understand its effect</li>
 <li>Gradually build up to more complex scenarios</li>
-</ol></section><section class="level3"><h4 id="document-your-analyses">Document Your Analyses<a class="anchor" aria-label="anchor" href="#document-your-analyses"></a>
-</h4>
+</ol></section><section class="level3"><h3 id="document-your-analyses">Document Your Analyses<a class="anchor" aria-label="anchor" href="#document-your-analyses"></a>
+</h3>
 <ul>
 <li>Use the <strong>Download Report</strong> feature to save complete records</li>
 <li>Take screenshots of key results</li>
 <li>Note which settings produced each result</li>
-</ul></section><section class="level3"><h4 id="engage-stakeholders">Engage Stakeholders<a class="anchor" aria-label="anchor" href="#engage-stakeholders"></a>
-</h4>
+</ul></section><section class="level3"><h3 id="engage-stakeholders">Engage Stakeholders<a class="anchor" aria-label="anchor" href="#engage-stakeholders"></a>
+</h3>
 <ul>
 <li>Use the comparison feature to show trade-offs</li>
 <li>Download maps and charts for presentations</li>
 <li>Allow stakeholders to explore scenarios themselves</li>
-</ul></section><section class="level3"><h4 id="understand-limitations">Understand Limitations<a class="anchor" aria-label="anchor" href="#understand-limitations"></a>
-</h4>
+</ul></section><section class="level3"><h3 id="understand-limitations">Understand Limitations<a class="anchor" aria-label="anchor" href="#understand-limitations"></a>
+</h3>
 <ul>
 <li>Results are only as good as the input data</li>
 <li>Optimal solutions are mathematically optimal, not necessarily politically optimal</li>
 <li>Ground-truthing and expert review remain essential</li>
-</ul></section></section><section class="level2"><h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
+</ul></section></section><section class="level2"><h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
+</h2>
+<section class="level3"><h3 id="the-application-is-slow">The Application is Slow<a class="anchor" aria-label="anchor" href="#the-application-is-slow"></a>
 </h3>
-<section class="level3"><h4 id="the-application-is-slow">The Application is Slow<a class="anchor" aria-label="anchor" href="#the-application-is-slow"></a>
-</h4>
 <ul>
 <li>Reduce the number of features if possible</li>
 <li>Disable climate-smart options for initial exploration</li>
 <li>Check your internet connection</li>
-</ul></section><section class="level3"><h4 id="analysis-fails">Analysis Fails<a class="anchor" aria-label="anchor" href="#analysis-fails"></a>
-</h4>
+</ul></section><section class="level3"><h3 id="analysis-fails">Analysis Fails<a class="anchor" aria-label="anchor" href="#analysis-fails"></a>
+</h3>
 <ul>
 <li>Ensure targets are realistic (not 100% for all features)</li>
 <li>Check that constraint options are compatible</li>
 <li>Try reducing the budget slightly</li>
-</ul></section><section class="level3"><h4 id="results-look-unexpected">Results Look Unexpected<a class="anchor" aria-label="anchor" href="#results-look-unexpected"></a>
-</h4>
+</ul></section><section class="level3"><h3 id="results-look-unexpected">Results Look Unexpected<a class="anchor" aria-label="anchor" href="#results-look-unexpected"></a>
+</h3>
 <ul>
 <li>Review the solver log for warnings</li>
 <li>Check which constraints were active</li>
 <li>Verify target and cost layer selections</li>
-</ul></section><section class="level3"><h4 id="session-timed-out">Session Timed Out<a class="anchor" aria-label="anchor" href="#session-timed-out"></a>
-</h4>
+</ul></section><section class="level3"><h3 id="session-timed-out">Session Timed Out<a class="anchor" aria-label="anchor" href="#session-timed-out"></a>
+</h3>
 <ul>
 <li>The application will display a “Session timed out” message</li>
 <li>Click <strong>Reload now</strong> to restart</li>
 <li>Your previous settings will need to be re-entered</li>
-</ul></section></section><section class="level2"><h3 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
-</h3>
+</ul></section></section><section class="level2"><h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+</h2>
 <p>The <em>shinyplanr</em> application provides an accessible interface for spatial conservation prioritisation. Key operations include:</p>
 <ol type="1">
 <li>
@@ -492,7 +490,7 @@
 <strong>Downloading results</strong> for reports and further analysis</li>
 </ol>
 <p>The <a href="ac-setting-up.html">Setting Up vignette</a> explains how to set up <em>shinyplanr</em> for a new region.</p>
-</section></section><script id="quarto-html-after-body" type="application/javascript">
+</section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

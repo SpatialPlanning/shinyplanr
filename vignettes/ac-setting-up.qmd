@@ -11,7 +11,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Setting Up *shinyplanr* for Your Region
 
 This chapter guides deployers through the process of setting up a new *shinyplanr* instance for a specific region. We cover the template creation function, data preparation, configuration options, and the feature dictionary. For instructions on deploying the finished app to Posit Connect, see the [Deployment vignette](ad-deployment.html).
 

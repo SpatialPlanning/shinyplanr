@@ -12,7 +12,6 @@ vignette: >
 bibliography: references.bib
 ---
 
-# Introduction to Spatial Planning
 
 This chapter provides the conceptual foundation for understanding spatial prioritisation for both conservation and multiple-use planning. We begin with the rationale for spatial planning, introduce systematic approaches, explain how mathematical optimisation is used, and explore modern advances including climate-smart planning, multiple-use zoning, and ecosystem services.
 

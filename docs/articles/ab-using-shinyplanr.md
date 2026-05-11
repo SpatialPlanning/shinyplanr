@@ -1,12 +1,10 @@
 # Using the shinyplanr Application
 
-## Using the *shinyplanr* Application
-
 This chapter guides you through using the *shinyplanr* web application.
 We cover each module (tab) of the application, explaining the available
 options and how to interpret results.
 
-### Overview
+## Overview
 
 When you open a *shinyplanr* application, you will see a navigation bar
 at the top with several tabs. The exact tabs available depend on how the
@@ -21,7 +19,7 @@ application has been configured for your region, but typically include:
 
 ![](images/TopBanner.png)
 
-### Welcome Tab
+## Welcome Tab
 
 The Welcome tab provides an introduction to the application and its
 purpose. This typically includes:
@@ -36,17 +34,17 @@ purpose. This typically includes:
 This page is customised for each deployment, so the content will vary
 depending on your region and project.
 
-### Scenario Tab
+## Scenario Tab
 
 The **Scenario** tab is where you run spatial prioritisation analyses.
 It contains a sidebar with input controls and a main panel displaying
 results.
 
-#### Sidebar Controls
+### Sidebar Controls
 
 The sidebar contains several sections for configuring your analysis:
 
-##### 1. Setting Targets
+#### 1. Setting Targets
 
 Targets specify how much of each feature should be represented in the
 conservation solution.
@@ -73,7 +71,7 @@ at once. This is the simplest option for quick exploration.
 > 30x30 global conservation commitments). You can then adjust individual
 > features based on their ecological importance or rarity.
 
-##### 2. Selecting a Cost Layer
+#### 2. Selecting a Cost Layer
 
 The cost layer determines which areas are more or less “expensive” to
 include in the conservation network.
@@ -92,7 +90,7 @@ Common cost layer options include:
 - **Custom costs**: Region-specific cost layers provided by the data
   administrator.
 
-##### 3. Choosing a Budget (Minimum Shortfall Objective)
+#### 3. Choosing a Budget (Minimum Shortfall Objective)
 
 If the application uses the **minimum shortfall objective**, you will
 see a budget input:
@@ -113,7 +111,7 @@ example:
 > finds the cheapest solution that meets *all* targets. In this case, no
 > budget input is shown.
 
-##### 4. Climate-Smart Options
+#### 4. Climate-Smart Options
 
 If climate change considerations are enabled, you will see a dropdown to
 select climate layers:
@@ -132,7 +130,7 @@ Options typically include:
 > Enabling climate-smart options increases analysis time. Be patient
 > whilst the analysis runs.
 
-##### 5. Constraints
+#### 5. Constraints
 
 Constraints allow you to lock certain areas in or out of the solution:
 
@@ -154,7 +152,7 @@ Constraints allow you to lock certain areas in or out of the solution:
 Select the relevant checkboxes to include these constraints in your
 analysis.
 
-#### Running the Analysis
+### Running the Analysis
 
 Once you have configured your options, click the **Run Analysis** button
 at the bottom of the sidebar.
@@ -173,12 +171,12 @@ The analysis typically takes 10-60 seconds depending on:
 > Multiple rapid clicks can cause the application to become
 > unresponsive.
 
-#### Results Tabs
+### Results Tabs
 
 After running an analysis, results appear in several tabs in the main
 panel:
 
-##### Scenario Tab
+#### Scenario Tab
 
 Shows the spatial solution map:
 
@@ -194,7 +192,7 @@ Use the **Download Plot** button to save the map as an image file.
 Use the **Download Spatial File** button to download the solution as a
 GeoPackage (.gpkg) for use in GIS software.
 
-##### Explore Tab
+#### Explore Tab
 
 An interactive Leaflet map allowing you to:
 
@@ -208,7 +206,7 @@ An interactive Leaflet map allowing you to:
 A draggable panel allows you to select which features to display on the
 map.
 
-##### Targets Tab
+#### Targets Tab
 
 Shows a bar chart of target achievement:
 
@@ -229,7 +227,7 @@ Use the **Sort by** dropdown to order features by:
 - Representation achieved
 - Difference from target
 
-##### Cost Tab
+#### Cost Tab
 
 Shows the spatial distribution of the selected cost layer:
 
@@ -238,14 +236,14 @@ Shows the spatial distribution of the selected cost layer:
 This helps you understand how costs vary across the planning region and
 where high cost areas are located.
 
-##### Climate Tab
+#### Climate Tab
 
 If climate-smart options are enabled, this tab shows:
 
 - The climate layer used in the analysis
 - How climate considerations affected planning unit selection
 
-##### Ecosystem Services Tab
+#### Ecosystem Services Tab
 
 If ecosystem services are configured, this tab displays:
 
@@ -254,7 +252,7 @@ If ecosystem services are configured, this tab displays:
 
 ![](images/EcosystemServices.png)
 
-##### Details Tab
+#### Details Tab
 
 A detailed table showing:
 
@@ -266,7 +264,7 @@ Use **Download Table** to export this data as a CSV file.
 
 ![](images/DetailsTab.png)
 
-##### Report Tab
+#### Report Tab
 
 Generate a comprehensive HTML report containing all analysis results:
 
@@ -284,7 +282,7 @@ including:
 This report can be shared with stakeholders who do not have access to
 the application.
 
-##### Log Tab
+#### Log Tab
 
 Shows the technical output from the *prioritizr* solver:
 
@@ -292,14 +290,14 @@ Shows the technical output from the *prioritizr* solver:
 
 This is useful for understanding solver performance and troubleshooting.
 
-### Comparison Tab
+## Comparison Tab
 
 The **Comparison** tab allows you to run two scenarios side-by-side and
 compare outcomes.
 
 ![](images/Comparison.png)
 
-#### Setting Up a Comparison
+### Setting Up a Comparison
 
 The interface mirrors the Scenario tab but with duplicate controls:
 
@@ -316,11 +314,11 @@ Common comparison scenarios include:
 - With vs without climate-smart options
 - Different locked-in area configurations
 
-#### Running the Comparison
+### Running the Comparison
 
 Click **Run Analysis** to execute both scenarios simultaneously.
 
-#### Interpreting Comparison Results
+### Interpreting Comparison Results
 
 The comparison tab shows a direct overlay of the two solutions.
 
@@ -337,12 +335,12 @@ Comparison tabs show side-by-side comparisons:
 This allows direct visual and quantitative comparison of how different
 choices affect outcomes.
 
-### Layer Information Tab
+## Layer Information Tab
 
 The **Layer Information** tab allows you to examine the spatial data
 underlying the analysis.
 
-#### Feature Density
+### Feature Density
 
 Shows overall feature density across planning units:
 
@@ -354,7 +352,7 @@ selected because they contribute to multiple targets simultaneously.
 Select which features to include in the density calculation using the
 checkboxes.
 
-#### Feature Maps
+### Feature Maps
 
 Visualise individual features:
 
@@ -364,7 +362,7 @@ Visualise individual features:
 
 ![](images/FeatureDistribution.png)
 
-#### Layer Information Table
+### Layer Information Table
 
 A comprehensive table listing all data layers with:
 
@@ -376,12 +374,12 @@ A comprehensive table listing all data layers with:
 
 ![](images/FeatureInformation.png)
 
-### Check Coverage Tab
+## Check Coverage Tab
 
 The **Check Coverage** tab allows you to upload your own spatial file
 and evaluate how well it conserves the features in the planning domain.
 
-#### Uploading a File
+### Uploading a File
 
 1.  Click **Choose a spatial file**
 2.  Select a GeoPackage (.gpkg), File Geodatabase (.gdb), or GeoJSON
@@ -390,7 +388,7 @@ and evaluate how well it conserves the features in the planning domain.
 
 ![](images/UploadSpatial.png)
 
-#### Viewing Results
+### Viewing Results
 
 After upload, you will see:
 
@@ -408,11 +406,11 @@ This is useful for:
 - Testing proposed zoning schemes
 - Comparing stakeholder-proposed areas to optimal solutions
 
-### Help Tab
+## Help Tab
 
 The **Help** tab provides additional information:
 
-#### Frequently Asked Questions
+### Frequently Asked Questions
 
 Common questions about using the application:
 
@@ -420,7 +418,7 @@ Common questions about using the application:
 - “Why is the download button not working?”
 - “Can I compare more than two spatial plans?”
 
-#### Technical Information
+### Technical Information
 
 Details about:
 
@@ -429,60 +427,60 @@ Details about:
 - Solver specifications
 - Version information
 
-### Tips for Effective Use
+## Tips for Effective Use
 
-#### Start Simple
+### Start Simple
 
 1.  Begin with default settings to understand the baseline
 2.  Change one parameter at a time to understand its effect
 3.  Gradually build up to more complex scenarios
 
-#### Document Your Analyses
+### Document Your Analyses
 
 - Use the **Download Report** feature to save complete records
 - Take screenshots of key results
 - Note which settings produced each result
 
-#### Engage Stakeholders
+### Engage Stakeholders
 
 - Use the comparison feature to show trade-offs
 - Download maps and charts for presentations
 - Allow stakeholders to explore scenarios themselves
 
-#### Understand Limitations
+### Understand Limitations
 
 - Results are only as good as the input data
 - Optimal solutions are mathematically optimal, not necessarily
   politically optimal
 - Ground-truthing and expert review remain essential
 
-### Troubleshooting
+## Troubleshooting
 
-#### The Application is Slow
+### The Application is Slow
 
 - Reduce the number of features if possible
 - Disable climate-smart options for initial exploration
 - Check your internet connection
 
-#### Analysis Fails
+### Analysis Fails
 
 - Ensure targets are realistic (not 100% for all features)
 - Check that constraint options are compatible
 - Try reducing the budget slightly
 
-#### Results Look Unexpected
+### Results Look Unexpected
 
 - Review the solver log for warnings
 - Check which constraints were active
 - Verify target and cost layer selections
 
-#### Session Timed Out
+### Session Timed Out
 
 - The application will display a “Session timed out” message
 - Click **Reload now** to restart
 - Your previous settings will need to be re-entered
 
-### Summary
+## Summary
 
 The *shinyplanr* application provides an accessible interface for
 spatial conservation prioritisation. Key operations include:
