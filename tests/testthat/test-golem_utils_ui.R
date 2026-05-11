@@ -93,15 +93,18 @@ test_that("Test undisplay works", {
 
   b <- shiny::actionButton("go_filter", "go")
   expect_s3_class(b, "shiny.tag")
-  expect_equal(
+  # Shiny >= 1.8 wraps the label in <span class="action-label">; accept either form.
+  expect_match(
     as.character(b),
-    '<button id="go_filter" type="button" class="btn btn-default action-button">go</button>'
+    'id="go_filter".*class="btn btn-default action-button"',
+    perl = TRUE
   )
   b_undisplay <- undisplay(b)
   expect_s3_class(b, "shiny.tag")
-  expect_equal(
+  expect_match(
     as.character(b_undisplay),
-    '<button id="go_filter" type="button" class="btn btn-default action-button" style="display: none;">go</button>'
+    'id="go_filter".*style="display: none;"',
+    perl = TRUE
   )
 })
 

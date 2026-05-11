@@ -28,7 +28,8 @@ testServer(
  
 test_that("module ui works", {
   ui <- mod_5coverage_ui(id = "test")
-  golem::expect_shinytaglist(ui)
+  # mod_5coverage_ui returns a sidebarLayout (shiny.tag), not a tagList
+  expect_s3_class(ui, "shiny.tag")
   # Check that formals have not been removed
   fmls <- formals(mod_5coverage_ui)
   for (i in c("id")){

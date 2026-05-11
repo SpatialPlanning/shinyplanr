@@ -83,6 +83,9 @@ Dict <- data.frame(
 
 vars <- c("feature_A", "feature_B")
 
+# Schema version (must match .shinyplanr_schema_version in config_schema.R)
+schema_version <- 1L
+
 # ---------------------------------------------------------------------------
 # Options (stub)
 # ---------------------------------------------------------------------------
@@ -148,6 +151,7 @@ tx_6changelog <- ""
 # Save to R/sysdata.rda
 # ---------------------------------------------------------------------------
 usethis::use_data(
+  schema_version,
   options,
   map_theme,
   bar_theme,

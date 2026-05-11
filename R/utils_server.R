@@ -44,7 +44,7 @@ fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature")
   targets <- ft %>%
     purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(name_check, x))))) %>%
     tibble::enframe() %>%
-    tidyr::unnest(cols = .data$value) %>%
+    tidyr::unnest(cols = "value") %>%
     dplyr::rename(feature = "name", target = "value") %>%
     dplyr::mutate(feature = ft) %>%
     dplyr::mutate(target = .data$target / 100) # requires number between 0-1
@@ -91,7 +91,7 @@ fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
   targets_bioregion <- cats %>%
     purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(bioregion_name_check, x))))) %>%
     tibble::enframe() %>%
-    tidyr::unnest(cols = .data$value) %>%
+    tidyr::unnest(cols = "value") %>%
     dplyr::rename(categoryID = "name", target = "value") %>%
     dplyr::mutate(categoryID = cats) %>%
     dplyr::mutate(target = .data$target / 100) %>% # requires number between 0-1

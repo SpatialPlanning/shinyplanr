@@ -46,6 +46,14 @@ load_config <- function(config_path = "config/shinyplanr_config.rds") {
   # to all module code without any changes to the existing modules.
   pkg_env <- asNamespace("shinyplanr")
   for (nm in names(config)) {
+    # If the binding exists and is locked (e.g. from sysdata.rda stubs),
+    # unlock it before overwriting so load_config() works in both testing
+    # and production contexts.
+    if (environmentIsLocked(pkg_env) &&
+        exists(nm, envir = pkg_env, inherits = FALSE) &&
+        bindingIsLocked(nm, pkg_env)) {
+      unlockBinding(nm, pkg_env)
+    }
     assign(nm, config[[nm]], envir = pkg_env)
   }
 

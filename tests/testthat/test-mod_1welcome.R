@@ -4,6 +4,12 @@
 # The module reads tx, tx_1footer, and options from the package namespace;
 # the stub sysdata.rda provides these for testing.
 
+# Helper: safely overwrite a (potentially locked) namespace binding and restore.
+.ns_set <- function(nm, value, envir) {
+  if (bindingIsLocked(nm, envir)) unlockBinding(nm, envir)
+  assign(nm, value, envir = envir)
+}
+
 # ---------------------------------------------------------------------------
 # UI structure tests
 # ---------------------------------------------------------------------------
@@ -40,9 +46,8 @@ test_that("mod_1welcome_ui() shows UQ logo when options$show_uq_logo is TRUE", {
   # Temporarily set show_uq_logo = TRUE in the namespace
   pkg_env <- asNamespace("shinyplanr")
   original_options <- get("options", envir = pkg_env, inherits = FALSE)
-  modified_options <- modifyList(original_options, list(show_uq_logo = TRUE))
-  assign("options", modified_options, envir = pkg_env)
-  on.exit(assign("options", original_options, envir = pkg_env), add = TRUE)
+  .ns_set("options", modifyList(original_options, list(show_uq_logo = TRUE)), pkg_env)
+  on.exit(.ns_set("options", original_options, pkg_env), add = TRUE)
 
   ui <- mod_1welcome_ui(id = "test_uq")
   html <- as.character(ui)
@@ -52,9 +57,8 @@ test_that("mod_1welcome_ui() shows UQ logo when options$show_uq_logo is TRUE", {
 test_that("mod_1welcome_ui() hides UQ logo when options$show_uq_logo is FALSE", {
   pkg_env <- asNamespace("shinyplanr")
   original_options <- get("options", envir = pkg_env, inherits = FALSE)
-  modified_options <- modifyList(original_options, list(show_uq_logo = FALSE))
-  assign("options", modified_options, envir = pkg_env)
-  on.exit(assign("options", original_options, envir = pkg_env), add = TRUE)
+  .ns_set("options", modifyList(original_options, list(show_uq_logo = FALSE)), pkg_env)
+  on.exit(.ns_set("options", original_options, pkg_env), add = TRUE)
 
   ui <- mod_1welcome_ui(id = "test_nouq")
   html <- as.character(ui)
@@ -70,8 +74,8 @@ test_that("mod_1welcome_ui() renders a tabsetPanel when tx$welcome has multiple 
       list(title = "Tab 2", text = "# Second tab")
     )
   )
-  assign("tx", multi_tx, envir = pkg_env)
-  on.exit(assign("tx", original_tx, envir = pkg_env), add = TRUE)
+  .ns_set("tx", multi_tx, pkg_env)
+  on.exit(.ns_set("tx", original_tx, pkg_env), add = TRUE)
 
   ui <- mod_1welcome_ui(id = "test_multi")
   html <- as.character(ui)
@@ -86,8 +90,8 @@ test_that("mod_1welcome_ui() renders plain div when tx$welcome has a single entr
       list(title = "Welcome", text = "# Hello")
     )
   )
-  assign("tx", single_tx, envir = pkg_env)
-  on.exit(assign("tx", original_tx, envir = pkg_env), add = TRUE)
+  .ns_set("tx", single_tx, pkg_env)
+  on.exit(.ns_set("tx", original_tx, pkg_env), add = TRUE)
 
   ui <- mod_1welcome_ui(id = "test_single")
   html <- as.character(ui)
