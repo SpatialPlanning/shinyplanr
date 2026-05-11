@@ -1,8 +1,0 @@
-<h3>September 2022</h3>
-Initial release
-<h3>October 2022</h3>
-'Particle Tracking' renamed to 'Drifter Analysis'
-Drifter Analysis moved to Important Features
-Additional 'Ice Drift' option added to Drifter Analysis
-Add changelog to Help module
-Add information table to Comparison Module
