@@ -237,7 +237,7 @@ mod_5coverage_server <- function(id) {
 }
 
 ## To be copied in the UI
-# mod_5coverage_ui("5coverage_1")
+# mod_5coverage_ui("5coverage_ui_1")
 
 ## To be copied in the server
-# mod_5coverage_server("5coverage_1")
+# mod_5coverage_server("5coverage_ui_1")

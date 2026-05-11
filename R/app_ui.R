@@ -36,7 +36,7 @@ app_ui <- function(request) {
     # shiny::tabPanel(
     #   "Multi-Objective Optimisation",
     #   shiny::fluidPage(
-    #     value = "moo", mod_7multiobj_ui("mod_7multiobj_ui_1")
+    #     value = "moo", mod_7multiobj_ui("7multiobj_ui_1")
     #   )
     # ),
     if (options$mod_3compare == TRUE) {
@@ -59,7 +59,7 @@ app_ui <- function(request) {
       shiny::tabPanel(
         "Check Coverage",
         shiny::fluidPage(
-          value = "coverage", mod_5coverage_ui("5coverage_1")
+          value = "coverage", mod_5coverage_ui("5coverage_ui_1")
         )
       )
     },

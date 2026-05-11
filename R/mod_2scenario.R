@@ -916,8 +916,8 @@ mod_2scenario_server <- function(id) {
         # Create data tables for download
         ggr_DataPlot <- shiny::reactive({
           dat <- DataTabler() %>%
-            dplyr::mutate(Class = as.factor(.data$Class)) %>%
-            dplyr::group_by(.data$Class) %>%
+            dplyr::mutate(Category = as.factor(.data$Category)) %>%
+            dplyr::group_by(.data$Category) %>%
             dplyr::group_split()
 
           design <- "AACC

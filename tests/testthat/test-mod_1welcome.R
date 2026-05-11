@@ -1,38 +1,112 @@
-testServer(
-  mod_1welcome_server,
-  # Add here your module params
-  args = list()
-  , {
-    ns <- session$ns
-    expect_true(
-      inherits(ns, "function")
-    )
-    expect_true(
-      grepl(id, ns(""))
-    )
-    expect_true(
-      grepl("test", ns("test"))
-    )
-    # Here are some examples of tests you can
-    # run on your module
-    # - Testing the setting of inputs
-    # session$setInputs(x = 1)
-    # expect_true(input$x == 1)
-    # - If ever your input updates a reactiveValues
-    # - Note that this reactiveValues must be passed
-    # - to the testServer function via args = list()
-    # expect_true(r$x == 1)
-    # - Testing output
-    # expect_true(inherits(output$tbl$html, "html"))
-})
- 
-test_that("module ui works", {
+# tests/testthat/test-mod_1welcome.R
+#
+# Meaningful tests for mod_1welcome_ui() and mod_1welcome_server().
+# The module reads tx, tx_1footer, and options from the package namespace;
+# the stub sysdata.rda provides these for testing.
+
+# ---------------------------------------------------------------------------
+# UI structure tests
+# ---------------------------------------------------------------------------
+
+test_that("mod_1welcome_ui() returns a shiny tag list", {
   ui <- mod_1welcome_ui(id = "test")
   golem::expect_shinytaglist(ui)
-  # Check that formals have not been removed
-  fmls <- formals(mod_1welcome_ui)
-  for (i in c("id")){
-    expect_true(i %in% names(fmls))
-  }
 })
- 
+
+test_that("mod_1welcome_ui() formals contain 'id'", {
+  fmls <- formals(mod_1welcome_ui)
+  expect_true("id" %in% names(fmls))
+})
+
+test_that("mod_1welcome_ui() renders without error using stub namespace data", {
+  # Stub sysdata.rda sets tx, tx_1footer, and options in the namespace;
+  # the UI should build without throwing.
+  expect_no_error(mod_1welcome_ui(id = "test"))
+})
+
+test_that("mod_1welcome_ui() produces HTML containing a footer div", {
+  ui <- mod_1welcome_ui(id = "test")
+  html <- as.character(ui)
+  expect_match(html, "home-footer", fixed = TRUE)
+})
+
+test_that("mod_1welcome_ui() includes a funder logo image tag", {
+  ui <- mod_1welcome_ui(id = "test")
+  html <- as.character(ui)
+  expect_match(html, "logo_funder\\.png", perl = TRUE)
+})
+
+test_that("mod_1welcome_ui() shows UQ logo when options$show_uq_logo is TRUE", {
+  # Temporarily set show_uq_logo = TRUE in the namespace
+  pkg_env <- asNamespace("shinyplanr")
+  original_options <- get("options", envir = pkg_env, inherits = FALSE)
+  modified_options <- modifyList(original_options, list(show_uq_logo = TRUE))
+  assign("options", modified_options, envir = pkg_env)
+  on.exit(assign("options", original_options, envir = pkg_env), add = TRUE)
+
+  ui <- mod_1welcome_ui(id = "test_uq")
+  html <- as.character(ui)
+  expect_match(html, "uq-logo-white\\.png", perl = TRUE)
+})
+
+test_that("mod_1welcome_ui() hides UQ logo when options$show_uq_logo is FALSE", {
+  pkg_env <- asNamespace("shinyplanr")
+  original_options <- get("options", envir = pkg_env, inherits = FALSE)
+  modified_options <- modifyList(original_options, list(show_uq_logo = FALSE))
+  assign("options", modified_options, envir = pkg_env)
+  on.exit(assign("options", original_options, envir = pkg_env), add = TRUE)
+
+  ui <- mod_1welcome_ui(id = "test_nouq")
+  html <- as.character(ui)
+  expect_false(grepl("uq-logo-white\\.png", html))
+})
+
+test_that("mod_1welcome_ui() renders a tabsetPanel when tx$welcome has multiple entries", {
+  pkg_env <- asNamespace("shinyplanr")
+  original_tx <- get("tx", envir = pkg_env, inherits = FALSE)
+  multi_tx <- list(
+    welcome = list(
+      list(title = "Tab 1", text = "# First tab"),
+      list(title = "Tab 2", text = "# Second tab")
+    )
+  )
+  assign("tx", multi_tx, envir = pkg_env)
+  on.exit(assign("tx", original_tx, envir = pkg_env), add = TRUE)
+
+  ui <- mod_1welcome_ui(id = "test_multi")
+  html <- as.character(ui)
+  expect_match(html, "nav nav-pills", fixed = TRUE)
+})
+
+test_that("mod_1welcome_ui() renders plain div when tx$welcome has a single entry", {
+  pkg_env <- asNamespace("shinyplanr")
+  original_tx <- get("tx", envir = pkg_env, inherits = FALSE)
+  single_tx <- list(
+    welcome = list(
+      list(title = "Welcome", text = "# Hello")
+    )
+  )
+  assign("tx", single_tx, envir = pkg_env)
+  on.exit(assign("tx", original_tx, envir = pkg_env), add = TRUE)
+
+  ui <- mod_1welcome_ui(id = "test_single")
+  html <- as.character(ui)
+  # A single entry is rendered without a tabsetPanel
+  expect_false(grepl("nav nav-pills", html, fixed = TRUE))
+})
+
+# ---------------------------------------------------------------------------
+# Server tests
+# ---------------------------------------------------------------------------
+
+test_that("mod_1welcome_server() has correct formals", {
+  fmls <- formals(mod_1welcome_server)
+  expect_true("id" %in% names(fmls))
+})
+
+testServer(mod_1welcome_server, args = list(), {
+  ns <- session$ns
+  expect_true(inherits(ns, "function"))
+  expect_true(grepl(id, ns("")))
+  expect_true(grepl("test", ns("test")))
+})

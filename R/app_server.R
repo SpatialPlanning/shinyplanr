@@ -46,7 +46,7 @@ app_server <- function(input, output, session) {
     }
 
     if (options$mod_5coverage == TRUE && shiny::req(input$navbar) == "Check Coverage") {
-      mod_5coverage_server("5coverage_1")
+      mod_5coverage_server("5coverage_ui_1")
     }
 
     if (options$mod_6help == TRUE && shiny::req(input$navbar) == "Help") {
