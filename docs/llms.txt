@@ -1,0 +1,81 @@
+# shinyplanr
+
+The goal of shinyplanr is to …
+
+## Installation
+
+You can install the development version of shinyplanr like so:
+
+``` r
+
+# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+```
+
+## Code of Conduct
+
+Please note that the shinyplanr project is released with a [Contributor
+Code of
+Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html).
+By contributing to this project, you agree to abide by its terms.
+
+# Package index
+
+## Running the app
+
+Functions for launching and configuring the shinyplanr application.
+
+- [`run_app()`](https://spatialplanning.github.io/shinyplanr/reference/run_app.md)
+  : Run the Shiny Application
+- [`load_config()`](https://spatialplanning.github.io/shinyplanr/reference/load_config.md)
+  : Load region configuration for shinyplanr
+
+## Deployment setup
+
+Functions for creating new regional deployment projects.
+
+- [`create_shinyplanr_template()`](https://spatialplanning.github.io/shinyplanr/reference/create_shinyplanr_template.md)
+  : Create a new shinyplanr deployment project
+
+## Data validation
+
+Functions for validating configuration and spatial data.
+
+- [`validate_shinyplanr_data()`](https://spatialplanning.github.io/shinyplanr/reference/validate_shinyplanr_data.md)
+  : Validate a shinyplanr deployment configuration before saving
+
+## Utilities
+
+- [`` `%>%` ``](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)
+  : Pipe operator
+
+# Articles
+
+### User Manual
+
+- [Introduction to Spatial
+  Planning](https://spatialplanning.github.io/shinyplanr/articles/aa-introduction.md):
+
+  Conceptual foundation for spatial prioritisation — planning units,
+  features, targets, objectives, climate-smart planning, multiple-use
+  planning, and ecosystem services.
+
+- [Using the shinyplanr
+  Application](https://spatialplanning.github.io/shinyplanr/articles/ab-using-shinyplanr.md):
+
+  A guide to each tab of the shinyplanr web application — setting
+  targets, selecting cost layers, running analyses, comparing scenarios,
+  and interpreting results.
+
+- [Setting Up shinyplanr for Your
+  Region](https://spatialplanning.github.io/shinyplanr/articles/ac-setting-up.md):
+
+  Step-by-step guide for deployers: creating a deployment project with
+  create_shinyplanr_template(), preparing spatial data, configuring app
+  options, defining the feature dictionary, and testing locally.
+
+- [Deploying
+  shinyplanr](https://spatialplanning.github.io/shinyplanr/articles/ad-deployment.md):
+
+  How to deploy a shinyplanr application to Posit Connect — locking
+  package versions with renv, configuring rsconnect, and troubleshooting
+  common deployment issues.
