@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_template.R
 \name{create_shinyplanr_template}
 \alias{create_shinyplanr_template}
-\title{Create a new shinyplanr app template}
+\title{Create a new shinyplanr deployment project}
 \usage{
 create_shinyplanr_template(
   country,
@@ -12,7 +12,9 @@ create_shinyplanr_template(
   include_climate = TRUE,
   include_cost = TRUE,
   include_mpas = TRUE,
-  output_dir = file.path("data-raw", country)
+  output_dir = file.path("..", country),
+  use_renv = TRUE,
+  create_rproj = TRUE
 )
 }
 \arguments{
@@ -21,7 +23,7 @@ Used for folder naming and default titles.}
 
 \item{crs}{Character. Coordinate reference system for the analysis.
 Default is "ESRI:54009" (Mollweide equal-area projection).
-Use https://projectionwizard.org to find an appropriate local CRS.}
+Use \url{https://projectionwizard.org} to find an appropriate local CRS.}
 
 \item{oceandatr}{Logical. If TRUE (default), the setup-data.R template will
 include code to automatically download data from oceandatr (bathymetry,
@@ -40,30 +42,43 @@ planning options in setup-app.R and placeholder climate data loading.}
 \item{include_mpas}{Logical. If TRUE (default), includes code to fetch
 marine protected areas from WDPA as locked-in constraints.}
 
-\item{output_dir}{Character. Path where the template folder will be created.}
+\item{output_dir}{Character. Path where the deployment project folder will be
+created. Defaults to \code{file.path("..", country)}, creating a sibling
+directory to the current working directory. The deployer opens this folder
+as their R project — it is \strong{not} inside the shinyplanr package source.}
+
+\item{use_renv}{Logical. If TRUE (default), initialises renv in the new
+project to lock package versions for reproducible deployments. Requires
+the renv package to be installed. Set to FALSE to skip renv initialisation.}
+
+\item{create_rproj}{Logical. If TRUE (default), creates an RStudio .Rproj
+file in the new project for easy project opening.}
 }
 \value{
-Invisibly returns the path to the created folder.
+Invisibly returns the path to the created project folder.
 }
 \description{
-Creates a folder structure with template files for deploying a new shinyplanr
-app for a specific country/region. The function generates setup-data.R,
-setup-app.R, Dict_Feature.csv, and markdown help files.
+Creates a standalone deployment project for a new region. The project
+contains all the files a practitioner needs to prepare their spatial data,
+configure the app, test locally, and deploy to Posit Connect — without
+modifying the shinyplanr package source code.
 }
 \examples{
 \dontrun{
-# Create a template for Tonga with oceandatr data
+# Create a deployment project for Tonga
 create_shinyplanr_template(
-  country = "Tonga",
-  crs = "EPSG:32702",
-  oceandatr = TRUE
+  country    = "Tonga",
+  crs        = "EPSG:32702",
+  oceandatr  = TRUE,
+  output_dir = "../tonga-shinyplanr"
 )
 
-# Create a minimal template for custom data
+# Minimal template for custom data, without renv
 create_shinyplanr_template(
-  country = "MyRegion",
-  crs = "+proj=cea +lon_0=150 +lat_ts=-10",
-  oceandatr = FALSE
+  country   = "MyRegion",
+  crs       = "+proj=cea +lon_0=150 +lat_ts=-10",
+  oceandatr = FALSE,
+  use_renv  = FALSE
 )
 }
 

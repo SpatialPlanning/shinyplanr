@@ -12,3 +12,5 @@ $run_dev.*
 ^rsconnect$
 ^\.github$
 ^\\.rscignore$
+^\.positai$
+^\.claude$

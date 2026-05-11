@@ -71,10 +71,12 @@ mod_1welcome_ui <- function(id) {
                     alt = "Funder Logo"),
                 href = options$funder_url,
                 target = "_blank"),
-              a(img(src = "www/uq-logo-white.png",
-                    alt = "UQ Logo"),
-                href = "https://spatialplanning.github.io",
-                target = "_blank")
+              if (isTRUE(options$show_uq_logo)) {
+                a(img(src = "www/uq-logo-white.png",
+                      alt = "UQ Logo"),
+                  href = "https://spatialplanning.github.io",
+                  target = "_blank")
+              }
             )
           )
         )

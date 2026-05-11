@@ -2,6 +2,7 @@
 
 export("%>%")
 export(create_shinyplanr_template)
+export(load_config)
 export(run_app)
 import(shiny)
 importFrom(golem,activate_js)
