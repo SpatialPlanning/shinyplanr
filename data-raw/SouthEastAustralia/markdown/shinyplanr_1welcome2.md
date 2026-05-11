@@ -4,7 +4,6 @@ Some terminology to get you started
 (see [MSP fundamentals](https://marxansolutions.org/learn/) for more information).
 
 **Overall aim**: To design a spatial plan that is both effective for conservation (meets targets) and efficient in terms of cost (a modest area) and stakeholder use (meets their needs).
-cost-efficient spatial plan that meets conservation targets.
 
 **Planning region**: The whole area under consideration — like the full jigsaw puzzle.
 
@@ -14,7 +13,7 @@ cost-efficient spatial plan that meets conservation targets.
 
 **Targets**: The conservation goals set for features (e.g., protecting at least 20% of each habitat type).
 
-**Cost layer**: Data showing where important human activities already occur. There can be cost layers for fishing, aquaculture, shipping, tourism, oil and gas, or other uses. By accounting for these activities, plans can avoid high-conflict areas — for example, protecting a reef less used by fishers instead of one that is heavily fished. Lower “cost” means fewer conflicts and higher chances of successful implementation.
+**Cost layer**: Data showing where important human activities already occur. There can be cost layers for fishing, aquaculture, shipping, tourism, oil and gas, or other uses. By accounting for these activities, plans can avoid high-conflict areas — for example, protecting a reef less used by fishers instead of one that is heavily fished. Lower "cost" means fewer conflicts and higher chances of successful implementation.
 
 **Zones**: Areas allocated for specific purposes. These could include fishing grounds, aquaculture sites, renewable energy sites, shipping lanes, or marine protected areas. The plan decides which planning units belong in which zone.
 
@@ -27,3 +26,4 @@ cost-efficient spatial plan that meets conservation targets.
 **Locked-in**: Areas that must be included in the final plan (e.g., existing marine protected areas or aquaculture sites).
 
 **Locked out**: Areas that cannot be included (e.g., military zones or existing oil and gas sites).
+

@@ -1,127 +1,155 @@
-## code to prepare the app goes here
+# Setup app configuration for shinyplanr
+# Country/Region: SouthEastAustralia
+# Generated: 2026-03-04
 
 library(tidyverse)
 library(sf)
-library(terra)
 
-data_dir <- file.path("data-raw", "SouthEastAustralia")
+country <- "SouthEastAustralia"
+data_dir <- file.path("data-raw", country)
 
-# TODO Write function to load default options
-# Especially different colours for the plotting etc
+# =============================================================================
+# APP PARAMETERS
+# =============================================================================
 
-
-# APP PARAMETERS --------------------------------------------------
 options <- list(
 
   ## General Options
-  app_title = "Kosrae: shinyplanr",
+  app_title = "SouthEastAustralia: shinyplanr",
+  nav_title = "SouthEastAustralia Spatial Planning",  # Navbar title
+  navbar = list(theme = "dark"),  # "light" or "dark" - determines text colour
 
-  nav_title = "Kosrae Spatial Planning", # Navbar title
+  ## Funder/credit link
+  funder_url = "https://spatialplanning.github.io",  # URL for funder logo link
 
-  navbar = list(theme = "dark"), # light or dark or auto - determines colour of text
   ## File locations
-  file_logo = file.path(data_dir, "logos", "WaittSquareLogo_invert.png"),
-  file_logo2 = file.path(data_dir, "logos", "BPM_logo.png"),
-  file_logo3 = file.path(data_dir, "logos", "WaittSquareLogo.png"),
+  file_logo = file.path(data_dir, "logos", "logo.png"),       # Main logo
+  file_logo2 = file.path(data_dir, "logos", "logo2.png"),     # Secondary logo
+  file_logo3 = file.path(data_dir, "logos", "logo3.png"),     # Third logo
+  file_logo_funder = file.path(data_dir, "logos", "logo_funder.png"),  # Funder logo
+  file_data = file.path(data_dir, paste0(country, "_RawData.rda")),
 
-  file_data = file.path(data_dir, "Kosrae_RawData.rda"),
+  ## Module switches (TRUE = enabled, FALSE = disabled)
+  mod_1welcome = TRUE,    # Welcome/introduction module
+  mod_2scenario = TRUE,   # Scenario building module
+  mod_3compare = TRUE,    # Compare solutions module
+  mod_4features = TRUE,   # Feature exploration module
+  mod_5coverage = TRUE,   # Coverage analysis module
+  mod_6help = TRUE,       # Help/FAQ module
+  mod_7credit = FALSE,    # Credits module
 
-  ## App Setup Options
-  mod_1welcome = TRUE, #switch modules on/off
-  mod_2scenario = TRUE, #switch modules on/off
-  mod_3compare = TRUE, #switch modules on/off
-  mod_4features = TRUE, #switch modules on/off
-  mod_5coverage = TRUE, #switch modules on/off
-  mod_6help = TRUE, #switch modules on/off
-  mod_7credit = FALSE, #switch modules on/off
-
+  ## Report generation
   include_report = TRUE,
 
+  ## Bioregion stratification
   include_bioregion = FALSE,
 
-  #TODO These options need to be updated. Probably into a list as we need specific
-  # options (e.g. direction) for the number of layers we have in case they are different
-  include_climateChange = FALSE,
-  climate_change = 1, #switch climate change on/off; 0 = not clim-smart; 1 = CPA; 2 = Feature; 3 = Percentile
-  percentile = 5,  # Warning: still requires some changes in the app: direction, percentile etc. should this be in here? those are input options to the functions
-  direction = -1,
-  refugiaTarget = 1,
+  ## Climate-smart planning options
+  include_climateChange = FALSE,  # Set TRUE when climate data is available
+  climate_change = 1,  # 0 = off; 1 = CPA; 2 = Feature; 3 = Percentile
+  percentile = 5,      # Percentile for climate refugia
+  direction = -1,      # 1 = high values are refugia; -1 = low values are refugia
+  refugiaTarget = 1,   # Target for climate refugia
 
+  ## Locked areas
+  include_lockedArea = TRUE,  # Include locked-in/out constraints
 
-  include_lockedArea = TRUE, # Includes locked in/out areas
+  ## Target grouping
+  targetsBy = "individual",  # Options: "individual", "category", "master"
 
-  targetsBy = "individual", # How to group the targets. Options are c("individual", "category", "master")
+  ## Objective function
+  obj_func = "min_shortfall",  # Options: "min_set", "min_shortfall"
 
-  ## Which objective function module are we using
-  # obj_func = "min_set", # Minimum set objective
-  obj_func = "min_shortfall", # Minimum shortfall objective
-
-  ## Geographic Options
-  cCRS = "ESRI:54009"
-
-  # Limits = c(xmin = 0, xmax = 30, ymin = -70.5, ymax = -60),
-  # Shape = "Hexagon", # Shape of PUs
-  # PU_size = 100 # km2
+  ## Geographic options
+  cCRS = "EPSG:9473"
 )
 
+# =============================================================================
+# COPY LOGOS
+# =============================================================================
 
-# Copy logo to required directory
-file.copy(options$file_logo, file.path("inst", "app", "www", "logo.png"), overwrite = TRUE)
+# Copy logos to app directory (create placeholder if missing)
+if (file.exists(options$file_logo)) {
+  file.copy(options$file_logo, file.path("inst", "app", "www", "logo.png"), overwrite = TRUE)
+} else {
+  message("Logo file not found: ", options$file_logo)
+}
 
-file.copy(options$file_logo2, file.path("inst", "app", "www", "logo2.png"), overwrite = TRUE)
+if (file.exists(options$file_logo2)) {
+  file.copy(options$file_logo2, file.path("inst", "app", "www", "logo2.png"), overwrite = TRUE)
+}
 
-file.copy(options$file_logo3, file.path("inst", "app", "www", "logo3.png"), overwrite = TRUE)
+if (file.exists(options$file_logo3)) {
+  file.copy(options$file_logo3, file.path("inst", "app", "www", "logo3.png"), overwrite = TRUE)
+}
 
-# DATASETS --------------------------------------------------------
+if (file.exists(options$file_logo_funder)) {
+  file.copy(options$file_logo_funder, file.path("inst", "app", "www", "logo_funder.png"), overwrite = TRUE)
+}
 
-# A dictionary of all data and feature-specific set up values
+# Set favicon
+if (file.exists(options$file_logo)) {
+  golem::use_favicon(options$file_logo, pkg = golem::get_golem_wd(), method = "curl")
+}
+
+# =============================================================================
+# LOAD DATA DICTIONARY
+# =============================================================================
+
+# Dictionary defines all layers and their properties
 Dict <- readr::read_csv(file.path(data_dir, "Dict_Feature.csv")) %>%
-  dplyr::filter(includeApp) %>% # Only those features to be included
+  dplyr::filter(includeApp) %>%
   dplyr::arrange(.data$type, .data$categoryID, .data$nameCommon)
 
-
+# Get variable names for features (not justification text)
 vars <- Dict %>%
   dplyr::filter(!type %in% c("Justification")) %>%
   dplyr::pull(nameVariable)
 
+# =============================================================================
+# LOAD AND PROCESS SPATIAL DATA
+# =============================================================================
 
-# An sf object for all layers
 load(options$file_data)
 
+# Select only variables in the dictionary
 raw_sf <- dat_sf %>%
   sf::st_drop_geometry() %>%
   dplyr::select(tidyselect::all_of(vars))
 
-zero_cols <- colnames(raw_sf)[which(colSums(raw_sf, na.rm=TRUE) %in% 0)] # Remove all zero columns
+# Remove columns that are all zeros
+zero_cols <- colnames(raw_sf)[which(colSums(raw_sf, na.rm = TRUE) == 0)]
 
+if (length(zero_cols) > 0) {
+  message("Removing zero columns: ", paste(zero_cols, collapse = ", "))
+  raw_sf <- raw_sf %>%
+    dplyr::select(-tidyselect::any_of(zero_cols))
+  vars <- vars[!vars %in% zero_cols]
+  Dict <- Dict %>%
+    dplyr::filter(!nameVariable %in% zero_cols)
+}
+
+# Add geometry back
 raw_sf <- raw_sf %>%
-  dplyr::select(-tidyselect::any_of(zero_cols)) %>%
-  dplyr::bind_cols(dat_sf %>% dplyr::select(geometry)) %>%  # Add geometry back in
+  dplyr::bind_cols(dat_sf %>% dplyr::select(geometry)) %>%
   sf::st_as_sf()
 
-vars <- vars[! vars %in% zero_cols] # Remove zero's from vars
+# Validate
+if (length(unique(vars)) != ncol(raw_sf) - 1) {
+  stop("Mismatch between Dict variables and data columns. Check Dict_Feature.csv")
+}
 
-Dict <- Dict %>%
-  dplyr::filter(!nameVariable %in% zero_cols)
+# =============================================================================
+# PLOTTING OVERLAYS
+# =============================================================================
 
-# Check if variables were removed from the data due to zero columns
-if (length(unique(vars)) != dim(raw_sf)[2]-1){
+# These are used for map overlays
+bndry <- bndry   # From loaded data
+overlay <- coast  # Coastline for overlay
 
-  stop("raw_sf and the Dictionary have different numbers of variables. If columns
-       were removed due to being all zero above, please remove corresponding
-       variable from Dict")}
-
-
-# Plotting Overlays -------------------------------------------------------
-
-bndry <- bndry
-overlay <- coast
-
-# TODO Work out how to add options here without having to define all.
-# Change to a list called plot_options()? that is passed to the function.
-
-
-# MODULE 1 - WELCOME ------------------------------------------------------
+# =============================================================================
+# TEXT CONTENT - WELCOME MODULE
+# =============================================================================
 
 tx <- list(
   welcome = list(
@@ -138,69 +166,44 @@ tx <- list(
       text = readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1welcome3.md"))
     ),
     list(
-      title = "C.A.R.E.",
+      title = "CARE",
       text = readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1welcome4.md"))
     ),
     list(
-      title = "Credit",
+      title = "References",
       text = readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1welcome5.md"))
     )
   )
 )
 
-# return_list <- read_textboxes(FILENAME)
+# =============================================================================
+# TEXT CONTENT - SCENARIO MODULE
+# =============================================================================
 
-
-#TODO Add all these to the tx list above.
-# MODULE 2 - SCENARIO ------------------------------------------------------
 tx_2solution <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2solution.md"))
 tx_2targets <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2targets.md"))
 tx_2cost <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2cost.md"))
 tx_2climate <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2climate.md"))
+tx_2ess <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_2ecosystemServices.md"))
 
-# MODULE 3 - COMPARISON ------------------------------------------------------
+# =============================================================================
+# TEXT CONTENT - HELP MODULE
+# =============================================================================
 
+tx_1footer <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_1footer.md"))
 
-
-# MODULE 6 - HELP ------------------------------------------------------
 tx_6faq <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_6faq.md"))
-tx_6changelog <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_6changelog.md"))
 tx_6technical <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_6technical.md"))
+tx_6changelog <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_6changelog.md"))
 
+# =============================================================================
+# PLOTTING THEMES
+# =============================================================================
 
-# MODULE 7 - CREDIT ------------------------------------------------------
-# tx_7credit <- readr::read_file(file.path(data_dir, "markdown", "shinyplanr_7credit.md"))
-
-
-
-# HEX STICKER -------------------------------------------------------------
-# Create app-specific Hex sticker if wanted. Otherwise the generic shinyplanr one will be used
-# hexSticker::sticker(options$file_logo,
-#                     package="",
-#                     s_x=1,
-#                     s_y=1,
-#                     s_width=.8,
-#                     h_fill = "#0033a0",
-#                     h_color = "grey40",
-#                     # url = "",
-#                     # u_color = "white",
-#                     dpi=600,
-#                     filename=file.path("inst", "app", "www", "Hex.png"))
-#
-
-golem::use_favicon(options$file_logo, pkg = golem::get_golem_wd(), method = "curl")
-
-
-# PLOTTING THEME -----------------------------------------------------------
 map_theme <- ggplot2::theme_bw(base_size = 14) +
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
-    # text = ggplot2::element_text(size = 6, colour = "black"),
-    # axis.text = ggplot2::element_text(size = 9, colour = "black"),
-    # plot.title = ggplot2::element_text(size = 12),
-    # legend.title = ggplot2::element_text(size = 9),
-    # legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
 
@@ -208,35 +211,44 @@ bar_theme <- ggplot2::theme_bw(base_size = 14) +
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
-    # text = ggplot2::element_text(size = 6, colour = "black"),
-    # axis.text = ggplot2::element_text(size = 6, colour = "black"),
-    # plot.title = ggplot2::element_text(size = 12),
-    # legend.title = ggplot2::element_text(size = 9),
-    # legend.text = ggplot2::element_text(size = 9),
     axis.title = ggplot2::element_blank()
   )
 
-file.copy(file.path("data-raw", "Kosrae", "custom.css"), # From
-          file.path("inst", "app", "www", "custom.css"), # To
-          overwrite = TRUE)
+# =============================================================================
+# OPTIONAL: CUSTOM CSS
+# =============================================================================
 
+# Uncomment to use custom CSS
+# file.copy(file.path(data_dir, "custom.css"),
+#           file.path("inst", "app", "www", "custom.css"),
+#           overwrite = TRUE)
 
-usethis::use_data(options,
-                  map_theme,
-                  bar_theme,
-                  Dict,
-                  vars,
-                  raw_sf,
-                  bndry,
-                  overlay,
-                  tx,
-                  tx_2solution,
-                  tx_2targets,
-                  tx_2cost,
-                  tx_2climate,
-                  tx_6faq,
-                  tx_6technical,
-                  tx_6changelog,
-                  overwrite = TRUE,
-                  internal = TRUE)
+# =============================================================================
+# SAVE INTERNAL DATA
+# =============================================================================
+
+usethis::use_data(
+  options,
+  map_theme,
+  bar_theme,
+  Dict,
+  vars,
+  raw_sf,
+  bndry,
+  overlay,
+  tx,
+  tx_1footer,
+  tx_2solution,
+  tx_2targets,
+  tx_2cost,
+  tx_2climate,
+  tx_2ess,
+  tx_6faq,
+  tx_6technical,
+  tx_6changelog,
+  overwrite = TRUE,
+  internal = TRUE
+)
+
+message("App configuration complete for ", country)
 

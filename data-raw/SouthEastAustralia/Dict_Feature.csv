@@ -1,117 +1,49 @@
-nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,justification
-abyssal,abyssal,Bathymetry,Bathymetry,Feature,30,0,85,TRUE,TRUE,
-lower bathyal ,lower bathyal ,Bathymetry,Bathymetry,Feature,30,0,85,TRUE,TRUE,
-upper bathyal ,upper bathyal ,Bathymetry,Bathymetry,Feature,30,0,85,TRUE,TRUE,
-continental shelf ,continental shelf ,Bathymetry,Bathymetry,Feature,30,0,85,TRUE,TRUE,
-Abyssal_Hills ,Abyssal_Hills ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Abyssal_Plains ,Abyssal_Plains ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Basins_perched_on_the_shelf ,Basins_perched_on_the_shelf ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Basins_perched_on_the_slope ,Basins_perched_on_the_slope ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Canyons_blind ,Canyons_blind ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Canyons_shelf_incising ,Canyons_shelf_incising ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Escarpments ,Escarpments ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Major_ocean_basins ,Major_ocean_basins ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Sills ,Sills ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Small_basins_of_seas_and_oceans ,Small_basins_of_seas_and_oceans ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Small_shelf_valley ,Small_shelf_valley ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Terraces ,Terraces ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Bridges ,Bridges ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Fans ,Fans ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Glacial_troughs ,Glacial_troughs ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Guyots ,Guyots ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Large_basins_of_seas_and_oceans ,Large_basins_of_seas_and_oceans ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Large_shelf_valleys_and_glacial_troughs ,Large_shelf_valleys_and_glacial_troughs ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Moderate_size_shelf_valley,Moderate_size_shelf_valley,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Plateaus ,Plateaus ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Ridges ,Ridges ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Rift_valleys,Rift_valleys,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Rises ,Rises ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Spreading_ridges,Spreading_ridges,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Trenches ,Trenches ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-Troughs ,Troughs ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-knolls ,knolls ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-seamounts ,seamounts ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,
-enviro_zone_1 ,enviro_zone_1 ,Bioregionalisation,Bioregionalisation,Feature,30,0,85,TRUE,TRUE,
-enviro_zone_2 ,enviro_zone_2 ,Bioregionalisation,Bioregionalisation,Feature,30,0,85,TRUE,TRUE,
-enviro_zone_3 ,enviro_zone_3 ,Bioregionalisation,Bioregionalisation,Feature,30,0,85,TRUE,TRUE,
-antipatharia ,antipatharia ,Corals,Corals,Feature,30,0,85,TRUE,TRUE,
-cold_corals ,cold_corals ,Corals,Corals,Feature,30,0,85,TRUE,TRUE,
-octocorals ,octocorals ,Corals,Corals,Feature,30,0,85,TRUE,TRUE,
-MPAs ,MPAs ,Protected Areas,ProtectedAreas,LockIn,NA,NA,NA,TRUE,TRUE,
-MPAs ,MPAs ,Protected Areas,ProtectedAreas,LockOut,NA,NA,NA,TRUE,TRUE,
-Cost_Distance ,Cost_Distance ,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,
-Cost_None ,Cost_None ,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,
-Cost_Random ,Cost_Random ,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,
-Cost_FishingHrs,Cost_FishingHrs,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,
-,,,,,,,,,,
-,,,,EcosystemServices,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-Coral / Algae,coral_algae,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,"The Coral/Algae class in the deep lagoon. The Coral/Algae class has a hard underlying framework (usually limestone) with a covering of coral (including soft coral) and/or seaweeds (including macroalgae and turf algae). Coral/Algae is topographically complex and supports high animal diversity and biomass. Both corals and algae are photosynthetic and have similar spectral signatures, making them difficult to distinguish by remote sensing."
-Seagrass,seagrass,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,A Seagrass dominated habitat on a soft bottom in the deep lagoon. From the Allen Coral Atlas.
-Distance to Coast,Cost_Distance,Other: Cost,Cost,Cost,NA,NA,NA,FALSE,FALSE,"Uses the distance from the coast as the cost layer, with distances further from the coast having higher cost. This mirrors the extra fuel consumption, longer travel time, and greater wear on the engine."
-Equal Area Cost,Cost_Area,Other: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,"No cost layer is used. In this instance, the size of the planning units is used as the cost, but because (usually) all planning units have the same size, the cost of selecting any planning unit is the same."
-Continental Shelf,shelf,Depth Zones,Depth,Feature,30,0,85,FALSE,FALSE,"The upper 0-200 m in the ocean. It contains all primary producers in the ocean, and most of the marine life is restricted to this depth or vertically migrates into this depth zone (e.g. seabirds, sea turtles, tuna)."
-Continental Slope,slope,Depth Zones,Depth,Feature,30,0,85,FALSE,FALSE,Between 200-1000 m deep. Also known as the twilight zone because of the dim light conditions. Contains unique biodiversity.
-Aquaculture,aquaculture,Ocean Use Survey,OUS,LockOut,NA,NA,NA,TRUE,TRUE,"Aquaculture is the farming of marine and freshwater finfish, shellfish, aquatic plants, algae and other organisms. It is an important source of revenue in many nations in the Global South."
-Fisheries: Bottom Fishing,bottom_fishing,Fisheries: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,The areas used for Bottom Fishing. This data is derived from the Ocean Use Survey.
-Fisheries: Trolling,trolling,Fisheries: Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,The areas used for Trolling Fisheries. This data is derived from the Ocean Use Survey.
-Fisheries: Vertical Longline,vertical_longline,Ocean Use Survey,Fishing,Feature,30,0,85,FALSE,FALSE,The areas used for Vertical Longline Fishing. This data is derived from the Ocean Use Survey.
-0 - 30m: Altiphotic,x0_30m_altiphotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-130 - 320m: Rariphotic,x30_130m_mesophotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-30 - 130m: Mesophotic,x130_320m_rariphotic,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-320 - 800m: Upper bathyal,x320_800m_upper_bathyal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-800 - 3500m: Lower bathyal,x800_3500m_lower_bathyal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-3500 - 6500m: Abyssal,x3500_6500m_abyssal,Depth Zones,Depth,Feature,30,0,85,TRUE,TRUE,GEBCO ([General Bathymetric Chart of the Oceans](https://www.gebco.net)) 2024 bathymetry data 
-Aquatic land features,aquatic_land_features,Reef Geomorphology,Geomorph,Feature,30,0,85,FALSE,FALSE,Millenium Coral Reef Geomorphology
-Diffuse fringing,diffuse_fringing,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,Millenium Coral Reef Geomorphology
-Forereef,forereef,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,Millenium Coral Reef Geomorphology
-Reef flat,reef_flat,Reef Geomorphology,Geomorph,Feature,30,0,85,TRUE,TRUE,Millenium Coral Reef Geomorphology
-Fish Health Score,fish_scores,High Reef-Health Areas,Health,Feature,30,0,85,TRUE,TRUE,"The fish assemblage health score is derived from reef monitoring data on: fish biomass, size structure, heterogeneity, evenness and predcator biomass. More details on the monitoring website: https://micronesiareefmonitoring.com"
-Benthic Health Score,benthic_scores,High Reef-Health Areas,Health,Feature,30,0,85,TRUE,TRUE,"The benthic substrate health score is derived from reef monitoring data on: coral cover, coral evenness, substrate ratio, and macroalgae cover. More details on the monitoring website: https://micronesiareefmonitoring.com"
-Mangrove Forest,mangroves,Habitat,AHabitat,Feature,30,0,85,TRUE,TRUE,Mangrove distribution data subset from the full vegetation map created by USGS in 2008 derived from high resolution QuickBird pansharpened-natural color image.
-Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,Kosrae marine protected area network compiled from data and information provided by Moses and Bond
-Marine Protected Areas,mpas,Protected Areas,MPAs,LockOut,NA,NA,NA,TRUE,TRUE,Kosrae marine protected area network compiled from data and information provided by Moses and Bond
-Barracuda,barracuda,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Black jack,black_jack,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Blacktail snapper,blacktail_snapper,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Emperor sp.,emperor_sp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Lowfin rudderfish,lowfin_rudderfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Mullet fringelip,mullet_fringelip,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Mullet sp.,mullet_sp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-One spot snapper,one_spot_snapper,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Orange spine unicorn fish,orange_spine_unicorn_fish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Rabbitfish spp.,rabbitfish_spp,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Randall's rabbitfish,randalls_rabbitfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Scribbled rabbitfish,scribbled_rabbitfish,Spawning Areas,Spawning,Feature,30,0,85,TRUE,TRUE,Spawning areas drawn by participants in the 2025 Kosrae Spawning Aggregation Survey. 
-Organic Soil Carbon,soilOrganicCarbon_tPU,Organic Soil Carbon,organicSoilCarbon,EcosystemServices,NA,NA,NA,TRUE,TRUE,Soil Organic Carbon conserved by mangrove protection
+nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,justification,,,,,,,,,,,,,,,,,,
+abyssal,abyssal,Bathymetry,Bathymetry,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+lower bathyal ,lower bathyal ,Bathymetry,Bathymetry,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+upper bathyal ,upper bathyal ,Bathymetry,Bathymetry,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+continental shelf ,continental shelf ,Bathymetry,Bathymetry,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Abyssal_Hills ,Abyssal_Hills ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Abyssal_Plains ,Abyssal_Plains ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Basins_perched_on_the_shelf ,Basins_perched_on_the_shelf ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Basins_perched_on_the_slope ,Basins_perched_on_the_slope ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Canyons_blind ,Canyons_blind ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Canyons_shelf_incising ,Canyons_shelf_incising ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Escarpments ,Escarpments ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Major_ocean_basins ,Major_ocean_basins ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Sills ,Sills ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Small_basins_of_seas_and_oceans ,Small_basins_of_seas_and_oceans ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Small_shelf_valley ,Small_shelf_valley ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Terraces ,Terraces ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Bridges ,Bridges ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Fans ,Fans ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Glacial_troughs ,Glacial_troughs ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Guyots ,Guyots ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Large_basins_of_seas_and_oceans ,Large_basins_of_seas_and_oceans ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Large_shelf_valleys_and_glacial_troughs ,Large_shelf_valleys_and_glacial_troughs ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Moderate_size_shelf_valley,Moderate_size_shelf_valley,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Plateaus ,Plateaus ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Ridges ,Ridges ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Rift_valleys,Rift_valleys,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Rises ,Rises ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Spreading_ridges,Spreading_ridges,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Trenches ,Trenches ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Troughs ,Troughs ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+knolls ,knolls ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+seamounts ,seamounts ,Geomorphology,Geomorphology,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+enviro_zone_1 ,enviro_zone_1 ,Bioregionalisation,Bioregionalisation,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+enviro_zone_2 ,enviro_zone_2 ,Bioregionalisation,Bioregionalisation,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+enviro_zone_3 ,enviro_zone_3 ,Bioregionalisation,Bioregionalisation,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+antipatharia ,antipatharia ,Corals,Corals,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+cold_corals ,cold_corals ,Corals,Corals,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+octocorals ,octocorals ,Corals,Corals,Feature,30,0,85,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+MPAs ,MPAs ,Protected Areas,ProtectedAreas,LockIn,NA,NA,NA,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+MPAs ,MPAs ,Protected Areas,ProtectedAreas,LockOut,NA,NA,NA,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Cost_Distance ,Cost_Distance ,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Cost_None ,Cost_None ,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Cost_Random ,Cost_Random ,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Cost_FishingHrs,Cost_FishingHrs,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,,,,,,,,,,,,,,,,,,
+Trend under Low Emissions (SSP-245; 2061-2080),tos_slpTrend_ssp245_intermediate,Temperature Trend,TempTrend,Climate,NA,NA,NA,TRUE,TRUE,"SSP2-4.5 is an intermediate greenhouse gas emission scenario, with CO2 emissions around current levels until 2050, then falling but not reaching net zero by 2100.",,,,,,,,,,,,,,,,,,
+Trend under Medium Emissions (SSP-370; 2061-2080),tos_slpTrend_ssp370_intermediate,Temperature Trend,TempTrend,Climate,NA,NA,NA,TRUE,TRUE,"SSP3-7.0 is a high greenhouse gas emission scenario, with CO2 emissions doubling by 2100.",,,,,,,,,,,,,,,,,,
+Trend under High Emissions (SSP-585; 2061-2080),tos_slpTrend_ssp585_intermediate,Temperature Trend,TempTrend,Climate,NA,NA,NA,TRUE,TRUE,"SSP5-8.5 is a very high greenhouse gas emission scenario, with CO2 emissions tripling by 2075.",,,,,,,,,,,,,,,,,,
+Organic Soil Carbon,soilOrganicCarbon_tPU,Organic Soil Carbon,organicSoilCarbon,EcosystemServices,NA,NA,NA,TRUE,TRUE,Soil Organic Carbon conserved by mangrove protection,,,,,,,,,,,,,,,,,,

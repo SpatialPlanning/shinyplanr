@@ -18,49 +18,44 @@ Several decision-support tools are available for spatial planning (Moilanen et a
 - Provides a reproducible workflow in R (Beyer et al., 2016); and 
 - Links easily with Shiny Apps for stakeholder engagement.
 
-The spatial prioritization in Kosrae uses four main inputs:
+The spatial prioritization uses four main inputs:
 
 - The planning region and planning units;
-- Conservation features (species, habitats, cultural areas), each with a representation target; and 
-- A cost layer (e.g., fishing value);
+- Conservation features (species, habitats, cultural areas), each with a representation target;
+- A cost layer (e.g., fishing value); and
 - An objective function (here, the *minimum set objective*, which ensures all targets are met while minimizing the cost - i.e., minimizing overlap between the solution and the cost layer).
 
 ### The planning region and planning units
-The planning region is Kosrae state waters. The planning units are 1 km\2 in size.
+
+*Describe your planning region here. Include information about the study area boundaries and the size of planning units used.*
 
 ### Feature layers
 
-**Shallow reefs:** We used the Allen Coral Atlas, which provides 9 geomorphic and 5 benthic classes for Kosrae. Key conservation interest lies in coral/algae and seagrass, which were intersected with geomorphic classes to define 15 habitats. These may be given higher conservation targets, while lower-value classes (e.g., sand, rubble) may have lower targets.
-
-The primary interest for conservation is habitat that has high associated biodiversity and can be impacted by human use (e.g., coral and seagrass). To ensure that biodiversity in these habitats is fully represented, the coral/algae and seagrass classes were intersected with the 8 geomorphic zones, creating a total of 14 key habitats for protection (seagrass is not present in all geomorphic zones). These habitats can be assigned higher protection targets than the remaining benthic classes, if desired.
-
-**Deeper waters:** Because detailed benthic habitat data is only available for the shallow water reefs around Kosrae, we classified deeper benthic habitats into two depth zones using the GEBCO 2024 grid (via the oceandatr R package; Ceccarelli et al., 2021):
-
-- Shelf (0–200 m)
-- Slope (200–1000 m)
-
-This framework ensures both shallow and deep ecosystems are represented in the planning process.
+*Describe the conservation features included in your analysis. This could include habitats, species distributions, geomorphic features, or areas of cultural importance.*
 
 ### Climate-smart planning
 
 Climate-smart planning aims to ensure protected areas remain effective under future climate change (Buenafe et al. 2025; Morelli et al., 2017; Pacifici et al., 2015). We focused on climate refugia — areas projected to warm more slowly and thus retain biodiversity longer.
 
-Two key metrics were calculated from an ensemble of 17 Earth System Models (SSP5-8.5 scenario; Hausfather et al., 2022):
+Two key metrics were calculated from an ensemble of Earth System Models:
 
-- **Climate exposure:** the projected warming rate (°C yr\-1) and
-- **Climate velocity:** the speed at which organisms must move to track suitable temperatures (km yr\-1; Pinsky et al., 2013).
+- **Climate exposure:** the projected warming rate (°C yr⁻¹) and
+- **Climate velocity:** the speed at which organisms must move to track suitable temperatures (km yr⁻¹; Pinsky et al., 2013).
 
 Thus, biodiversity is likely to better cope with climate change in planning units with lower climate exposure (Brito-Morales et al., 2022). Further, biodiversity is more likely to be retained in the area where there is slower climate velocity (Arafeh-Dalmau et al., 2021).
   
-Climate exposure and climate velocity were combined into a climate-resilience metric, with higher values indicating greater climate resilience (Buenafe et al. 2023; Arafeh-Dalmau et al., 2021; Brito-Morales et al., 2022). Therefore, climate-resilient areas are likely to warm less and their biodiversity is more likely to be retained (see Buenafe et al. for more details; Brito-Morales et al., 2022).
+Climate exposure and climate velocity were combined into a climate-resilience metric, with higher values indicating greater climate resilience (Buenafe et al. 2023; Arafeh-Dalmau et al., 2021; Brito-Morales et al., 2022). Therefore, climate-resilient areas are likely to warm less and their biodiversity is more likely to be retained.
 
 We then applied the Climate Priority Area Approach (Buenafe et al., 2023):
 
 - The top 5% of high-resilience areas were given a 100% protection target; and
 - The remaining 95% were assigned lower targets, ensuring overall species targets that are specified by the user are still met.
 
-This method guides protection toward climate-resilient areas, while still distributing conservation effort across broader habitats. Note that our climate-smart metric is based on temperature projections only. Temperature was chosen because it is the most robust variables from Earth System Models and is the most ecologically relevant physical driver of biology (Burrows et al., 2014; Molinos et al., 2016; Chawarski et al., 2022).
+This method guides protection toward climate-resilient areas, while still distributing conservation effort across broader habitats.
 
 ### The cost layer
 
-The cost layer represents the opportunity cost of protection — for example, loss of fishing opportunities if an area is designated as a marine protected area. We included several cost layers to reflect different human uses. In the prioritization, which uses the *minimum set objective*, areas with higher costs are less likely to be selected, unless they are essential to meet biodiversity targets. This ensures spatial plans are both ecologically effective and socially acceptable.
+The cost layer represents the opportunity cost of protection — for example, loss of fishing opportunities if an area is designated as a marine protected area. In the prioritization, which uses the *minimum set objective*, areas with higher costs are less likely to be selected, unless they are essential to meet biodiversity targets. This ensures spatial plans are both ecologically effective and socially acceptable.
+
+*Describe the specific cost layers included in your analysis here.*
+

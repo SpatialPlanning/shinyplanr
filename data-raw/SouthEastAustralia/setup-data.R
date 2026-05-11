@@ -1,42 +1,28 @@
+# Setup data for shinyplanr app
+# Country/Region: SouthEastAustralia
+# Generated: 2026-03-04
+
 library(tidyverse)
 library(spatialplanr)
-library(oceandatr)
-library(rnaturalearth)
 library(sf)
 library(terra)
-library(gfwr)
 
-# TODO Add check that all names in Dict are unique. Or change target plotting to
-# use variable name rather than the common name. It would be good to have the
-# same Common name if needed.
+library(oceandatr)
 
-data_path <- file.path("data-raw", "SouthEastAustralia", "SEAustraliaData")
+# =============================================================================
+# BASIC PARAMETERS
+# =============================================================================
 
-name <- "South East Australia"
-country = "Australia"
+country <- "Australia"
+crs <- "EPSG:9473"
+resolution <- 20000L  # Planning unit size in meters
 
-# Set up geospatial data ------
+data_dir <- file.path("data-raw", "SouthEastAustralia")
+data_path <- file.path(data_dir, "data")  # Path to your raw data files
 
-#kosrae equal area projection from projection wizard, found using bbox of 12nm limits
-aus_crs <- "+proj=aea +lon_0=146.4038086 +lat_1=-40.8934514 +lat_2=-37.9069435 +lat_0=-39.4001975 +datum=WGS84 +units=m +no_defs"
-
-## Boundary ----------------------------------------------------------
-
-bndry <- spatialplanr::splnr_create_polygon(dplyr::tibble(
-  x = c(142, 150, 150, 142, 142),
-  y = c(-37.6, -37.6, -41.5, -41.5, -37.6)
-), cCRS = aus_crs)
-
-
-## Coastline --------------------------------------------------------
-
-coast <- rnaturalearth::ne_countries(scale = 10, country = country) %>%
-  sf::st_transform(crs = aus_crs) %>%
-  sf::st_crop(bndry)
-
-ggplot() + geom_sf(data = coast) + geom_sf(data = bndry, colour = "red", fill = NA)
-
-## Planning Units ----------------------------------------------------------
+# =============================================================================
+# BOUNDARIES (using oceandatr)
+# =============================================================================
 
 
 #' Remove Planning Units (PUs) that intersect with land
@@ -84,37 +70,105 @@ splnr_remove_PUs <- function(PUs, coast) {
 }
 
 
-# First get all the cells within the bndry
-PUs <- get_grid(boundary = bndry,
-                  resolution = 5000,
-                  crs = aus_crs,
-                  touches = TRUE,
-                  output = "sf_hex")
+# Get EEZ boundary from Marine Regions database
+# See: https://marineregions.org/gazetteer.php for valid names
+# eez <- oceandatr::get_boundary(name = country, type = "eez") %>%
+#   sf::st_transform(crs = crs) %>%
+#   sf::st_geometry() %>%
+#   sf::st_sf()
+
+# Alternative: Load custom boundary
+# bndry <- sf::st_read(file.path(data_path, "my_boundary.gpkg")) %>%
+#   sf::st_transform(crs = crs)
+
+# Separate boundary (for plotting)
+# bndry <- eez %>%
+#   sf::st_cast(to = "POLYGON") %>%
+#   dplyr::mutate(Area_km2 = sf::st_area(.) %>%
+#                   units::set_units("km2") %>%
+#                   units::drop_units())
+#
+
+boundary <- spatialplanr::splnr_create_polygon(dplyr::tibble(
+  x = c(142, 150, 150, 142, 142),
+  y = c(-37.6, -37.6, -41.5, -41.5, -37.6)
+), cCRS = crs)
 
 
-PUs <- splnr_remove_PUs(PUs, coast)
+# Get coastline for plotting overlays
+coast <- rnaturalearth::ne_countries(country = country, scale = "medium", returnclass = "sf") %>%
+  sf::st_transform(crs = crs) %>%
+  sf::st_crop(boundary)
+
+# Create planning unit grid
+PUs <- spatialgridr::get_grid(boundary = boundary,
+                              crs = crs,
+                              output = "sf_hex",
+                              resolution = resolution) %>%
+  splnr_remove_PUs(coast)
 
 
+# Check the grid
 ggplot() +
-  geom_sf(data = PUs, colour = "black") +
-  geom_sf(data = coast, colour = "red")
+  geom_sf(data = PUs, fill = NA, colour = "grey80") +
+  geom_sf(data = boundary, fill = NA, colour = "blue") +
+  geom_sf(data = coast, fill = "darkgrey")
 
+# =============================================================================
+# FEATURE DATA
+# =============================================================================
 
-# Do features -----
+# Download and process oceandatr layers
+# These will be automatically added to the planning units
+# Variable names are set to match Dict_Feature.csv
 
+# Bathymetry / Depth zones
+bathymetry <- oceandatr::get_bathymetry(spatial_grid = PUs,
+                                        classify_bathymetry = TRUE) %>%
+  sf::st_drop_geometry()
 
-dat_sf <- bind_cols(
-  oceandatr::get_bathymetry(spatial_grid = PUs) %>% sf::st_drop_geometry(),
-  oceandatr::get_geomorphology(spatial_grid = PUs) %>% sf::st_drop_geometry(),
-  oceandatr::get_knolls(spatial_grid = PUs) %>% sf::st_drop_geometry(),
-  oceandatr::get_seamounts(spatial_grid = PUs, buffer = 30000) %>% sf::st_drop_geometry(),
-  oceandatr::get_enviro_zones(spatial_grid = PUs, max_num_clusters = 5, show_plots = FALSE) %>% sf::st_drop_geometry(),
-  oceandatr::get_coral_habitat(spatial_grid = PUs)
+# Geomorphology (seafloor features)
+geomorphology <- oceandatr::get_geomorphology(spatial_grid = PUs) %>%
+  sf::st_drop_geometry()
+
+# Knolls (underwater hills)
+knolls <- oceandatr::get_knolls(spatial_grid = PUs) %>%
+  sf::st_drop_geometry()
+
+# Seamounts (with 30km buffer)
+seamounts <- oceandatr::get_seamounts(spatial_grid = PUs,
+                                      buffer = 30000) %>%
+  sf::st_drop_geometry()
+
+# Environmental zones (data-driven bioregions)
+enviro_zones <- oceandatr::get_enviro_zones(spatial_grid = PUs,
+                                            max_num_clusters = 5,
+                                            show_plots = FALSE) %>%
+  sf::st_drop_geometry()
+
+# Deep-water coral habitat
+corals <- oceandatr::get_coral_habitat(spatial_grid = PUs) %>%
+  sf::st_drop_geometry()
+
+# Combine all oceandatr features
+dat_sf <- dplyr::bind_cols(
+  PUs,
+  bathymetry,
+  geomorphology,
+  knolls,
+  seamounts,
+  enviro_zones,
+  corals
 ) %>%
-  dplyr::mutate(across(everything(), ~replace_na(.x, 0))) # Replace NA/NaN with 0
+  dplyr::mutate(across(where(is.numeric), ~replace_na(.x, 0)))
 
+# =============================================================================
+# COST DATA
+# =============================================================================
 
-# Add cost data -----------------------------------------------------------
+# Calculate planning unit area (for equal-area cost)
+PU_Area <- as.numeric(units::set_units(sf::st_area(PUs)[1], km^2)) %>%
+  round(2)
 
 gfw_cost <- splnr_get_gfw(region = country, "2014-01-01", "2023-12-31", "YEARLY", spat_res = "LOW", compress = TRUE) %>%
   dplyr::mutate(ApparentFishingHrs = if_else(ApparentFishingHrs > 1000, NA, ApparentFishingHrs)) %>%
@@ -123,51 +177,134 @@ gfw_cost <- splnr_get_gfw(region = country, "2014-01-01", "2023-12-31", "YEARLY"
   sf::st_interpolate_aw(., PUs, extensive = TRUE, keep_NA = TRUE)
 
 
-cost <- PUs %>%
-  splnr_get_distCoast(custom_coast = coast) %>%  # Distance to nearest coast
-  dplyr::rename(Cost_Distance = coastDistance_km) %>%
-  dplyr::mutate(Cost_None = 0.1,
-                Cost_Random = runif(dim(.)[1]),
-                Cost_Distance = 1/Cost_Distance,
-                Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001)) %>%
-  dplyr::relocate(geometry, .after = tidyselect::last_col())
-
-
-# Locked in areas ---------------------------------------------------------
-
-# TODO These are only point MPAs. Need some polygons to do this right.
-
-lock_in <- country %>%
-  lapply(wdpar::wdpa_fetch,
-         wait = TRUE,
-         # force = TRUE,
-         download_dir = rappdirs::user_data_dir("wdpar")
-  ) %>%
-  dplyr::bind_rows() %>%
-  dplyr::filter(.data$MARINE > 0) %>%
-  sf::st_transform(crs = aus_crs) %>%
+# Cost layers
+cost <- dat_sf %>%
   dplyr::select(geometry) %>%
-  spatialgridr::get_data_in_grid(spatial_grid = PUs, dat = ., name = "MPAs", cutoff = 0.5)
+  spatialplanr::splnr_get_distCoast(custom_coast = coast) %>%
+  dplyr::mutate(
+    Cost_Area = PU_Area,  # Equal area cost
+    Cost_Distance = 1/coastDistance_km,  # Distance to coast
+    Cost_FishingHrs = tidyr::replace_na(gfw_cost$ApparentFishingHrs, 0.00001)
+  ) %>%
+  dplyr::select(-coastDistance_km) %>%
+  sf::st_drop_geometry()
+
+# Add cost to main data
+dat_sf <- dplyr::bind_cols(dat_sf, cost)
+
+# TODO: Add custom cost layers (e.g., fishing effort, opportunity cost)
+# fishing_cost <- ... %>% sf::st_drop_geometry()
+# dat_sf <- dplyr::bind_cols(dat_sf, fishing_cost)
+
+# =============================================================================
+# LOCKED-IN AREAS (MPAs)
+# =============================================================================
+
+# Fetch marine protected areas from WDPA
+# Note: First run may download data (~2GB)
+mpas <- spatialplanr::splnr_get_MPAs(PlanUnits = PUs, Countries = country) %>%
+  sf::st_transform(crs = crs) %>%
+  dplyr::select(geometry) %>%
+  spatialgridr::get_data_in_grid(spatial_grid = PUs, dat = ., name = "mpas", cutoff = 0.5) %>%
+  sf::st_drop_geometry()
+
+# Add MPAs to main data
+dat_sf <- dplyr::bind_cols(dat_sf, mpas)
+
+# TODO: Add custom locked-in/out areas
+# locked_out <- sf::st_read(file.path(data_path, "no_take_zones.gpkg")) %>%
+#   spatialgridr::get_data_in_grid(spatial_grid = PUs, dat = ., name = "locked_out")
+
+# =============================================================================
+# CLIMATE DATA (optional)
+# =============================================================================
+
+# TODO: Load climate data if available
+# Climate data should be a metric where higher/lower values indicate
+# climate refugia (depending on direction setting in setup-app.R)
+
+# Example: SST trend data
+# climate_sf <- readr::read_rds(file.path(data_path, "sst_trends.rds")) %>%
+#   sf::st_transform(crs) %>%
+#   sf::st_interpolate_aw(dat_sf, extensive = FALSE, na.rm = TRUE, keep_NA = TRUE)
+
+# climate_files <- c(
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp585_r1i1p1f1_rg_recent_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp245_r1i1p1f1_rg_intermediate_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp245_r1i1p1f1_rg_long_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp245_r1i1p1f1_rg_mid_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp245_r1i1p1f1_rg_near_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp245_r1i1p1f1_rg_recent_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp370_r1i1p1f1_rg_intermediate_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp370_r1i1p1f1_rg_long_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp370_r1i1p1f1_rg_mid_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp370_r1i1p1f1_rg_near_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp370_r1i1p1f1_rg_recent_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp585_r1i1p1f1_rg_intermediate_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp585_r1i1p1f1_rg_long_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp585_r1i1p1f1_rg_mid_term.RDS",
+#   "data-raw/SouthEastAustralia/data/Climate/tos_slpTrend_ensemble_ssp585_r1i1p1f1_rg_near_term.RDS"
+# )
 
 
+# fix_climate <- function(file){
+#
+#   dat <- read_rds(file) %>%
+#     terra::rast() %>%
+#     subset("slpTrends")
+#
+#   names(dat) <- tools::file_path_sans_ext(basename(file) %>%
+#                                             str_remove("ensemble_") %>%
+#                                             str_remove("r1i1p1f1_rg_") %>%
+#                                             str_remove("_term"))
+#
+#   terra::writeRaster(dat, stringr::str_replace_all(file, ".RDS", ".tif"))
+#
+# }
+
+# purrr::walk(climate_files, fix_climate)
 
 
-# Multiple Use
+climate_files <- c(
+  file.path(data_path, "Climate/tos_slpTrend_ensemble_ssp585_r1i1p1f1_rg_intermediate_term.tif"),
+  file.path(data_path, "Climate/tos_slpTrend_ensemble_ssp370_r1i1p1f1_rg_intermediate_term.tif"),
+  file.path(data_path, "Climate/tos_slpTrend_ensemble_ssp245_r1i1p1f1_rg_intermediate_term.tif")
+)
+
+climate_sf <- rast(climate_files) %>%
+  spatialgridr::get_data_in_grid(spatial_grid = PUs, dat = .,)
+
+# If you have climate data, bind it:
+dat_sf <- dplyr::bind_cols(dat_sf, climate_sf %>% sf::st_drop_geometry())
+
+# ========
+# Add Multiple Use
+# ========
 
 MultiUse <- st_read(file.path(data_path, "OffshoreRenewable_Energy_Infrastructure_Regions_987513835804844725.gpkg")) %>%
   spatialgridr::get_data_in_grid(spatial_grid = PUs, dat = ., name = "REI", cutoff = 0.5)
 
 
-ggplot() + geom_sf(data = MultiUse, aes(fill = REI))
 
-
+# ========
 # Ecosystem Services
+# ========
+
+
+# Mangroves
+# ES <- terra::mosaic(
+#   terra::rast("~/Nextcloud/MME1DATA-Q1215/WAITT_ES/Maxwell_2020_SOC_mangroves_2020/163E_05N/sol_soc.tha_mangroves.typology_m_30m_s0..100cm_2020_global_v1.1.tif"),
+#   terra::rast("~/Nextcloud/MME1DATA-Q1215/WAITT_ES/Maxwell_2020_SOC_mangroves_2020/162E_05N/sol_soc.tha_mangroves.typology_m_30m_s0..100cm_2020_global_v1.1.tif")) %>%
+#   get_data_in_grid(spatial_grid = PUs, dat = ., meth = "mean", antimeridian = FALSE, name = "soilOrganicCarbon_tPU") %>%
+#   dplyr::mutate(across(everything(), ~replace_na(., 0)),
+#                 soilOrganicCarbon_tPU = soilOrganicCarbon_tPU * 1.00635) # Convert to total carbon per PU CellARea = 1.00635 ha
+
 
 
 ES <- sf::st_read("/Users/jason/Nextcloud/MME1DATA-Q1215/WAITT_ES/Menendez_2020_CoastalProtection/3_CoastalStudyUnit Aggregations/UCSC_CWON_studyunits.gpkg") %>%
   filter(ISO3 == "AUS") %>%
-  sf::st_transform(aus_crs) %>%
-  sf::st_crop(bndry) %>%
+  sf::st_transform(crs) %>%
+  sf::st_crop(boundary) %>%
   dplyr::select(all_of(c("Risk_Pop_2020", "Risk_Stock_2020"))) %>%
   sf::st_interpolate_aw(., PUs, extensive = FALSE, keep_NA = FALSE) #, "Ben_Stock_2020")) # Benefits to population, Benefits to Property
 
@@ -176,17 +313,28 @@ EcoServ <- sf::st_join(PUs, ES, join = st_equals)
 
 
 
-# Summarise
-dat_sf <- bind_cols(dat_sf,
-                    lock_in %>% sf::st_drop_geometry(),
-                    cost %>% sf::st_drop_geometry(),
-                    EcoServ %>% sf::st_drop_geometry(),
-                    MultiUse %>% sf::st_drop_geometry()) %>%
+# =============================================================================
+# FINAL PROCESSING AND SAVE
+# =============================================================================
+
+# Ensure geometry is last column
+dat_sf <- dat_sf %>%
   dplyr::relocate(geometry, .after = tidyselect::everything())
 
-rm(cost, lock_in, eez)
+# Check for any remaining NAs and replace with 0
+if (any(is.na(sf::st_drop_geometry(dat_sf)))) {
+  warning("NA values found in data - replacing with 0")
+  dat_sf <- dat_sf %>%
+    dplyr::mutate(across(where(is.numeric), ~replace_na(., 0)))
+}
 
+# Check column names match Dict_Feature.csv
+message("Data columns: ", paste(names(dat_sf), collapse = ", "))
 
-save(dat_sf, bndry, coast, file = file.path("data-raw", "SouthEastAustralia", "SouthEastAustralia_RawData.rda"))
+# Save the processed data
+save(dat_sf, boundary, coast,
+     file = file.path(data_dir, paste0(country, "_RawData.rda")))
 
-cat("Finished processing data")
+message("Data saved to: ", file.path(data_dir, paste0(country, "_RawData.rda")))
+message("Finished processing data for ", country)
+
