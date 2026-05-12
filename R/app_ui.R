@@ -5,6 +5,9 @@
 #' @import shiny
 #' @noRd
 app_ui <- function(request) {
+  cfg     <- get_pkg_config()
+  options <- cfg$options
+
   shiny::navbarPage(
     id = "navbar",
     title = shiny::a(shiny::img(src = "www/logo.png",
@@ -13,7 +16,7 @@ app_ui <- function(request) {
                      options$nav_title
     ),
     header = shiny::tagList(
-      golem_add_external_resources(), # fn() for adding external resources
+      golem_add_external_resources(options), # fn() for adding external resources
       shinyjs::useShinyjs()
     ),
     theme = bslib::bs_theme(version = 5), # Theme handled by custom.css
@@ -22,7 +25,7 @@ app_ui <- function(request) {
       shiny::tabPanel(
         "Welcome",
         shiny::fluidPage(
-          value = "welcome", mod_1welcome_ui("1welcome_ui_1")
+          value = "welcome", mod_1welcome_ui("1welcome_ui_1", cfg)
         )
       )
     },
@@ -30,20 +33,20 @@ app_ui <- function(request) {
       "Scenario",
       shiny::fluidPage(
         # shiny::actionButton("sidebar_button","Settings",icon = icon("bars")),
-        value = "soln", mod_2scenario_ui("2scenario_ui_1")
+        value = "soln", mod_2scenario_ui("2scenario_ui_1", cfg)
       )
     ),
     # shiny::tabPanel(
     #   "Multi-Objective Optimisation",
     #   shiny::fluidPage(
-    #     value = "moo", mod_7multiobj_ui("7multiobj_ui_1")
+    #     value = "moo", mod_7multiobj_ui("7multiobj_ui_1", cfg)
     #   )
     # ),
     if (options$mod_3compare == TRUE) {
       shiny::tabPanel(
         "Comparison",
         shiny::fluidPage(
-          value = "compare", mod_3compare_ui("3compare_ui_1")
+          value = "compare", mod_3compare_ui("3compare_ui_1", cfg)
         )
       )
     },
@@ -51,7 +54,7 @@ app_ui <- function(request) {
       shiny::tabPanel(
         "Layer Information",
         shiny::fluidPage(
-          value = "features", mod_4features_ui("4features_ui_1")
+          value = "features", mod_4features_ui("4features_ui_1", cfg)
         )
       )
     },
@@ -59,7 +62,7 @@ app_ui <- function(request) {
       shiny::tabPanel(
         "Check Coverage",
         shiny::fluidPage(
-          value = "coverage", mod_5coverage_ui("5coverage_ui_1")
+          value = "coverage", mod_5coverage_ui("5coverage_ui_1", cfg)
         )
       )
     },
@@ -67,7 +70,7 @@ app_ui <- function(request) {
       shiny::tabPanel(
         "Help",
         shiny::fluidPage(
-          value = "help", mod_6help_ui("6help_ui_1")
+          value = "help", mod_6help_ui("6help_ui_1", cfg)
         )
       )
     },
@@ -83,7 +86,7 @@ app_ui <- function(request) {
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
-golem_add_external_resources <- function() {
+golem_add_external_resources <- function(options) {
   add_resource_path(
     "www",
     app_sys("app/www")

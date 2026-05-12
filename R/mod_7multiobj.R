@@ -9,7 +9,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_7multiobj_ui <- function(id) {
+mod_7multiobj_ui <- function(id, cfg) {
 
   ns <- shiny::NS(id)
 
@@ -28,7 +28,7 @@ mod_7multiobj_ui <- function(id) {
 #' 7multiobj Server Functions
 #'
 #' @noRd
-mod_7multiobj_server <- function(id) {
+mod_7multiobj_server <- function(id, cfg) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 

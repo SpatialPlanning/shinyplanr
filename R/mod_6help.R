@@ -7,7 +7,11 @@
 #' @noRd
 #'
 
-mod_6help_ui <- function(id) {
+mod_6help_ui <- function(id, cfg) {
+  # Extract config locals
+  tx_6faq       <- cfg$tx_6faq
+  tx_6technical <- cfg$tx_6technical
+
   ns <- shiny::NS(id)
   # shiny::tagList(
     tabsetPanel(
@@ -32,7 +36,7 @@ mod_6help_ui <- function(id) {
 #' 6help Server Functions
 #'
 #' @noRd
-mod_6help_server <- function(id) {
+mod_6help_server <- function(id, cfg) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
   })

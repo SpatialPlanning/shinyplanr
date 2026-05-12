@@ -7,7 +7,11 @@
 #' @noRd
 #'
 #' @importFrom rlang .data
-mod_2scenario_ui <- function(id) {
+mod_2scenario_ui <- function(id, cfg) {
+  # Extract config locals
+  Dict      <- cfg$Dict
+  options   <- cfg$options
+
   ns <- shiny::NS(id)
 
   # Decide numbering for optional sections
@@ -339,7 +343,20 @@ mod_2scenario_ui <- function(id) {
 #' 2scenario Server Functions
 #'
 #' @noRd
-mod_2scenario_server <- function(id) {
+mod_2scenario_server <- function(id, cfg) {
+  # Extract config locals
+  Dict         <- cfg$Dict
+  options      <- cfg$options
+  raw_sf       <- cfg$raw_sf
+  bndry        <- cfg$bndry
+  overlay      <- cfg$overlay
+  map_theme    <- cfg$map_theme
+  tx_2solution <- cfg$tx_2solution
+  tx_2targets  <- cfg$tx_2targets
+  tx_2cost     <- cfg$tx_2cost
+  tx_2climate  <- cfg$tx_2climate
+  tx_2ess      <- cfg$tx_2ess
+
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 

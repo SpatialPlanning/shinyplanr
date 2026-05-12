@@ -1,38 +1,33 @@
+# tests/testthat/test-mod_3compare.R
+#
+# Tests for mod_3compare_ui() and mod_3compare_server().
+# cfg is built from the stub sysdata.rda objects in the package namespace.
+
+# Build a cfg list from the stub namespace for use across all tests.
+cfg <- shinyplanr:::get_pkg_config()
+
 testServer(
   mod_3compare_server,
-  # Add here your module params
-  args = list()
-  , {
+  args = list(cfg = cfg),
+  {
     ns <- session$ns
-    expect_true(
-      inherits(ns, "function")
-    )
-    expect_true(
-      grepl(id, ns(""))
-    )
-    expect_true(
-      grepl("test", ns("test"))
-    )
-    # Here are some examples of tests you can
-    # run on your module
-    # - Testing the setting of inputs
-    # session$setInputs(x = 1)
-    # expect_true(input$x == 1)
-    # - If ever your input updates a reactiveValues
-    # - Note that this reactiveValues must be passed
-    # - to the testServer function via args = list()
-    # expect_true(r$x == 1)
-    # - Testing output
-    # expect_true(inherits(output$tbl$html, "html"))
-})
-
-test_that("module ui works", {
-  ui <- mod_3compare_ui(id = "test")
-  golem::expect_shinytag(ui)
-  # Check that formals have not been removed
-  fmls <- formals(mod_3compare_ui)
-  for (i in c("id")){
-    expect_true(i %in% names(fmls))
+    expect_true(inherits(ns, "function"))
+    expect_true(grepl(id, ns("")))
+    expect_true(grepl("test", ns("test")))
   }
+)
+
+test_that("mod_3compare_ui() works", {
+  ui <- mod_3compare_ui(id = "test", cfg = cfg)
+  golem::expect_shinytag(ui)
+  # Check that formals contain id and cfg
+  fmls <- formals(mod_3compare_ui)
+  expect_true("id"  %in% names(fmls))
+  expect_true("cfg" %in% names(fmls))
 })
 
+test_that("mod_3compare_server() formals contain 'id' and 'cfg'", {
+  fmls <- formals(mod_3compare_server)
+  expect_true("id"  %in% names(fmls))
+  expect_true("cfg" %in% names(fmls))
+})
