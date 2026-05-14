@@ -1,0 +1,51 @@
+url: https://spatialplanning.github.io/shinyplanr
+
+template:
+  bootstrap: 5
+
+home:
+  title: "shinyplanr — Spatial Planning in Shiny"
+  description: >
+    A golem-based Shiny application package that provides an interactive
+    graphical user interface for spatial conservation prioritisation using
+    the prioritizr R package.
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    github:
+      icon: fab fa-github
+      href: https://github.com/SpatialPlanning/shinyplanr
+      aria-label: GitHub
+
+articles:
+- title: "User Manual"
+  navbar: "Manual"
+  contents:
+  - aa-introduction
+  - ab-using-shinyplanr
+  - ac-setting-up
+  - ad-deployment
+
+reference:
+- title: "Running the app"
+  desc: "Functions for launching and configuring the shinyplanr application."
+  contents:
+  - run_app
+  - load_config
+
+- title: "Deployment setup"
+  desc: "Functions for creating new regional deployment projects."
+  contents:
+  - create_shinyplanr_template
+
+- title: "Data validation"
+  desc: "Functions for validating configuration and spatial data."
+  contents:
+  - validate_shinyplanr_data
+
+- title: "Utilities"
+  contents:
+  - '`%>%`'

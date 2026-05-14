@@ -12,3 +12,11 @@ $run_dev.*
 ^rsconnect$
 ^\.github$
 ^\\.rscignore$
+^\.positai$
+^\.claude$
+^docs$
+^plans$
+^inst/manual$
+^_pkgdown\.yml$
+^pkgdown$
+^vignettes/\.quarto$

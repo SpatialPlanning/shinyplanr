@@ -13,6 +13,38 @@ app_sys <- function(...) {
 }
 
 
+#' Retrieve the full shinyplanr config from the package config environment
+#'
+#' Called once at the top of `app_ui()` and `app_server()` to get the config
+#' list that was populated by `load_config()`. All module UI and server
+#' functions receive this list as their `cfg` argument and extract only the
+#' objects they need as locals at the top of the function.
+#'
+#' The local-extraction pattern:
+#' ```r
+#' mod_2scenario_ui <- function(id, cfg) {
+#'   Dict    <- cfg$Dict
+#'   options <- cfg$options
+#'   raw_sf  <- cfg$raw_sf
+#'   # ... rest of function body unchanged
+#' }
+#' ```
+#'
+#' @return A named list containing all config keys (Dict, raw_sf, options,
+#'   bndry, overlay, map_theme, tx, tx_1footer, tx_2solution, tx_2targets,
+#'   tx_2cost, tx_2climate, tx_2ess, tx_6faq, tx_6technical, tx_6changelog,
+#'   schema_version, etc.) as populated by `load_config()`.
+#'
+#' @seealso [load_config()] which must be called before `run_app()` to
+#'   populate the config environment that this function reads from.
+#'
+#' @noRd
+get_pkg_config <- function() {
+  required <- .shinyplanr_required_keys
+  mget(required, envir = shinyplanr_config, inherits = FALSE)
+}
+
+
 #' Read App Config
 #'
 #' @param value Value to retrieve from the config file.

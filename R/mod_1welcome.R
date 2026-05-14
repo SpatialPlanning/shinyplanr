@@ -35,7 +35,12 @@ create_welcome_page <- function(x, ns){
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_1welcome_ui <- function(id) {
+mod_1welcome_ui <- function(id, cfg) {
+  # Extract config locals
+  tx         <- cfg$tx
+  tx_1footer <- cfg$tx_1footer
+  options    <- cfg$options
+
   ns <- NS(id)
   shiny::fluidPage(
 
@@ -71,10 +76,12 @@ mod_1welcome_ui <- function(id) {
                     alt = "Funder Logo"),
                 href = options$funder_url,
                 target = "_blank"),
-              a(img(src = "www/uq-logo-white.png",
-                    alt = "UQ Logo"),
-                href = "https://spatialplanning.github.io",
-                target = "_blank")
+              if (isTRUE(options$show_uq_logo)) {
+                a(img(src = "www/uq-logo-white.png",
+                      alt = "UQ Logo"),
+                  href = "https://spatialplanning.github.io",
+                  target = "_blank")
+              }
             )
           )
         )
@@ -86,7 +93,7 @@ mod_1welcome_ui <- function(id) {
 #' 1welcome Server Functions
 #'
 #' @noRd
-mod_1welcome_server <- function(id) {
+mod_1welcome_server <- function(id, cfg) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
   })

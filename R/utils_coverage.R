@@ -1,6 +1,4 @@
-#' Utility functions for the coverage module
-#'
-#' @noRd
+# Utility functions for the coverage module
 
 
 #' Read and validate an uploaded spatial file

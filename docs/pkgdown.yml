@@ -1,0 +1,12 @@
+pandoc: '3.9'
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  aa-introduction: aa-introduction.html
+  ab-using-shinyplanr: ab-using-shinyplanr.html
+  ac-setting-up: ac-setting-up.html
+  ad-deployment: ad-deployment.html
+last_built: 2026-05-13T22:08Z
+urls:
+  reference: https://spatialplanning.github.io/shinyplanr/reference
+  article: https://spatialplanning.github.io/shinyplanr/articles

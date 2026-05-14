@@ -30,6 +30,8 @@ Authors@R: c(
       comment = c(ORCID = "0000-0001-8932-0681"))
     )
 Description: A generic app package to facilitate spatial planning in prioritizr and Shiny.
+URL: https://spatialplanning.github.io/shinyplanr, https://github.com/SpatialPlanning/shinyplanr
+BugReports: https://github.com/SpatialPlanning/shinyplanr/issues
 License: MIT + file LICENSE
 Imports:
     bslib,
@@ -39,16 +41,15 @@ Imports:
     gridExtra,
     golem (>= 0.4.1),
     htmltools,
-    kableExtra,
-    knitr,
     leaflet,
     magrittr,
     patchwork,
     prioritizr,
-    quarto,
-    rcbc,
     purrr,
+    rcbc,
     reactable,
+    readr,
+    renv,
     rlang,
     sf,
     shiny (>= 1.7.4),
@@ -57,19 +58,22 @@ Imports:
     shinydisconnect,
     shinyjs,
     shinyWidgets,
-    sparkline,
     spatialplanr (>= 0.6.9),
     stringr,
     tibble,
     tidyr,
-    tidyselect
-Suggests: 
+    tidyselect,
+    withr
+Suggests:
+    knitr,
+    quarto,
     spelling,
     testthat (>= 3.0.0)
 Remotes: 
     github::dirkschumacher/rcbc,
     github::dreamRs/shinyWidgets,
     github::spatialplanning/spatialplanr
+VignetteBuilder: quarto
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US

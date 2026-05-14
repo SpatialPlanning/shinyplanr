@@ -8,7 +8,10 @@
 #'
 #' @importFrom shiny NS tagList
 
-mod_4features_ui <- function(id) {
+mod_4features_ui <- function(id, cfg) {
+  # Extract config locals
+  Dict <- cfg$Dict
+
   ns <- shiny::NS(id)
 
 
@@ -85,7 +88,14 @@ mod_4features_ui <- function(id) {
 #' 4features Server Functions
 #'
 #' @noRd
-mod_4features_server <- function(id) {
+mod_4features_server <- function(id, cfg) {
+  # Extract config locals
+  Dict      <- cfg$Dict
+  raw_sf    <- cfg$raw_sf
+  bndry     <- cfg$bndry
+  overlay   <- cfg$overlay
+  map_theme <- cfg$map_theme
+
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 

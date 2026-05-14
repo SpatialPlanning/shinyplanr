@@ -16,11 +16,26 @@ fget_category <- function(Dict) {
 
 # Get Targets
 
-#' Calculate targets based on inputs
+#' Calculate targets based on slider inputs
+#'
+#' Reads slider input values for all features of a given \code{dataType} from
+#' the feature dictionary and returns a data frame of feature name / target
+#' pairs ready for use in \code{prioritizr::add_relative_targets()}.
+#'
+#' @param input Shiny input object.
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{type} and \code{nameVariable}).
+#' @param name_check Character. Prefix used to build slider input IDs
+#'   (e.g. \code{"sli_"} for the Scenario module, \code{"sli2_"} for Compare).
+#' @param dataType Character. The \code{type} value(s) in \code{Dict} to
+#'   include (default \code{"Feature"}).
+#'
+#' @return A tibble with columns \code{feature} (character) and \code{target}
+#'   (numeric, 0–1 scale).
 #'
 #' @noRd
 #'
-fget_targets <- function(input, name_check = "sli_", dataType = "Feature") {
+fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature") {
 
   ft <- Dict %>%
     dplyr::filter(.data$type %in% dataType) %>%
@@ -29,7 +44,7 @@ fget_targets <- function(input, name_check = "sli_", dataType = "Feature") {
   targets <- ft %>%
     purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(name_check, x))))) %>%
     tibble::enframe() %>%
-    tidyr::unnest(cols = .data$value) %>%
+    tidyr::unnest(cols = "value") %>%
     dplyr::rename(feature = "name", target = "value") %>%
     dplyr::mutate(feature = ft) %>%
     dplyr::mutate(target = .data$target / 100) # requires number between 0-1
@@ -52,7 +67,7 @@ fget_targets <- function(input, name_check = "sli_", dataType = "Feature") {
 fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
 
   # Get feature targets
-  targets <- fget_targets(input, name_check = name_check, dataType = "Feature")
+  targets <- fget_targets(input, Dict = Dict, name_check = name_check, dataType = "Feature")
 
   # Get bioregion targets if they exist
   ft_bioregion <- Dict %>%
@@ -73,14 +88,15 @@ fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
     unique()
 
   # Get bioregion targets from inputs
-  targets_bioregion <- cats %>%
+  targets_bioregion_raw <- cats %>%
     purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(bioregion_name_check, x))))) %>%
     tibble::enframe() %>%
-    tidyr::unnest(cols = .data$value) %>%
+    tidyr::unnest(cols = "value") %>%
     dplyr::rename(categoryID = "name", target = "value") %>%
     dplyr::mutate(categoryID = cats) %>%
-    dplyr::mutate(target = .data$target / 100) %>% # requires number between 0-1
-    dplyr::left_join(ft_bioregion, ., by = "categoryID") %>%
+    dplyr::mutate(target = .data$target / 100) # requires number between 0-1
+
+  targets_bioregion <- dplyr::left_join(ft_bioregion, targets_bioregion_raw, by = "categoryID") %>%
     dplyr::select(-"categoryID")
 
   # Combine feature and bioregion targets
@@ -143,21 +159,33 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
 
 
 
-#' Title
+#' Update a checkbox group input from the feature dictionary
+#'
+#' Refreshes the choices in a checkbox group input using entries from the
+#' feature dictionary filtered by category. Input ID prefix \code{"check2"}
+#' is used in the Comparison module; \code{"check"} is used in the Scenario
+#' module.
+#'
+#' @param session Shiny session object.
+#' @param id_in Character. The input ID of the checkbox group to update.
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{category}, \code{nameCommon}, \code{nameVariable}).
+#' @param selected Character or NA. The selected value(s) after update.
+#'   Defaults to NA (no selection).
 #'
 #' @noRd
 #'
-fupdate_checkbox <- function(session, id_in, Dict, selected = NA) { # works unless everything is not selected
+fupdate_checkbox <- function(session, id_in, Dict, selected = NA) {
 
   if (stringr::str_detect(id_in, "check2") == TRUE) {
     choice <- Dict %>%
-      dplyr::filter(.data$Category == stringr::str_remove(id_in, "check2")) # %>%
+      dplyr::filter(.data$category == stringr::str_remove(id_in, "check2"))
   } else if (stringr::str_detect(id_in, "check") == TRUE) {
     choice <- Dict %>%
-      dplyr::filter(.data$Category == stringr::str_remove(id_in, "check")) # %>%
+      dplyr::filter(.data$category == stringr::str_remove(id_in, "check"))
   }
   choice <- choice %>%
-    dplyr::select("NameCommon", "NameVariable") %>%
+    dplyr::select("nameCommon", "nameVariable") %>%
     tibble::deframe()
 
   shiny::updateCheckboxGroupInput(
@@ -169,25 +197,33 @@ fupdate_checkbox <- function(session, id_in, Dict, selected = NA) { # works unle
 }
 
 
-
-#' Title
+#' Reset a checkbox group input to all-selected using the feature dictionary
+#'
+#' Like \code{fupdate_checkbox()} but re-selects all choices when
+#' \code{selected} is \code{NA}.
+#'
+#' @param session Shiny session object.
+#' @param id_in Character. The input ID of the checkbox group to reset.
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{category}, \code{nameCommon}, \code{nameVariable}).
+#' @param selected Character or NA. Specific value(s) to select; when
+#'   \code{NA} (default) all choices are selected.
 #'
 #' @noRd
 #'
-fupdate_checkboxReset <- function(session, id_in, Dict, selected = NA) { # works unless everything is not selected
+fupdate_checkboxReset <- function(session, id_in, Dict, selected = NA) {
 
   if (stringr::str_detect(id_in, "check2") == TRUE) {
     choice <- Dict %>%
-      dplyr::filter(.data$Category == stringr::str_remove(id_in, "check2")) # %>%
+      dplyr::filter(.data$category == stringr::str_remove(id_in, "check2"))
   } else if (stringr::str_detect(id_in, "check") == TRUE) {
     choice <- Dict %>%
-      dplyr::filter(.data$Category == stringr::str_remove(id_in, "check")) # %>%
+      dplyr::filter(.data$category == stringr::str_remove(id_in, "check"))
   }
   choice <- choice %>%
-    dplyr::select("NameCommon", "NameVariable") %>%
+    dplyr::select("nameCommon", "nameVariable") %>%
     tibble::deframe()
 
-  # selected <- ifelse(selected == NA, unlist(choice), selected)
   if (is.na(selected)) {
     shiny::updateCheckboxGroupInput(
       session = session, inputId = id_in,
@@ -340,15 +376,18 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
   } else {
     dlPlot <- shiny::downloadHandler(
       filename = function() {
-        paste(gg_prefix,"_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv", sep="")
+        paste0(gg_prefix, "_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv")
       },
-      content = function(file){
-        # If you later pass a data frame here, add similar guards and write.csv
-        shiny::showNotification(
-          "No data available to download yet. Please run an analysis first.",
-          type = "error", duration = 5
-        )
-        stop("No data available to download.")
-      })
+      content = function(file) {
+        if (is.null(gg_id) || !is.data.frame(gg_id)) {
+          shiny::showNotification(
+            "No data available to download yet. Please run an analysis first.",
+            type = "error", duration = 5
+          )
+          stop("No data available to download.")
+        }
+        readr::write_csv(gg_id, file)
+      }
+    )
   }
 }

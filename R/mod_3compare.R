@@ -7,7 +7,10 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_3compare_ui <- function(id) {
+mod_3compare_ui <- function(id, cfg) {
+  # Extract config locals
+  Dict    <- cfg$Dict
+  options <- cfg$options
 
   ns <- NS(id)
 
@@ -328,7 +331,15 @@ mod_3compare_ui <- function(id) {
 #' 3compare Server Functions
 #'
 #' @noRd
-mod_3compare_server <- function(id) {
+mod_3compare_server <- function(id, cfg) {
+  # Extract config locals
+  Dict      <- cfg$Dict
+  options   <- cfg$options
+  raw_sf    <- cfg$raw_sf
+  bndry     <- cfg$bndry
+  overlay   <- cfg$overlay
+  map_theme <- cfg$map_theme
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     . <- NULL
@@ -1202,7 +1213,7 @@ mod_3compare_server <- function(id) {
           output$reportStatus <- shiny::renderUI({
             shiny::tagList(
               shiny::icon("spinner", class = "fa-spin"),
-              shiny::span(" Generating comparison report…")
+              shiny::span(" Generating comparison report\u2026")
             )
           })
 

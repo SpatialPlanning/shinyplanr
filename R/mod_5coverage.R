@@ -7,7 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_5coverage_ui <- function(id) {
+mod_5coverage_ui <- function(id, cfg) {
 
   ns <- shiny::NS(id)
 
@@ -69,7 +69,11 @@ mod_5coverage_ui <- function(id) {
 #' 5coverage Server Functions
 #'
 #' @noRd
-mod_5coverage_server <- function(id) {
+mod_5coverage_server <- function(id, cfg) {
+  # Extract config locals
+  raw_sf <- cfg$raw_sf
+  Dict   <- cfg$Dict
+
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -237,7 +241,7 @@ mod_5coverage_server <- function(id) {
 }
 
 ## To be copied in the UI
-# mod_5coverage_ui("5coverage_1")
+# mod_5coverage_ui("5coverage_ui_1")
 
 ## To be copied in the server
-# mod_5coverage_server("5coverage_1")
+# mod_5coverage_server("5coverage_ui_1")

@@ -1,13 +1,32 @@
 
 #' Define conservation problem for shinyplanr
 #'
-#' @param targets
-#' @param raw_sf
-#' @param options
-#' @param input
-#' @param name_check
-#' @param clim_input
-#' @param compare_id
+#' Constructs a \code{prioritizr} problem object from user-selected targets,
+#' spatial data, and options. Handles minimum-set and minimum-shortfall
+#' objective functions, optional climate-smart approaches, and locked-in /
+#' locked-out constraints.
+#'
+#' @param targets Data frame. Feature-target pairs with columns \code{feature}
+#'   (character, matching column names in \code{raw_sf}) and \code{target}
+#'   (numeric, 0–1 scale). Typically the output of
+#'   \code{fget_targets_with_bioregions()}.
+#' @param raw_sf An \code{sf} object containing all feature and cost columns
+#'   as well as planning unit geometries.
+#' @param options List. App-level options (from the deployment config), including
+#'   \code{obj_func} (\code{"min_set"} or \code{"min_shortfall"}),
+#'   \code{climate_change} (integer, 0–3), \code{percentile},
+#'   \code{direction}, and \code{refugiaTarget}.
+#' @param input Shiny input object. Used to read cost, climate, budget, and
+#'   lock-in/lock-out input values.
+#' @param name_check Character. Prefix for slider input IDs. Default
+#'   \code{"sli_"}.
+#' @param clim_input Character. Value of the climate dropdown input. Pass
+#'   \code{"NA"} (as a string) when climate-smart planning is not selected.
+#' @param compare_id Character. Suffix appended to input IDs when called from
+#'   the Comparison module (e.g. \code{""} for Scenario, \code{"1"} or
+#'   \code{"2"} for the two Compare panels). Default \code{""}.
+#'
+#' @return A \code{prioritizr} problem object ready for solving.
 #'
 #' @noRd
 #'

@@ -1,3 +1,9 @@
+# Ensure rcbc is imported — it is the CBC solver backend used by
+# prioritizr::add_cbc_solver(). prioritizr calls rcbc internally, but CHECK
+# requires at least one importFrom declaration for packages listed in Imports.
+#' @importFrom rcbc cbc_solve
+NULL
+
 #' Solve prioritization problem with error handling
 #'
 #' Wraps the solve() call with standardized error handling and alerts.

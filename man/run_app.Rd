@@ -37,5 +37,17 @@ expression in order for the match to be considered successful.}
 See `?golem::get_golem_options` for more details.}
 }
 \description{
-Run the Shiny Application
+Launches the shinyplanr Shiny application. When running from a deployment
+project (i.e. not from the package source), you must call
+[load_config()] **before** calling `run_app()` so that all region-specific
+data and settings are loaded into the package namespace. A typical
+`app.R` entry point looks like:
+
+```r
+shinyplanr::load_config("config/shinyplanr_config.rds")
+shinyplanr::run_app()
+```
+}
+\seealso{
+[load_config()] for loading region configuration prior to launch.
 }

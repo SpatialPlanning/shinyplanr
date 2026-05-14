@@ -1,1 +1,0 @@
-The bar plots show the level of protection (% representation in total area selected) for each feature in the solution.. The + symbols  represent the target set for each feature. Hollow bars with a black border indicate incidental protection of features which were not chosen in this analysis but have spatial overlap with selected planning units.

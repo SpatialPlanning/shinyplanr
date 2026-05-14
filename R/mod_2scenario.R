@@ -7,7 +7,11 @@
 #' @noRd
 #'
 #' @importFrom rlang .data
-mod_2scenario_ui <- function(id) {
+mod_2scenario_ui <- function(id, cfg) {
+  # Extract config locals
+  Dict      <- cfg$Dict
+  options   <- cfg$options
+
   ns <- shiny::NS(id)
 
   # Decide numbering for optional sections
@@ -339,11 +343,25 @@ mod_2scenario_ui <- function(id) {
 #' 2scenario Server Functions
 #'
 #' @noRd
-mod_2scenario_server <- function(id) {
+mod_2scenario_server <- function(id, cfg) {
+  # Extract config locals
+  Dict         <- cfg$Dict
+  options      <- cfg$options
+  raw_sf       <- cfg$raw_sf
+  bndry        <- cfg$bndry
+  overlay      <- cfg$overlay
+  map_theme    <- cfg$map_theme
+  tx_2solution <- cfg$tx_2solution
+  tx_2targets  <- cfg$tx_2targets
+  tx_2cost     <- cfg$tx_2cost
+  tx_2climate  <- cfg$tx_2climate
+  tx_2ess      <- cfg$tx_2ess
+
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
     . <- NULL
+    ess_para <- NULL  # declared here; assigned via <<- inside observeEvent
 
     # Define all switches ----
     # I wonder if I can move these to a function as I can use the same
@@ -916,8 +934,8 @@ mod_2scenario_server <- function(id) {
         # Create data tables for download
         ggr_DataPlot <- shiny::reactive({
           dat <- DataTabler() %>%
-            dplyr::mutate(Class = as.factor(.data$Class)) %>%
-            dplyr::group_by(.data$Class) %>%
+            dplyr::mutate(Category = as.factor(.data$Category)) %>%
+            dplyr::group_by(.data$Category) %>%
             dplyr::group_split()
 
           design <- "AACC
@@ -991,7 +1009,7 @@ output$txt_ess <- shiny::renderText(
             tidyr::pivot_longer(cols = dplyr::everything(), names_to = "nameVariable", values_to = "Value") %>%
             dplyr::summarise(SelectedValue = sum(.data$Value, na.rm = TRUE), .by = "nameVariable") %>%
             dplyr::left_join(total_values, by = "nameVariable") %>%
-            dplyr::left_join(Dict %>% dplyr::select(nameVariable, nameCommon, justification, units),
+            dplyr::left_join(Dict %>% dplyr::select("nameVariable", "nameCommon", "justification", "units"),
                              by = "nameVariable") %>%
             dplyr::mutate(
               Name = .data$nameCommon,
@@ -1000,7 +1018,7 @@ output$txt_ess <- shiny::renderText(
               pct_selected = round((.data$SelectedValue / .data$TotalValue) * 100, 1),
               pct_unselected = 100 - .data$pct_selected
             ) %>%
-            dplyr::select(Name, Description, Value, pct_selected, pct_unselected)
+            dplyr::select("Name", "Description", "Value", "pct_selected", "pct_unselected")
 
           return(ess_values)
 
@@ -1100,7 +1118,7 @@ output$txt_ess <- shiny::renderText(
           output$reportStatus <- shiny::renderUI({
             shiny::tagList(
               shiny::icon("spinner", class = "fa-spin"),
-              shiny::span(" Generating report…")
+              shiny::span(" Generating report\u2026")
             )
           })
 

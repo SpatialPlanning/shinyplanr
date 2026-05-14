@@ -1,0 +1,63 @@
+# Run the Shiny Application
+
+Launches the shinyplanr Shiny application. When running from a
+deployment project (i.e. not from the package source), you must call
+\[load_config()\] \*\*before\*\* calling \`run_app()\` so that all
+region-specific data and settings are loaded into the package namespace.
+A typical \`app.R\` entry point looks like:
+
+“\`r shinyplanr::load_config("config/shinyplanr_config.rds")
+shinyplanr::run_app() “\`
+
+## Usage
+
+``` r
+run_app(
+  onStart = NULL,
+  options = list(),
+  enableBookmarking = NULL,
+  uiPattern = "/",
+  ...
+)
+```
+
+## Arguments
+
+- onStart:
+
+  A function that will be called before the app is actually run. This is
+  only needed for `shinyAppObj`, since in the `shinyAppDir` case, a
+  `global.R` file can be used for this purpose.
+
+- options:
+
+  Named options that should be passed to the `runApp` call (these can be
+  any of the following: "port", "launch.browser", "host", "quiet",
+  "display.mode" and "test.mode"). You can also specify `width` and
+  `height` parameters which provide a hint to the embedding environment
+  about the ideal height/width for the app.
+
+- enableBookmarking:
+
+  Can be one of `"url"`, `"server"`, or `"disable"`. The default value,
+  `NULL`, will respect the setting from any previous calls to
+  [`enableBookmarking()`](https://rdrr.io/pkg/shiny/man/enableBookmarking.html).
+  See
+  [`enableBookmarking()`](https://rdrr.io/pkg/shiny/man/enableBookmarking.html)
+  for more information on bookmarking your app.
+
+- uiPattern:
+
+  A regular expression that will be applied to each `GET` request to
+  determine whether the `ui` should be used to handle the request. Note
+  that the entire request path must match the regular expression in
+  order for the match to be considered successful.
+
+- ...:
+
+  arguments to pass to golem_opts. See \`?golem::get_golem_options\` for
+  more details.
+
+## See also
+
+\[load_config()\] for loading region configuration prior to launch.
