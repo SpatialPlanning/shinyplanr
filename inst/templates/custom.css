@@ -1,0 +1,39 @@
+/* custom.css — shinyplanr region theme override
+ *
+ * Place this file in setup/content/custom.css
+ * It will be copied to www/custom.css by setup-app.R and loaded
+ * AFTER the package default CSS, so any values you set here will
+ * override the defaults.
+ *
+ * HOW TO USE
+ * ----------
+ * 1. Edit the colour hex codes in the :root block below.
+ * 2. Re-run setup/setup-app.R to copy this file to www/custom.css.
+ * 3. Reload the app to see the changes.
+ *
+ * To find all available CSS variables (colours, fonts, spacing),
+ * see the full default stylesheet in the installed shinyplanr package:
+ *   system.file("app", "www", "custom.css", package = "shinyplanr")
+ *
+ * TIP: Only override the variables you want to change.
+ * Any variable not listed here will use the package default.
+ */
+
+:root {
+  /* ---- Primary brand colours ---- */
+  /* --primary-1 controls: navbar background, buttons, active elements, sliders */
+  --primary-1: #3B7592;
+
+  /* --primary-2 controls: footer background */
+  --primary-2: #191919;
+
+  /* --primary-3 controls: light accent (e.g. progress bar gradient start) */
+  --primary-3: #B3E1E9;
+
+  /* --primary-4 controls: hover backgrounds, active nav highlight */
+  --primary-4: #D9F0F4;
+
+  /* ---- Font family ---- */
+  /* Uncomment and edit to change the app font. Must be a Google Font or system font. */
+  /* --bs-font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif; */
+}

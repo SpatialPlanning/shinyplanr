@@ -87,18 +87,29 @@ app_ui <- function(request) {
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
 golem_add_external_resources <- function(options) {
-  add_resource_path(
-    "www",
-    app_sys("app/www")
-  )
+  # Register package's built-in www/ (CSS, JS, default logos, favicon)
+  add_resource_path("www", app_sys("app/www"))
+
+  # If running from a deployment project, register the deployment www/ at the
+  # SAME prefix. Shiny's addResourcePath() replaces the previous registration,
+  # so deployment logos (logo.png, logo2.png, etc.) will override the package
+  # defaults. All required files (uq-logo-white.png, etc.) are copied to the
+  # deployment www/ by setup-app.R.
+  if (dir.exists("www")) {
+    shiny::addResourcePath("www", normalizePath("www", mustWork = FALSE))
+  }
 
   tags$head(
     favicon(ext = "png"),
     bundle_resources(
       path = app_sys("app/www"),
       app_title = options$app_title
-    )
-    # Add here other external resources
-    # for example, you can add shinyalert::useShinyalert()
+    ),
+    # Deployer CSS override: if the deployment project contains www/custom.css,
+    # it is loaded AFTER the package CSS so that :root variable overrides win.
+    # Create setup/content/custom.css and re-run setup-app.R to use this.
+    if (file.exists("www/custom.css")) {
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+    }
   )
 }
