@@ -17,3 +17,6 @@ $run_dev.*
 ^docs$
 ^plans$
 ^inst/manual$
+^_pkgdown\.yml$
+^pkgdown$
+^vignettes/\.quarto$

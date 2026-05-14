@@ -134,7 +134,7 @@ test_that("load_config() stops with clear error when file does not exist", {
   )
 })
 
-test_that("load_config() reads a valid config and assigns objects to namespace", {
+test_that("load_config() reads a valid config and assigns objects to config env", {
   cfg <- make_valid_config()
   tmp <- tempfile(fileext = ".rds")
   saveRDS(cfg, tmp)
@@ -145,12 +145,12 @@ test_that("load_config() reads a valid config and assigns objects to namespace",
     regexp = "shinyplanr config loaded"
   )
 
-  # Check that key objects were assigned into the namespace
-  pkg_env <- asNamespace("shinyplanr")
-  expect_true(exists("options",  envir = pkg_env, inherits = FALSE))
-  expect_true(exists("Dict",     envir = pkg_env, inherits = FALSE))
-  expect_true(exists("raw_sf",   envir = pkg_env, inherits = FALSE))
-  expect_true(exists("tx",       envir = pkg_env, inherits = FALSE))
+  # Check that key objects were assigned into shinyplanr_config (not namespace)
+  cfg_env <- shinyplanr:::shinyplanr_config
+  expect_true(exists("options",  envir = cfg_env, inherits = FALSE))
+  expect_true(exists("Dict",     envir = cfg_env, inherits = FALSE))
+  expect_true(exists("raw_sf",   envir = cfg_env, inherits = FALSE))
+  expect_true(exists("tx",       envir = cfg_env, inherits = FALSE))
 })
 
 test_that("load_config() invisibly returns the config list", {

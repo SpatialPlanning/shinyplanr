@@ -13,7 +13,7 @@ app_sys <- function(...) {
 }
 
 
-#' Retrieve the full shinyplanr config from the package namespace
+#' Retrieve the full shinyplanr config from the package config environment
 #'
 #' Called once at the top of `app_ui()` and `app_server()` to get the config
 #' list that was populated by `load_config()`. All module UI and server
@@ -36,13 +36,12 @@ app_sys <- function(...) {
 #'   schema_version, etc.) as populated by `load_config()`.
 #'
 #' @seealso [load_config()] which must be called before `run_app()` to
-#'   populate the namespace that this function reads from.
+#'   populate the config environment that this function reads from.
 #'
 #' @noRd
 get_pkg_config <- function() {
-  pkg_env  <- asNamespace("shinyplanr")
   required <- .shinyplanr_required_keys
-  mget(required, envir = pkg_env, inherits = FALSE)
+  mget(required, envir = shinyplanr_config, inherits = FALSE)
 }
 
 

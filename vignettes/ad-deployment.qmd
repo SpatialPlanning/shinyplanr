@@ -362,6 +362,6 @@ Ensure `setup/setup-app.R` ran successfully (logo copy step). Check that logo fi
 
 This almost always means a package version mismatch between local and Posit Connect. Run `renv::snapshot()` locally and re-deploy.
 
-### "object 'Dict' not found" or similar
+### "value for 'Dict' not found" or similar
 
 `load_config()` was not called, or failed silently. Check that `app.R` in the project root calls `shinyplanr::load_config("config/shinyplanr_config.rds")` before `shinyplanr::run_app()`.

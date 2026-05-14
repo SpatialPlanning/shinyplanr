@@ -41,20 +41,13 @@ load_config <- function(config_path = "config/shinyplanr_config.rds") {
   # Validate schema version and required keys — stops with clear error if wrong
   .validate_config(config, config_path)
 
-  # Assign all config objects into the shinyplanr package namespace.
-  # This makes options, Dict, raw_sf, bndry, overlay, tx_* etc. available
-  # to all module code without any changes to the existing modules.
-  pkg_env <- asNamespace("shinyplanr")
+  # Store all config objects in the dedicated shinyplanr_config environment.
+  # This environment's *binding* in the namespace is locked (you cannot
+  # replace the env object itself), but the environment it points to is NOT
+  # locked — keys can be freely added or overwritten without unlockBinding().
+  # This avoids the R CMD check NOTE for "possibly unsafe calls".
   for (nm in names(config)) {
-    # If the binding exists and is locked (e.g. from sysdata.rda stubs),
-    # unlock it before overwriting so load_config() works in both testing
-    # and production contexts.
-    if (environmentIsLocked(pkg_env) &&
-        exists(nm, envir = pkg_env, inherits = FALSE) &&
-        bindingIsLocked(nm, pkg_env)) {
-      unlockBinding(nm, pkg_env)
-    }
-    assign(nm, config[[nm]], envir = pkg_env)
+    shinyplanr_config[[nm]] <- config[[nm]]
   }
 
   message(

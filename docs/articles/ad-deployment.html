@@ -550,7 +550,7 @@ Re-run setup/setup-app.R to regenerate the config with the current schema.</code
 </section><section class="level3"><h3 id="local-app-works-but-deployed-app-fails">Local app works but deployed app fails<a class="anchor" aria-label="anchor" href="#local-app-works-but-deployed-app-fails"></a>
 </h3>
 <p>This almost always means a package version mismatch between local and Posit Connect. Run <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code> locally and re-deploy.</p>
-</section><section class="level3"><h3 id="object-dict-not-found-or-similar">“object ‘Dict’ not found” or similar<a class="anchor" aria-label="anchor" href="#object-dict-not-found-or-similar"></a>
+</section><section class="level3"><h3 id="value-for-dict-not-found-or-similar">“value for ‘Dict’ not found” or similar<a class="anchor" aria-label="anchor" href="#value-for-dict-not-found-or-similar"></a>
 </h3>
 <p><code><a href="../reference/load_config.html">load_config()</a></code> was not called, or failed silently. Check that <code>app.R</code> in the project root calls <code>shinyplanr::load_config("config/shinyplanr_config.rds")</code> before <code><a href="../reference/run_app.html">shinyplanr::run_app()</a></code>.</p>
 </section></section><script id="quarto-html-after-body" type="application/javascript">

@@ -46,7 +46,6 @@ Imports:
     patchwork,
     prioritizr,
     purrr,
-    quarto,
     rcbc,
     reactable,
     readr,

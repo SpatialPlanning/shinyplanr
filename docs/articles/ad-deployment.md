@@ -406,7 +406,7 @@ Posit Connect. Run
 [`renv::snapshot()`](https://rstudio.github.io/renv/reference/snapshot.html)
 locally and re-deploy.
 
-### “object ‘Dict’ not found” or similar
+### “value for ‘Dict’ not found” or similar
 
 [`load_config()`](https://spatialplanning.github.io/shinyplanr/reference/load_config.md)
 was not called, or failed silently. Check that `app.R` in the project

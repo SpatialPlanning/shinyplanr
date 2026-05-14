@@ -22,29 +22,24 @@ test_that("app_ui() always includes the Scenario tab", {
   expect_match(html, "Scenario", fixed = TRUE)
 })
 
-# Helper: safely set a locked namespace binding and restore it on exit.
-.ns_set <- function(nm, value, envir, original) {
-  if (bindingIsLocked(nm, envir)) unlockBinding(nm, envir)
-  assign(nm, value, envir = envir)
+# Helper: temporarily override shinyplanr_config$options and restore on exit.
+# No unlockBinding() needed — shinyplanr_config is an unlocked environment.
+.cfg_set_options <- function(overrides) {
+  cfg_env <- shinyplanr:::shinyplanr_config
+  original <- cfg_env$options
+  cfg_env$options <- modifyList(original, overrides)
+  withr::defer(cfg_env$options <- original, envir = parent.frame())
 }
 
 test_that("app_ui() includes Welcome tab when options$mod_1welcome is TRUE", {
-  pkg_env <- asNamespace("shinyplanr")
-  original_options <- get("options", envir = pkg_env, inherits = FALSE)
-  .ns_set("options", modifyList(original_options, list(mod_1welcome = TRUE)), pkg_env)
-  on.exit(.ns_set("options", original_options, pkg_env), add = TRUE)
-
+  .cfg_set_options(list(mod_1welcome = TRUE))
   ui   <- app_ui()
   html <- as.character(ui)
   expect_match(html, "Welcome", fixed = TRUE)
 })
 
 test_that("app_ui() omits Welcome tab when options$mod_1welcome is FALSE", {
-  pkg_env <- asNamespace("shinyplanr")
-  original_options <- get("options", envir = pkg_env, inherits = FALSE)
-  .ns_set("options", modifyList(original_options, list(mod_1welcome = FALSE)), pkg_env)
-  on.exit(.ns_set("options", original_options, pkg_env), add = TRUE)
-
+  .cfg_set_options(list(mod_1welcome = FALSE))
   ui   <- app_ui()
   html <- as.character(ui)
   # Welcome tab panel should not be present when disabled
@@ -53,22 +48,14 @@ test_that("app_ui() omits Welcome tab when options$mod_1welcome is FALSE", {
 })
 
 test_that("app_ui() includes Comparison tab when options$mod_3compare is TRUE", {
-  pkg_env <- asNamespace("shinyplanr")
-  original_options <- get("options", envir = pkg_env, inherits = FALSE)
-  .ns_set("options", modifyList(original_options, list(mod_3compare = TRUE)), pkg_env)
-  on.exit(.ns_set("options", original_options, pkg_env), add = TRUE)
-
+  .cfg_set_options(list(mod_3compare = TRUE))
   ui   <- app_ui()
   html <- as.character(ui)
   expect_match(html, "Comparison", fixed = TRUE)
 })
 
 test_that("app_ui() includes Help tab when options$mod_6help is TRUE", {
-  pkg_env <- asNamespace("shinyplanr")
-  original_options <- get("options", envir = pkg_env, inherits = FALSE)
-  .ns_set("options", modifyList(original_options, list(mod_6help = TRUE)), pkg_env)
-  on.exit(.ns_set("options", original_options, pkg_env), add = TRUE)
-
+  .cfg_set_options(list(mod_6help = TRUE))
   ui   <- app_ui()
   html <- as.character(ui)
   expect_match(html, "Help", fixed = TRUE)
