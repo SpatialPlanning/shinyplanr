@@ -63,7 +63,7 @@ modifying the shinyplanr package source code.</p>
 <span>  include_climate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  include_cost <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  include_mpas <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">".."</span>, <span class="va">country</span><span class="op">)</span>,</span>
+<span>  output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">".."</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"shinyplanr_"</span>, <span class="va">country</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  use_renv <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  create_rproj <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -85,7 +85,7 @@ Use <a href="https://projectionwizard.org" class="external-link">https://project
 
 
 <dt id="arg-oceandatr">oceandatr<a class="anchor" aria-label="anchor" href="#arg-oceandatr"></a></dt>
-<dd><p>Logical. If TRUE (default), the setup-data.R template will
+<dd><p>Logical. If TRUE (default), the 2_setup_data.R template will
 include code to automatically download data from oceandatr (bathymetry,
 geomorphology, seamounts, knolls, coral habitat, environmental regions).
 If FALSE, creates a minimal template for manual data entry.</p></dd>

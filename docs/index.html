@@ -66,18 +66,55 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header">
-<img src="logo.png" class="logo" alt=""><h1 id="shinyplanr">shinyplanr<a class="anchor" aria-label="anchor" href="#shinyplanr"></a>
+<img src="logo.png" class="logo" alt=""><h1 id="shinyplanr-">shinyplanr <a class="anchor" aria-label="anchor" href="#shinyplanr-"></a>
 </h1>
 </div>
 <!-- badges: start -->
 
-<p>The goal of shinyplanr is to …</p>
+<p><code>shinyplanr</code> is an R package that provides a ready-to-deploy web application for spatial conservation planning. It gives ecologists, planners, and stakeholders an accessible browser-based interface for running spatial prioritisation analyses — no R experience required.</p>
+<div class="section level2">
+<h2 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
+</h2>
+<p>The app is built on top of <a href="https://prioritizr.net" class="external-link">prioritizr</a>, which uses mathematical optimisation (integer linear programming) to identify the most efficient set of areas to protect or manage. <code>shinyplanr</code> wraps this powerful engine in an interactive point-and-click interface that can be deployed for any region with appropriate spatial data.</p>
+<p>Key capabilities include:</p>
+<ul>
+<li>
+<strong>Set biodiversity targets</strong> — specify how much of each habitat, species distribution, or other feature should be represented in the solution</li>
+<li>
+<strong>Choose a cost layer</strong> — reflect real-world trade-offs such as equal area, distance from shore, or fishing effort</li>
+<li>
+<strong>Apply constraints</strong> — lock in existing protected areas or lock out shipping lanes, aquaculture zones, and other incompatible uses</li>
+<li>
+<strong>Run analyses</strong> — find the optimal spatial plan using fast, guaranteed-optimal ILP solvers</li>
+<li>
+<strong>Compare scenarios</strong> — run two configurations side-by-side to explore trade-offs between different management choices</li>
+<li>
+<strong>Climate-smart planning</strong> — optionally prioritise areas projected to be climate refugia under future change</li>
+<li>
+<strong>Ecosystem services</strong> — evaluate how much of services such as carbon storage and coastal protection a solution captures</li>
+<li>
+<strong>Check coverage</strong> — upload an existing spatial plan (e.g. a proposed protected area network) and see how well it meets feature targets</li>
+<li>
+<strong>Download results</strong> — export maps, tables, and self-contained HTML reports for sharing with stakeholders</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="who-it-is-for">Who it is for<a class="anchor" aria-label="anchor" href="#who-it-is-for"></a>
+</h2>
+<p><code>shinyplanr</code> is designed to be deployed by an R developer or data administrator for a specific region, and then used by non-technical stakeholders — conservation managers, government agencies, researchers, and community groups — through a standard web browser.</p>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of shinyplanr like so:</p>
+<p>You can install the development version from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"SpatialPlanning/shinyplanr"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+</h2>
+<p>See the <a href="articles/aa-introduction.html">Introduction</a> for the conceptual background on spatial prioritisation, and <a href="articles/ab-using-shinyplanr.html">Using shinyplanr</a> for a full guide to the application interface. To set up a new deployment for your region, see <a href="articles/ac-setting-up.html">Setting Up</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="code-of-conduct">Code of Conduct<a class="anchor" aria-label="anchor" href="#code-of-conduct"></a>
@@ -129,8 +166,8 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
-<li><a href="https://github.com/MathMarEcol/shinyplanr/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/MathMarEcol/shinyplanr/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://github.com/MathMarEcol/shinyplanr/actions/workflows/test-coverage.yaml" class="external-link"><img src="https://github.com/MathMarEcol/shinyplanr/actions/workflows/test-coverage.yaml/badge.svg" alt="test-coverage"></a></li>
+<li><a href="https://github.com/SpatialPlanning/shinyplanr/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/SpatialPlanning/shinyplanr/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/SpatialPlanning/shinyplanr/actions/workflows/test-coverage.yaml" class="external-link"><img src="https://github.com/SpatialPlanning/shinyplanr/actions/workflows/test-coverage.yaml/badge.svg" alt="test-coverage"></a></li>
 </ul>
 </div>
 
