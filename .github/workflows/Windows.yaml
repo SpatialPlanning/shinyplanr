@@ -58,9 +58,6 @@ jobs:
           # Add the bin directory to the GitHub Actions PATH for subsequent steps
           echo "C:\cbc\$name\bin" >> $env:GITHUB_PATH
 
-      - name: Verify Installation
-        run: cbc --version
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 7
