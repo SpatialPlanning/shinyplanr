@@ -2,38 +2,839 @@
  *
  * Place this file in setup/content/custom.css
  * It will be copied to www/custom.css by setup-app.R and loaded
- * AFTER the package default CSS, so any values you set here will
- * override the defaults.
+ * in place of the package default CSS.
  *
- * HOW TO USE
- * ----------
+ * HOW TO CUSTOMISE
+ * ----------------
  * 1. Edit the colour hex codes in the :root block below.
  * 2. Re-run setup/setup-app.R to copy this file to www/custom.css.
  * 3. Reload the app to see the changes.
  *
- * To find all available CSS variables (colours, fonts, spacing),
- * see the full default stylesheet in the installed shinyplanr package:
- *   system.file("app", "www", "custom.css", package = "shinyplanr")
- *
- * TIP: Only override the variables you want to change.
- * Any variable not listed here will use the package default.
+ * NOTE: This file IS the full stylesheet for your deployment.
+ * It replaces the package default CSS, so all rules must be present here.
+ * Only the :root colour variables (marked below) need to be changed
+ * for a new deployment.
  */
 
+/* Import Montserrat font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* CSS Custom Properties (Variables) for theme consistency */
 :root {
-  /* ---- Primary brand colours ---- */
-  /* --primary-1 controls: navbar background, buttons, active elements, sliders */
+  /* ==========================================================
+   * CUSTOMISE THESE COLOURS FOR YOUR DEPLOYMENT
+   * ========================================================== */
+
+  /* --primary-1: navbar background, buttons, active elements, sliders */
   --primary-1: #3B7592;
 
-  /* --primary-2 controls: footer background */
+  /* --primary-2: footer background */
   --primary-2: #191919;
 
-  /* --primary-3 controls: light accent (e.g. progress bar gradient start) */
+  /* --primary-3: light accent (e.g. progress bar gradient start) */
   --primary-3: #B3E1E9;
 
-  /* --primary-4 controls: hover backgrounds, active nav highlight */
+  /* --primary-4: hover backgrounds, active nav highlight */
   --primary-4: #D9F0F4;
 
-  /* ---- Font family ---- */
-  /* Uncomment and edit to change the app font. Must be a Google Font or system font. */
-  /* --bs-font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif; */
+  /* --bs-font-family: app font (must be a Google Font or system font) */
+  --bs-font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* ==========================================================
+   * DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING
+   * ========================================================== */
+
+  /* Secondary Colors */
+  --secondary-1: #3899EC;
+
+  /* State Colors */
+  --state-complete: #88C057;
+  --state-warning: #E9C46A;
+  --state-error: #E76F51;
+  --state-info: #3A86FF;
+
+  /* Text Colors */
+  --text-1: #2A2929;
+  --text-2: #090C02;
+  --text-3: #FFFFFF;
+
+  /* Background Colors */
+  --background: #F7F7F7;
+
+  /* Grey Scale */
+  --grey-100: #FAFAFA;
+  --grey-300: #F0F0F0;
+  --grey-500: #BFBFBF;
+  --grey-700: #595959;
+
+  /* Bootstrap compatibility - map to new primary */
+  --bs-primary: var(--primary-1);
+
+  /* Typography Scale */
+  --bs-h1-font-size: 2rem;
+  --bs-h2-font-size: 1.8rem;
+  --bs-h3-font-size: 1.6rem;
+  --bs-h4-font-size: 1.4rem;
+  --bs-h5-font-size: 1.2rem;
+  --bs-h6-font-size: 1rem;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing Variables */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.25rem;
+  --spacing-xl: 1.5rem;
+  --spacing-xxl: 2rem;
+
+  /* Pixel spacing for specific cases */
+  --spacing-2px: 2px;
+  --spacing-5px: 5px;
+  --spacing-8px: 8px;
+  --spacing-50px: 50px;
+  --spacing-120px: 120px;
+
+  /* Heading Font Weights */
+  --bs-h1-font-weight: var(--font-weight-bold);
+  --bs-h2-font-weight: var(--font-weight-semibold);
+  --bs-h3-font-weight: var(--font-weight-semibold);
+  --bs-h4-font-weight: var(--font-weight-medium);
+  --bs-h5-font-weight: var(--font-weight-medium);
+  --bs-h6-font-weight: var(--font-weight-normal);
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Layout */
+  --bs-navbar-padding-y: 0.5rem;
+  --bs-border-radius: 0.75rem; /* More rounded corners */
+
+  /* Navbar styling variables */
+  --bs-navbar-font-size: var(--bs-h6-font-size);
+  --bs-navbar-title-font-size: var(--bs-h4-font-size);
+  --bs-navbar-font-weight: var(--font-weight-medium);
+  --bs-navbar-color: var(--text-3);
+  --bs-navbar-hover-color: var(--primary-4);
+  --bs-navbar-active-bg: var(--primary-4);
+  --bs-navbar-toggler-border: rgba(255, 255, 255, 0.3);
+}
+
+/* Apply font globally with proper typography */
+body {
+  font-family: var(--bs-font-family) !important;
+  font-weight: var(--font-weight-normal) !important;
+  line-height: var(--line-height-normal) !important;
+  color: var(--text-1) !important;
+  background-color: var(--background) !important;
+  padding-bottom: 120px !important; /* Space for fixed footer */
+  border-top: none !important;
+}
+
+/* Paragraph text styling */
+p {
+  color: var(--text-1) !important;
+}
+
+/* Apply font to all headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--bs-font-family) !important;
+}
+
+/* Apply font to navbar */
+.navbar {
+  font-family: var(--bs-font-family) !important;
+}
+
+/* Navbar font styling and alignment - consolidated */
+.navbar .nav-link,
+.navbar .navbar-brand,
+.navbar .navbar-nav > li > a,
+.navbar-default .navbar-nav > li > a {
+  font-size: var(--bs-navbar-font-size) !important;
+  font-weight: var(--bs-navbar-font-weight) !important;
+  border-radius: var(--bs-border-radius) !important;
+}
+
+/* Navbar vertical centering */
+.nav.navbar-nav {
+  align-items: center !important;
+  display: flex !important;
+}
+
+.nav.navbar-nav .nav-item {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.nav.navbar-nav .nav-link {
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+}
+
+.navbar-brand {
+  display: flex !important;
+  align-items: center !important;
+  font-size: var(--bs-navbar-title-font-size) !important;
+  padding-top: var(--spacing-xs);
+  padding-bottom: var(--spacing-xs);
+  margin-right: var(--spacing-md);
+  line-height: inherit;
+}
+
+/* Fix specific Bootstrap navbar alignment */
+.navbar > .container-fluid {
+  align-items: center !important;
+}
+
+/* Navbar title specific styling */
+.navbar-header .navbar-brand,
+.navbar .navbar-brand {
+  font-size: var(--bs-navbar-title-font-size) !important;
+  font-weight: var(--bs-navbar-font-weight) !important;
+}
+
+/* Target navbar brand text specifically */
+.navbar-header .navbar-brand *,
+.navbar .navbar-brand *,
+.navbar-brand * {
+  font-size: var(--bs-navbar-title-font-size) !important;
+}
+
+/* Apply font to buttons */
+.btn {
+  font-family: var(--bs-font-family) !important;
+}
+
+/* Heading font sizes and weights */
+h1 {
+  font-size: var(--bs-h1-font-size) !important;
+  font-weight: var(--bs-h1-font-weight) !important;
+  line-height: var(--line-height-tight) !important;
+}
+
+h2 {
+  font-size: var(--bs-h2-font-size) !important;
+  font-weight: var(--bs-h2-font-weight) !important;
+  line-height: var(--line-height-tight) !important;
+}
+
+h3 {
+  font-size: var(--bs-h3-font-size) !important;
+  font-weight: var(--bs-h3-font-weight) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+h4 {
+  font-size: var(--bs-h4-font-size) !important;
+  font-weight: var(--bs-h4-font-weight) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+h5 {
+  font-size: var(--bs-h5-font-size) !important;
+  font-weight: var(--bs-h5-font-weight) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+h6 {
+  font-size: var(--bs-h6-font-size) !important;
+  font-weight: var(--bs-h6-font-weight) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+/* Navbar background colour */
+.navbar,
+.navbar-default,
+.navbar-inverse,
+.navbar-light,
+.navbar-dark,
+#navbar {
+  background: var(--primary-1) !important;
+  background-color: var(--primary-1) !important;
+  padding-top: var(--spacing-sm) !important;
+  padding-bottom: var(--spacing-sm) !important;
+  border: none !important;
+  border-color: transparent !important;
+}
+
+/* Navbar text colour — white for non-active/non-hover elements */
+.navbar *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar-default *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar-inverse *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar-light *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar-dark *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+#navbar *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
+.navbar a:not(.nav-link.active):not(.active):not(:hover),
+.navbar-default a:not(.nav-link.active):not(.active):not(:hover),
+.navbar-inverse a:not(.nav-link.active):not(.active):not(:hover),
+.navbar-light a:not(.nav-link.active):not(.active):not(:hover),
+.navbar-dark a:not(.nav-link.active):not(.active):not(:hover),
+#navbar a:not(.nav-link.active):not(.active):not(:hover),
+.navbar span:not(.active),
+.navbar-default span:not(.active),
+#navbar span:not(.active),
+.navbar li:not(.active),
+.navbar-default li:not(.active),
+#navbar li:not(.active),
+.navbar .nav-link:not(.active):not(:hover),
+.navbar .navbar-nav:not(.active),
+.navbar .navbar-brand,
+.navbar-brand,
+.navbar-text {
+  color: var(--text-3) !important;
+}
+
+/* Base styling for all navbar links */
+.navbar .nav-tabs .nav-link,
+.navbar-nav .nav-link,
+ul.nav.navbar-nav li a,
+.navbar .navbar-nav > li > a,
+.navbar-default .navbar-nav > li > a {
+  border: none !important;
+  padding: var(--spacing-sm) var(--spacing-md) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: var(--bs-border-radius) !important;
+  transition: background-color 0.2s ease !important;
+}
+
+/* Navbar link colour (explicit) */
+.navbar .nav-tabs .nav-link,
+.navbar-nav .nav-link,
+ul.nav.navbar-nav li a {
+  color: var(--bs-navbar-color) !important;
+}
+
+/* Navbar hover state */
+.navbar .nav-tabs .nav-link:hover,
+.navbar-nav .nav-link:hover,
+ul.nav.navbar-nav li a:hover,
+.navbar .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > li > a:hover {
+  color: var(--primary-1) !important;
+  background-color: var(--primary-4) !important;
+  border-radius: var(--bs-border-radius) !important;
+}
+
+/* Navbar active/selected state */
+.navbar .nav-tabs .nav-link.active,
+.navbar-nav .nav-link.active,
+ul.nav.navbar-nav li.active a,
+.navbar .navbar-nav > li.active > a,
+.navbar-default .navbar-nav > li.active > a {
+  background-color: var(--primary-4) !important;
+  color: var(--primary-1) !important;
+  border-radius: var(--bs-border-radius) !important;
+  outline: 1px solid var(--primary-4) !important;
+  outline-offset: 2px !important;
+  border: none !important;
+}
+
+/* Ensure active navbar elements override general text colour */
+.navbar .nav-tabs .nav-link.active,
+.navbar-nav .nav-link.active,
+ul.nav.navbar-nav li.active a,
+.navbar .navbar-nav > li.active > a,
+.navbar-default .navbar-nav > li.active > a {
+  color: var(--primary-1) !important;
+}
+
+/* Active state using navbarPage active-bg variable */
+.navbar .nav-tabs .nav-link.active,
+.navbar-nav .nav-link.active,
+ul.nav.navbar-nav li.active a {
+  color: var(--bs-navbar-color) !important;
+  background-color: var(--bs-navbar-active-bg) !important;
+}
+
+/* Hide empty nav-link elements that Shiny generates */
+.navbar-nav .nav-link:empty {
+  display: none !important;
+}
+
+/* Hide nav-links that start with #tab- and have no visible content */
+.navbar-nav .nav-link[href^="#tab-"]:empty {
+  display: none !important;
+}
+
+/* Ensure external links don't get hover background */
+.navbar-nav a[href*="http"]:hover {
+  background-color: transparent !important;
+}
+
+/* Navbar toggle button for mobile */
+.navbar-toggler {
+  border-color: var(--bs-navbar-toggler-border);
+}
+
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Logo styling in navbar */
+.navbar-logo {
+  padding-right: 10px;
+  margin-top: -10px;
+  margin-bottom: -10px;
+}
+
+/* Bootstrap primary colour override */
+.btn-primary {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: var(--text-3);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-2);
+  border-color: var(--primary-2);
+  color: var(--text-3);
+}
+
+.btn-primary:focus, .btn-primary.focus {
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 50%, transparent);
+}
+
+/* Outline primary buttons */
+.btn-outline-primary {
+  color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: var(--text-3);
+}
+
+.btn-outline-primary:focus {
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 50%, transparent);
+}
+
+/* Secondary buttons */
+.btn-secondary {
+  background-color: var(--grey-700);
+  border-color: var(--grey-700);
+  color: var(--text-3);
+}
+
+.btn-secondary:hover {
+  background-color: var(--grey-500);
+  border-color: var(--grey-500);
+  color: var(--text-3);
+}
+
+/* Rounded corners */
+.rounded {
+  border-radius: var(--bs-border-radius) !important;
+}
+
+.btn {
+  border-radius: var(--bs-border-radius);
+}
+
+.form-control {
+  border-radius: var(--bs-border-radius);
+}
+
+.card {
+  border-radius: var(--bs-border-radius);
+}
+
+/* Link colours */
+a {
+  color: var(--bs-primary);
+}
+
+a:hover {
+  color: var(--secondary-1);
+}
+
+/* Form controls focus state */
+.form-control:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 25%, transparent);
+}
+
+/* Sliders (range inputs) */
+input[type="range"]::-webkit-slider-thumb {
+  background: var(--bs-primary);
+}
+
+input[type="range"]::-moz-range-thumb {
+  background: var(--bs-primary);
+  border: none;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 25%, transparent);
+}
+
+/* Shiny sliders */
+.irs-bar {
+  background: var(--bs-primary) !important;
+}
+
+.irs-handle {
+  background: var(--bs-primary) !important;
+  border-color: var(--bs-primary) !important;
+}
+
+.irs-from, .irs-to, .irs-single {
+  background: var(--bs-primary) !important;
+}
+
+/* Nav tabs */
+.nav-tabs .nav-link.active {
+  color: var(--bs-primary);
+  border-color: var(--bs-primary) var(--bs-primary) var(--text-3);
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: color-mix(in srgb, var(--bs-primary) 30%, transparent);
+  color: var(--bs-primary);
+}
+
+.nav-tabs .nav-link {
+  color: var(--grey-700);
+}
+
+/* Tab panel nav-links (not in navbar) - unselected */
+.nav-link:not(.navbar .nav-link):not(.navbar-nav .nav-link):not(.active) {
+  color: var(--primary-1) !important;
+}
+
+/* Tab panel nav-links (not in navbar) - hover */
+.nav-link:not(.navbar .nav-link):not(.navbar-nav .nav-link):hover {
+  color: var(--primary-1) !important;
+}
+
+/* Tab panels (pills) */
+.nav-pills .nav-link.active {
+  background-color: var(--bs-primary);
+}
+
+.nav-pills .nav-link:hover {
+  background-color: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+}
+
+/* Tabset panels (Shiny specific) */
+.tabbable .nav-tabs .active a,
+.tabbable .nav-tabs li.active a {
+  color: var(--bs-primary) !important;
+  border-bottom-color: var(--bs-primary) !important;
+}
+
+.tabbable .nav-tabs a:hover {
+  color: var(--bs-primary) !important;
+}
+
+/* Additional tabPanel selectors for Shiny */
+.nav.nav-tabs li a,
+.nav-tabs > li > a {
+  color: var(--grey-700);
+}
+
+.nav.nav-tabs li.active a,
+.nav-tabs > li.active > a {
+  color: var(--bs-primary) !important;
+  border-bottom-color: var(--bs-primary) !important;
+}
+
+.nav.nav-tabs li a:hover,
+.nav-tabs > li > a:hover {
+  color: var(--bs-primary) !important;
+}
+
+/* Progress bars */
+.progress-bar {
+  background-color: var(--bs-primary);
+}
+
+/* Badges */
+.badge.bg-primary {
+  background-color: var(--bs-primary) !important;
+}
+
+.badge-primary {
+  background-color: var(--bs-primary) !important;
+}
+
+/* Alert primary */
+.alert-primary {
+  color: color-mix(in srgb, var(--bs-primary) 80%, black);
+  background-color: color-mix(in srgb, var(--bs-primary) 20%, white);
+  border-color: color-mix(in srgb, var(--bs-primary) 30%, white);
+}
+
+/* Checkboxes and radio buttons */
+.form-check-input:checked {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+.form-check-input:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 25%, transparent);
+}
+
+/* Select dropdowns */
+.form-select:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 25%, transparent);
+}
+
+/* Pagination */
+.page-link {
+  color: var(--bs-primary);
+}
+
+.page-item.active .page-link {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+.page-link:hover {
+  color: color-mix(in srgb, var(--bs-primary) 85%, black);
+}
+
+/* Accordion */
+.accordion-button:not(.collapsed) {
+  color: var(--bs-primary);
+  background-color: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+}
+
+.accordion-button:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 25%, transparent);
+}
+
+/* ==========================================================================
+   Footer Styles
+   ========================================================================== */
+
+.home-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: var(--spacing-8px) var(--spacing-120px);
+  border-top: var(--spacing-2px) solid var(--primary-1);
+  background: var(--primary-2);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.footer-content {
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.funding-section {
+  padding: var(--spacing-5px) 0;
+}
+
+.contact-section {
+  padding: var(--spacing-5px) 0;
+  text-align: center;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.contact-section p {
+  color: var(--primary-4) !important;
+  font-size: var(--bs-h6-font-size);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-xs);
+  font-weight: var(--font-weight-normal);
+}
+
+.contact-link {
+  color: var(--primary-3);
+  text-decoration: none;
+  font-weight: var(--font-weight-normal);
+  transition: color 0.3s ease;
+}
+
+.contact-link:hover {
+  color: var(--primary-4);
+  text-decoration: underline;
+}
+
+.funding-title {
+  color: var(--primary-4);
+  font-family: var(--bs-font-family);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--bs-h5-font-size);
+  margin-bottom: var(--spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.funding-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: var(--spacing-5px) 0;
+}
+
+.funding-logos a {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.funding-logos img {
+  height: var(--spacing-50px) !important;
+  width: auto;
+  max-height: 100px;
+  object-fit: contain;
+  display: block;
+}
+
+/* ==========================================================================
+   Shiny output styling — transparent backgrounds
+   ========================================================================== */
+
+.shiny-plot-output,
+.shiny-bound-output.shiny-plot-output,
+.shiny-plot-output.html-fill-item,
+div.shiny-plot-output,
+#shiny-tab-welcome .shiny-plot-output,
+.tab-content .shiny-plot-output,
+.tab-pane .shiny-plot-output {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+div[id*="plot"],
+div[class*="plot"] {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.ggplot,
+.plotly,
+.htmlwidget {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.shiny-plot-output img,
+.shiny-plot-output canvas,
+.shiny-plot-output svg {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.shiny-table-output,
+.shiny-bound-output.shiny-table-output,
+div.shiny-table-output {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.shiny-table-output table,
+.shiny-table-output tbody,
+.shiny-table-output thead,
+.shiny-table-output tr,
+.shiny-table-output td,
+.shiny-table-output th {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* ==========================================================================
+   Ecosystem Services Progress Bar (Reactable)
+   ========================================================================== */
+
+.ess-progress-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: var(--bs-font-family);
+}
+
+.ess-progress-bar {
+  display: flex;
+  height: 24px;
+  width: 100%;
+  border-radius: var(--spacing-xs);
+  overflow: hidden;
+  border: 1px solid var(--grey-500);
+}
+
+.ess-progress-selected {
+  /* Gradient scales to full 100% width so same % always shows same color */
+  /* --pct is passed via inline style from R */
+  background: linear-gradient(90deg, var(--primary-3) 0%, var(--primary-1) 100%);
+  background-size: calc(10000% / var(--pct, 100)) 100%;
+  background-position: left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-weight: var(--font-weight-medium);
+  font-size: 0.6875rem; /* 11px */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.ess-progress-unselected {
+  background: linear-gradient(90deg, var(--grey-100) 0%, var(--grey-300) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--grey-700);
+  font-size: 0.6875rem; /* 11px */
+}
+
+.ess-progress-legend {
+  font-size: 0.625rem; /* 10px */
+  color: var(--grey-700);
+  margin-top: var(--spacing-xs);
+  text-align: center;
+}
+
+.ess-legend-selected {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: var(--primary-1);
+  border: 1px solid var(--grey-500);
+  border-radius: var(--spacing-2px);
+  vertical-align: middle;
+  margin-right: var(--spacing-2px);
+}
+
+.ess-legend-unselected {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: var(--grey-300);
+  border: 1px solid var(--grey-500);
+  border-radius: var(--spacing-2px);
+  vertical-align: middle;
+  margin-right: var(--spacing-2px);
+  margin-left: var(--spacing-8px);
 }

@@ -43,10 +43,11 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   out_sf <- raw_sf %>%
     dplyr::select(
       tidyselect::all_of(c(targets$feature,
-                           input[[paste0("costid", compare_id)]])))
+                           input[[paste0("costid", compare_id)]],
+                           "geometry")))
 
   # Create options for climate-smart ----
-  if (clim_input == "NA") { # Not Climate-smart
+  if (is.null(clim_input) || is.na(clim_input) || clim_input == "NA") { # Not Climate-smart
     p_dat <- out_sf # Create the problem data. Nothing more needed if not climate-smart
 
   } else { # Climate-smart
