@@ -41,9 +41,25 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - name: Install CBC (Windows)
+      - name: Install CBC Solver
         shell: pwsh
-        run: choco install cbc -y
+        run: |
+          # Update $version here to upgrade CBC
+          $version = "2.10.13"
+          $arch    = "x86_64-w64-mingw64"
+          $name    = "Cbc-releases.$version-$arch"
+
+          # Download release zip
+          Invoke-WebRequest -Uri "https://github.com/coin-or/Cbc/releases/download/releases%2F$version/$name.zip" -OutFile "cbc.zip"
+
+          # Extract the archive
+          Expand-Archive -Path "cbc.zip" -DestinationPath "C:\cbc"
+
+          # Add the bin directory to the GitHub Actions PATH for subsequent steps
+          echo "C:\cbc\$name\bin" >> $env:GITHUB_PATH
+
+      - name: Verify Installation
+        run: cbc --version
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
