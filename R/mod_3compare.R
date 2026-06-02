@@ -126,10 +126,12 @@ mod_3compare_ui <- function(id, cfg) {
           create_fancy_dropdown(id = id,  id_in = "climateid1", Dict = Dict %>%
                                   dplyr::filter(.data$type == "Climate") %>%
                                   dplyr::add_row(nameCommon = "Don't consider",
+                                                 nameVariable = "NA",
                                                  category = "Climate", .before = 1)),
           create_fancy_dropdown(id = id,  id_in = "climateid2", Dict = Dict %>%
                                   dplyr::filter(.data$type == "Climate") %>%
                                   dplyr::add_row(nameCommon = "Don't consider",
+                                                 nameVariable = "NA",
                                                  category = "Climate", .before = 1)),
         )
       )),
@@ -488,12 +490,24 @@ mod_3compare_server <- function(id, cfg) {
 
     # Define Problems
     p1Data <- shiny::reactive({
-      p1 <- fdefine_problem(targetData1(), raw_sf, options, input, clim_input = input$climateid1, compare_id = "1")
+      # Validate climate input - default to "NA" if NULL or empty
+      clim_val1 <- input$climateid1
+      if (is.null(clim_val1) || length(clim_val1) == 0 || clim_val1 == "") {
+        clim_val1 <- "NA"
+      }
+      
+      p1 <- fdefine_problem(targetData1(), raw_sf, options, input, clim_input = clim_val1, compare_id = "1")
       return(p1)
     })
 
     p2Data <- shiny::reactive({
-      p2 <- fdefine_problem(targetData2(), raw_sf, options, input, clim_input = input$climateid2, compare_id = "2")
+      # Validate climate input - default to "NA" if NULL or empty
+      clim_val2 <- input$climateid2
+      if (is.null(clim_val2) || length(clim_val2) == 0 || clim_val2 == "") {
+        clim_val2 <- "NA"
+      }
+      
+      p2 <- fdefine_problem(targetData2(), raw_sf, options, input, clim_input = clim_val2, compare_id = "2")
       return(p2)
     })
 

@@ -53,60 +53,66 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   } else { # Climate-smart
 
     # Add climate data and run climate approach --------------------------------------------------------
+    
+    # Validate that climate column exists in raw_sf
+    clim_col <- input[[paste0("climateid", compare_id)]]
+    
+    if (!clim_col %in% names(raw_sf)) {
+      warning(paste0("Climate column '", clim_col, "' not found in spatial data. Proceeding without climate-smart planning."))
+      p_dat <- out_sf
+    } else {
 
-    # TODO Rewrite the functions to allow other names of climate columns
-    # Rename column based on user selection
-    if (input[[paste0("climateid", compare_id)]] != "NA") {
-
+      # TODO Rewrite the functions to allow other names of climate columns
+      # Rename column based on user selection
       climate_sf <- raw_sf %>%
-        dplyr::select("metric" = input[[paste0("climateid", compare_id)]])
-    }
+        dplyr::select("metric" = clim_col)
 
-    # TODO Update these functions in spatialplanr to remove climate_sf and instead pass a column name....
-    # We shouldn't need to name the column 'metric'
-    if (options$climate_change == 1) { # CPA approach
+      # TODO Update these functions in spatialplanr to remove climate_sf and instead pass a column name....
+      # We shouldn't need to name the column 'metric'
+      if (options$climate_change == 1) { # CPA approach
 
-      CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
-        features = out_sf %>%
-          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = climate_sf,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction,
-        refugiaTarget = options$refugiaTarget
-      )
-    } else if (options$climate_change == 2) { # feature approach
+        CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
+          features = out_sf %>%
+            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+          metric = climate_sf,
+          percentile = options$percentile,
+          targets = targets,
+          direction = options$direction,
+          refugiaTarget = options$refugiaTarget
+        )
+      } else if (options$climate_change == 2) { # feature approach
 
-      CS_Approach <- spatialplanr::splnr_climate_featureApproach(
-        features = out_sf %>%
-          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = climate_sf,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction,
-        refugiaTarget = options$refugiaTarget
-      )
-    } else if (options$climate_change == 3) { # percentile approach
+        CS_Approach <- spatialplanr::splnr_climate_featureApproach(
+          features = out_sf %>%
+            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+          metric = climate_sf,
+          percentile = options$percentile,
+          targets = targets,
+          direction = options$direction,
+          refugiaTarget = options$refugiaTarget
+        )
+      } else if (options$climate_change == 3) { # percentile approach
 
-      CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
-        features = out_sf %>%
-          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = climate_sf,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction
-      )
-    }
+        CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
+          features = out_sf %>%
+            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+          metric = climate_sf,
+          percentile = options$percentile,
+          targets = targets,
+          direction = options$direction
+        )
+      }
 
-    # Get targets
-    targets <- CS_Approach$Targets # New targets df with CS targets
+      # Get targets
+      targets <- CS_Approach$Targets # New targets df with CS targets
 
-    # Create p_dat and add cost column back in.
-    p_dat <- CS_Approach$Features %>%
-      sf::st_join(raw_sf %>%
-                    dplyr::select(input[[paste0("costid", compare_id)]],
-                                  input[[paste0("climateid", compare_id)]]),
-                  join = sf::st_equals)
+      # Create p_dat and add cost column back in.
+      p_dat <- CS_Approach$Features %>%
+        sf::st_join(raw_sf %>%
+                      dplyr::select(input[[paste0("costid", compare_id)]],
+                                    input[[paste0("climateid", compare_id)]]),
+                    join = sf::st_equals)
+    } # End else block for valid climate column
   } # End climate data analysis
 
 

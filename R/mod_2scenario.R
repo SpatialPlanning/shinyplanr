@@ -158,6 +158,7 @@ mod_2scenario_ui <- function(id, cfg) {
                               Dict = Dict %>%
                                 dplyr::filter(.data$type == "Climate") %>%
                                 dplyr::add_row(nameCommon = "Don't consider",
+                                               nameVariable = "NA",
                                                category = "Climate", .before = 1)),
       )),
 
@@ -559,7 +560,13 @@ mod_2scenario_server <- function(id, cfg) {
 
 
     p1Data <- shiny::reactive({
-      p1 <- fdefine_problem(targetData(), raw_sf, options, input, clim_input = input$climateid)
+      # Validate climate input - default to "NA" if NULL or empty
+      clim_val <- input$climateid
+      if (is.null(clim_val) || length(clim_val) == 0 || clim_val == "") {
+        clim_val <- "NA"
+      }
+      
+      p1 <- fdefine_problem(targetData(), raw_sf, options, input, clim_input = clim_val)
       return(p1)
     })
 
