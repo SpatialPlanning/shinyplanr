@@ -1,6 +1,6 @@
 Package: shinyplanr
 Title: Spatial Planning in Shiny
-Version: 0.1.3
+Version: 0.1.4s
 Authors@R: c(
     person(
       given = 'Jason D.', 
@@ -46,6 +46,7 @@ Imports:
     patchwork,
     prioritizr,
     purrr,
+    quarto,
     rcbc,
     reactable,
     readr,
@@ -66,7 +67,6 @@ Imports:
     withr
 Suggests:
     knitr,
-    quarto,
     spelling,
     testthat (>= 3.0.0)
 Remotes: 
