@@ -41,6 +41,7 @@ Imports:
     gridExtra,
     golem (>= 0.4.1),
     htmltools,
+    kableExtra,
     leaflet,
     magrittr,
     patchwork,
