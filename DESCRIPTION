@@ -1,6 +1,6 @@
 Package: shinyplanr
 Title: Spatial Planning in Shiny
-Version: 0.1.4s
+Version: 0.1.4
 Authors@R: c(
     person(
       given = 'Jason D.', 
