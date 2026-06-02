@@ -403,9 +403,24 @@ mod_2scenario_server <- function(id, cfg) {
       shiny::hideTab(inputId = "tabs", target = "6", session = session)
     }
 
+    ## Turn off Explore tab ----
+    if (!isTRUE(options$include_explore)) {
+      shiny::hideTab(inputId = "tabs", target = "4", session = session)
+    }
+
+    ## Turn off Ecosystem Services tab ----
+    if (!isTRUE(options$include_ess)) {
+      shiny::hideTab(inputId = "tabs", target = "5", session = session)
+    }
+
     ## Turn off Report tab ----
     if (!isTRUE(options$include_report)) {
       shiny::hideTab(inputId = "tabs", target = "10", session = session)
+    }
+
+    ## Turn off Log tab ----
+    if (!isTRUE(options$include_log)) {
+      shiny::hideTab(inputId = "tabs", target = "8", session = session)
     }
 
     ## Turn on Locked In/Out Constraints ----

@@ -396,6 +396,11 @@ mod_3compare_server <- function(id, cfg) {
       shiny::hideTab(inputId = "tabs", target = "10", session = session)
     }
 
+    ## Turn off Log tab ----
+    if (!isTRUE(options$include_log)) {
+      shiny::hideTab(inputId = "tabs", target = "9", session = session)
+    }
+
     if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
       shinyjs::show(id = "switchConstraints")
     }
