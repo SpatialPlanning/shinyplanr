@@ -123,13 +123,34 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       message("[fdefine_problem] CS targets: ", nrow(targets), " rows")
 
       # Create p_dat and add cost column back in.
-      message("[fdefine_problem] Joining CS features with cost/climate columns via st_join...")
+      # Use a row-ID left_join instead of sf::st_join(join = sf::st_equals) to avoid
+      # duplicate rows caused by floating-point geometry mismatches (same fix as spatialplanr).
+      message("[fdefine_problem] Joining CS features with cost/climate columns via left_join...")
+      cost_col   <- input[[paste0("costid",    compare_id)]]
+      clim_col_j <- input[[paste0("climateid", compare_id)]]
+
+      # Build a plain data frame of the columns to attach, keyed by row position
+      join_cols <- raw_sf %>%
+        sf::st_drop_geometry() %>%
+        dplyr::select(dplyr::all_of(c(cost_col, clim_col_j))) %>%
+        dplyr::mutate(.row_id = dplyr::row_number())
+
       p_dat <- CS_Approach$Features %>%
-        sf::st_join(raw_sf %>%
-                      dplyr::select(input[[paste0("costid", compare_id)]],
-                                    input[[paste0("climateid", compare_id)]]),
-                    join = sf::st_equals)
-      message("[fdefine_problem] st_join DONE: ", nrow(p_dat), " rows, ", ncol(p_dat), " cols")
+        dplyr::mutate(.row_id = dplyr::row_number()) %>%
+        dplyr::left_join(join_cols, by = ".row_id") %>%
+        dplyr::select(-".row_id")
+
+      message("[fdefine_problem] left_join DONE: ", nrow(p_dat), " rows, ", ncol(p_dat), " cols")
+
+      # Sanity check: row count must not have changed
+      n_features <- nrow(CS_Approach$Features)
+      if (nrow(p_dat) != n_features) {
+        stop(paste0(
+          "[fdefine_problem] Row-count mismatch after joining cost/climate columns. ",
+          "CS_Approach$Features has ", n_features, " rows but p_dat has ", nrow(p_dat), " rows. ",
+          "This indicates a bug in the join logic."
+        ))
+      }
     } # End else block for valid climate column
   } # End climate data analysis
 
