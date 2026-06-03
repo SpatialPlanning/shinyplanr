@@ -39,39 +39,49 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   #TODO Still need to check on how clim_input is being used here in this function.
   # Many commands expect NA or T/F but it seems like we pass in the input$climateid
 
+  message("[fdefine_problem] START - clim_input: ", clim_input, " | compare_id: '", compare_id, "'")
+
   # Create sf object with features/cost -------------------------------------
+  message("[fdefine_problem] Building out_sf with ", length(targets$feature), " features")
   out_sf <- raw_sf %>%
     dplyr::select(
       tidyselect::all_of(c(targets$feature,
                            input[[paste0("costid", compare_id)]],
                            "geometry")))
+  message("[fdefine_problem] out_sf built: ", nrow(out_sf), " rows, ", ncol(out_sf), " cols")
 
   # Create options for climate-smart ----
   if (is.null(clim_input) || is.na(clim_input) || clim_input == "NA") { # Not Climate-smart
+    message("[fdefine_problem] No climate - using out_sf directly")
     p_dat <- out_sf # Create the problem data. Nothing more needed if not climate-smart
 
   } else { # Climate-smart
+    message("[fdefine_problem] Climate-smart path - clim_input: ", clim_input)
 
     # Add climate data and run climate approach --------------------------------------------------------
     
     # Validate that climate column exists in raw_sf
     clim_col <- input[[paste0("climateid", compare_id)]]
+    message("[fdefine_problem] Climate column: '", clim_col, "'")
     
     if (!clim_col %in% names(raw_sf)) {
       warning(paste0("Climate column '", clim_col, "' not found in spatial data. Proceeding without climate-smart planning."))
       p_dat <- out_sf
     } else {
+      message("[fdefine_problem] Climate column found in raw_sf - building climate_sf")
 
       # TODO Rewrite the functions to allow other names of climate columns
       # Rename column based on user selection
       # Note: Must keep geometry column for sf operations
       climate_sf <- raw_sf %>%
         dplyr::select("metric" = clim_col, geometry)
+      message("[fdefine_problem] climate_sf built: ", nrow(climate_sf), " rows")
 
       # TODO Update these functions in spatialplanr to remove climate_sf and instead pass a column name....
       # We shouldn't need to name the column 'metric'
+      message("[fdefine_problem] Calling climate approach: options$climate_change = ", options$climate_change)
       if (options$climate_change == 1) { # CPA approach
-
+        message("[fdefine_problem] Running splnr_climate_priorityAreaApproach...")
         CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
@@ -81,8 +91,9 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
           direction = options$direction,
           refugiaTarget = options$refugiaTarget
         )
+        message("[fdefine_problem] splnr_climate_priorityAreaApproach DONE")
       } else if (options$climate_change == 2) { # feature approach
-
+        message("[fdefine_problem] Running splnr_climate_featureApproach...")
         CS_Approach <- spatialplanr::splnr_climate_featureApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
@@ -92,8 +103,9 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
           direction = options$direction,
           refugiaTarget = options$refugiaTarget
         )
+        message("[fdefine_problem] splnr_climate_featureApproach DONE")
       } else if (options$climate_change == 3) { # percentile approach
-
+        message("[fdefine_problem] Running splnr_climate_percentileApproach...")
         CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
@@ -102,22 +114,28 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
           targets = targets,
           direction = options$direction
         )
+        message("[fdefine_problem] splnr_climate_percentileApproach DONE")
       }
 
       # Get targets
+      message("[fdefine_problem] Extracting CS targets")
       targets <- CS_Approach$Targets # New targets df with CS targets
+      message("[fdefine_problem] CS targets: ", nrow(targets), " rows")
 
       # Create p_dat and add cost column back in.
+      message("[fdefine_problem] Joining CS features with cost/climate columns via st_join...")
       p_dat <- CS_Approach$Features %>%
         sf::st_join(raw_sf %>%
                       dplyr::select(input[[paste0("costid", compare_id)]],
                                     input[[paste0("climateid", compare_id)]]),
                     join = sf::st_equals)
+      message("[fdefine_problem] st_join DONE: ", nrow(p_dat), " rows, ", ncol(p_dat), " cols")
     } # End else block for valid climate column
   } # End climate data analysis
 
-
+  message("[fdefine_problem] p_dat ready - checking feature count")
   f_no <- fCheckFeatureNo(p_dat) # Check number of features
+  message("[fdefine_problem] Feature count: ", f_no)
 
 
   ## Set up problem -------------------------------------------------
