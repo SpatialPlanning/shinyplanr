@@ -256,6 +256,19 @@ mod_3compare_ui <- function(id, cfg) {
                                     selected = "category",  multiple = FALSE),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_target"), height = "700px"))
         ),
+        tabPanel("Cost",
+                 value = 4,
+                 shiny::fixedPanel(
+                   style = "z-index:100", # To force the button above all plots.=
+                   shiny::downloadButton(ns("dlPlot4"), "Download Plot",
+                                         style = "float: right; padding:4px; font-size:120%"
+                   ),
+                   right = "1%", bottom = "1%", left = "34%"
+                 ),
+                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_cost")))),
+                 shiny::span(shiny::p(shiny::textOutput(ns("txt_cost")))),
+                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_cost"), height = "700px")),
+        ),
         tabPanel("Climate",
                  value = 7,
                  shiny::fixedPanel(
@@ -495,7 +508,7 @@ mod_3compare_server <- function(id, cfg) {
       if (is.null(clim_val1) || length(clim_val1) == 0 || clim_val1 == "") {
         clim_val1 <- "NA"
       }
-      
+
       p1 <- fdefine_problem(targetData1(), raw_sf, options, input, clim_input = clim_val1, compare_id = "1")
       return(p1)
     })
@@ -506,7 +519,7 @@ mod_3compare_server <- function(id, cfg) {
       if (is.null(clim_val2) || length(clim_val2) == 0 || clim_val2 == "") {
         clim_val2 <- "NA"
       }
-      
+
       p2 <- fdefine_problem(targetData2(), raw_sf, options, input, clim_input = clim_val2, compare_id = "2")
       return(p2)
     })
