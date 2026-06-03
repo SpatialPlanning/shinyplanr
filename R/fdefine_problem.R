@@ -64,8 +64,9 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
       # TODO Rewrite the functions to allow other names of climate columns
       # Rename column based on user selection
+      # Note: Must keep geometry column for sf operations
       climate_sf <- raw_sf %>%
-        dplyr::select("metric" = clim_col)
+        dplyr::select("metric" = clim_col, geometry)
 
       # TODO Update these functions in spatialplanr to remove climate_sf and instead pass a column name....
       # We shouldn't need to name the column 'metric'
