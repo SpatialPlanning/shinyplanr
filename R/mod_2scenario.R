@@ -565,8 +565,9 @@ mod_2scenario_server <- function(id, cfg) {
       if (is.null(clim_val) || length(clim_val) == 0 || clim_val == "") {
         clim_val <- "NA"
       }
-      
+      message("[p1Data] reactive triggered - clim_val: ", clim_val)
       p1 <- fdefine_problem(targetData(), raw_sf, options, input, clim_input = clim_val)
+      message("[p1Data] fdefine_problem returned")
       return(p1)
     })
 
@@ -576,9 +577,10 @@ mod_2scenario_server <- function(id, cfg) {
     solveLog <- shiny::reactiveVal(character(0))
 
     solution <- shiny::reactive({
-
+      message("[solution] reactive triggered")
       # Get the problem object
       prob <- p1Data()
+      message("[solution] p1Data() returned")
 
       # Use consolidated helper that solves and builds a clean log
       res <- fsolve_with_log(prob, cost_id = input$costid)
