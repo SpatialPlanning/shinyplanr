@@ -118,25 +118,26 @@ mod_3compare_ui <- function(id, cfg) {
 
 
 
-      shinyjs::hidden(div(
-        id = ns("switchClimSmart"),
-        shiny::h2("3. Climate-smart"),
-        shiny::p("Should the spatial plan be made climate-resilient?"),
-        shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
-        shiny::splitLayout(
-          cellWidths = c("50%", "50%"),
-          create_fancy_dropdown(id = id,  id_in = "climateid1", Dict = Dict %>%
-                                  dplyr::filter(.data$type == "Climate") %>%
-                                  dplyr::add_row(nameCommon = "Don't consider",
-                                                 nameVariable = "NA",
-                                                 category = "Climate", .before = 1)),
-          create_fancy_dropdown(id = id,  id_in = "climateid2", Dict = Dict %>%
-                                  dplyr::filter(.data$type == "Climate") %>%
-                                  dplyr::add_row(nameCommon = "Don't consider",
-                                                 nameVariable = "NA",
-                                                 category = "Climate", .before = 1)),
+      if (isTRUE(options$include_climateChange)) {
+        div(
+          shiny::h2("3. Climate-smart"),
+          shiny::p("Should the spatial plan be made climate-resilient?"),
+          shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
+          shiny::splitLayout(
+            cellWidths = c("50%", "50%"),
+            create_fancy_dropdown(id = id,  id_in = "climateid1", Dict = Dict %>%
+                                    dplyr::filter(.data$type == "Climate") %>%
+                                    dplyr::add_row(nameCommon = "Don't consider",
+                                                   nameVariable = "NA",
+                                                   category = "Climate", .before = 1)),
+            create_fancy_dropdown(id = id,  id_in = "climateid2", Dict = Dict %>%
+                                    dplyr::filter(.data$type == "Climate") %>%
+                                    dplyr::add_row(nameCommon = "Don't consider",
+                                                   nameVariable = "NA",
+                                                   category = "Climate", .before = 1)),
+          )
         )
-      )),
+      },
       #
       #       shinyjs::hidden(div(
       #         id = ns("switchConstraints"),
@@ -386,12 +387,9 @@ mod_3compare_server <- function(id, cfg) {
                                     name_check = "check2LO_",
                                     categoryOut = TRUE)
 
-    if (isTRUE(options$include_climateChange)) { # dont make observeEvent because it's a global variable
-      shinyjs::show(id = "switchClimSmart")
-    } else {
-      shinyjs::hide(id = "switchClimSmart")
-
-      # Hide the Climate tab if climate change is not enabled
+    # Hide the Climate tab if climate change is not enabled.
+    # The climate UI section is rendered conditionally in the UI (if/else), so no show/hide needed here.
+    if (!isTRUE(options$include_climateChange)) {
       shiny::hideTab(inputId = "tabs", target = "7", session = session)
     }
 
@@ -1039,20 +1037,26 @@ mod_3compare_server <- function(id, cfg) {
           shiny::bindEvent(input$analyse)
 
         output$gg_clim <- shiny::renderPlot({
-          if (input$climateid1 != "NA" | input$climateid2 != "NA") {
+          clim1 <- input$climateid1 %||% "NA"
+          clim2 <- input$climateid2 %||% "NA"
+          if (clim1 != "NA" | clim2 != "NA") {
             ggr_clim()
           }
         }, bg = "transparent")
 
         output$hdr_clim <- shiny::renderText({
-          if (input$climateid1 != "NA" | input$climateid2 != "NA") {
+          clim1 <- input$climateid1 %||% "NA"
+          clim2 <- input$climateid2 %||% "NA"
+          if (clim1 != "NA" | clim2 != "NA") {
             paste("Climate Resilience")
           }
         }) %>%
           shiny::bindEvent(input$analyse)
 
         output$txt_clim <- shiny::renderText({
-          if (input$climateid1 != "NA" | input$climateid2 != "NA") {
+          clim1 <- input$climateid1 %||% "NA"
+          clim2 <- input$climateid2 %||% "NA"
+          if (clim1 != "NA" | clim2 != "NA") {
             paste("Kernel density estimates for the climate-resilience metric. The metric comprises two components,
           both based on projected temperature in 2100 from a suite of Earth System Models under a high emission scenario:
           1. Exposure to climate change (amount of warming); 2. Climate velocity (the pace of isotherm movement).
