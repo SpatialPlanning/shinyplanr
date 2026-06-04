@@ -766,6 +766,30 @@ div.shiny-table-output {
 }
 
 /* ==========================================================================
+   Bootstrap-Select / pickerInput — text wrapping and overflow fixes
+   ========================================================================== */
+
+/* Prevent the selected-value button from overflowing its container */
+.bootstrap-select {
+  width: 100% !important;
+}
+
+.bootstrap-select > .dropdown-toggle {
+  width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Allow long option labels to wrap inside the open dropdown list */
+.bootstrap-select .dropdown-menu li a,
+.bootstrap-select .dropdown-menu li a span.text {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* ==========================================================================
    Ecosystem Services Progress Bar (Reactable)
    ========================================================================== */
 

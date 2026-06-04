@@ -249,13 +249,21 @@ mod_2scenario_ui <- function(id, cfg) {
                  shiny::span(shiny::h2(shiny::textOutput(ns("hdr_target")))),
                  shiny::textOutput(ns("txt_target")),
                  shiny::br(),
-                 shiny::selectInput(inputId = ns("checkSort"),
-                                    label = "Sort plot by:",
-                                    choices = c("Category" = "category",
-                                                "Target" = "target",
-                                                "Representation" = "representation",
-                                                "Difference from Target" = "difference"),
-                                    selected = "category",  multiple = FALSE),
+                 shinyWidgets::pickerInput(
+                                    inputId  = ns("checkSort"),
+                                    label    = "Sort plot by:",
+                                    choices  = c("Category" = "category",
+                                                 "Target" = "target",
+                                                 "Representation" = "representation",
+                                                 "Difference from Target" = "difference"),
+                                    selected = "category",
+                                    multiple = FALSE,
+                                    options  = shinyWidgets::pickerOptions(
+                                      style      = "btn-default btn-block",
+                                      dropupAuto = FALSE,
+                                      whiteSpace = "normal",
+                                      container  = "body"
+                                    )),
 
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_targetPlot"), height = "600px"))
         ),
