@@ -123,22 +123,21 @@ mod_3compare_ui <- function(id, cfg) {
           shiny::h2("3. Climate-smart"),
           shiny::p("Should the spatial plan be made climate-resilient?"),
           shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
-          shiny::splitLayout(
-            # overflow:visible needed so the selectize input box does not get clipped by the
-            # splitLayout cell, and so the open dropdown list can extend beyond the cell boundary.
-            # tags$head counts as a layout child, hence the 0% dummy width at position one.
-            tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
-            cellWidths = c("0%", "50%", "50%"),
-            create_fancy_dropdown(id = id,  id_in = "climateid1", Dict = Dict %>%
-                                    dplyr::filter(.data$type == "Climate") %>%
-                                    dplyr::add_row(nameCommon = "Don't consider",
-                                                   nameVariable = "NA",
-                                                   category = "Climate", .before = 1)),
-            create_fancy_dropdown(id = id,  id_in = "climateid2", Dict = Dict %>%
-                                    dplyr::filter(.data$type == "Climate") %>%
-                                    dplyr::add_row(nameCommon = "Don't consider",
-                                                   nameVariable = "NA",
-                                                   category = "Climate", .before = 1)),
+          shiny::fluidRow(
+            shiny::column(6,
+              create_fancy_dropdown(id = id,  id_in = "climateid1", Dict = Dict %>%
+                                      dplyr::filter(.data$type == "Climate") %>%
+                                      dplyr::add_row(nameCommon = "Don't consider",
+                                                     nameVariable = "NA",
+                                                     category = "Climate", .before = 1))
+            ),
+            shiny::column(6,
+              create_fancy_dropdown(id = id,  id_in = "climateid2", Dict = Dict %>%
+                                      dplyr::filter(.data$type == "Climate") %>%
+                                      dplyr::add_row(nameCommon = "Don't consider",
+                                                     nameVariable = "NA",
+                                                     category = "Climate", .before = 1))
+            )
           )
         )
       },
