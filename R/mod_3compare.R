@@ -22,7 +22,8 @@ mod_3compare_ui <- function(id, cfg) {
   }
 
   # TODO I need to look at the slider_ variables at the top of mod2 and work our
-  #  how to implement that here. Then I need to implement the bioregions stuff
+  # how to implement that here. 
+  # Then I need to implement the bioregions stuff
 
   Vars <- fcreate_vars(id = id, Dict = Dict, name_check = "sli_", categoryOut = TRUE)
   Vars2 <- fcreate_vars(id = id, Dict = Dict, name_check = "sli2_", categoryOut = TRUE)
