@@ -123,6 +123,7 @@ mod_3compare_ui <- function(id, cfg) {
         shiny::p("Should the spatial plan be made climate-resilient?"),
         shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
         shiny::splitLayout(
+          cellWidths = c("50%", "50%"),
           create_fancy_dropdown(id = id,  id_in = "climateid1", Dict = Dict %>%
                                   dplyr::filter(.data$type == "Climate") %>%
                                   dplyr::add_row(nameCommon = "Don't consider",
