@@ -759,9 +759,19 @@ div.shiny-table-output {
    (Shiny's selectInput uses selectize.js under Bootstrap 5)
    ========================================================================== */
 
-/* Prevent the selected value from overflowing the input box */
-.selectize-input {
+/* Force the selectize control and input to fill their container.
+   selectize.js sets an inline width style when it initialises, which can be
+   wrong when the widget is inside a hidden element (shinyjs::hidden / splitLayout).
+   The !important here overrides that inline style. */
+.shiny-input-container .selectize-control,
+.shiny-input-container .selectize-input {
   width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Prevent the selected value text from overflowing the input box */
+.selectize-input {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
