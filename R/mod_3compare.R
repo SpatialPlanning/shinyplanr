@@ -260,8 +260,7 @@ mod_3compare_ui <- function(id, cfg) {
                                     options  = shinyWidgets::pickerOptions(
                                       style      = "btn-default btn-block",
                                       dropupAuto = FALSE,
-                                      whiteSpace = "normal",
-                                      container  = "body"
+                                      whiteSpace = "normal"
                                     )),
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_target"), height = "700px"))
         ),

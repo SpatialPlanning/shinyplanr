@@ -261,8 +261,7 @@ mod_2scenario_ui <- function(id, cfg) {
                                     options  = shinyWidgets::pickerOptions(
                                       style      = "btn-default btn-block",
                                       dropupAuto = FALSE,
-                                      whiteSpace = "normal",
-                                      container  = "body"
+                                      whiteSpace = "normal"
                                     )),
 
                  shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_targetPlot"), height = "600px"))

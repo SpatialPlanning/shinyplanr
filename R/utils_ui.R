@@ -302,8 +302,7 @@ fcustom_cost <- function(id, id_in, Dict) {
     options  = shinyWidgets::pickerOptions(
       style      = "btn-default btn-block",
       dropupAuto = FALSE,
-      whiteSpace = "normal",
-      container  = "body"
+      whiteSpace = "normal"
     )
   )
 }
@@ -355,10 +354,9 @@ create_fancy_dropdown <- function(id, id_in, Dict) {
     choices = featureList,
     multiple = FALSE,
     options = shinyWidgets::pickerOptions(
-      style        = "btn-default btn-block",
-      dropupAuto   = FALSE,
-      whiteSpace   = "normal",
-      container    = "body"
+      style      = "btn-default btn-block",
+      dropupAuto = FALSE,
+      whiteSpace = "normal"
     )
   )
 }
