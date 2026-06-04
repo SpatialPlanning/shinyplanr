@@ -148,19 +148,20 @@ mod_2scenario_ui <- function(id, cfg) {
 
 
 
-      shinyjs::hidden(div(
-        id = ns("switchClimSmart"),
-        shiny::h2("3. Climate-smart"),
-        shiny::p("Should the spatial plan be made climate-smart?"),
-        shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
-        create_fancy_dropdown(id = id,
-                              id_in = "climateid",
-                              Dict = Dict %>%
-                                dplyr::filter(.data$type == "Climate") %>%
-                                dplyr::add_row(nameCommon = "Don't consider",
-                                               nameVariable = "NA",
-                                               category = "Climate", .before = 1)),
-      )),
+      if (isTRUE(options$include_climateChange)) {
+        div(
+          shiny::h2("3. Climate-smart"),
+          shiny::p("Should the spatial plan be made climate-smart?"),
+          shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
+          create_fancy_dropdown(id = id,
+                                id_in = "climateid",
+                                Dict = Dict %>%
+                                  dplyr::filter(.data$type == "Climate") %>%
+                                  dplyr::add_row(nameCommon = "Don't consider",
+                                                 nameVariable = "NA",
+                                                 category = "Climate", .before = 1)),
+        )
+      },
 
       shinyjs::hidden(div(
         id = ns("switchConstraints"),
@@ -394,13 +395,9 @@ mod_2scenario_server <- function(id, cfg) {
       shinyjs::show(id = "switchBioregions")
     }
 
-    ## Turn on Climate Smart -----
-    if (isTRUE(options$include_climateChange)) {
-      shinyjs::show(id = "switchClimSmart")
-    } else {
-      shinyjs::hide(id = "switchClimSmart")
-
-      # Hide the Climate tab if climate change is not enabled
+    ## Hide the Climate tab if climate change is not enabled.
+    ## The climate UI section is rendered conditionally in the UI (if/else), so no show/hide needed here.
+    if (!isTRUE(options$include_climateChange)) {
       shiny::hideTab(inputId = "tabs", target = "6", session = session)
     }
 
@@ -863,22 +860,25 @@ mod_2scenario_server <- function(id, cfg) {
           shiny::bindEvent(input$analyse)
 
         output$gg_clim <- shiny::renderPlot({
-          if (input$climateid != "NA") {
+          clim <- input$climateid %||% "NA"
+          if (clim != "NA") {
             ggr_clim()
           }
         }, bg = "transparent")
 
         output$hdr_clim <- shiny::renderText({
-          if (input$climateid != "NA") {
+          clim <- input$climateid %||% "NA"
+          if (clim != "NA") {
             paste("Climate Resilience")
           }
         }) %>%
           shiny::bindEvent(input$analyse)
 
         output$txt_clim <- shiny::renderText({
-          if (input$climateid != "NA") {
+          clim <- input$climateid %||% "NA"
+          if (clim != "NA") {
             paste(tx_2climate)
-          } else if (input$climateid == "NA") {
+          } else {
             paste("Climate-smart spatial planning option not selected.")
           }
         }) %>%
@@ -1170,7 +1170,7 @@ output$txt_ess <- shiny::renderText(
           sol_plot <- tryCatch({ if (is.function(plot_data1)) plot_data1() else NULL }, error = function(e) NULL)
           tgt_plot <- tryCatch({ if (is.function(gg_Target)) gg_Target() else NULL }, error = function(e) NULL)
           cst_plot <- tryCatch({ if (is.function(costPlotData)) costPlotData() else NULL }, error = function(e) NULL)
-          clim_plot <- tryCatch({ if (input$climateid != "NA" && is.function(ggr_clim)) ggr_clim() else NULL }, error = function(e) NULL)
+          clim_plot <- tryCatch({ if ((input$climateid %||% "NA") != "NA" && is.function(ggr_clim)) ggr_clim() else NULL }, error = function(e) NULL)
           det_table <- tryCatch({ if (is.function(DataTabler)) DataTabler() else NULL }, error = function(e) NULL)
 
           # Create file paths
