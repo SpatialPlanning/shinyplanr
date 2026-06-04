@@ -766,15 +766,12 @@ div.shiny-table-output {
 }
 
 /* ==========================================================================
-   Bootstrap-Select / pickerInput — text wrapping and overflow fixes
+   selectize.js dropdown — text wrapping and overflow fixes
+   (Shiny's selectInput uses selectize.js under Bootstrap 5)
    ========================================================================== */
 
-/* Prevent the selected-value button from overflowing its container */
-.bootstrap-select {
-  width: 100% !important;
-}
-
-.bootstrap-select > .dropdown-toggle {
+/* Prevent the selected value from overflowing the input box */
+.selectize-input {
   width: 100% !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -782,11 +779,13 @@ div.shiny-table-output {
 }
 
 /* Allow long option labels to wrap inside the open dropdown list */
-.bootstrap-select .dropdown-menu li a,
-.bootstrap-select .dropdown-menu li a span.text {
+.selectize-dropdown-content .option {
   white-space: normal !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
+  line-height: 1.4 !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
 }
 
 /* ==========================================================================

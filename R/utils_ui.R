@@ -294,16 +294,10 @@ fcustom_cost <- function(id, id_in, Dict) {
     dplyr::select("nameCommon", "nameVariable") %>%
     tibble::deframe()
 
-  shinyWidgets::pickerInput(
-    inputId  = shiny::NS(namespace = id, id = id_in),
-    label    = NULL,
-    choices  = choice,
-    multiple = FALSE,
-    options  = shinyWidgets::pickerOptions(
-      style      = "btn-default btn-block",
-      dropupAuto = FALSE,
-      whiteSpace = "normal"
-    )
+  shiny::selectInput(shiny::NS(namespace = id, id = id_in),
+                     label = NULL,
+                     choices = choice,
+                     multiple = FALSE
   )
 }
 
@@ -331,10 +325,6 @@ fcustom_cost <- function(id, id_in, Dict) {
 
 #' Fancy dropdown menu with categories
 #'
-#' Uses \code{shinyWidgets::pickerInput()} so that long option labels wrap
-#' inside the open dropdown list and the selected-value button does not
-#' overflow its container.
-#'
 #' @noRd
 #'
 create_fancy_dropdown <- function(id, id_in, Dict) {
@@ -348,15 +338,9 @@ create_fancy_dropdown <- function(id, id_in, Dict) {
     purrr::map(~ (.x %>% dplyr::select("nameCommon", "nameVariable"))) %>%
     purrr::map(tibble::deframe)
 
-  shinyWidgets::pickerInput(
-    inputId = shiny::NS(namespace = id, id = id_in),
-    label   = NULL,
-    choices = featureList,
-    multiple = FALSE,
-    options = shinyWidgets::pickerOptions(
-      style      = "btn-default btn-block",
-      dropupAuto = FALSE,
-      whiteSpace = "normal"
-    )
+  shiny::selectInput(inputId = shiny::NS(namespace = id, id = id_in),
+                     label = NULL,
+                     choices = featureList,
+                     multiple = FALSE
   )
 }
