@@ -236,7 +236,7 @@ mod_4features_server <- function(id, cfg) {
     #     dplyr::pull(.data$justification)
     #      )
 
-    output$txt_just <- ""
+    output$txt_just <- shiny::renderText("")
 
 
   })
