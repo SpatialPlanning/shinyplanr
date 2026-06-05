@@ -796,6 +796,9 @@ mod_2scenario_server <- function(id, cfg) {
       {
         costPlotData <<- shiny::reactive({
 
+
+          browser()
+
           #TODO Need to scale the cost data to look better on the plot.
           spatialplanr::splnr_plot_costOverlay(soln = solution(),
                                                cost = NA,
