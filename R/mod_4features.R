@@ -222,7 +222,7 @@ mod_4features_server <- function(id, cfg) {
 
       Dict %>%
         dplyr::filter(.data$includeJust == TRUE) %>%
-        dplyr::select("category", "nameCommon", "justification") %>%
+        dplyr::select("category", "nameCommon") %>% # "justification"
         dplyr::rename(Category = "category", Name = "nameCommon"
                       # , Justification = "justification"
                       ) %>%
