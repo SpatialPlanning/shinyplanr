@@ -215,22 +215,30 @@ mod_4features_server <- function(id, cfg) {
     }, bg = "transparent") %>% shiny::bindCache(input$checkFeat)
 
 
+    #TODO I have temporarily disabled justification because it is not complete.
+
     # Feature justification table
     output$LayerTable <- shiny::renderTable({
 
       Dict %>%
         dplyr::filter(.data$includeJust == TRUE) %>%
         dplyr::select("category", "nameCommon", "justification") %>%
-        dplyr::rename(Category = "category", Name = "nameCommon", Justification = "justification") %>%
+        dplyr::rename(Category = "category", Name = "nameCommon"
+                      # , Justification = "justification"
+                      ) %>%
         dplyr::arrange(.data$Category, .data$Name)
     })
 
     # Text justification for the spatial plot
-    output$txt_just <- shiny::renderText(
-      Dict %>%
-        dplyr::filter(.data$nameVariable == input$checkFeat) %>%
-        dplyr::pull(.data$justification)
-    )
+    # output$txt_just <- shiny::renderText(
+    #   Dict %>%
+    #     dplyr::filter(.data$nameVariable == input$checkFeat) %>%
+    #     dplyr::pull(.data$justification)
+    #      )
+
+    output$txt_just <- ""
+
+
   })
 }
 
