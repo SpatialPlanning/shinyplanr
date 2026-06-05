@@ -732,6 +732,10 @@ mod_2scenario_server <- function(id, cfg) {
         input$tabs == 2 | input$tabs == 10 | input$analyse > 0
       },
       {
+
+
+        browser()
+print("IN target plotting")
         gg_Target <<- shiny::reactive({
 
           # Use consolidated helper function for feature representation
