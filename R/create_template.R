@@ -2,7 +2,7 @@
 #'
 #' Creates a standalone deployment project for a new region. The project
 #' contains all the files a practitioner needs to prepare their spatial data,
-#' configure the app, test locally, and deploy to Posit Connect — without
+#' configure the app, test locally, and deploy to Posit Connect -- without
 #' modifying the shinyplanr package source code.
 #'
 #' @param country Character. Name of the country/region (e.g., "Fiji", "Kosrae").
@@ -25,7 +25,7 @@
 #' @param output_dir Character. Path where the deployment project folder will be
 #'   created. Defaults to \code{file.path("..", country)}, creating a sibling
 #'   directory to the current working directory. The deployer opens this folder
-#'   as their R project — it is \strong{not} inside the shinyplanr package source.
+#'   as their R project - it is \strong{not} inside the shinyplanr package source.
 #' @param use_renv Logical. If TRUE (default), initialises renv in the new
 #'   project to lock package versions for reproducible deployments. Requires
 #'   the renv package to be installed. Set to FALSE to skip renv initialisation.
@@ -440,7 +440,7 @@ create_shinyplanr_template <- function(
     "# HOW TO RUN: Click 'Source' or run line-by-line.",
     "",
     "# =============================================================================",
-    "# STEP 0 — GitHub Credentials",
+    "# STEP 0 \u2014 GitHub Credentials",
     "# =============================================================================",
     "#",
     "# Several packages are installed from GitHub. renv contacts the GitHub API",
@@ -471,7 +471,7 @@ create_shinyplanr_template <- function(
     "  cred <- tryCatch(gitcreds::gitcreds_get(), error = function(e) NULL)",
     "  if (is.null(cred) || !nzchar(cred$password)) {",
     "    message('No GitHub credentials found in keychain.')",
-    "    message('Running gitcreds::gitcreds_set() — paste your PAT when prompted.')",
+    "    message('Running gitcreds::gitcreds_set() \u2014 paste your PAT when prompted.')",
     "    gitcreds::gitcreds_set()",
     "    cred <- tryCatch(gitcreds::gitcreds_get(), error = function(e) NULL)",
     "  }",
@@ -484,28 +484,28 @@ create_shinyplanr_template <- function(
     "})",
     "",
     "# =============================================================================",
-    "# STEP 1 — Hydrate from your existing R libraries (fast, no re-download)",
+    "# STEP 1 \u2014 Hydrate from your existing R libraries (fast, no re-download)",
     "# =============================================================================",
     "#",
     "# renv::hydrate() scans ALL libraries on .libPaths(), including your",
     "# personal library (~/.R/library), and links packages you already have",
-    "# into this project's renv library — no re-downloading.",
+    "# into this project's renv library \u2014 no re-downloading.",
     "# Packages not found are silently skipped and installed in the next steps.",
     "",
     "renv::hydrate(prompt = FALSE)",
     "",
     "# =============================================================================",
-    "# STEP 2 — Install GitHub-only packages with explicit remotes",
+    "# STEP 2 \u2014 Install GitHub-only packages with explicit remotes",
     "# =============================================================================",
     "#",
     "# These packages are not on CRAN. Explicit org/repo ensures renv.lock",
     "# records the correct source for Posit Connect / new-machine deployments.",
-    "# renv checks its global cache first — already-cached = near-instant.",
+    "# renv checks its global cache first \u2014 already-cached = near-instant.",
     "",
     github_pkgs_lines,
     "",
     "# =============================================================================",
-    "# STEP 3 — Install any remaining CRAN packages not caught by hydrate",
+    "# STEP 3 \u2014 Install any remaining CRAN packages not caught by hydrate",
     "# =============================================================================",
     "",
     "renv::install(c(",
@@ -518,7 +518,7 @@ create_shinyplanr_template <- function(
     "), prompt = FALSE)",
     "",
     "# =============================================================================",
-    "# STEP 4 — Lock versions",
+    "# STEP 4 \u2014 Lock versions",
     "# =============================================================================",
     "#",
     "# Writes renv.lock. Commit this file to version control.",
@@ -932,8 +932,7 @@ create_shinyplanr_template <- function(
     "}",
     "",
     "raw_sf <- raw_sf %>%",
-    "  dplyr::bind_cols(dat_sf %>% dplyr::select(geometry)) %>%",
-    "  sf::st_as_sf()",
+    "  sf::st_set_geometry(sf::st_geometry(dat_sf))",
     "",
     "if (length(unique(vars)) != ncol(raw_sf) - 1) {",
     '  stop("Mismatch between Dict variables and data columns. Check Dict_Feature.csv")',
@@ -996,12 +995,11 @@ create_shinyplanr_template <- function(
     "# =============================================================================",
     "",
     "config_list <- list(",
-    "  schema_version = shinyplanr:::.shinyplanr_schema_version,",
+    "  schema_version = shinyplanr::get_schema_version(),",
     "  options        = options,",
     "  map_theme      = map_theme,",
     "  bar_theme      = bar_theme,",
     "  Dict           = Dict,",
-    "  vars           = vars,",
     "  raw_sf         = raw_sf,",
     "  bndry          = bndry,",
     "  overlay        = overlay,",

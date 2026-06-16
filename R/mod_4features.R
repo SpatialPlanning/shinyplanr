@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import shiny
 
 mod_4features_ui <- function(id, cfg) {
   # Extract config locals
@@ -25,10 +25,10 @@ mod_4features_ui <- function(id, cfg) {
 
 
   # shiny::tagList(
-  tabsetPanel(
-    id = "tabs4",
+  shiny::tabsetPanel(
+    id = ns("tabs4"),
     type = "pills",
-    tabPanel("Feature Density",
+    shiny::tabPanel("Feature Density",
              value = 3,
              shiny::sidebarLayout(
                shiny::sidebarPanel(
@@ -55,7 +55,7 @@ mod_4features_ui <- function(id, cfg) {
              )
     ),
 
-    tabPanel("Feature Maps",
+    shiny::tabPanel("Feature Maps",
              value = 1,
              shiny::sidebarLayout(
                shiny::sidebarPanel(
@@ -75,7 +75,7 @@ mod_4features_ui <- function(id, cfg) {
                )
              )
     ),
-    tabPanel("Layer Information",
+    shiny::tabPanel("Layer Information",
              value = 2,
              shiny::fluidPage(
                shiny::tableOutput(ns("LayerTable")),
@@ -111,7 +111,7 @@ mod_4features_server <- function(id, cfg) {
 
     plotDensity <- shiny::reactive({
 
-      idx <- purrr::map_vec(stringr::str_c("input$", ftd), \(x) rlang::eval_tidy(rlang::parse_expr(x)))
+      idx <- purrr::map_vec(ftd, \(x) input[[x]])
 
       ftd <- ftd[idx] %>% stringr::str_remove_all("checkftd_")
 
@@ -146,18 +146,11 @@ mod_4features_server <- function(id, cfg) {
 
 
 
-    # TODO Extract the chosen name from the Dict file and get the category. Otherwise
-    # there will be a problem if, for example, cost doesn't start with Cost_ etc
+    plotFeature <- shiny::reactive({
 
-    if (input$checkFeat == "Cost_None") { # to avoid No Cost Cost
-      pl_title <- " "
-    } else {
       pl_title <- Dict %>%
         dplyr::filter(.data$nameVariable %in% input$checkFeat) %>%
         dplyr::pull("nameCommon")
-    }
-
-    plotFeature <- shiny::reactive({
 
       type <- Dict %>%
         dplyr::filter(.data$nameVariable == input$checkFeat) %>%

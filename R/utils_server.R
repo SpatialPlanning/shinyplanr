@@ -42,7 +42,7 @@ fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature")
     dplyr::pull("nameVariable")
 
   targets <- ft %>%
-    purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(name_check, x))))) %>%
+    purrr::map(\(x) input[[paste0(name_check, x)]]) %>%
     tibble::enframe() %>%
     tidyr::unnest(cols = "value") %>%
     dplyr::rename(feature = "name", target = "value") %>%
@@ -89,7 +89,7 @@ fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
 
   # Get bioregion targets from inputs
   targets_bioregion_raw <- cats %>%
-    purrr::map(\(x) rlang::eval_tidy(rlang::parse_expr(paste0("input$", paste0(bioregion_name_check, x))))) %>%
+    purrr::map(\(x) input[[paste0(bioregion_name_check, x)]]) %>%
     tibble::enframe() %>%
     tidyr::unnest(cols = "value") %>%
     dplyr::rename(categoryID = "name", target = "value") %>%
@@ -238,9 +238,15 @@ fupdate_checkboxReset <- function(session, id_in, Dict, selected = NA) {
 
 #' Reset all inputs to default
 #'
+#' @param session Shiny session object.
+#' @param input Shiny input object.
+#' @param output Shiny output object.
+#' @param Dict Data frame. The feature dictionary.
+#' @param id Integer. Slider set identifier (1 for Scenario/Compare-1, 2 for Compare-2).
+#'
 #' @noRd
 #'
-fresetSlider <- function(session, input, output, id = 1) {
+fresetSlider <- function(session, input, output, Dict, id = 1) {
   # Add 2 to check ID if using Input2 in the Compare module
 
   idx <- ifelse(id == 2, "2", "")
@@ -266,6 +272,7 @@ fresetSlider <- function(session, input, output, id = 1) {
 #'
 fCheckFeatureNo <- function(dat) {
   f_no <- dat %>%
+    sf::st_drop_geometry() %>%
     dplyr::select(-tidyselect::starts_with("Cost_"), -tidyselect::any_of("metric")) %>%
     ncol()
 
@@ -283,15 +290,14 @@ get_lockIn <- function(input, num = "") {
 
   # Are there locked in areas in the app
   inps <- names(input) %>%
-    stringr::str_subset(paste0("check",num,"LI_")) %>%
-    stringr::str_c("input$", .)
+    stringr::str_subset(paste0("check", num, "LI_"))
 
   # Which ones (if any) are selected?
-  n_inps <- purrr::map_vec(inps, \(x) rlang::eval_tidy(rlang::parse_expr(x)))
+  n_inps <- purrr::map_vec(inps, \(x) input[[x]])
 
   # Get the selected names
   LI <- inps[n_inps] %>%
-    stringr::str_remove_all("input\\$check\\d*LI_")
+    stringr::str_remove_all(paste0("check", num, "LI_"))
 
 }
 
@@ -304,17 +310,16 @@ get_lockOut <- function(input, num = "") {
 
   . <- NULL
 
-  # Are there locked in areas in the app
+  # Are there locked out areas in the app
   inps <- names(input) %>%
-    stringr::str_subset(paste0("check",num,"LO_")) %>%
-    stringr::str_c("input$", .)
+    stringr::str_subset(paste0("check", num, "LO_"))
 
   # Which ones (if any) are selected?
-  n_inps <- purrr::map_vec(inps, \(x) rlang::eval_tidy(rlang::parse_expr(x)))
+  n_inps <- purrr::map_vec(inps, \(x) input[[x]])
 
   # Get the selected names
   LO <- inps[n_inps] %>%
-    stringr::str_remove_all("input\\$check\\d*LO_")
+    stringr::str_remove_all(paste0("check", num, "LO_"))
 
 }
 
@@ -333,12 +338,7 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
   # the start and then not update?
 
 
-  if (gg_prefix != "DataSummary"){
-
-    # TODO what does this rv do? Stop downloading when nothing run?
-    # Create reactiveValues object
-    # and set flag to 0 to prevent errors with adding NULL
-    rv <- reactiveValues(download_flag = 0)
+  if (gg_prefix != "DataSummary") {
 
     dlPlot <- shiny::downloadHandler(
       filename = function() {
@@ -357,20 +357,6 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
                         plot = gg_id,
                         device = "png", width = width, height = height, units = "in", dpi = 400
         )
-        # When the downloadHandler function runs, increment rv$download_flag
-        rv$download_flag <- rv$download_flag + 1
-
-        # if (rv$download_flag > 0 & gg_prefix == "Solution") { # trigger event whenever the value of rv$download_flag changes
-        #   # shinyjs::alert("File downloaded!")
-        #   shinyalert::shinyalert("<h3><strong>Further Information!</strong></h3>", "<h4>Don't forget to also download the data table (Details Tab) to store information about the inputs you provided to this analysis.</h4>",
-        #                          type = "info",
-        #                          closeOnEsc = TRUE,
-        #                          closeOnClickOutside = TRUE,
-        #                          html = TRUE,
-        #                          callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
-        #   )
-        #   shinyjs::runjs("window.scrollTo(0, 0)")
-        # }
       }
     )
   } else {
@@ -390,4 +376,49 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
       }
     )
   }
+
+  return(dlPlot)
+}
+
+
+#' Download a solution sf object as a GeoJSON file
+#'
+#' Shared helper used by \code{mod_2scenario_server} and \code{mod_3compare_server}
+#' for the individual-scenario spatial download buttons. Transforms the solution
+#' to WGS84 (EPSG:4326), renames \code{solution_1} to \code{solution} if needed,
+#' and writes a GeoJSON file.
+#'
+#' @param sol An \code{sf} object returned by the solver (must contain a
+#'   \code{solution_1} or \code{solution} column).
+#' @param file Character. Output file path supplied by Shiny's
+#'   \code{downloadHandler} content function.
+#'
+#' @return Invisibly \code{NULL}; called for its side-effect of writing \code{file}.
+#'
+#' @noRd
+#'
+fdownload_solution_geojson <- function(sol, file) {
+  if (!inherits(sol, "sf")) {
+    shiny::showNotification(
+      "Please run an analysis before downloading the spatial file.",
+      type = "error", duration = 5
+    )
+    stop("No solution available.")
+  }
+
+  # Normalise column name: solution_1 -> solution
+  if (!("solution" %in% names(sol))) {
+    if ("solution_1" %in% names(sol)) {
+      names(sol)[names(sol) == "solution_1"] <- "solution"
+    } else {
+      sol <- dplyr::mutate(sol, solution = NA_integer_)
+    }
+  }
+
+  sol_out <- sol %>%
+    dplyr::select("solution") %>%
+    sf::st_transform("EPSG:4326")
+
+  sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
+  invisible(NULL)
 }

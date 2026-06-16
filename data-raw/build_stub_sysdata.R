@@ -81,10 +81,8 @@ Dict <- data.frame(
   stringsAsFactors = FALSE
 )
 
-vars <- c("feature_A", "feature_B")
-
 # Schema version (must match .shinyplanr_schema_version in config_schema.R)
-schema_version <- 1L
+schema_version <- 2L
 
 # ---------------------------------------------------------------------------
 # Options (stub)
@@ -159,7 +157,6 @@ usethis::use_data(
   map_theme,
   bar_theme,
   Dict,
-  vars,
   raw_sf,
   bndry,
   overlay,

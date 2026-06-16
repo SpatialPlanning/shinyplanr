@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #'
-
+#' @import shiny
 mod_6help_ui <- function(id, cfg) {
   # Extract config locals
   tx_6faq       <- cfg$tx_6faq
@@ -14,16 +14,16 @@ mod_6help_ui <- function(id, cfg) {
 
   ns <- shiny::NS(id)
   # shiny::tagList(
-    tabsetPanel(
-      id = "tabs5",
+    shiny::tabsetPanel(
+      id = ns("tabs5"),
       type = "pills",
-      tabPanel("Frequently Asked Questions",
+      shiny::tabPanel("Frequently Asked Questions",
         value = 1,
         shiny::fluidPage(
           shiny::markdown(tx_6faq)
         )
       ),
-      tabPanel("Technical Information",
+      shiny::tabPanel("Technical Information",
         value = 2,
         shiny::fluidPage(
           shiny::markdown(tx_6technical)

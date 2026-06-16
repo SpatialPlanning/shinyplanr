@@ -17,7 +17,16 @@ app_ui <- function(request) {
     ),
     header = shiny::tagList(
       golem_add_external_resources(options), # fn() for adding external resources
-      shinyjs::useShinyjs()
+      shinyjs::useShinyjs(),
+      shinydisconnect::disconnectMessage(
+        text = "Your session timed out, reload the application.",
+        refresh = "Reload now",
+        background = "#f89f43",
+        colour = "white",
+        overlayColour = "grey",
+        overlayOpacity = 0.3,
+        refreshColour = "brown"
+      )
     ),
     theme = bslib::bs_theme(version = 5), # Theme handled by custom.css
     selected = "Welcome",
@@ -36,12 +45,6 @@ app_ui <- function(request) {
         value = "soln", mod_2scenario_ui("2scenario_ui_1", cfg)
       )
     ),
-    # shiny::tabPanel(
-    #   "Multi-Objective Optimisation",
-    #   shiny::fluidPage(
-    #     value = "moo", mod_7multiobj_ui("7multiobj_ui_1", cfg)
-    #   )
-    # ),
     if (options$mod_3compare == TRUE) {
       shiny::tabPanel(
         "Comparison",

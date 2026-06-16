@@ -74,7 +74,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       # Rename column based on user selection
       # Note: Must keep geometry column for sf operations
       climate_sf <- raw_sf %>%
-        dplyr::select("metric" = clim_col, geometry)
+        dplyr::select("metric" = clim_col, "geometry")
       message("[fdefine_problem] climate_sf built: ", nrow(climate_sf), " rows")
 
       # TODO Update these functions in spatialplanr to remove climate_sf and instead pass a column name....
@@ -171,7 +171,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
     p_dat <- p_dat %>%
       dplyr::mutate(DummyVar = 1)
 
-    p1 <- prioritizr::problem(p_dat, "DummyVar") %>%
+    p1 <- prioritizr::problem(p_dat, "DummyVar", cost_column = "DummyVar") %>%
       prioritizr::add_min_set_objective() %>%
       prioritizr::add_relative_targets(0) %>%
       prioritizr::add_binary_decisions() %>%
@@ -224,9 +224,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   if (length(LI) > 0) {
     for (idx in 1:length(LI)){
       p1 <- p1 %>%
-        prioritizr::add_locked_in_constraints(as.logical(
-          rlang::eval_tidy(rlang::parse_expr(paste0("raw_sf$",LI[idx])))
-        ))
+        prioritizr::add_locked_in_constraints(as.logical(raw_sf[[LI[idx]]]))
     } # End loop
   } # End Lock In
 
@@ -239,11 +237,9 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   if (length(LO) > 0) {
     for (idx in 1:length(LO)){
       p1 <- p1 %>%
-        prioritizr::add_locked_out_constraints(as.logical(
-          rlang::eval_tidy(rlang::parse_expr(paste0("raw_sf$",LO[idx])))
-        ))
+        prioritizr::add_locked_out_constraints(as.logical(raw_sf[[LO[idx]]]))
     } # End loop
-  } # End Lock In
+  } # End Lock Out
 
 
   rm(p_dat)

@@ -126,11 +126,23 @@ fcalculate_coverage <- function(uploaded_sf, raw_sf, Dict) {
   targetPlotData <- purrr::map_dfr(feature_names, function(feat) {
     feat_values <- raw_df[[feat]]
 
-    # total_amount: sum of 1s across all planning units
-    total_amount <- sum(feat_values == 1, na.rm = TRUE)
+    # Warn if feature values are not binary (0/1); coverage sums are still
+    # computed correctly for continuous values but the app is designed for
+    # binary presence/absence data.
+    non_binary <- !all(feat_values %in% c(0, 1, NA))
+    if (non_binary) {
+      warning(
+        "fcalculate_coverage(): feature '", feat,
+        "' contains non-binary values. Coverage sums may not be meaningful.",
+        call. = FALSE
+      )
+    }
 
-    # absolute_held: sum of 1s in planning units that are covered
-    absolute_held <- sum(feat_values[is_covered] == 1, na.rm = TRUE)
+    # total_amount: sum of feature values across all planning units
+    total_amount <- sum(feat_values, na.rm = TRUE)
+
+    # absolute_held: sum of feature values in planning units that are covered
+    absolute_held <- sum(feat_values[is_covered], na.rm = TRUE)
 
     # relative_held: proportion
     relative_held <- if (total_amount > 0) absolute_held / total_amount else 0

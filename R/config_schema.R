@@ -13,8 +13,23 @@
 #
 # Current schema version history:
 #   1 - Initial runtime-config deployment model
+#   2 - Removed redundant `vars` key (derivable from Dict$nameVariable)
 
-.shinyplanr_schema_version <- 1L
+.shinyplanr_schema_version <- 2L
+
+#' Return the current shinyplanr config schema version
+#'
+#' Returns the integer schema version that this installation of shinyplanr
+#' expects. Use this in your `3_setup_app.R` script to stamp the config with
+#' the correct version so that `load_config()` can detect mismatches.
+#'
+#' @return An integer scalar.
+#' @export
+#' @examples
+#' shinyplanr::get_schema_version()
+get_schema_version <- function() {
+  .shinyplanr_schema_version
+}
 
 
 # Required keys that must be present in every config file.
@@ -25,7 +40,6 @@
   "map_theme",
   "bar_theme",
   "Dict",
-  "vars",
   "raw_sf",
   "bndry",
   "overlay",

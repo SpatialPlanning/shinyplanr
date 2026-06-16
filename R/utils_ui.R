@@ -56,7 +56,7 @@ fcreate_vars <- function(id, Dict = Dict, name_check = "check",
                          id_in = paste0("master_sli_", dplyr::first(.data$categoryID)),
                          nameCommon = dplyr::first(.data$category),
                          targetMin = min(.data$targetMin, na.rm = TRUE),
-                         targetMax = min(.data$targetMax, na.rm = TRUE),
+                         targetMax = max(.data$targetMax, na.rm = TRUE),
                          targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),
                          .by = "category")
     }

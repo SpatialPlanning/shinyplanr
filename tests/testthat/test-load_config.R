@@ -9,7 +9,7 @@
 
 make_valid_config <- function() {
   list(
-    schema_version = 1L,
+    schema_version = 2L,
     options        = list(
       app_title             = "Test App",
       nav_title             = "Test Region",
@@ -51,7 +51,6 @@ make_valid_config <- function() {
       justification = c("A stub feature."),
       stringsAsFactors = FALSE
     ),
-    vars           = "feature_A",
     raw_sf         = sf::st_sf(
       feature_A = c(0.8, 0.2),
       geometry  = sf::st_sfc(
@@ -164,6 +163,6 @@ test_that("load_config() invisibly returns the config list", {
 
   result <- suppressMessages(load_config(tmp))
   expect_type(result, "list")
-  expect_equal(result$schema_version, 1L)
+  expect_equal(result$schema_version, 2L)
   expect_equal(result$options$app_title, "Test App")
 })

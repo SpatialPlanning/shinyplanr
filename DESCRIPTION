@@ -38,11 +38,9 @@ Imports:
     config (>= 0.3.1),
     dplyr,
     ggplot2,
-    ggridges,
     gridExtra,
     golem (>= 0.4.1),
     htmltools,
-    kableExtra,
     leaflet,
     magrittr,
     patchwork,
@@ -52,7 +50,6 @@ Imports:
     rcbc,
     reactable,
     readr,
-    renv,
     rlang,
     sf,
     shiny (>= 1.7.4),
@@ -69,6 +66,8 @@ Imports:
     withr
 Suggests:
     knitr,
+    renv,
+    rstudioapi,
     spelling,
     testthat (>= 3.0.0)
 Remotes: 
