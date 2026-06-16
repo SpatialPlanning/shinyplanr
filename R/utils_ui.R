@@ -26,7 +26,7 @@
 #'
 #' @noRd
 #'
-fcreate_vars <- function(id, Dict = Dict, name_check = "check",
+fcreate_vars <- function(id, Dict, name_check = "check",
                          categoryOut = FALSE, byCategory = FALSE,
                          dataType = "Feature") {
 
@@ -56,7 +56,7 @@ fcreate_vars <- function(id, Dict = Dict, name_check = "check",
                          id_in = paste0("master_sli_", dplyr::first(.data$categoryID)),
                          nameCommon = dplyr::first(.data$category),
                          targetMin = min(.data$targetMin, na.rm = TRUE),
-                         targetMax = min(.data$targetMax, na.rm = TRUE),
+                         targetMax = max(.data$targetMax, na.rm = TRUE),
                          targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),
                          .by = "category")
     }
@@ -87,7 +87,7 @@ fcreate_vars <- function(id, Dict = Dict, name_check = "check",
 #'
 #' @noRd
 #'
-fcreate_check <- function(id, Dict = Dict, idType, name_check = "check", categoryOut = FALSE) {
+fcreate_check <- function(id, Dict, idType, name_check = "check", categoryOut = FALSE) {
 
   vars <- Dict %>%
     dplyr::filter(.data$type == idType) %>%
@@ -295,7 +295,7 @@ fcustom_cost <- function(id, id_in, Dict) {
     tibble::deframe()
 
   shiny::selectInput(shiny::NS(namespace = id, id = id_in),
-                     label = NULL, #shiny::h3(" "),
+                     label = NULL,
                      choices = choice,
                      multiple = FALSE
   )
@@ -325,9 +325,13 @@ fcustom_cost <- function(id, id_in, Dict) {
 
 #' Fancy dropdown menu with categories
 #'
+#' @param width Passed to \code{shiny::selectInput()}. Defaults to \code{"100\%"}
+#'   so the widget fills its container correctly even when initialised inside a
+#'   hidden element (e.g. \code{shinyjs::hidden}).
+#'
 #' @noRd
 #'
-create_fancy_dropdown <- function(id, id_in, Dict) {
+create_fancy_dropdown <- function(id, id_in, Dict, width = "100%") {
   . <- NULL
 
   featureList <- Dict %>%
@@ -341,6 +345,7 @@ create_fancy_dropdown <- function(id, id_in, Dict) {
   shiny::selectInput(inputId = shiny::NS(namespace = id, id = id_in),
                      label = NULL,
                      choices = featureList,
-                     multiple = FALSE
+                     multiple = FALSE,
+                     width = width
   )
 }

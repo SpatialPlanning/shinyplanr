@@ -34,26 +34,31 @@ create_welcome_page <- function(x, ns){
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import shiny
 mod_1welcome_ui <- function(id, cfg) {
   # Extract config locals
   tx         <- cfg$tx
   tx_1footer <- cfg$tx_1footer
   options    <- cfg$options
 
-  ns <- NS(id)
+  # Institution text: use options$institution_text if set, otherwise fall back
+  # to the legacy hard-coded UQ string so existing deployments are unaffected.
+  institution_text <- options$institution_text %||%
+    "This application was developed by researchers at The University of Queensland."
+
+  ns <- shiny::NS(id)
   shiny::fluidPage(
 
     create_welcome_page(tx$welcome, ns),
 
 
     # Footer section with logos and funding information
-    div(
+    shiny::div(
       class = "home-footer",
       shiny::fluidRow(
         shiny::column(
           width = 4,
-          div(
+          shiny::div(
             class = "contact-section",
             shiny::markdown(tx_1footer)
           )
@@ -61,16 +66,16 @@ mod_1welcome_ui <- function(id, cfg) {
         shiny::column(
           width = 4,
           shiny::div(class = "contact-section",
-                     shiny::p("This application was developed by researchers at The University of Queensland."),
+                     shiny::p(institution_text),
                      shiny::p(paste0("\u00A9 ", format(Sys.Date(), "%Y"))),
           )
         ),
         shiny::column(
           width = 4,
-          div(
+          shiny::div(
             class = "funding-section",
             shiny::h5("Funded by:", class = "funding-title"),
-            div(
+            shiny::div(
               class = "funding-logos",
               a(img(src = "www/logo_funder.png",
                     alt = "Funder Logo"),
@@ -94,7 +99,7 @@ mod_1welcome_ui <- function(id, cfg) {
 #'
 #' @noRd
 mod_1welcome_server <- function(id, cfg) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
   })
 }

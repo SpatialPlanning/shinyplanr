@@ -72,7 +72,7 @@ test_that("mod_2scenario_ui() shows climate panel when include_climateChange is 
 
   ui   <- mod_2scenario_ui(id = "test_clim", cfg = cfg_clim)
   html <- as.character(ui)
-  expect_match(html, "switchClimSmart", fixed = TRUE)
+  expect_match(html, "Climate-smart", fixed = TRUE)
   expect_match(html, "climateid",       fixed = TRUE)
 })
 

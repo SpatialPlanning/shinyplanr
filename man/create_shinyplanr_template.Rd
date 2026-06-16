@@ -12,7 +12,7 @@ create_shinyplanr_template(
   include_climate = TRUE,
   include_cost = TRUE,
   include_mpas = TRUE,
-  output_dir = file.path("..", country),
+  output_dir = file.path("..", paste0("shinyplanr_", country)),
   use_renv = TRUE,
   create_rproj = TRUE
 )
@@ -25,7 +25,7 @@ Used for folder naming and default titles.}
 Default is "ESRI:54009" (Mollweide equal-area projection).
 Use \url{https://projectionwizard.org} to find an appropriate local CRS.}
 
-\item{oceandatr}{Logical. If TRUE (default), the setup-data.R template will
+\item{oceandatr}{Logical. If TRUE (default), the 2_setup_data.R template will
 include code to automatically download data from oceandatr (bathymetry,
 geomorphology, seamounts, knolls, coral habitat, environmental regions).
 If FALSE, creates a minimal template for manual data entry.}
@@ -45,7 +45,7 @@ marine protected areas from WDPA as locked-in constraints.}
 \item{output_dir}{Character. Path where the deployment project folder will be
 created. Defaults to \code{file.path("..", country)}, creating a sibling
 directory to the current working directory. The deployer opens this folder
-as their R project — it is \strong{not} inside the shinyplanr package source.}
+as their R project - it is \strong{not} inside the shinyplanr package source.}
 
 \item{use_renv}{Logical. If TRUE (default), initialises renv in the new
 project to lock package versions for reproducible deployments. Requires
@@ -60,7 +60,7 @@ Invisibly returns the path to the created project folder.
 \description{
 Creates a standalone deployment project for a new region. The project
 contains all the files a practitioner needs to prepare their spatial data,
-configure the app, test locally, and deploy to Posit Connect — without
+configure the app, test locally, and deploy to Posit Connect -- without
 modifying the shinyplanr package source code.
 }
 \examples{

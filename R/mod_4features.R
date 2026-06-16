@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import shiny
 
 mod_4features_ui <- function(id, cfg) {
   # Extract config locals
@@ -25,10 +25,10 @@ mod_4features_ui <- function(id, cfg) {
 
 
   # shiny::tagList(
-  tabsetPanel(
-    id = "tabs4",
+  shiny::tabsetPanel(
+    id = ns("tabs4"),
     type = "pills",
-    tabPanel("Feature Density",
+    shiny::tabPanel("Feature Density",
              value = 3,
              shiny::sidebarLayout(
                shiny::sidebarPanel(
@@ -55,7 +55,7 @@ mod_4features_ui <- function(id, cfg) {
              )
     ),
 
-    tabPanel("Feature Maps",
+    shiny::tabPanel("Feature Maps",
              value = 1,
              shiny::sidebarLayout(
                shiny::sidebarPanel(
@@ -75,7 +75,7 @@ mod_4features_ui <- function(id, cfg) {
                )
              )
     ),
-    tabPanel("Layer Information",
+    shiny::tabPanel("Layer Information",
              value = 2,
              shiny::fluidPage(
                shiny::tableOutput(ns("LayerTable")),
@@ -106,14 +106,16 @@ mod_4features_server <- function(id, cfg) {
     #       {
     # Solution plotting reactive
 
-    ftd <- names(input) %>%
-      stringr::str_subset("checkftd_")
-
     plotDensity <- shiny::reactive({
 
-      idx <- purrr::map_vec(stringr::str_c("input$", ftd), \(x) rlang::eval_tidy(rlang::parse_expr(x)))
+      # Derive checked feature IDs inside the reactive so it re-evaluates
+      # whenever any checkbox changes (fixes A3: ftd was computed outside reactive).
+      ftd_all <- names(input) %>%
+        stringr::str_subset("checkftd_")
 
-      ftd <- ftd[idx] %>% stringr::str_remove_all("checkftd_")
+      idx <- purrr::map_vec(ftd_all, \(x) input[[x]])
+
+      ftd <- ftd_all[idx] %>% stringr::str_remove_all("checkftd_")
 
       dens <- raw_sf %>%
         dplyr::mutate(DummyVar = 0) %>% # Create a dummy variable so it will still plot 0 when nothing selected
@@ -146,18 +148,11 @@ mod_4features_server <- function(id, cfg) {
 
 
 
-    # TODO Extract the chosen name from the Dict file and get the category. Otherwise
-    # there will be a problem if, for example, cost doesn't start with Cost_ etc
+    plotFeature <- shiny::reactive({
 
-    if (input$checkFeat == "Cost_None") { # to avoid No Cost Cost
-      pl_title <- " "
-    } else {
       pl_title <- Dict %>%
         dplyr::filter(.data$nameVariable %in% input$checkFeat) %>%
         dplyr::pull("nameCommon")
-    }
-
-    plotFeature <- shiny::reactive({
 
       type <- Dict %>%
         dplyr::filter(.data$nameVariable == input$checkFeat) %>%
@@ -217,20 +212,29 @@ mod_4features_server <- function(id, cfg) {
 
     # Feature justification table
     output$LayerTable <- shiny::renderTable({
-
       Dict %>%
         dplyr::filter(.data$includeJust == TRUE) %>%
         dplyr::select("category", "nameCommon", "justification") %>%
-        dplyr::rename(Category = "category", Name = "nameCommon", Justification = "justification") %>%
+        dplyr::rename(
+          Category      = "category",
+          Name          = "nameCommon",
+          Justification = "justification"
+        ) %>%
         dplyr::arrange(.data$Category, .data$Name)
     })
 
-    # Text justification for the spatial plot
-    output$txt_just <- shiny::renderText(
-      Dict %>%
+    # Text justification for the spatial plot (shown above the feature map)
+    output$txt_just <- shiny::renderUI({
+      just <- Dict %>%
         dplyr::filter(.data$nameVariable == input$checkFeat) %>%
-        dplyr::pull(.data$justification)
-    )
+        dplyr::pull("justification")
+      if (length(just) == 0 || is.na(just) || nchar(just) == 0) {
+        return(NULL)
+      }
+      shiny::p(just)
+    })
+
+
   })
 }
 

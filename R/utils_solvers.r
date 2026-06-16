@@ -67,12 +67,13 @@ fsolve_problem <- function(problem_data) {
 #' planning units selected, total/selected area (km^2), and total/selected cost.
 #'
 #' @param problem_data prioritizr problem object
-#' @param cost_id name of the cost column to summarize (e.g., "Cost_X" or "Cost_None")
+#' @param cost_id name of the cost column to summarize (e.g., "Cost_Area"), or
+#'   `NULL` if no cost layer was used.
 #'
 #' @return list(solution = sf or NULL, log = single character string)
 #'
 #' @noRd
-fsolve_with_log <- function(problem_data, cost_id = "Cost_None") {
+fsolve_with_log <- function(problem_data, cost_id = NULL) {
     solve_start <- Sys.time()
 
     # Header
@@ -171,7 +172,7 @@ fsolve_with_log <- function(problem_data, cost_id = "Cost_None") {
         }
 
         # Cost
-        if (!identical(cost_id, "Cost_None") && cost_id %in% names(sol)) {
+        if (!is.null(cost_id) && cost_id %in% names(sol)) {
             total_cost_all <- sum(sol[[cost_id]], na.rm = TRUE)
             total_cost_sel <- sum(sol[[cost_id]][sol$solution_1 == 1], na.rm = TRUE)
             if (is.finite(total_cost_all) && total_cost_all > 0) {

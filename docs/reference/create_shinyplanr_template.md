@@ -16,7 +16,7 @@ create_shinyplanr_template(
   include_climate = TRUE,
   include_cost = TRUE,
   include_mpas = TRUE,
-  output_dir = file.path("..", country),
+  output_dir = file.path("..", paste0("shinyplanr_", country)),
   use_renv = TRUE,
   create_rproj = TRUE
 )
@@ -37,7 +37,7 @@ create_shinyplanr_template(
 
 - oceandatr:
 
-  Logical. If TRUE (default), the setup-data.R template will include
+  Logical. If TRUE (default), the 2_setup_data.R template will include
   code to automatically download data from oceandatr (bathymetry,
   geomorphology, seamounts, knolls, coral habitat, environmental
   regions). If FALSE, creates a minimal template for manual data entry.

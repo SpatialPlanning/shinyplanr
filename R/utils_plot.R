@@ -29,38 +29,41 @@ create_climDataPlot <- function(df) {
 #' @noRd
 fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
 
-  # Guard: must be an sf/data-frame with required columns
+  # Guard: must be an sf object
   if (is.null(sDat) || !inherits(sDat, "sf")) {
     return(list("No solution could be generated for the current settings.", NULL))
   }
 
-  s_no_geom <- sDat %>% sf::st_drop_geometry()
+  s_no_geom <- sf::st_drop_geometry(sDat)
 
-  if (!all(c(cost_name, col_name) %in% names(s_no_geom))) {
+  # solution column must exist to compute any text
+  if (!col_name %in% names(s_no_geom)) {
     return(list("No solution text available.", NULL))
   }
 
-  sDat <- s_no_geom %>%
-    dplyr::select(dplyr::all_of(c(cost_name, col_name)))
+  # Planning unit selection text — always computed
+  PU_count <- sum(s_no_geom[[col_name]] == 1, na.rm = TRUE)
+  txt_soln <- paste0(
+    "In this scenario ", round(PU_count / nrow(s_no_geom) * 100),
+    "% of the planning region was selected."
+  )
 
-  totalCost <- sDat %>%
-    dplyr::pull(cost_name) %>%
-    sum()
+  # Cost text — only when a real cost column is present in the solution
+  has_cost <- !is.null(cost_name) && cost_name %in% names(s_no_geom)
+  if (has_cost) {
+    totalCost   <- sum(s_no_geom[[cost_name]], na.rm = TRUE)
+    outsideCost <- sum(
+      s_no_geom[[cost_name]][s_no_geom[[col_name]] == 0],
+      na.rm = TRUE
+    )
+    txt_cost <- paste0(
+      round((outsideCost / totalCost) * 100),
+      "% of the total cost is outside the selected area."
+    )
+    return(list(txt_soln, txt_cost))
+  }
 
-  outsideCost <- sDat %>%
-    dplyr::filter(.data[[col_name]] == 0) %>%
-    dplyr::pull(cost_name) %>%
-    sum()
-
-  PU_count <- sDat %>%
-    dplyr::filter(.data[[col_name]] == 1) %>%
-    nrow()
-
-  txt_soln <- paste0("In this scenario ", round(PU_count / nrow(sDat) * 100), "% of the planning region was selected.")
-  txt_cost <- paste0(round((outsideCost / totalCost) * 100), "% of the total cost is outside the selected area.")
-
-  out <- list(txt_soln, txt_cost)
-  return(out)
+  return(list(txt_soln, NULL))
 }
 
 

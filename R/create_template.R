@@ -2,7 +2,7 @@
 #'
 #' Creates a standalone deployment project for a new region. The project
 #' contains all the files a practitioner needs to prepare their spatial data,
-#' configure the app, test locally, and deploy to Posit Connect — without
+#' configure the app, test locally, and deploy to Posit Connect -- without
 #' modifying the shinyplanr package source code.
 #'
 #' @param country Character. Name of the country/region (e.g., "Fiji", "Kosrae").
@@ -25,7 +25,7 @@
 #' @param output_dir Character. Path where the deployment project folder will be
 #'   created. Defaults to \code{file.path("..", country)}, creating a sibling
 #'   directory to the current working directory. The deployer opens this folder
-#'   as their R project — it is \strong{not} inside the shinyplanr package source.
+#'   as their R project - it is \strong{not} inside the shinyplanr package source.
 #' @param use_renv Logical. If TRUE (default), initialises renv in the new
 #'   project to lock package versions for reproducible deployments. Requires
 #'   the renv package to be installed. Set to FALSE to skip renv initialisation.
@@ -339,13 +339,32 @@ create_shinyplanr_template <- function(
   proj <- normalizePath(output_dir, mustWork = FALSE)
 
   tryCatch(
-    {
-      old_wd <- setwd(proj)
-      on.exit(setwd(old_wd), add = TRUE)
+    withr::with_dir(proj, {
 
       # Create renv infrastructure only. Package installation happens in
       # 1_setup_enviro.R once the user is inside the activated project.
       renv::init(bare = TRUE)
+
+      # Prepend global .Renviron loading so user-level env vars (e.g.
+      # GITHUB_PAT) are available inside the isolated renv session.
+      # renv's .Rprofile only sources renv/activate.R; without this line
+      # the GitHub PAT stored in ~/.Renviron is invisible to renv::install().
+      rprofile_path_tmp <- file.path(proj, ".Rprofile")
+      existing_rp <- if (file.exists(rprofile_path_tmp)) {
+        readLines(rprofile_path_tmp, warn = FALSE)
+      } else {
+        character(0)
+      }
+      writeLines(
+        c(
+          "# Load global ~/.Renviron so GITHUB_PAT and other user env vars are",
+          "# available inside the renv project session (added by shinyplanr).",
+          'if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")',
+          "",
+          existing_rp
+        ),
+        rprofile_path_tmp
+      )
 
       # Append a one-time startup hook to .Rprofile.
       # When the user opens the project, this opens 1_setup_enviro.R as a tab
@@ -379,7 +398,7 @@ create_shinyplanr_template <- function(
 
       message("\nrenv infrastructure created. Open ", basename(proj),
               ".Rproj and run setup/1_setup_enviro.R to install packages.")
-    },
+    }),
     error = function(e) {
       message(
         "\nCould not initialise renv: ", e$message,
@@ -395,16 +414,16 @@ create_shinyplanr_template <- function(
 .write_setup_enviro <- function(setup_dir, oceandatr = TRUE) {
 
   github_pkgs_lines <- c(
-    'renv::install("SpatialPlanning/shinyplanr")',
-    'renv::install("spatialplanning/spatialplanr")',
-    'renv::install("dirkschumacher/rcbc")',
-    'renv::install("dreamRs/shinyWidgets")'
+    'renv::install("SpatialPlanning/shinyplanr@HEAD", prompt = FALSE)',
+    'renv::install("SpatialPlanning/spatialplanr@HEAD", prompt = FALSE)',
+    'renv::install("dirkschumacher/rcbc@HEAD", prompt = FALSE)',
+    'renv::install("dreamRs/shinyWidgets@HEAD", prompt = FALSE)'
   )
   if (isTRUE(oceandatr)) {
     github_pkgs_lines <- c(
       github_pkgs_lines,
-      'renv::install("emlab-ucsb/oceandatr")',
-      'renv::install("emlab-ucsb/spatialgridr")'
+      'renv::install("emlab-ucsb/oceandatr@HEAD", prompt = FALSE)',
+      'renv::install("emlab-ucsb/spatialgridr@HEAD", prompt = FALSE)'
     )
   }
 
@@ -419,28 +438,72 @@ create_shinyplanr_template <- function(
     "# HOW TO RUN: Click 'Source' or run line-by-line.",
     "",
     "# =============================================================================",
-    "# STEP 1 — Hydrate from your existing R libraries (fast, no re-download)",
+    "# STEP 0 \u2014 GitHub Credentials",
+    "# =============================================================================",
+    "#",
+    "# Several packages are installed from GitHub. renv contacts the GitHub API",
+    "# for each one. Without authentication, requests are rate-limited to",
+    "# 60/hour, causing intermittent 'error code 56' failures. Authentication",
+    "# raises this to 5,000/hour and eliminates these errors.",
+    "#",
+    "# We use the 'gitcreds' package, which reads your GitHub PAT from the",
+    "# system keychain (macOS Keychain / Windows Credential Manager).",
+    "# If you have authenticated with GitHub via the 'gh' CLI or RStudio,",
+    "# your credentials may already be stored and this will work automatically.",
+    "#",
+    "# Run the block below. It will:",
+    "#   a) Install gitcreds if needed",
+    "#   b) Check if a GitHub PAT is already stored in your keychain",
+    "#   c) If not, open a prompt for you to paste your PAT",
+    "#   d) Set GITHUB_PAT in this session so renv can use it",
+    "#",
+    "# To create a PAT (do this once, only if you don't have one):",
+    "#   1. Go to: https://github.com/settings/tokens/new",
+    "#      - Token name: 'R renv installs'",
+    "#      - Expiration: 90 days",
+    "#      - Scopes: leave ALL boxes UNCHECKED (public repos need no scope)",
+    "#      - Click 'Generate token' and copy it (starts with ghp_...)",
+    "#",
+    "if (!requireNamespace('gitcreds', quietly = TRUE)) install.packages('gitcreds', quiet = TRUE)",
+    "local({",
+    "  cred <- tryCatch(gitcreds::gitcreds_get(), error = function(e) NULL)",
+    "  if (is.null(cred) || !nzchar(cred$password)) {",
+    "    message('No GitHub credentials found in keychain.')",
+    "    message('Running gitcreds::gitcreds_set() \u2014 paste your PAT when prompted.')",
+    "    gitcreds::gitcreds_set()",
+    "    cred <- tryCatch(gitcreds::gitcreds_get(), error = function(e) NULL)",
+    "  }",
+    "  if (!is.null(cred) && nzchar(cred$password)) {",
+    "    Sys.setenv(GITHUB_PAT = cred$password)",
+    "    message('GITHUB_PAT set from keychain. Unauthenticated rate limit lifted.')",
+    "  } else {",
+    "    warning('Could not load GitHub credentials. GitHub API calls may fail.')",
+    "  }",
+    "})",
+    "",
+    "# =============================================================================",
+    "# STEP 1 \u2014 Hydrate from your existing R libraries (fast, no re-download)",
     "# =============================================================================",
     "#",
     "# renv::hydrate() scans ALL libraries on .libPaths(), including your",
     "# personal library (~/.R/library), and links packages you already have",
-    "# into this project's renv library — no re-downloading.",
+    "# into this project's renv library \u2014 no re-downloading.",
     "# Packages not found are silently skipped and installed in the next steps.",
     "",
-    "renv::hydrate()",
+    "renv::hydrate(prompt = FALSE)",
     "",
     "# =============================================================================",
-    "# STEP 2 — Install GitHub-only packages with explicit remotes",
+    "# STEP 2 \u2014 Install GitHub-only packages with explicit remotes",
     "# =============================================================================",
     "#",
     "# These packages are not on CRAN. Explicit org/repo ensures renv.lock",
     "# records the correct source for Posit Connect / new-machine deployments.",
-    "# renv checks its global cache first — already-cached = near-instant.",
+    "# renv checks its global cache first \u2014 already-cached = near-instant.",
     "",
     github_pkgs_lines,
     "",
     "# =============================================================================",
-    "# STEP 3 — Install any remaining CRAN packages not caught by hydrate",
+    "# STEP 3 \u2014 Install any remaining CRAN packages not caught by hydrate",
     "# =============================================================================",
     "",
     "renv::install(c(",
@@ -450,10 +513,10 @@ create_shinyplanr_template <- function(
     '  "shinyalert", "shinycssloaders", "shinydisconnect", "shinyjs",',
     '  "prioritizr", "rnaturalearth", "rnaturalearthdata", "units",',
     '  "withr", "rsconnect"',
-    "))",
+    "), prompt = FALSE)",
     "",
     "# =============================================================================",
-    "# STEP 4 — Lock versions",
+    "# STEP 4 \u2014 Lock versions",
     "# =============================================================================",
     "#",
     "# Writes renv.lock. Commit this file to version control.",
@@ -592,15 +655,18 @@ create_shinyplanr_template <- function(
 
   if (oceandatr) {
     content <- c(content,
-      "bathymetry   <- oceandatr::get_bathymetry(spatial_grid = PUs, classify_bathymetry = TRUE) %>% sf::st_drop_geometry()",
+      "bathymetry <- oceandatr::get_bathymetry(spatial_grid = PUs, classify_bathymetry = TRUE) # Keep geometry for bathymetry",
       "geomorphology <- oceandatr::get_geomorphology(spatial_grid = PUs) %>% sf::st_drop_geometry()",
-      "knolls       <- oceandatr::get_knolls(spatial_grid = PUs) %>% sf::st_drop_geometry()",
-      "seamounts    <- oceandatr::get_seamounts(spatial_grid = PUs, buffer = 30000) %>% sf::st_drop_geometry()",
+      "knolls <- oceandatr::get_knolls(spatial_grid = PUs) %>% sf::st_drop_geometry()",
+      "seamounts <- oceandatr::get_seamounts(spatial_grid = PUs, buffer = 30000) %>% sf::st_drop_geometry()",
       "enviro_zones <- oceandatr::get_enviro_zones(spatial_grid = PUs, max_num_clusters = 5, show_plots = FALSE) %>% sf::st_drop_geometry()",
-      "corals       <- oceandatr::get_coral_habitat(spatial_grid = PUs) %>% sf::st_drop_geometry()",
+      "corals <- oceandatr::get_coral_habitat(spatial_grid = PUs) %>% sf::st_drop_geometry()",
       "",
-      "dat_sf <- dplyr::bind_cols(PUs, bathymetry, geomorphology, knolls, seamounts, enviro_zones, corals) %>%",
+      "dat_sf <- dplyr::bind_cols(bathymetry, geomorphology, knolls, seamounts, enviro_zones, corals) %>%",
       "  dplyr::mutate(across(where(is.numeric), ~replace_na(.x, 0)))",
+      "",
+      "# Replace any spaces in column names with underscores",
+      "names(dat_sf) <- stringr::str_replace_all(names(dat_sf), ' ', '_')",
       ""
     )
   } else {
@@ -760,11 +826,20 @@ create_shinyplanr_template <- function(
     "  ## Report generation",
     "  include_report = TRUE,",
     "",
+    "  ## Optional tabs",
+    "  include_ess     = TRUE,  # Ecosystem Services tab",
+    "  include_explore = TRUE,  # Explore tab",
+    "  include_log     = TRUE,  # Log tab",
+    "",
     "  ## Bioregion stratification",
     "  include_bioregion = FALSE,",
     "",
     "  ## UQ logo in welcome footer",
-    "  show_uq_logo = TRUE,   # Set FALSE to hide the UQ logo"
+    "  show_uq_logo = TRUE,   # Set FALSE to hide the UQ logo",
+    "",
+    "  ## Institution text in welcome footer",
+    '  # institution_text = "This application was developed by researchers at My Institution."',
+    "  # Leave commented out to use the default UQ text."
   )
 
   # Climate options
@@ -859,8 +934,7 @@ create_shinyplanr_template <- function(
     "}",
     "",
     "raw_sf <- raw_sf %>%",
-    "  dplyr::bind_cols(dat_sf %>% dplyr::select(geometry)) %>%",
-    "  sf::st_as_sf()",
+    "  sf::st_set_geometry(sf::st_geometry(dat_sf))",
     "",
     "if (length(unique(vars)) != ncol(raw_sf) - 1) {",
     '  stop("Mismatch between Dict variables and data columns. Check Dict_Feature.csv")',
@@ -922,16 +996,54 @@ create_shinyplanr_template <- function(
     "# SAVE CONFIGURATION",
     "# =============================================================================",
     "",
+    "# =============================================================================",
+    "# SIDEBAR (pre-computed slider/checkbox metadata)",
+    "# =============================================================================",
+    "#",
+    "# These are computed once here so that mod_2scenario and mod_3compare do not",
+    "# need to recompute them on every UI render and every server init.",
+    "# The module IDs must match those used in app_ui.R / app_server.R.",
+    "",
+    "sidebar <- list(",
+    "  scenario = list(",
+    '    slider_vars     = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
+    "                                                categoryOut = TRUE, byCategory = FALSE),",
+    '    slider_varsBioR = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
+    "                                                categoryOut = TRUE, byCategory = TRUE,",
+    '                                                dataType = "Bioregion"),',
+    '    slider_varsCat  = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
+    "                                                categoryOut = TRUE, byCategory = TRUE),",
+    '    check_lockIn    = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockIn",',
+    '                                                 "checkLI_", categoryOut = TRUE),',
+    '    check_lockOut   = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockOut",',
+    '                                                 "checkLO_", categoryOut = TRUE)',
+    "  ),",
+    "  compare = list(",
+    '    Vars            = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",',
+    "                                               categoryOut = TRUE),",
+    '    Vars2           = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",',
+    "                                               categoryOut = TRUE),",
+    '    check_lockIn    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",',
+    '                                                 "check1LI_", categoryOut = TRUE),',
+    '    check_lockIn2   = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",',
+    '                                                 "check2LI_", categoryOut = TRUE),',
+    '    check_lockOut   = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",',
+    '                                                 "check1LO_", categoryOut = TRUE),',
+    '    check_lockOut2  = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",',
+    '                                                 "check2LO_", categoryOut = TRUE)',
+    "  )",
+    ")",
+    "",
     "config_list <- list(",
-    "  schema_version = shinyplanr:::.shinyplanr_schema_version,",
+    "  schema_version = shinyplanr::get_schema_version(),",
     "  options        = options,",
     "  map_theme      = map_theme,",
     "  bar_theme      = bar_theme,",
     "  Dict           = Dict,",
-    "  vars           = vars,",
     "  raw_sf         = raw_sf,",
     "  bndry          = bndry,",
     "  overlay        = overlay,",
+    "  sidebar        = sidebar,",
     "  tx             = tx,",
     "  tx_1footer     = tx_1footer,",
     "  tx_2solution   = tx_2solution,",

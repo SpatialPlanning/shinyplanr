@@ -10,9 +10,19 @@ local({
   pkg_env  <- asNamespace("shinyplanr")
   cfg_env  <- shinyplanr:::shinyplanr_config
   required <- shinyplanr:::.shinyplanr_required_keys
+  missing  <- character(0)
   for (nm in required) {
     if (exists(nm, envir = pkg_env, inherits = FALSE)) {
       cfg_env[[nm]] <- get(nm, envir = pkg_env, inherits = FALSE)
+    } else {
+      missing <- c(missing, nm)
     }
+  }
+  if (length(missing) > 0) {
+    stop(
+      "helper-config.R: required config keys missing from sysdata.rda: ",
+      paste(missing, collapse = ", "),
+      "\nRe-run data-raw/build_stub_sysdata.R to regenerate R/sysdata.rda."
+    )
   }
 })

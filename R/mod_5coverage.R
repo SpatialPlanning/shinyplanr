@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import shiny
 mod_5coverage_ui <- function(id, cfg) {
 
   ns <- shiny::NS(id)
@@ -33,15 +33,6 @@ mod_5coverage_ui <- function(id, cfg) {
     ),
 
     shiny::mainPanel(
-      shinydisconnect::disconnectMessage(
-        text = "Your session timed out, reload the application.",
-        refresh = "Reload now",
-        background = "#f89f43",
-        colour = "white",
-        overlayColour = "grey",
-        overlayOpacity = 0.3,
-        refreshColour = "brown"
-      ),
 
       shiny::h2("Coverage Analysis"),
       shiny::p("Upload a spatial file to visualise the protected area and evaluate feature coverage."),

@@ -8,74 +8,94 @@ app_ui <- function(request) {
   cfg     <- get_pkg_config()
   options <- cfg$options
 
-  shiny::navbarPage(
-    id = "navbar",
-    title = shiny::a(shiny::img(src = "www/logo.png",
-                                height = 40,
-                                class = "navbar-logo"),
-                     options$nav_title
-    ),
-    header = shiny::tagList(
-      golem_add_external_resources(options), # fn() for adding external resources
-      shinyjs::useShinyjs()
-    ),
-    theme = bslib::bs_theme(version = 5), # Theme handled by custom.css
-    selected = "Welcome",
-    if (options$mod_1welcome == TRUE) {
-      shiny::tabPanel(
-        "Welcome",
-        shiny::fluidPage(
-          value = "welcome", mod_1welcome_ui("1welcome_ui_1", cfg)
-        )
-      )
-    },
-    shiny::tabPanel(
-      "Scenario",
+  # Build the tab list programmatically so that disabled optional tabs produce
+  # no NULL entries in navbarPage() (which Shiny silently drops but can cause
+  # layout issues and confuses the `selected` logic).
+  tabs <- list()
+
+  if (isTRUE(options$mod_1welcome)) {
+    tabs[["Welcome"]] <- shiny::tabPanel(
+      "Welcome",
       shiny::fluidPage(
-        # shiny::actionButton("sidebar_button","Settings",icon = icon("bars")),
-        value = "soln", mod_2scenario_ui("2scenario_ui_1", cfg)
+        value = "welcome", mod_1welcome_ui("1welcome_ui_1", cfg)
       )
-    ),
-    # shiny::tabPanel(
-    #   "Multi-Objective Optimisation",
-    #   shiny::fluidPage(
-    #     value = "moo", mod_7multiobj_ui("7multiobj_ui_1", cfg)
-    #   )
-    # ),
-    if (options$mod_3compare == TRUE) {
-      shiny::tabPanel(
-        "Comparison",
-        shiny::fluidPage(
-          value = "compare", mod_3compare_ui("3compare_ui_1", cfg)
-        )
-      )
-    },
-    if (options$mod_4features == TRUE) {
-      shiny::tabPanel(
-        "Layer Information",
-        shiny::fluidPage(
-          value = "features", mod_4features_ui("4features_ui_1", cfg)
-        )
-      )
-    },
-    if (options$mod_5coverage == TRUE) {
-      shiny::tabPanel(
-        "Check Coverage",
-        shiny::fluidPage(
-          value = "coverage", mod_5coverage_ui("5coverage_ui_1", cfg)
-        )
-      )
-    },
-    if (options$mod_6help == TRUE) {
-      shiny::tabPanel(
-        "Help",
-        shiny::fluidPage(
-          value = "help", mod_6help_ui("6help_ui_1", cfg)
-        )
-      )
-    },
+    )
+  }
+
+  tabs[["Scenario"]] <- shiny::tabPanel(
+    "Scenario",
+    shiny::fluidPage(
+      value = "soln", mod_2scenario_ui("2scenario_ui_1", cfg)
+    )
   )
 
+  if (isTRUE(options$mod_3compare)) {
+    tabs[["Comparison"]] <- shiny::tabPanel(
+      "Comparison",
+      shiny::fluidPage(
+        value = "compare", mod_3compare_ui("3compare_ui_1", cfg)
+      )
+    )
+  }
+
+  if (isTRUE(options$mod_4features)) {
+    tabs[["Layer Information"]] <- shiny::tabPanel(
+      "Layer Information",
+      shiny::fluidPage(
+        value = "features", mod_4features_ui("4features_ui_1", cfg)
+      )
+    )
+  }
+
+  if (isTRUE(options$mod_5coverage)) {
+    tabs[["Check Coverage"]] <- shiny::tabPanel(
+      "Check Coverage",
+      shiny::fluidPage(
+        value = "coverage", mod_5coverage_ui("5coverage_ui_1", cfg)
+      )
+    )
+  }
+
+  if (isTRUE(options$mod_6help)) {
+    tabs[["Help"]] <- shiny::tabPanel(
+      "Help",
+      shiny::fluidPage(
+        value = "help", mod_6help_ui("6help_ui_1", cfg)
+      )
+    )
+  }
+
+  # Select the first available tab by name
+  selected_tab <- names(tabs)[[1]]
+
+  do.call(
+    shiny::navbarPage,
+    c(
+      list(
+        id     = "navbar",
+        title  = shiny::a(
+          shiny::img(src = "www/logo.png", height = 40, class = "navbar-logo"),
+          options$nav_title
+        ),
+        header = shiny::tagList(
+          golem_add_external_resources(options),
+          shinyjs::useShinyjs(),
+          shinydisconnect::disconnectMessage(
+            text           = "Your session timed out, reload the application.",
+            refresh        = "Reload now",
+            background     = "#f89f43",
+            colour         = "white",
+            overlayColour  = "grey",
+            overlayOpacity = 0.3,
+            refreshColour  = "brown"
+          )
+        ),
+        theme    = bslib::bs_theme(version = 5),
+        selected = selected_tab
+      ),
+      unname(tabs)
+    )
+  )
 }
 
 #' Add external Resources to the Application
