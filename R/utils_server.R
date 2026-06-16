@@ -4,10 +4,9 @@
 #'
 fget_category <- function(Dict) {
   category <- Dict %>%
-    dplyr::filter(!.data$type %in% c("Cost", "Justification", "Climate")) %>%
+    dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
     dplyr::select("nameVariable", "category") %>%
     dplyr::rename(feature = .data$nameVariable)
-  # TODO I want to remove this last command and have the app deal with `nanmeVariable`
 
   return(category)
 }
@@ -162,102 +161,69 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
 #' Update a checkbox group input from the feature dictionary
 #'
 #' Refreshes the choices in a checkbox group input using entries from the
-#' feature dictionary filtered by category. Input ID prefix \code{"check2"}
-#' is used in the Comparison module; \code{"check"} is used in the Scenario
-#' module.
+#' feature dictionary filtered by category. The category is derived by
+#' stripping the known prefix from \code{id_in} (e.g. \code{"check2"},
+#' \code{"check"}).
+#'
+#' When \code{selected} is \code{NA} (default), all choices are selected
+#' (reset behaviour). Pass an explicit character vector to select specific
+#' values, or \code{character(0)} to deselect all.
 #'
 #' @param session Shiny session object.
 #' @param id_in Character. The input ID of the checkbox group to update.
 #' @param Dict Data frame. The feature dictionary (must contain columns
 #'   \code{category}, \code{nameCommon}, \code{nameVariable}).
 #' @param selected Character or NA. The selected value(s) after update.
-#'   Defaults to NA (no selection).
+#'   When \code{NA} (default) all choices are selected.
 #'
 #' @noRd
 #'
 fupdate_checkbox <- function(session, id_in, Dict, selected = NA) {
 
-  if (stringr::str_detect(id_in, "check2") == TRUE) {
-    choice <- Dict %>%
-      dplyr::filter(.data$category == stringr::str_remove(id_in, "check2"))
-  } else if (stringr::str_detect(id_in, "check") == TRUE) {
-    choice <- Dict %>%
-      dplyr::filter(.data$category == stringr::str_remove(id_in, "check"))
+  # Derive category by stripping the longest matching prefix first so that
+  # "check2" is tried before "check" (avoids partial-match ambiguity).
+  if (stringr::str_starts(id_in, "check2")) {
+    cat <- stringr::str_remove(id_in, "^check2")
+  } else if (stringr::str_starts(id_in, "check")) {
+    cat <- stringr::str_remove(id_in, "^check")
+  } else {
+    cat <- id_in
   }
-  choice <- choice %>%
+
+  choice <- Dict %>%
+    dplyr::filter(.data$category == cat) %>%
     dplyr::select("nameCommon", "nameVariable") %>%
     tibble::deframe()
 
+  sel <- if (is.na(selected)) unlist(choice) else selected
+
   shiny::updateCheckboxGroupInput(
-    session = session,
-    inputId = id_in,
-    choices = choice,
-    selected = selected
+    session  = session,
+    inputId  = id_in,
+    choices  = choice,
+    selected = sel
   )
 }
 
 
-#' Reset a checkbox group input to all-selected using the feature dictionary
-#'
-#' Like \code{fupdate_checkbox()} but re-selects all choices when
-#' \code{selected} is \code{NA}.
+
+
+#' Reset all slider inputs to their initial values
 #'
 #' @param session Shiny session object.
-#' @param id_in Character. The input ID of the checkbox group to reset.
-#' @param Dict Data frame. The feature dictionary (must contain columns
-#'   \code{category}, \code{nameCommon}, \code{nameVariable}).
-#' @param selected Character or NA. Specific value(s) to select; when
-#'   \code{NA} (default) all choices are selected.
+#' @param slider_vars Data frame. Pre-computed slider metadata from
+#'   \code{cfg$sidebar$scenario$slider_vars} or
+#'   \code{cfg$sidebar$compare$Vars} / \code{Vars2}. Must contain columns
+#'   \code{id_in} and \code{targetInitial}.
 #'
 #' @noRd
 #'
-fupdate_checkboxReset <- function(session, id_in, Dict, selected = NA) {
-
-  if (stringr::str_detect(id_in, "check2") == TRUE) {
-    choice <- Dict %>%
-      dplyr::filter(.data$category == stringr::str_remove(id_in, "check2"))
-  } else if (stringr::str_detect(id_in, "check") == TRUE) {
-    choice <- Dict %>%
-      dplyr::filter(.data$category == stringr::str_remove(id_in, "check"))
-  }
-  choice <- choice %>%
-    dplyr::select("nameCommon", "nameVariable") %>%
-    tibble::deframe()
-
-  if (is.na(selected)) {
-    shiny::updateCheckboxGroupInput(
-      session = session, inputId = id_in,
-      choices = choice,
-      selected = unlist(choice)
-    )
-  }
-}
-
-
-
-
-#' Reset all inputs to default
-#'
-#' @param session Shiny session object.
-#' @param input Shiny input object.
-#' @param output Shiny output object.
-#' @param Dict Data frame. The feature dictionary.
-#' @param id Integer. Slider set identifier (1 for Scenario/Compare-1, 2 for Compare-2).
-#'
-#' @noRd
-#'
-fresetSlider <- function(session, input, output, Dict, id = 1) {
-  # Add 2 to check ID if using Input2 in the Compare module
-
-  idx <- ifelse(id == 2, "2", "")
-
-  sld <- fcreate_vars(id = id,
-                      Dict = Dict,
-                      name_check = paste0("sli", idx, "_"),
-                      categoryOut = TRUE)
-
-  purrr::walk2(.x = sld$id_in, .y = sld$targetInitial,
-               .f = \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y))
+fresetSlider <- function(session, slider_vars) {
+  purrr::walk2(
+    .x = slider_vars$id_in,
+    .y = slider_vars$targetInitial,
+    .f = \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y)
+  )
 }
 
 
@@ -268,13 +234,36 @@ fresetSlider <- function(session, input, output, Dict, id = 1) {
 
 #' Check the number of features
 #'
+#' Counts the number of feature columns in \code{dat} by looking up which
+#' column names appear in \code{Dict} as type \code{"Feature"} or
+#' \code{"Bioregion"}. Falls back to the legacy prefix-exclusion approach
+#' when \code{Dict} is not supplied (for backwards compatibility).
+#'
+#' @param dat An \code{sf} object or data frame containing the problem data.
+#' @param Dict Optional data frame. The feature dictionary. When supplied,
+#'   only columns whose \code{nameVariable} appears in \code{Dict} with
+#'   \code{type \%in\% c("Feature", "Bioregion")} are counted.
+#'
 #' @noRd
 #'
-fCheckFeatureNo <- function(dat) {
-  f_no <- dat %>%
-    sf::st_drop_geometry() %>%
-    dplyr::select(-tidyselect::starts_with("Cost_"), -tidyselect::any_of("metric")) %>%
-    ncol()
+fCheckFeatureNo <- function(dat, Dict = NULL) {
+
+  dat_plain <- sf::st_drop_geometry(dat)
+
+  if (!is.null(Dict)) {
+    feature_vars <- Dict %>%
+      dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
+      dplyr::pull("nameVariable")
+    f_no <- sum(names(dat_plain) %in% feature_vars)
+  } else {
+    # Legacy fallback: exclude Cost_ prefix and "metric" column
+    f_no <- dat_plain %>%
+      dplyr::select(
+        -tidyselect::starts_with("Cost_"),
+        -tidyselect::any_of("metric")
+      ) %>%
+      ncol()
+  }
 
   return(f_no)
 }
@@ -285,8 +274,6 @@ fCheckFeatureNo <- function(dat) {
 #' @noRd
 #'
 get_lockIn <- function(input, num = "") {
-
-  . <- NULL
 
   # Are there locked in areas in the app
   inps <- names(input) %>%
@@ -299,6 +286,7 @@ get_lockIn <- function(input, num = "") {
   LI <- inps[n_inps] %>%
     stringr::str_remove_all(paste0("check", num, "LI_"))
 
+  return(LI)
 }
 
 
@@ -307,8 +295,6 @@ get_lockIn <- function(input, num = "") {
 #' @noRd
 #'
 get_lockOut <- function(input, num = "") {
-
-  . <- NULL
 
   # Are there locked out areas in the app
   inps <- names(input) %>%
@@ -321,6 +307,7 @@ get_lockOut <- function(input, num = "") {
   LO <- inps[n_inps] %>%
     stringr::str_remove_all(paste0("check", num, "LO_"))
 
+  return(LO)
 }
 
 
@@ -329,24 +316,32 @@ get_lockOut <- function(input, num = "") {
 
 #' Download Plot - Server Side
 #'
+#' Creates a \code{downloadHandler} for a ggplot or data frame output.
+#'
+#' @param gg_reactive A \strong{reactive} (callable, no parentheses) that
+#'   returns the current ggplot object or data frame. Evaluated lazily inside
+#'   the \code{content} function so it always reflects the latest analysis.
+#' @param gg_prefix Character. Filename prefix (e.g. \code{"Solution"}).
+#'   Use \code{"DataSummary"} to trigger CSV download instead of PNG.
+#' @param time_date_reactive A \strong{reactive} or \strong{reactiveVal}
+#'   (callable, no parentheses) that returns a timestamp string used in the
+#'   filename. Evaluated lazily inside \code{filename}.
+#' @param width,height Numeric. PNG dimensions in inches. Default 19 × 18.
+#'
 #' @noRd
 #'
-fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, height = 18) {
-
-  # TODO For some reason, this code is run 5 times (once for each button/tab preseumably)
-  # every time the tab is changed. It should only load when the tab is active? Or load all at
-  # the start and then not update?
-
+fDownloadPlotServer <- function(gg_reactive, gg_prefix, time_date_reactive,
+                                width = 19, height = 18) {
 
   if (gg_prefix != "DataSummary") {
 
     dlPlot <- shiny::downloadHandler(
       filename = function() {
-        paste(gg_prefix, "_", time_date, ".png", sep = "")
+        paste0(gg_prefix, "_", time_date_reactive(), ".png")
       },
       content = function(file) {
-        # Guard: ensure a plot exists (analysis has been run and plot created)
-        if (is.null(gg_id)) {
+        gg <- gg_reactive()
+        if (is.null(gg)) {
           shiny::showNotification(
             "Please run an analysis and generate the plot before downloading.",
             type = "error", duration = 5
@@ -354,27 +349,31 @@ fDownloadPlotServer <- function(input, gg_id, gg_prefix, time_date, width = 19, 
           stop("No plot available to download.")
         }
         ggplot2::ggsave(file,
-                        plot = gg_id,
-                        device = "png", width = width, height = height, units = "in", dpi = 400
-        )
+                        plot = gg,
+                        device = "png", width = width, height = height,
+                        units = "in", dpi = 400)
       }
     )
+
   } else {
+
     dlPlot <- shiny::downloadHandler(
       filename = function() {
-        paste0(gg_prefix, "_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv")
+        paste0(gg_prefix, "_", time_date_reactive(), ".csv")
       },
       content = function(file) {
-        if (is.null(gg_id) || !is.data.frame(gg_id)) {
+        dat <- gg_reactive()
+        if (is.null(dat) || !is.data.frame(dat)) {
           shiny::showNotification(
             "No data available to download yet. Please run an analysis first.",
             type = "error", duration = 5
           )
           stop("No data available to download.")
         }
-        readr::write_csv(gg_id, file)
+        readr::write_csv(dat, file)
       }
     )
+
   }
 
   return(dlPlot)

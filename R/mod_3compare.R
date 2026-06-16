@@ -11,6 +11,7 @@ mod_3compare_ui <- function(id, cfg) {
   # Extract config locals
   Dict    <- cfg$Dict
   options <- cfg$options
+  sidebar <- cfg$sidebar$compare
 
   ns <- NS(id)
 
@@ -21,36 +22,13 @@ mod_3compare_ui <- function(id, cfg) {
     LI_num <- "3"
   }
 
-  # TODO I need to look at the slider_ variables at the top of mod2 and work our
-  # how to implement that here. 
-  # Then I need to implement the bioregions stuff
-
-  Vars <- fcreate_vars(id = id, Dict = Dict, name_check = "sli_", categoryOut = TRUE)
-  Vars2 <- fcreate_vars(id = id, Dict = Dict, name_check = "sli2_", categoryOut = TRUE)
-
-  check_lockIn <- fcreate_check(id = id,
-                                Dict = Dict,
-                                idType = "LockIn",
-                                name_check = "check1LI_",
-                                categoryOut = TRUE)
-
-  check_lockIn2 <- fcreate_check(id = id,
-                                 Dict = Dict,
-                                 idType = "LockIn",
-                                 name_check = "check2LI_",
-                                 categoryOut = TRUE)
-
-  check_lockOut <- fcreate_check(id = id,
-                                 Dict = Dict,
-                                 idType = "LockOut",
-                                 name_check = "check1LO_",
-                                 categoryOut = TRUE)
-
-  check_lockOut2 <- fcreate_check(id = id,
-                                  Dict = Dict,
-                                  idType = "LockOut",
-                                  name_check = "check2LO_",
-                                  categoryOut = TRUE)
+  # Use pre-computed sidebar vars from config (avoids duplicate computation)
+  Vars           <- sidebar$Vars
+  Vars2          <- sidebar$Vars2
+  check_lockIn   <- sidebar$check_lockIn
+  check_lockIn2  <- sidebar$check_lockIn2
+  check_lockOut  <- sidebar$check_lockOut
+  check_lockOut2 <- sidebar$check_lockOut2
 
 
 
@@ -358,35 +336,17 @@ mod_3compare_server <- function(id, cfg) {
   bndry     <- cfg$bndry
   overlay   <- cfg$overlay
   map_theme <- cfg$map_theme
+  sidebar   <- cfg$sidebar$compare
 
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     . <- NULL
 
-    # Recreate lock-in/out objects for server logic
-    check_lockIn <- fcreate_check(id = id,
-                                  Dict = Dict,
-                                  idType = "LockIn",
-                                  name_check = "check1LI_",
-                                  categoryOut = TRUE)
-
-    check_lockIn2 <- fcreate_check(id = id,
-                                   Dict = Dict,
-                                   idType = "LockIn",
-                                   name_check = "check2LI_",
-                                   categoryOut = TRUE)
-
-    check_lockOut <- fcreate_check(id = id,
-                                   Dict = Dict,
-                                   idType = "LockOut",
-                                   name_check = "check1LO_",
-                                   categoryOut = TRUE)
-
-    check_lockOut2 <- fcreate_check(id = id,
-                                    Dict = Dict,
-                                    idType = "LockOut",
-                                    name_check = "check2LO_",
-                                    categoryOut = TRUE)
+    # Use pre-computed sidebar vars from config (avoids duplicate computation)
+    check_lockIn   <- sidebar$check_lockIn
+    check_lockIn2  <- sidebar$check_lockIn2
+    check_lockOut  <- sidebar$check_lockOut
+    check_lockOut2 <- sidebar$check_lockOut2
 
     # Hide the Climate tab if climate change is not enabled.
     # The climate UI section is rendered conditionally in the UI (if/else), so no show/hide needed here.
@@ -425,15 +385,10 @@ mod_3compare_server <- function(id, cfg) {
       session$close()
     })
 
-    shiny::observeEvent(input$resetSlider,
-                        {fresetSlider(session, input, output, Dict = Dict, id = 1)
-                        },ignoreInit = TRUE
-    )
-
-    shiny::observeEvent(input$resetSlider,
-                        {fresetSlider(session, input, output, Dict = Dict, id = 2)
-                        },ignoreInit = TRUE
-    )
+    shiny::observeEvent(input$resetSlider, {
+      fresetSlider(session, sidebar$Vars)
+      fresetSlider(session, sidebar$Vars2)
+    }, ignoreInit = TRUE)
 
     # On analyse: capture timestamp, reset to first tab, scroll to top.
     shiny::observeEvent(input$analyse, {
@@ -594,7 +549,7 @@ mod_3compare_server <- function(id, cfg) {
       ggr_comp()
     }, bg = "transparent")
 
-    output$dlPlot1 <- fDownloadPlotServer(input, gg_id = ggr_comp(), gg_prefix = "Compare", time_date = analysisTime())
+    output$dlPlot1 <- fDownloadPlotServer(gg_reactive = ggr_comp, gg_prefix = "Compare", time_date_reactive = analysisTime)
 
     # Download comparison spatial data (GeoJSON) showing which areas are in which scenario
     output$dlSpatialComp <- shiny::downloadHandler(
@@ -696,17 +651,17 @@ mod_3compare_server <- function(id, cfg) {
 
     output$txt_soln1 <- shiny::renderText({
       soln_text1 <- fSolnText(input, solution1(), input$costid1)
-      paste(soln_text1[[1]], soln_text1[[2]])
+      paste(c(soln_text1[[1]], soln_text1[[2]]), collapse = " ")
     }) %>%
       shiny::bindEvent(input$analyse)
 
     output$txt_soln2 <- shiny::renderText({
       soln_text2 <- fSolnText(input, solution2(), input$costid2)
-      paste(soln_text2[[1]], soln_text2[[2]])
+      paste(c(soln_text2[[1]], soln_text2[[2]]), collapse = " ")
     }) %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot2 <- fDownloadPlotServer(input, gg_id = ggr_soln(), gg_prefix = "Solution", time_date = analysisTime())
+    output$dlPlot2 <- fDownloadPlotServer(gg_reactive = ggr_soln, gg_prefix = "Solution", time_date_reactive = analysisTime)
 
     # Download spatial data for Scenario 1
     output$dlSpatial1 <- shiny::downloadHandler(
@@ -822,7 +777,7 @@ mod_3compare_server <- function(id, cfg) {
       protection of features which were not chosen in this analysis but have areal overlap with selected planning units."
     })
 
-    output$dlPlot3 <- fDownloadPlotServer(input, gg_id = ggr_target(), gg_prefix = "Target", time_date = analysisTime())
+    output$dlPlot3 <- fDownloadPlotServer(gg_reactive = ggr_target, gg_prefix = "Target", time_date_reactive = analysisTime)
     ## Cost Plot -------------------------------------------------------------
 
     ggr_cost <- shiny::reactive({
@@ -876,17 +831,23 @@ mod_3compare_server <- function(id, cfg) {
     output$txt_cost <- shiny::renderText({
       cost_txt1 <- Dict %>% dplyr::filter(.data$nameVariable == input$costid1)
       cost_txt2 <- Dict %>% dplyr::filter(.data$nameVariable == input$costid2)
+      # Strip a leading "This cost" sentence if present, otherwise use justification as-is
+      strip_cost_prefix <- function(just) {
+        stripped <- stringr::str_remove(just, "^This cost[^.]*\\.\\s*")
+        if (nchar(stripped) == 0) just else stripped
+      }
       paste0(
-        "To illustrate how the chosen cost influences the spatial plan, this plot shows the
-         spatial plan (= scenario) overlaid with the cost of including a planning unit in a
-         reserve. The cost used on the left is ", cost_txt1$nameCommon, " and ",
-        stringr::str_remove(cost_txt1$justification, "This cost"), "The cost on the right is ",
-        cost_txt2$nameCommon, " and ", stringr::str_remove(cost_txt2$justification, "This cost")
+        "To illustrate how the chosen cost influences the spatial plan, this plot shows the",
+        " spatial plan (= scenario) overlaid with the cost of including a planning unit in a",
+        " reserve. The cost used on the left is ", cost_txt1$nameCommon, " and ",
+        strip_cost_prefix(cost_txt1$justification),
+        " The cost on the right is ",
+        cost_txt2$nameCommon, " and ", strip_cost_prefix(cost_txt2$justification)
       )
     }) %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot4 <- fDownloadPlotServer(input, gg_id = ggr_cost(), gg_prefix = "Cost", time_date = analysisTime())
+    output$dlPlot4 <- fDownloadPlotServer(gg_reactive = ggr_cost, gg_prefix = "Cost", time_date_reactive = analysisTime)
 
     ## Climate Resilience Plot -------------------------------------------------
 
@@ -940,7 +901,7 @@ mod_3compare_server <- function(id, cfg) {
     }) %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot7 <- fDownloadPlotServer(input, gg_id = ggr_clim(), gg_prefix = "Climate", time_date = analysisTime())
+    output$dlPlot7 <- fDownloadPlotServer(gg_reactive = ggr_clim, gg_prefix = "Climate", time_date_reactive = analysisTime)
 
     ## Details / Feature Summary Table -----------------------------------------
 
@@ -1010,7 +971,7 @@ mod_3compare_server <- function(id, cfg) {
     output$hdr_DetsData <- shiny::renderText("Feature Summary") %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot8 <- fDownloadPlotServer(input, gg_id = DataTabler(), gg_prefix = "DataSummary", time_date = analysisTime(), width = 16, height = 10)
+    output$dlPlot8 <- fDownloadPlotServer(gg_reactive = DataTabler, gg_prefix = "DataSummary", time_date_reactive = analysisTime, width = 16, height = 10)
 
     ## Log Tab -----------------------------------------------------------------
     # Render log text for Scenario 1

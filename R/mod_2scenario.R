@@ -11,6 +11,7 @@ mod_2scenario_ui <- function(id, cfg) {
   # Extract config locals
   Dict      <- cfg$Dict
   options   <- cfg$options
+  sidebar   <- cfg$sidebar$scenario
 
   ns <- shiny::NS(id)
 
@@ -21,40 +22,12 @@ mod_2scenario_ui <- function(id, cfg) {
     LI_num <- "3"
   }
 
-
-  # TODO I want to use this in the server as well. Not sure how to pass between the two.
-  slider_vars <- fcreate_vars(id = id,
-                              Dict = Dict,
-                              name_check = "sli_",
-                              categoryOut = TRUE,
-                              byCategory = FALSE)
-
-  # Reformat varsIn for the category sliders
-  slider_varsBioR <- fcreate_vars(id = id,
-                                  Dict = Dict,
-                                  name_check = "sli_",
-                                  categoryOut = TRUE,
-                                  byCategory = TRUE,
-                                  dataType = "Bioregion")
-
-  # Reformat varsIn for the category sliders
-  slider_varsCat <- fcreate_vars(id = id,
-                                 Dict = Dict,
-                                 name_check = "sli_",
-                                 categoryOut = TRUE,
-                                 byCategory = TRUE)
-
-  check_lockIn <- fcreate_check(id = id,
-                                Dict = Dict,
-                                idType = "LockIn",
-                                name_check = "checkLI_",
-                                categoryOut = TRUE)
-
-  check_lockOut <- fcreate_check(id = id,
-                                 Dict = Dict,
-                                 idType = "LockOut",
-                                 name_check = "checkLO_",
-                                 categoryOut = TRUE)
+  # Use pre-computed sidebar vars from config (avoids duplicate computation)
+  slider_vars     <- sidebar$slider_vars
+  slider_varsBioR <- sidebar$slider_varsBioR
+  slider_varsCat  <- sidebar$slider_varsCat
+  check_lockIn    <- sidebar$check_lockIn
+  check_lockOut   <- sidebar$check_lockOut
 
 
 
@@ -138,7 +111,7 @@ mod_2scenario_ui <- function(id, cfg) {
         shiny::h4("Boundary Penalty"),
         shiny::p("The boundary penalty tries to......"),
         shiny::numericInput(
-          inputId = id,
+          inputId = ns("boundaryPenalty"),
           label = NULL,
           value = 100,
           min = 0,
@@ -185,21 +158,11 @@ mod_2scenario_ui <- function(id, cfg) {
       ),
       width = 4),
     shiny::mainPanel(
-      shinydisconnect::disconnectMessage(
-        text = "Your session timed out, reload the application.",
-        refresh = "Reload now",
-        background = "#f89f43",
-        colour = "white",
-        overlayColour = "grey",
-        overlayOpacity = 0.3,
-        refreshColour = "brown"
-      ),
-
       tabsetPanel(
         id = ns("tabs"),
         type = "pills",
         tabPanel("Scenario",
-                 value = 1,
+                 value = "1",
                  shiny::fixedPanel(
                    style = "z-index:100", # To force the buttons above all plots.
                    shiny::div(
@@ -353,6 +316,7 @@ mod_2scenario_server <- function(id, cfg) {
   bndry        <- cfg$bndry
   overlay      <- cfg$overlay
   map_theme    <- cfg$map_theme
+  sidebar      <- cfg$sidebar$scenario
   tx_2solution <- cfg$tx_2solution
   tx_2targets  <- cfg$tx_2targets
   tx_2cost     <- cfg$tx_2cost
@@ -430,14 +394,9 @@ mod_2scenario_server <- function(id, cfg) {
     })
 
 
-    # TODO This is not working. Not sure why. Also not sure if we want that.
-    # # Go back to the first tab when analyse is clicked.
+    # Go back to the first tab and top of page when analyse is clicked.
     shiny::observeEvent(input$analyse, {
-      shiny::updateTabsetPanel(session, "tabs", selected = 1)
-    })
-
-    # Go back to the top of the page when analyse is clicked.
-    shiny::observeEvent(input$analyse, {
+      shiny::updateTabsetPanel(session, "tabs", selected = "1")
       shinyjs::runjs("window.scrollTo(0, 0)")
     })
 
@@ -451,39 +410,12 @@ mod_2scenario_server <- function(id, cfg) {
 
 
 
-    slider_vars <- fcreate_vars(id = id,
-                                Dict = Dict,
-                                name_check = "sli_",
-                                categoryOut = TRUE,
-                                byCategory = FALSE)
-
-    # Recreate lock-in/out objects for server logic
-    check_lockIn <- fcreate_check(id = id,
-                                  Dict = Dict,
-                                  idType = "LockIn",
-                                  name_check = "checkLI_",
-                                  categoryOut = TRUE)
-
-    check_lockOut <- fcreate_check(id = id,
-                                   Dict = Dict,
-                                   idType = "LockOut",
-                                   name_check = "checkLO_",
-                                   categoryOut = TRUE)
-
-    # Reformat varsIn for the category sliders
-    slider_varsBioR <- fcreate_vars(id = id,
-                                    Dict = Dict,
-                                    name_check = "sli_",
-                                    categoryOut = TRUE,
-                                    byCategory = TRUE,
-                                    dataType = "Bioregion")
-
-    # Reformat varsIn for the category sliders
-    slider_varsCat <- fcreate_vars(id = id,
-                                   Dict = Dict,
-                                   name_check = "sli_",
-                                   categoryOut = TRUE,
-                                   byCategory = TRUE)
+    # Use pre-computed sidebar vars from config (avoids duplicate computation)
+    slider_vars     <- sidebar$slider_vars
+    slider_varsBioR <- sidebar$slider_varsBioR
+    slider_varsCat  <- sidebar$slider_varsCat
+    check_lockIn    <- sidebar$check_lockIn
+    check_lockOut   <- sidebar$check_lockOut
 
 
 
@@ -508,7 +440,7 @@ mod_2scenario_server <- function(id, cfg) {
 
     # Reset Features
     shiny::observeEvent(input$resetSlider, {
-      fresetSlider(session, input, output)
+      fresetSlider(session, slider_vars)
     }, ignoreInit = TRUE)
 
     # Generic lock-in/lock-out toggling for all features
@@ -561,9 +493,7 @@ mod_2scenario_server <- function(id, cfg) {
       if (is.null(clim_val) || length(clim_val) == 0 || clim_val == "") {
         clim_val <- "NA"
       }
-      message("[p1Data] reactive triggered - clim_val: ", clim_val)
       p1 <- fdefine_problem(targetData(), raw_sf, options, input, clim_input = clim_val)
-      message("[p1Data] fdefine_problem returned")
       return(p1)
     })
 
@@ -573,10 +503,8 @@ mod_2scenario_server <- function(id, cfg) {
     solveLog <- shiny::reactiveVal(character(0))
 
     solution <- shiny::reactive({
-      message("[solution] reactive triggered")
       # Get the problem object
       prob <- p1Data()
-      message("[solution] p1Data() returned")
 
       # Use consolidated helper that solves and builds a clean log
       res <- fsolve_with_log(prob, cost_id = input$costid)
@@ -663,8 +591,9 @@ mod_2scenario_server <- function(id, cfg) {
       }
     }) %>% shiny::bindEvent(input$analyse)
 
-    output$dlPlot1 <- fDownloadPlotServer(input, gg_id = plot_data1_cache(),
-                                          gg_prefix = "Solution", time_date = analysisTime())
+    output$dlPlot1 <- fDownloadPlotServer(gg_reactive = plot_data1_cache,
+                                          gg_prefix = "Solution",
+                                          time_date_reactive = analysisTime)
 
     output$dlSpatial1 <- shiny::downloadHandler(
       filename = function() paste0("Scenario_Spatial_", analysisTime(), ".geojson"),
@@ -755,7 +684,9 @@ mod_2scenario_server <- function(id, cfg) {
     }) %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot2 <- fDownloadPlotServer(input, gg_id = gg_Target(), gg_prefix = "Target", time_date = analysisTime()) # Download figure
+    output$dlPlot2 <- fDownloadPlotServer(gg_reactive = gg_Target,
+                                          gg_prefix = "Target",
+                                          time_date_reactive = analysisTime)
 
 
 
@@ -813,7 +744,9 @@ mod_2scenario_server <- function(id, cfg) {
     }) %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot3 <- fDownloadPlotServer(input, gg_id = costPlotData(), gg_prefix = "Cost", time_date = analysisTime()) # Download figure
+    output$dlPlot3 <- fDownloadPlotServer(gg_reactive = costPlotData,
+                                          gg_prefix = "Cost",
+                                          time_date_reactive = analysisTime)
 
     ## Climate Tab -------------------------------------------------
 
@@ -863,7 +796,9 @@ mod_2scenario_server <- function(id, cfg) {
     }) %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot6 <- fDownloadPlotServer(input, gg_id = ggr_clim(), gg_prefix = "Climate", time_date = analysisTime()) # Download figure
+    output$dlPlot6 <- fDownloadPlotServer(gg_reactive = ggr_clim,
+                                          gg_prefix = "Climate",
+                                          time_date_reactive = analysisTime)
 
 
 
@@ -937,7 +872,10 @@ mod_2scenario_server <- function(id, cfg) {
     ) %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot7 <- fDownloadPlotServer(input, gg_id = DataTabler(), gg_prefix = "DataSummary", time_date = analysisTime(), width = 16, height = 10) # Download figure
+    output$dlPlot7 <- fDownloadPlotServer(gg_reactive = DataTabler,
+                                          gg_prefix = "DataSummary",
+                                          time_date_reactive = analysisTime,
+                                          width = 16, height = 10)
 
 
     # Ecosystem Services Tab -------------------------------------------------

@@ -11,6 +11,7 @@ mod_6help_ui <- function(id, cfg) {
   # Extract config locals
   tx_6faq       <- cfg$tx_6faq
   tx_6technical <- cfg$tx_6technical
+  tx_6changelog <- cfg$tx_6changelog
 
   ns <- shiny::NS(id)
   # shiny::tagList(
@@ -27,6 +28,12 @@ mod_6help_ui <- function(id, cfg) {
         value = 2,
         shiny::fluidPage(
           shiny::markdown(tx_6technical)
+        )
+      ),
+      shiny::tabPanel("Changelog",
+        value = 3,
+        shiny::fluidPage(
+          shiny::markdown(tx_6changelog)
         )
       ),
     )

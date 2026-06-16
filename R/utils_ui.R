@@ -26,7 +26,7 @@
 #'
 #' @noRd
 #'
-fcreate_vars <- function(id, Dict = Dict, name_check = "check",
+fcreate_vars <- function(id, Dict, name_check = "check",
                          categoryOut = FALSE, byCategory = FALSE,
                          dataType = "Feature") {
 
@@ -87,7 +87,7 @@ fcreate_vars <- function(id, Dict = Dict, name_check = "check",
 #'
 #' @noRd
 #'
-fcreate_check <- function(id, Dict = Dict, idType, name_check = "check", categoryOut = FALSE) {
+fcreate_check <- function(id, Dict, idType, name_check = "check", categoryOut = FALSE) {
 
   vars <- Dict %>%
     dplyr::filter(.data$type == idType) %>%

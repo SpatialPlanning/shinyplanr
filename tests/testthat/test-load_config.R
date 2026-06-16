@@ -8,6 +8,38 @@
 # ---------------------------------------------------------------------------
 
 make_valid_config <- function() {
+  Dict <- data.frame(
+    nameCommon    = c("Feature A"),
+    nameVariable  = c("feature_A"),
+    category      = c("Habitat"),
+    categoryID    = c("Hab"),
+    type          = c("Feature"),
+    targetInitial = c(30),
+    targetMin     = c(0),
+    targetMax     = c(85),
+    includeApp    = c(TRUE),
+    includeJust   = c(TRUE),
+    units         = c(""),
+    justification = c("A stub feature."),
+    stringsAsFactors = FALSE
+  )
+  sidebar <- list(
+    scenario = list(
+      slider_vars     = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = FALSE),
+      slider_varsBioR = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "Bioregion"),
+      slider_varsCat  = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE),
+      check_lockIn    = fcreate_check("2scenario_ui_1", Dict, "LockIn",  "checkLI_", categoryOut = TRUE),
+      check_lockOut   = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
+    ),
+    compare = list(
+      Vars           = fcreate_vars("3compare_ui_1", Dict, "sli_",  categoryOut = TRUE),
+      Vars2          = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
+      check_lockIn   = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check1LI_", categoryOut = TRUE),
+      check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check2LI_", categoryOut = TRUE),
+      check_lockOut  = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
+      check_lockOut2 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
+    )
+  )
   list(
     schema_version = 2L,
     options        = list(
@@ -36,21 +68,7 @@ make_valid_config <- function() {
     ),
     map_theme      = ggplot2::theme_bw(),
     bar_theme      = ggplot2::theme_bw(),
-    Dict           = data.frame(
-      nameCommon    = c("Feature A"),
-      nameVariable  = c("feature_A"),
-      category      = c("Habitat"),
-      categoryID    = c("Hab"),
-      type          = c("Feature"),
-      targetInitial = c(30),
-      targetMin     = c(0),
-      targetMax     = c(85),
-      includeApp    = c(TRUE),
-      includeJust   = c(TRUE),
-      units         = c(""),
-      justification = c("A stub feature."),
-      stringsAsFactors = FALSE
-    ),
+    Dict           = Dict,
     raw_sf         = sf::st_sf(
       feature_A = c(0.8, 0.2),
       geometry  = sf::st_sfc(
@@ -66,6 +84,7 @@ make_valid_config <- function() {
       )
     ),
     overlay        = sf::st_sf(geometry = sf::st_sfc(crs = "ESRI:54009")),
+    sidebar        = sidebar,
     tx             = list(
       welcome = list(list(title = "Welcome", text = "# Hello"))
     ),

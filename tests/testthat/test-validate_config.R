@@ -9,6 +9,38 @@
 # ---------------------------------------------------------------------------
 
 make_valid_config_v2 <- function() {
+  Dict <- data.frame(
+    nameCommon    = c("Feature A", "Feature B"),
+    nameVariable  = c("feature_A", "feature_B"),
+    category      = c("Habitat", "Habitat"),
+    categoryID    = c("Hab", "Hab"),
+    type          = c("Feature", "Feature"),
+    targetInitial = c(30, 30),
+    targetMin     = c(0, 0),
+    targetMax     = c(85, 85),
+    includeApp    = c(TRUE, TRUE),
+    includeJust   = c(TRUE, TRUE),
+    units         = c("", ""),
+    justification = c("Stub A.", "Stub B."),
+    stringsAsFactors = FALSE
+  )
+  sidebar <- list(
+    scenario = list(
+      slider_vars     = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = FALSE),
+      slider_varsBioR = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "Bioregion"),
+      slider_varsCat  = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE),
+      check_lockIn    = fcreate_check("2scenario_ui_1", Dict, "LockIn",  "checkLI_", categoryOut = TRUE),
+      check_lockOut   = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
+    ),
+    compare = list(
+      Vars           = fcreate_vars("3compare_ui_1", Dict, "sli_",  categoryOut = TRUE),
+      Vars2          = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
+      check_lockIn   = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check1LI_", categoryOut = TRUE),
+      check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check2LI_", categoryOut = TRUE),
+      check_lockOut  = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
+      check_lockOut2 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
+    )
+  )
   list(
     schema_version = 2L,
     options = list(
@@ -37,22 +69,8 @@ make_valid_config_v2 <- function() {
     ),
     map_theme = ggplot2::theme_bw(),
     bar_theme = ggplot2::theme_bw(),
-    Dict = data.frame(
-      nameCommon    = c("Feature A", "Feature B"),
-      nameVariable  = c("feature_A", "feature_B"),
-      category      = c("Habitat", "Habitat"),
-      categoryID    = c("Hab", "Hab"),
-      type          = c("Feature", "Feature"),
-      targetInitial = c(30, 30),
-      targetMin     = c(0, 0),
-      targetMax     = c(85, 85),
-      includeApp    = c(TRUE, TRUE),
-      includeJust   = c(TRUE, TRUE),
-      units         = c("", ""),
-      justification = c("Stub A.", "Stub B."),
-      stringsAsFactors = FALSE
-    ),
-    raw_sf = sf::st_sf(
+    Dict    = Dict,
+    raw_sf  = sf::st_sf(
       feature_A = c(0.8, 0.2),
       feature_B = c(0.3, 0.7),
       geometry  = sf::st_sfc(
@@ -61,14 +79,15 @@ make_valid_config_v2 <- function() {
         crs = "ESRI:54009"
       )
     ),
-    bndry = sf::st_sf(
+    bndry   = sf::st_sf(
       geometry = sf::st_sfc(
         sf::st_polygon(list(cbind(c(0, 2, 2, 0, 0), c(0, 0, 1, 1, 0)))),
         crs = "ESRI:54009"
       )
     ),
     overlay = sf::st_sf(geometry = sf::st_sfc(crs = "ESRI:54009")),
-    tx = list(
+    sidebar = sidebar,
+    tx      = list(
       welcome = list(list(title = "Welcome", text = "# Hello"))
     ),
     tx_1footer    = "Footer text",

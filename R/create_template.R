@@ -339,9 +339,7 @@ create_shinyplanr_template <- function(
   proj <- normalizePath(output_dir, mustWork = FALSE)
 
   tryCatch(
-    {
-      old_wd <- setwd(proj)
-      on.exit(setwd(old_wd), add = TRUE)
+    withr::with_dir(proj, {
 
       # Create renv infrastructure only. Package installation happens in
       # 1_setup_enviro.R once the user is inside the activated project.
@@ -400,7 +398,7 @@ create_shinyplanr_template <- function(
 
       message("\nrenv infrastructure created. Open ", basename(proj),
               ".Rproj and run setup/1_setup_enviro.R to install packages.")
-    },
+    }),
     error = function(e) {
       message(
         "\nCould not initialise renv: ", e$message,
@@ -837,7 +835,11 @@ create_shinyplanr_template <- function(
     "  include_bioregion = FALSE,",
     "",
     "  ## UQ logo in welcome footer",
-    "  show_uq_logo = TRUE,   # Set FALSE to hide the UQ logo"
+    "  show_uq_logo = TRUE,   # Set FALSE to hide the UQ logo",
+    "",
+    "  ## Institution text in welcome footer",
+    '  # institution_text = "This application was developed by researchers at My Institution."',
+    "  # Leave commented out to use the default UQ text."
   )
 
   # Climate options
@@ -994,6 +996,44 @@ create_shinyplanr_template <- function(
     "# SAVE CONFIGURATION",
     "# =============================================================================",
     "",
+    "# =============================================================================",
+    "# SIDEBAR (pre-computed slider/checkbox metadata)",
+    "# =============================================================================",
+    "#",
+    "# These are computed once here so that mod_2scenario and mod_3compare do not",
+    "# need to recompute them on every UI render and every server init.",
+    "# The module IDs must match those used in app_ui.R / app_server.R.",
+    "",
+    "sidebar <- list(",
+    "  scenario = list(",
+    '    slider_vars     = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
+    "                                                categoryOut = TRUE, byCategory = FALSE),",
+    '    slider_varsBioR = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
+    "                                                categoryOut = TRUE, byCategory = TRUE,",
+    '                                                dataType = "Bioregion"),',
+    '    slider_varsCat  = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
+    "                                                categoryOut = TRUE, byCategory = TRUE),",
+    '    check_lockIn    = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockIn",',
+    '                                                 "checkLI_", categoryOut = TRUE),',
+    '    check_lockOut   = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockOut",',
+    '                                                 "checkLO_", categoryOut = TRUE)',
+    "  ),",
+    "  compare = list(",
+    '    Vars            = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",',
+    "                                               categoryOut = TRUE),",
+    '    Vars2           = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",',
+    "                                               categoryOut = TRUE),",
+    '    check_lockIn    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",',
+    '                                                 "check1LI_", categoryOut = TRUE),',
+    '    check_lockIn2   = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",',
+    '                                                 "check2LI_", categoryOut = TRUE),',
+    '    check_lockOut   = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",',
+    '                                                 "check1LO_", categoryOut = TRUE),',
+    '    check_lockOut2  = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",',
+    '                                                 "check2LO_", categoryOut = TRUE)',
+    "  )",
+    ")",
+    "",
     "config_list <- list(",
     "  schema_version = shinyplanr::get_schema_version(),",
     "  options        = options,",
@@ -1003,6 +1043,7 @@ create_shinyplanr_template <- function(
     "  raw_sf         = raw_sf,",
     "  bndry          = bndry,",
     "  overlay        = overlay,",
+    "  sidebar        = sidebar,",
     "  tx             = tx,",
     "  tx_1footer     = tx_1footer,",
     "  tx_2solution   = tx_2solution,",

@@ -106,14 +106,16 @@ mod_4features_server <- function(id, cfg) {
     #       {
     # Solution plotting reactive
 
-    ftd <- names(input) %>%
-      stringr::str_subset("checkftd_")
-
     plotDensity <- shiny::reactive({
 
-      idx <- purrr::map_vec(ftd, \(x) input[[x]])
+      # Derive checked feature IDs inside the reactive so it re-evaluates
+      # whenever any checkbox changes (fixes A3: ftd was computed outside reactive).
+      ftd_all <- names(input) %>%
+        stringr::str_subset("checkftd_")
 
-      ftd <- ftd[idx] %>% stringr::str_remove_all("checkftd_")
+      idx <- purrr::map_vec(ftd_all, \(x) input[[x]])
+
+      ftd <- ftd_all[idx] %>% stringr::str_remove_all("checkftd_")
 
       dens <- raw_sf %>%
         dplyr::mutate(DummyVar = 0) %>% # Create a dummy variable so it will still plot 0 when nothing selected
@@ -208,28 +210,29 @@ mod_4features_server <- function(id, cfg) {
     }, bg = "transparent") %>% shiny::bindCache(input$checkFeat)
 
 
-    #TODO I have temporarily disabled justification because it is not complete.
-
     # Feature justification table
     output$LayerTable <- shiny::renderTable({
-
       Dict %>%
         dplyr::filter(.data$includeJust == TRUE) %>%
-        dplyr::select("category", "nameCommon") %>% # "justification"
-        dplyr::rename(Category = "category", Name = "nameCommon"
-                      # , Justification = "justification"
-                      ) %>%
+        dplyr::select("category", "nameCommon", "justification") %>%
+        dplyr::rename(
+          Category      = "category",
+          Name          = "nameCommon",
+          Justification = "justification"
+        ) %>%
         dplyr::arrange(.data$Category, .data$Name)
     })
 
-    # Text justification for the spatial plot
-    # output$txt_just <- shiny::renderText(
-    #   Dict %>%
-    #     dplyr::filter(.data$nameVariable == input$checkFeat) %>%
-    #     dplyr::pull(.data$justification)
-    #      )
-
-    output$txt_just <- shiny::renderText("")
+    # Text justification for the spatial plot (shown above the feature map)
+    output$txt_just <- shiny::renderUI({
+      just <- Dict %>%
+        dplyr::filter(.data$nameVariable == input$checkFeat) %>%
+        dplyr::pull("justification")
+      if (length(just) == 0 || is.na(just) || nchar(just) == 0) {
+        return(NULL)
+      }
+      shiny::p(just)
+    })
 
 
   })

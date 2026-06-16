@@ -14,6 +14,7 @@
 # Current schema version history:
 #   1 - Initial runtime-config deployment model
 #   2 - Removed redundant `vars` key (derivable from Dict$nameVariable)
+#       Added `sidebar` key (pre-computed fcreate_vars/fcreate_check results)
 
 .shinyplanr_schema_version <- 2L
 
@@ -43,6 +44,7 @@ get_schema_version <- function() {
   "raw_sf",
   "bndry",
   "overlay",
+  "sidebar",
   "tx",
   "tx_1footer",
   "tx_2solution",

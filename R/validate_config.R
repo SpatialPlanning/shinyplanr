@@ -185,6 +185,23 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   }
 
   # -------------------------------------------------------------------------
+  # 6b. overlay CRS matches raw_sf CRS (when overlay is non-empty)
+  # -------------------------------------------------------------------------
+  if (inherits(raw_sf, "sf") && inherits(overlay, "sf") && nrow(overlay) > 0) {
+    crs_match_overlay <- isTRUE(sf::st_crs(raw_sf) == sf::st_crs(overlay))
+    .check(
+      "overlay_CRS_matches_raw_sf",
+      crs_match_overlay,
+      if (!crs_match_overlay)
+        paste0(
+          "overlay CRS does not match raw_sf CRS.\n",
+          "  raw_sf:  ", sf::st_crs(raw_sf)$input, "\n",
+          "  overlay: ", sf::st_crs(overlay)$input
+        )
+    )
+  }
+
+  # -------------------------------------------------------------------------
   # 7. No Feature columns in raw_sf are all-zero or all-NA
   # -------------------------------------------------------------------------
   if (inherits(raw_sf, "sf") && is.data.frame(Dict)) {
@@ -238,6 +255,28 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       "config_list$tx must be a list with a 'welcome' element.\n",
       "  Each entry of tx$welcome must be a list with 'title' (character) ",
       "and 'text' (character) fields."
+    )
+  )
+
+  # -------------------------------------------------------------------------
+  # 8b. sidebar structure
+  # -------------------------------------------------------------------------
+  sidebar <- config_list[["sidebar"]]
+  sidebar_ok <- (
+    is.list(sidebar) &&
+    is.list(sidebar[["scenario"]]) &&
+    is.list(sidebar[["compare"]]) &&
+    is.data.frame(sidebar[["scenario"]][["slider_vars"]]) &&
+    is.data.frame(sidebar[["compare"]][["Vars"]]) &&
+    is.data.frame(sidebar[["compare"]][["Vars2"]])
+  )
+  .check(
+    "sidebar_structure",
+    sidebar_ok,
+    paste0(
+      "config_list$sidebar must be a list with 'scenario' and 'compare' sub-lists.\n",
+      "  Each must contain pre-computed slider/checkbox data frames.\n",
+      "  Re-run setup-app.R to regenerate the config."
     )
   )
 

@@ -149,6 +149,43 @@ tx_6technical <- ""
 tx_6changelog <- ""
 
 # ---------------------------------------------------------------------------
+# Sidebar (pre-computed slider/checkbox metadata)
+# ---------------------------------------------------------------------------
+# These are the outputs of fcreate_vars() / fcreate_check() called with the
+# stub Dict and the hardcoded module IDs used in app_ui.R / app_server.R.
+# At runtime, load_config() replaces these with the real deployment values.
+
+sidebar <- list(
+  scenario = list(
+    slider_vars     = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
+                                                categoryOut = TRUE, byCategory = FALSE),
+    slider_varsBioR = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
+                                                categoryOut = TRUE, byCategory = TRUE,
+                                                dataType = "Bioregion"),
+    slider_varsCat  = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
+                                                categoryOut = TRUE, byCategory = TRUE),
+    check_lockIn    = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockIn",
+                                                 "checkLI_", categoryOut = TRUE),
+    check_lockOut   = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockOut",
+                                                 "checkLO_", categoryOut = TRUE)
+  ),
+  compare = list(
+    Vars            = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
+                                               categoryOut = TRUE),
+    Vars2           = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
+                                               categoryOut = TRUE),
+    check_lockIn    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
+                                                 "check1LI_", categoryOut = TRUE),
+    check_lockIn2   = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
+                                                 "check2LI_", categoryOut = TRUE),
+    check_lockOut   = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
+                                                 "check1LO_", categoryOut = TRUE),
+    check_lockOut2  = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
+                                                 "check2LO_", categoryOut = TRUE)
+  )
+)
+
+# ---------------------------------------------------------------------------
 # Save to R/sysdata.rda
 # ---------------------------------------------------------------------------
 usethis::use_data(
@@ -160,6 +197,7 @@ usethis::use_data(
   raw_sf,
   bndry,
   overlay,
+  sidebar,
   tx,
   tx_1footer,
   tx_2solution,

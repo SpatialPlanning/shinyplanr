@@ -41,6 +41,11 @@ mod_1welcome_ui <- function(id, cfg) {
   tx_1footer <- cfg$tx_1footer
   options    <- cfg$options
 
+  # Institution text: use options$institution_text if set, otherwise fall back
+  # to the legacy hard-coded UQ string so existing deployments are unaffected.
+  institution_text <- options$institution_text %||%
+    "This application was developed by researchers at The University of Queensland."
+
   ns <- shiny::NS(id)
   shiny::fluidPage(
 
@@ -61,7 +66,7 @@ mod_1welcome_ui <- function(id, cfg) {
         shiny::column(
           width = 4,
           shiny::div(class = "contact-section",
-                     shiny::p("This application was developed by researchers at The University of Queensland."),
+                     shiny::p(institution_text),
                      shiny::p(paste0("\u00A9 ", format(Sys.Date(), "%Y"))),
           )
         ),
