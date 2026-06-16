@@ -512,6 +512,7 @@ create_shinyplanr_template <- function(
     '  "leaflet", "htmltools", "patchwork", "gridExtra", "reactable",',
     '  "shinyalert", "shinycssloaders", "shinydisconnect", "shinyjs",',
     '  "prioritizr", "rnaturalearth", "rnaturalearthdata", "units",',
+    '  "knitr", "kableExtra", "quarto",',
     '  "withr", "rsconnect"',
     "), prompt = FALSE)",
     "",

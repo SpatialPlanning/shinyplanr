@@ -65,6 +65,7 @@ Imports:
     tidyselect,
     withr
 Suggests:
+    kableExtra,
     knitr,
     renv,
     rstudioapi,
