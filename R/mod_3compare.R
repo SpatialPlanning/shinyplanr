@@ -404,15 +404,22 @@ mod_3compare_server <- function(id, cfg) {
     })
 
     # Define Problems
+    # bindEvent(input$analyse) freezes p1Data/p2Data to the inputs at click time,
+    # matching solution1()/solution2() which are also bound to input$analyse.
+    # Without this, a cost/climate change after clicking Analyse but before visiting
+    # the Targets tab would cause targetPlotData to be computed with different inputs
+    # than the solution was solved with.
     p1Data <- shiny::reactive({
       p1 <- fdefine_problem(targetData1(), raw_sf, options, input, clim_input = climVal1(), compare_id = "1")
       return(p1)
-    })
+    }) %>%
+      shiny::bindEvent(input$analyse)
 
     p2Data <- shiny::reactive({
       p2 <- fdefine_problem(targetData2(), raw_sf, options, input, clim_input = climVal2(), compare_id = "2")
       return(p2)
-    })
+    }) %>%
+      shiny::bindEvent(input$analyse)
 
 
     # Solve the problems and capture logs -------------------------------------------------------

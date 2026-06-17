@@ -262,15 +262,22 @@ frender_report <- function(file, output, template_name, notification_id,
 #' comparison modules:
 #' \enumerate{
 #'   \item A \code{reactiveVal(NULL)} that stores the last evaluated result.
+#'   \item An \code{observeEvent} on \code{input$analyse} that resets the cache
+#'     to \code{NULL} whenever a new analysis is run, preventing stale plots
+#'     from appearing in downloaded reports.
 #'   \item An \code{observeEvent} on \code{input[[tabs_id]]} that populates the
 #'     cache when the user navigates to \code{tab_id}.
 #' }
 #'
 #' The cache is used by the report download handler so that plots do not need to
 #' be re-evaluated at download time if the user has already visited the tab.
+#' The reset on \code{input$analyse} ensures that if the user runs a new analysis
+#' and downloads the report without revisiting a tab, the report handler's
+#' \code{\%||\%} fallback correctly re-evaluates the reactive rather than
+#' returning a plot from the previous analysis.
 #'
-#' Must be called from inside \code{shiny::moduleServer()} so that the observer
-#' is correctly bound to the active session.
+#' Must be called from inside \code{shiny::moduleServer()} so that the observers
+#' are correctly bound to the active session.
 #'
 #' @param gg_reactive A reactive expression (no parentheses) that returns the
 #'   plot or table object to cache.
@@ -288,6 +295,13 @@ frender_report <- function(file, output, template_name, notification_id,
 fmake_tab_cache <- function(gg_reactive, tab_id, input, tabs_id = "tabs") {
   cache <- shiny::reactiveVal(NULL)
 
+  # Reset cache on every new analysis so the report handler's %||% fallback
+  # re-evaluates the reactive rather than returning a plot from a prior run.
+  shiny::observeEvent(input$analyse, {
+    cache(NULL)
+  }, ignoreInit = TRUE)
+
+  # Populate cache when the user visits this tab.
   shiny::observeEvent(input[[tabs_id]], {
     if (input[[tabs_id]] == tab_id) {
       val <- tryCatch(gg_reactive(), error = function(e) NULL)

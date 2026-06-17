@@ -406,6 +406,11 @@ mod_2scenario_server <- function(id, cfg) {
 
 
 
+    # bindEvent(input$analyse) freezes p1Data to the inputs at click time,
+    # matching solution() which is also bound to input$analyse.
+    # Without this, a cost/climate change after clicking Analyse but before visiting
+    # the Targets tab would cause targetPlotData to be computed with different inputs
+    # than the solution was solved with.
     p1Data <- shiny::reactive({
       # Validate climate input - default to "NA" if NULL or empty
       clim_val <- input$climateid
@@ -414,7 +419,8 @@ mod_2scenario_server <- function(id, cfg) {
       }
       p1 <- fdefine_problem(targetData(), raw_sf, options, input, clim_input = clim_val)
       return(p1)
-    })
+    }) %>%
+      shiny::bindEvent(input$analyse)
 
 
     # Solve the problem -------------------------------------------------------
