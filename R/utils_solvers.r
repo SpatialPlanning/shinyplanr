@@ -1,7 +1,7 @@
-# Ensure rcbc is imported — it is the CBC solver backend used by
-# prioritizr::add_cbc_solver(). prioritizr calls rcbc internally, but CHECK
-# requires at least one importFrom declaration for packages listed in Imports.
-#' @importFrom rcbc cbc_solve
+# highs is the default solver backend used by prioritizr::add_default_solver().
+# prioritizr calls highs internally, but R CMD CHECK requires at least one
+# importFrom declaration for packages listed in Imports.
+#' @importFrom highs highs_solve
 NULL
 
 #' Solve prioritization problem with error handling

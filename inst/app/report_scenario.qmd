@@ -155,10 +155,3 @@ if (!is.null(params$solver_log)) {
 }
 ```
 
----
-
-# Session Information
-
-```{r session-info}
-sessionInfo()
-```

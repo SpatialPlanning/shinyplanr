@@ -535,15 +535,17 @@ mod_3compare_server <- function(id, cfg) {
         )
     }) %>% shiny::bindEvent(input$analyse)
 
-    # Cache populated on tab visit
+    # Cache populated when both solutions resolve, not on tab visit.
+    # updateTabsetPanel() redirects to tab 1 before solution1()/solution2()
+    # are evaluated, so observeEvent(input$tabs == 1) always fires too early.
+    # Both solutions are bindEvent(input$analyse), so observing solution2()
+    # (evaluated after solution1()) fires exactly once per analysis run.
     ggr_comp_cache <- shiny::reactiveVal(NULL)
 
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 1) {
-        val <- tryCatch(ggr_comp(), error = function(e) NULL)
-        if (!is.null(val)) ggr_comp_cache(val)
-      }
-    })
+    shiny::observeEvent(solution2(), {
+      val <- tryCatch(ggr_comp(), error = function(e) NULL)
+      if (!is.null(val)) ggr_comp_cache(val)
+    }, ignoreNULL = TRUE)
 
     output$gg_comp <- shiny::renderPlot({
       ggr_comp()
@@ -616,15 +618,14 @@ mod_3compare_server <- function(id, cfg) {
         )
     }) %>% shiny::bindEvent(input$analyse)
 
-    # Cache populated on tab visit
+    # Cache populated when both solutions resolve (same rationale as ggr_comp_cache).
+    # Tab 2 is always shown after analysis, so the tab observer fires too early.
     ggr_soln_cache <- shiny::reactiveVal(NULL)
 
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 2) {
-        val <- tryCatch(ggr_soln(), error = function(e) NULL)
-        if (!is.null(val)) ggr_soln_cache(val)
-      }
-    })
+    shiny::observeEvent(solution2(), {
+      val <- tryCatch(ggr_soln(), error = function(e) NULL)
+      if (!is.null(val)) ggr_soln_cache(val)
+    }, ignoreNULL = TRUE)
 
     output$gg_soln <- shiny::renderPlot({
       ggr_soln()
@@ -677,23 +678,35 @@ mod_3compare_server <- function(id, cfg) {
 
     ## Target Plot -------------------------------------------------------------
 
-    # On-screen reactive — updates when analyse or sort changes
-    ggr_target <- shiny::reactive({
-
-      targetPlotData1 <- fget_feature_representation(
+    # Shared feature-representation data — expensive computation, cached by analysis run.
+    # Both ggr_target and DataTabler consume these reactives so fget_feature_representation
+    # is called at most once per scenario per analysis, regardless of tabs visited.
+    targetPlotData1 <- shiny::reactive({
+      fget_feature_representation(
         soln = solution1(), problem_data = p1Data(), targets = targetData1(),
         climate_id = climVal1(), options = options, Dict = Dict
       )
+    }) %>%
+      shiny::bindCache(input$analyse)
 
-      targetPlotData2 <- fget_feature_representation(
+    targetPlotData2 <- shiny::reactive({
+      fget_feature_representation(
         soln = solution2(), problem_data = p2Data(), targets = targetData2(),
         climate_id = climVal2(), options = options, Dict = Dict
       )
+    }) %>%
+      shiny::bindCache(input$analyse)
 
-      if (is.null(targetPlotData1) || is.null(targetPlotData2)) return(NULL)
+    # On-screen reactive — updates when analyse is clicked or sort changes.
+    # Consumes targetPlotData1/2() so the expensive data step is not repeated.
+    ggr_target <- shiny::reactive({
+      tpd1 <- targetPlotData1()
+      tpd2 <- targetPlotData2()
+
+      if (is.null(tpd1) || is.null(tpd2)) return(NULL)
 
       patchwork::wrap_plots(
-        spatialplanr::splnr_plot_featureRep(targetPlotData1,
+        spatialplanr::splnr_plot_featureRep(tpd1,
                                             nr = 2, showTarget = TRUE,
                                             category = fget_category(Dict = Dict),
                                             renameFeatures = TRUE, namesToReplace = Dict,
@@ -701,7 +714,7 @@ mod_3compare_server <- function(id, cfg) {
           ggplot2::ggtitle("Scenario 1") +
           ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
                          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)),
-        spatialplanr::splnr_plot_featureRep(targetPlotData2,
+        spatialplanr::splnr_plot_featureRep(tpd2,
                                             nr = 2, showTarget = TRUE,
                                             category = fget_category(Dict = Dict),
                                             renameFeatures = TRUE, namesToReplace = Dict,
@@ -717,47 +730,16 @@ mod_3compare_server <- function(id, cfg) {
     }) %>%
       shiny::bindCache(input$analyse, input$checkSort)
 
-    # Cache for report — always uses "category" sort, populated on tab visit
+    # Cache for report — populated on tab visit using the already-memoised ggr_target().
+    # The report uses whatever sort the user last selected (input$checkSort).
     ggr_target_cache <- shiny::reactiveVal(NULL)
 
     shiny::observeEvent(input$tabs, {
       if (input$tabs == 3) {
-        targetPlotData1 <- tryCatch(fget_feature_representation(
-          soln = solution1(), problem_data = p1Data(), targets = targetData1(),
-          climate_id = climVal1(), options = options, Dict = Dict
-        ), error = function(e) NULL)
-        targetPlotData2 <- tryCatch(fget_feature_representation(
-          soln = solution2(), problem_data = p2Data(), targets = targetData2(),
-          climate_id = climVal2(), options = options, Dict = Dict
-        ), error = function(e) NULL)
-        if (!is.null(targetPlotData1) && !is.null(targetPlotData2)) {
-          val <- tryCatch(
-            patchwork::wrap_plots(
-              spatialplanr::splnr_plot_featureRep(targetPlotData1,
-                                                  nr = 2, showTarget = TRUE,
-                                                  category = fget_category(Dict = Dict),
-                                                  renameFeatures = TRUE, namesToReplace = Dict,
-                                                  sort_by = "category") +
-                ggplot2::ggtitle("Scenario 1") +
-                ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                               legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)),
-              spatialplanr::splnr_plot_featureRep(targetPlotData2,
-                                                  nr = 2, showTarget = TRUE,
-                                                  category = fget_category(Dict = Dict),
-                                                  renameFeatures = TRUE, namesToReplace = Dict,
-                                                  sort_by = "category") +
-                ggplot2::ggtitle("Scenario 2") +
-                ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                               legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)),
-              nrow = 1, guides = "collect"
-            ) &
-              ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
-                             plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                             legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)),
-            error = function(e) NULL
-          )
-          if (!is.null(val)) ggr_target_cache(val)
-        }
+        # ggr_target() hits bindCache — no recomputation if already visited with
+        # the current sort selection.
+        val <- tryCatch(ggr_target(), error = function(e) NULL)
+        if (!is.null(val)) ggr_target_cache(val)
       }
     })
 
@@ -907,27 +889,23 @@ mod_3compare_server <- function(id, cfg) {
 
     DataTabler <- shiny::reactive({
 
-      targetPlotData1 <- fget_feature_representation(
-        soln = solution1(), problem_data = p1Data(), targets = targetData1(),
-        climate_id = climVal1(), options = options, Dict = Dict
-      ) %>%
+      # Consume the shared targetPlotData reactives — fget_feature_representation
+      # has already been called (and cached) by ggr_target; no duplicate work here.
+      tpd1 <- targetPlotData1() %>%
         dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
 
-      targetPlotData2 <- fget_feature_representation(
-        soln = solution2(), problem_data = p2Data(), targets = targetData2(),
-        climate_id = climVal2(), options = options, Dict = Dict
-      ) %>%
+      tpd2 <- targetPlotData2() %>%
         dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
 
-      if (is.null(targetPlotData1) || is.null(targetPlotData2)) return(NULL)
+      if (is.null(tpd1) || is.null(tpd2)) return(NULL)
 
       rpl <- Dict %>%
-        dplyr::filter(.data$nameVariable %in% unique(c(targetPlotData1$feature, targetPlotData2$feature))) %>%
+        dplyr::filter(.data$nameVariable %in% unique(c(tpd1$feature, tpd2$feature))) %>%
         dplyr::select("nameVariable", "nameCommon") %>%
         dplyr::mutate(nameVariable = stringr::str_c("^", .data$nameVariable, "$")) %>%
         tibble::deframe()
 
-      FeaturestoSave1 <- targetPlotData1 %>%
+      FeaturestoSave1 <- tpd1 %>%
         dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
         dplyr::mutate(value = as.integer(round(.data$relative_held * 100)),
                       target = as.integer(round(.data$target * 100))) %>%
@@ -938,7 +916,7 @@ mod_3compare_server <- function(id, cfg) {
         dplyr::arrange(.data$Category, .data$Feature) %>%
         dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
 
-      FeaturestoSave2 <- targetPlotData2 %>%
+      FeaturestoSave2 <- tpd2 %>%
         dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
         dplyr::mutate(value = as.integer(round(.data$relative_held * 100)),
                       target = as.integer(round(.data$target * 100))) %>%

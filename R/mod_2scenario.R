@@ -546,8 +546,13 @@ mod_2scenario_server <- function(id, cfg) {
     #   (a) a reactive() bound to input$analyse (invalidates on new analysis,
     #       but does NOT execute until called)
     #   (b) a reactiveVal(NULL) caching the last evaluated ggplot object
-    #   (c) an observeEvent(input$tabs) that evaluates the reactive and
-    #       populates the cache when the user visits that tab
+    #   (c) population strategy depends on the tab:
+    #       - Tab 1 (Scenario): populated via observeEvent(solution()) because
+    #         updateTabsetPanel() redirects to tab 1 *before* solution() has
+    #         been evaluated, so an observeEvent(input$tabs == 1) fires too
+    #         early and always sees a NULL solution.
+    #       - All other tabs: populated via observeEvent(input$tabs) when the
+    #         user navigates to that tab (lazy — only if visited).
     #
     # The report handler reads from the caches.  If a cache is NULL (tab never
     # visited), the report evaluates the reactive directly at download time.
@@ -564,12 +569,15 @@ mod_2scenario_server <- function(id, cfg) {
 
     plot_data1_cache <- shiny::reactiveVal(NULL)
 
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 1) {
-        val <- plot_data1()
-        if (!is.null(val)) plot_data1_cache(val)
-      }
-    })
+    # Populate cache when solution() resolves, not on tab visit.
+    # updateTabsetPanel() redirects to tab 1 before solution() is evaluated,
+    # so observeEvent(input$tabs == 1) always fires too early and sees NULL.
+    # solution() is bindEvent(input$analyse), so this fires exactly once per
+    # analysis run, after the solve completes.
+    shiny::observeEvent(solution(), {
+      val <- tryCatch(plot_data1(), error = function(e) NULL)
+      if (!is.null(val)) plot_data1_cache(val)
+    }, ignoreNULL = TRUE)
 
     output$gg_soln <- shiny::renderPlot({
       req(inherits(solution(), "sf"))
@@ -600,29 +608,32 @@ mod_2scenario_server <- function(id, cfg) {
       content  = function(file) fdownload_solution_geojson(solution(), file)
     )
 
-
+ 
 
     ## Target Plot -------------------------------------------------------------
 
-    # Reactive for on-screen display — updates when analyse is clicked or sort changes
-    gg_Target <- shiny::reactive({
-
-      # Use consolidated helper function for feature representation
-      targetPlotData <- fget_feature_representation(
+    # Shared feature-representation data — expensive computation, cached by analysis run.
+    # Both gg_Target and DataTabler consume this reactive so fget_feature_representation
+    # is called at most once per analysis, regardless of how many tabs the user visits.
+    targetPlotData <- shiny::reactive({
+      fget_feature_representation(
         soln = solution(),
         problem_data = p1Data(),
         targets = targetData(),
-        climate_id = input$climateid,
+        climate_id = input$climateid %||% "NA",
         options = options,
         Dict = Dict
       )
+    }) %>%
+      shiny::bindCache(input$analyse)
 
-      # Return NULL if no data
-      if (is.null(targetPlotData)) {
-        return(NULL)
-      }
+    # Reactive for on-screen display — updates when analyse is clicked or sort changes.
+    # Consumes targetPlotData() so the expensive data step is not repeated.
+    gg_Target <- shiny::reactive({
+      tpd <- targetPlotData()
+      if (is.null(tpd)) return(NULL)
 
-      spatialplanr::splnr_plot_featureRep(targetPlotData,
+      spatialplanr::splnr_plot_featureRep(tpd,
                                           category = fget_category(Dict = Dict),
                                           renameFeatures = TRUE,
                                           namesToReplace = Dict,
@@ -635,38 +646,16 @@ mod_2scenario_server <- function(id, cfg) {
     }) %>%
       shiny::bindCache(input$analyse, input$checkSort)
 
-    # Cache for report — always uses default "category" sort, populated on tab visit
+    # Cache for report — populated on tab visit using the already-memoised gg_Target().
+    # The report uses whatever sort the user last selected (input$checkSort).
     gg_Target_cache <- shiny::reactiveVal(NULL)
 
     shiny::observeEvent(input$tabs, {
       if (input$tabs == 2) {
-        # Evaluate with fixed "category" sort for report consistency
-        targetPlotData <- tryCatch({
-          fget_feature_representation(
-            soln = solution(),
-            problem_data = p1Data(),
-            targets = targetData(),
-            climate_id = input$climateid,
-            options = options,
-            Dict = Dict
-          )
-        }, error = function(e) NULL)
-
-        if (!is.null(targetPlotData)) {
-          val <- tryCatch({
-            spatialplanr::splnr_plot_featureRep(targetPlotData,
-                                                category = fget_category(Dict = Dict),
-                                                renameFeatures = TRUE,
-                                                namesToReplace = Dict,
-                                                nr = 2,
-                                                showTarget = TRUE,
-                                                sort_by = "category") +
-              ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                             legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
-              )
-          }, error = function(e) NULL)
-          if (!is.null(val)) gg_Target_cache(val)
-        }
+        # gg_Target() hits bindCache — no recomputation if the user has already
+        # visited this tab with the current sort selection.
+        val <- tryCatch(gg_Target(), error = function(e) NULL)
+        if (!is.null(val)) gg_Target_cache(val)
       }
     })
 
@@ -808,30 +797,24 @@ mod_2scenario_server <- function(id, cfg) {
 
     DataTabler <- shiny::reactive({
 
-      # Use consolidated helper function for feature representation
-      targetPlotData <- fget_feature_representation(
-        soln = solution(),
-        problem_data = p1Data(),
-        targets = targetData(),
-        climate_id = input$climateid,
-        options = options,
-        Dict = Dict
-      )
+      # Consume the shared targetPlotData reactive — fget_feature_representation
+      # has already been called (and cached) by gg_Target; no duplicate work here.
+      tpd <- targetPlotData()
 
       # Return NULL if no data
-      if (is.null(targetPlotData)) {
+      if (is.null(tpd)) {
         return(NULL)
       }
 
       # Create named vector to do the replacement
       rpl <- Dict %>%
-        dplyr::filter(.data$nameVariable %in% targetPlotData$feature) %>%
+        dplyr::filter(.data$nameVariable %in% tpd$feature) %>%
         dplyr::select("nameVariable", "nameCommon") %>%
         dplyr::mutate(nameVariable = stringr::str_c("^", .data$nameVariable, "$")) %>%
         tibble::deframe()
 
       # TODO Add category to spatialplanr::splnr_get_featureRep and remove from splnr_plot_featureRep
-      FeaturestoSave <- targetPlotData %>%
+      FeaturestoSave <- tpd %>%
         dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
         dplyr::mutate(
           value = as.integer(round(.data$relative_held * 100)),
