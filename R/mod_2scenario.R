@@ -61,13 +61,15 @@ mod_2scenario_ui <- function(id, cfg) {
 
       shinyjs::hidden(div(
         id = ns("switchIndividualTargets"),
-        shiny::h2("1. Select Targets"),
+        shiny::h2("1. Select Feature Targets"),
         fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
       )),
 
       shinyjs::hidden(div(
         id = ns("switchBioregions"),
-        # TODO Add a conditional here to account for yes/no bioregions
+        # Hidden by default; shown by the server only when options$include_bioregion
+        # is TRUE (see utils_server.R fsetup_ui_switches()). No UI-level conditional
+        # is needed because shinyjs::hidden() already prevents rendering until shown.
         shiny::h3(paste0("1.", length(unique(slider_vars$category)) + 1, " Bioregions")),
         fcustom_sliderCategory(slider_varsBioR, labelNum = 1, byCategory = TRUE),
       )),
@@ -133,9 +135,9 @@ mod_2scenario_ui <- function(id, cfg) {
         id = ns("switchConstraints"),
         shiny::h2(paste0(LI_num,". Constraints")),
         shiny::p("You can also lock-in or lock-out some pre-defined areas to ensure they are either specifically included (lock-in) or excluded (lock-out) from the protected area. Planning Units outside these areas will be selected if needed to meet the targets."),
-        shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
+        if (nrow(check_lockIn) > 0) shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
         fcustom_checkCategory(check_lockIn),
-        shiny::h3(paste0(LI_num,".2 Locked-Out Areas")),
+        if (nrow(check_lockOut) > 0) shiny::h3(paste0(LI_num, ".2 Locked-Out Areas")),
         fcustom_checkCategory(check_lockOut),
       )),
 
@@ -488,7 +490,8 @@ mod_2scenario_server <- function(id, cfg) {
       if (!inherits(solution(), "sf")) return(NULL)
       fplot_solution_with_constraints(
         soln = solution(), input = input, raw_sf = raw_sf,
-        bndry = bndry, overlay = overlay, map_theme = map_theme, num = ""
+        bndry = bndry, overlay = overlay, map_theme = map_theme, num = "",
+        Dict = Dict
       )
     }) %>% shiny::bindEvent(input$analyse)
 

@@ -79,12 +79,15 @@ fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
 #' @param overlay Overlay sf object
 #' @param map_theme ggplot2 theme for map
 #' @param num Scenario number ("", "1", or "2" for compare module)
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{nameVariable} and \code{nameCommon}). Used to look up human-readable
+#'   legend labels for locked-in and locked-out areas.
 #'
 #' @return ggplot2 object
 #'
 #' @noRd
 #'
-fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay, map_theme, num = "") {
+fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay, map_theme, num = "", Dict = NULL) {
 
   # Base solution plot
   plot_out <- spatialplanr::splnr_plot_solution(
@@ -98,14 +101,36 @@ fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay,
       ggtheme = map_theme
     )
 
+  # Build a nameVariable -> nameCommon lookup from Dict (if available)
+  # This is used to display human-readable labels in the legend instead of
+  # raw column names (nameVariable).
+  name_lookup <- if (!is.null(Dict)) {
+    Dict %>%
+      dplyr::select("nameVariable", "nameCommon") %>%
+      tibble::deframe()  # named vector: nameVariable = nameCommon
+  } else {
+    NULL
+  }
+
   # Add lock-in areas if selected
   LI <- get_lockIn(input, num = num)
   if (length(LI) > 0) {
+    # Build named label vector for selected lock-in variables.
+    # Falls back to the raw nameVariable if not found in Dict.
+    li_labels <- if (!is.null(name_lookup)) {
+      stats::setNames(
+        dplyr::coalesce(name_lookup[LI], LI),
+        LI
+      )
+    } else {
+      LI
+    }
     plot_out <- plot_out +
       spatialplanr::splnr_gg_add(
         lockIn = raw_sf,
         nameLockIn = LI,
         legendLockIn = "Locked In Areas",
+        labelLockIn = li_labels,
         ggtheme = FALSE
       )
   }
@@ -113,11 +138,22 @@ fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay,
   # Add lock-out areas if selected
   LO <- get_lockOut(input, num = num)
   if (length(LO) > 0) {
+    # Build named label vector for selected lock-out variables.
+    # Falls back to the raw nameVariable if not found in Dict.
+    lo_labels <- if (!is.null(name_lookup)) {
+      stats::setNames(
+        dplyr::coalesce(name_lookup[LO], LO),
+        LO
+      )
+    } else {
+      LO
+    }
     plot_out <- plot_out +
       spatialplanr::splnr_gg_add(
         lockOut = raw_sf,
         nameLockOut = LO,
         legendLockOut = "Locked Out Areas",
+        labelLockOut = lo_labels,
         ggtheme = FALSE
       )
   }

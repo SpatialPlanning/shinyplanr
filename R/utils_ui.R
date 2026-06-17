@@ -165,13 +165,15 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #'
 fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCategory = TRUE) {
 
+  if (nrow(varsIn) == 0) return(NULL)
+
   ctgs <- unique(varsIn$category)
 
   if (isFALSE(byCategory)){
 
     shinyList <- vector("list", length = length(ctgs) * 2)
 
-    for (ctg in 1:length(ctgs)) {
+    for (ctg in seq_along(ctgs)) {
       feats <- varsIn %>%
         dplyr::filter(.data$category == ctgs[ctg]) %>%
         dplyr::select(-c("category", "categoryID"))
@@ -190,7 +192,7 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCa
 
     shinyList <- vector("list", length = length(ctgs))
 
-    for (ctg in 1:length(ctgs)) {
+    for (ctg in seq_along(ctgs)) {
       feats <- varsIn %>%
         dplyr::filter(.data$category == ctgs[ctg]) %>%
         dplyr::select(-"category")
@@ -230,6 +232,8 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCa
 #'
 fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
 
+  if (nrow(varsIn) == 0) return(NULL)
+
   fcustom_checkbox <- function(id, id_in, nameCommon, value = FALSE) {
     shinyWidgets::prettyCheckbox(
       inputId = shiny::NS(namespace = id, id = id_in),
@@ -245,7 +249,7 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
 
   shinyList <- vector("list", length = length(ctgs) * 2)
 
-  for (ctg in 1:length(ctgs)) {
+  for (ctg in seq_along(ctgs)) {
     feats <- varsIn %>%
       dplyr::filter(.data$category == ctgs[ctg]) %>%
       dplyr::select(-"category")

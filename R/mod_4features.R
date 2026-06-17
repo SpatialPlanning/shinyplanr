@@ -158,9 +158,8 @@ mod_4features_server <- function(id, cfg) {
         dplyr::filter(.data$nameVariable == input$checkFeat) %>%
         dplyr::pull(type)
 
-      # TODO I have fudged this it only returns a single type (e.g. when a feature is both lock in and lock out). Are there situations where this will be a problem?
-      # Ideally we would used the same function regardless of the type so this becomes irrelevent.
-
+      # A feature can appear in Dict with multiple types (e.g. MPAs as both LockIn and LockOut).
+      # Taking type[[1]] is safe here because LockIn and LockOut produce identical binary plots.
       type <- type[[1]]
 
       if (type == "Cost") {

@@ -46,7 +46,7 @@ mod_3compare_ui <- function(id, cfg) {
         shiny::h2("Scenario 1", style = "width: 100%; text-align:center; display: block"),
         shiny::h2("Scenario 2", style = "width: 100%; text-align:center; display: block"),
       ),
-      shiny::h2("1. Select Targets"),
+      shiny::h2("1. Select Feature Targets"),
       shiny::actionButton(ns("resetSlider"), "Reset All Features",
                           width = "100%", class = "btn btn-outline-primary",
                           style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
@@ -131,13 +131,13 @@ mod_3compare_ui <- function(id, cfg) {
         id = ns("switchConstraints"),
         shiny::h2(paste0(LI_num,". Constraints")),
         shiny::p("You can also lock-in or lock-out some pre-defined areas to ensure they are either specifically included (lock-in) or excluded (lock-out) from the protected area. Planning Units outside these areas will be selected if needed to meet the targets."),
-        shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
-        shiny::splitLayout(
+        if (nrow(check_lockIn) > 0 || nrow(check_lockIn2) > 0) shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
+        if (nrow(check_lockIn) > 0 || nrow(check_lockIn2) > 0) shiny::splitLayout(
           fcustom_checkCategory(check_lockIn),
           fcustom_checkCategory(check_lockIn2)
         ),
-        shiny::h3(paste0(LI_num,".2 Locked-Out Areas")),
-        shiny::splitLayout(
+        if (nrow(check_lockOut) > 0 || nrow(check_lockOut2) > 0) shiny::h3(paste0(LI_num, ".2 Locked-Out Areas")),
+        if (nrow(check_lockOut) > 0 || nrow(check_lockOut2) > 0) shiny::splitLayout(
           fcustom_checkCategory(check_lockOut),
           fcustom_checkCategory(check_lockOut2)
         )
@@ -537,12 +537,14 @@ mod_3compare_server <- function(id, cfg) {
 
       plot_soln1 <- fplot_solution_with_constraints(
         soln = solution1(), input = input, raw_sf = raw_sf,
-        bndry = bndry, overlay = overlay, map_theme = map_theme, num = "1"
+        bndry = bndry, overlay = overlay, map_theme = map_theme, num = "1",
+        Dict = Dict
       )
 
       plot_soln2 <- fplot_solution_with_constraints(
         soln = solution2(), input = input, raw_sf = raw_sf,
-        bndry = bndry, overlay = overlay, map_theme = map_theme, num = "2"
+        bndry = bndry, overlay = overlay, map_theme = map_theme, num = "2",
+        Dict = Dict
       )
 
       patchwork::wrap_plots(plot_soln1, plot_soln2, nrow = 1, guides = "collect") &
@@ -737,7 +739,6 @@ mod_3compare_server <- function(id, cfg) {
     output$hdr_cost <- shiny::renderText("The Cost Layer Overlaid with Selection") %>%
       shiny::bindEvent(input$analyse)
 
-    # TODO Move this text to the Dictionary and implement call to display here as usual
     output$txt_cost <- shiny::renderText({
       cost_txt1 <- Dict %>% dplyr::filter(.data$nameVariable == input$costid1)
       cost_txt2 <- Dict %>% dplyr::filter(.data$nameVariable == input$costid2)

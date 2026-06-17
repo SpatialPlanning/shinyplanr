@@ -168,8 +168,11 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   } else if (options$obj_func == "min_shortfall") {
 
-    # Calculate total value of current cost layer
-    # TODO make this a reactive and then this only needs to be done when cost layer changes
+    # Calculate total value of current cost layer.
+    # Note: fdefine_problem() is called inside solution(), which is bound to
+    # input$analyse. total_cost is therefore already only recalculated when the
+    # user clicks Analyse. A separate reactive would require passing total_cost
+    # as an argument here, adding complexity for negligible performance gain.
     total_cost <- p_dat %>%
       sf::st_drop_geometry() %>%
       dplyr::select(input[[paste0("costid", compare_id)]]) %>%
