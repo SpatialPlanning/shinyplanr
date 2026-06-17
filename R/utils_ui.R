@@ -53,7 +53,7 @@ fcreate_vars <- function(id, Dict, name_check = "check",
 
       vars <- vars %>%
         dplyr::summarise(id = dplyr::first(.data$id),
-                         id_in = paste0("master_sli_", dplyr::first(.data$categoryID)),
+                         id_in = paste0("master_", name_check, dplyr::first(.data$categoryID)),
                          nameCommon = dplyr::first(.data$category),
                          targetMin = min(.data$targetMin, na.rm = TRUE),
                          targetMax = max(.data$targetMax, na.rm = TRUE),
@@ -107,25 +107,6 @@ fcreate_check <- function(id, Dict, idType, name_check = "check", categoryOut = 
 
   return(vars)
 }
-
-#
-# #' Title
-# #'
-# #' @noRd
-# #'
-# fcustom_checkboxGroup <- function(id, id_in, Dict, titl) {
-#   Dict <- Dict %>%
-#     dplyr::select("nameCommon", "nameVariable") %>%
-#     tibble::deframe()
-#
-#   shiny::checkboxGroupInput(shiny::NS(namespace = id, id = id_in),
-#                             shiny::h5(titl),
-#                             choices = Dict,
-#                             selected = unlist(Dict)
-#   )
-# }
-
-
 
 #' Create a single \code{sliderInput} for a conservation feature
 #'
@@ -283,28 +264,6 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
 
   return(shinyList)
 }
-
-#
-#
-# #' Custom Drop Down for Climate
-# #'
-# #' @noRd
-# #'
-# fcustom_climate <- function(id, id_in, Dict) {
-#   choice <- Dict %>%
-#     dplyr::filter(.data$type == "Climate") %>%
-#     dplyr::select("nameCommon", "nameVariable") %>%
-#     dplyr::add_row(nameCommon = "Don't consider", .before = 1) %>%
-#     tibble::deframe()
-#
-#   shiny::selectInput(shiny::NS(namespace = id, id = id_in),
-#                      label = NULL, #shiny::h3(" "),
-#                      choices = choice,
-#                      multiple = FALSE
-#   )
-# }
-
-
 
 #' Fancy dropdown menu with categories
 #'

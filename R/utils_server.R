@@ -1,316 +1,352 @@
-#' Return category df from Dict
+#' Apply all UI show/hide switches driven by the options list
+#'
+#' Centralises the imperative \code{shinyjs::show/hide} and
+#' \code{shiny::hideTab} calls that are run once at server startup in both the
+#' scenario and comparison modules.  Every argument that controls a tab has a
+#' default of \code{NULL}; passing \code{NULL} skips that \code{hideTab} call,
+#' so each module only needs to supply the tabs it actually owns.
+#'
+#' Switches for UI elements that do not yet exist in a given module (e.g.
+#' \code{switchBoundaryPenalty} in the comparison module) are silently ignored
+#' by \code{shinyjs} — the calls are included here so the comparison module is
+#' ready to adopt those features without further changes to this helper.
+#'
+#' @param options Named list of app options (from \code{load_config()}).
+#' @param session Shiny session object from the enclosing \code{moduleServer}.
+#' @param tab_climate Character tab value for the Climate tab, or \code{NULL}
+#'   to skip.
+#' @param tab_explore Character tab value for the Explore tab, or \code{NULL}
+#'   to skip.
+#' @param tab_ess Character tab value for the Ecosystem Services tab, or
+#'   \code{NULL} to skip.
+#' @param tab_report Character tab value for the Report tab, or \code{NULL}
+#'   to skip.
+#' @param tab_log Character tab value for the Log tab, or \code{NULL} to skip.
+#'
+#' @return Invisibly \code{NULL}. Called for its side-effects.
 #'
 #' @noRd
 #'
-fget_category <- function(Dict) {
-  category <- Dict %>%
-    dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
-    dplyr::select("nameVariable", "category") %>%
-    dplyr::rename(feature = .data$nameVariable)
+fapply_ui_switches <- function(options, session,
+                               tab_climate = NULL,
+                               tab_explore = NULL,
+                               tab_ess     = NULL,
+                               tab_report  = NULL,
+                               tab_log     = NULL) {
 
-  return(category)
-}
-
-
-
-# Get Targets
-
-#' Calculate targets based on slider inputs
-#'
-#' Reads slider input values for all features of a given \code{dataType} from
-#' the feature dictionary and returns a data frame of feature name / target
-#' pairs ready for use in \code{prioritizr::add_relative_targets()}.
-#'
-#' @param input Shiny input object.
-#' @param Dict Data frame. The feature dictionary (must contain columns
-#'   \code{type} and \code{nameVariable}).
-#' @param name_check Character. Prefix used to build slider input IDs
-#'   (e.g. \code{"sli_"} for the Scenario module, \code{"sli2_"} for Compare).
-#' @param dataType Character. The \code{type} value(s) in \code{Dict} to
-#'   include (default \code{"Feature"}).
-#'
-#' @return A tibble with columns \code{feature} (character) and \code{target}
-#'   (numeric, 0–1 scale).
-#'
-#' @noRd
-#'
-fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature") {
-
-  ft <- Dict %>%
-    dplyr::filter(.data$type %in% dataType) %>%
-    dplyr::pull("nameVariable")
-
-  targets <- ft %>%
-    purrr::map(\(x) input[[paste0(name_check, x)]]) %>%
-    tibble::enframe() %>%
-    tidyr::unnest(cols = "value") %>%
-    dplyr::rename(feature = "name", target = "value") %>%
-    dplyr::mutate(feature = ft) %>%
-    dplyr::mutate(target = .data$target / 100) # requires number between 0-1
-
-  return(targets)
-}
-
-
-#' Calculate targets including bioregions
-#'
-#' Consolidates the logic for getting both feature and bioregion targets.
-#' This replaces ~30 lines of duplicated code in both Scenario and Compare modules.
-#'
-#' @param input Shiny input object
-#' @param name_check Prefix for slider inputs (e.g., "sli_", "sli2_")
-#' @param Dict The data dictionary
-#'
-#' @noRd
-#'
-fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
-
-  # Get feature targets
-  targets <- fget_targets(input, Dict = Dict, name_check = name_check, dataType = "Feature")
-
-  # Get bioregion targets if they exist
-  ft_bioregion <- Dict %>%
-    dplyr::filter(.data$type %in% "Bioregion") %>%
-    dplyr::select("feature" = "nameVariable", "categoryID")
-
-  # If no bioregions, return just features
-  if (nrow(ft_bioregion) == 0) {
-    return(targets)
-  }
-
-  # Build bioregion name_check (e.g., "sli_" -> "master_sli_", "sli2_" -> "master_sli2_")
-  bioregion_name_check <- paste0("master_", name_check)
-
-  # Get unique categories
-  cats <- ft_bioregion %>%
-    dplyr::pull("categoryID") %>%
-    unique()
-
-  # Get bioregion targets from inputs
-  targets_bioregion_raw <- cats %>%
-    purrr::map(\(x) input[[paste0(bioregion_name_check, x)]]) %>%
-    tibble::enframe() %>%
-    tidyr::unnest(cols = "value") %>%
-    dplyr::rename(categoryID = "name", target = "value") %>%
-    dplyr::mutate(categoryID = cats) %>%
-    dplyr::mutate(target = .data$target / 100) # requires number between 0-1
-
-  targets_bioregion <- dplyr::left_join(ft_bioregion, targets_bioregion_raw, by = "categoryID") %>%
-    dplyr::select(-"categoryID")
-
-  # Combine feature and bioregion targets
-  targets_combined <- dplyr::bind_rows(targets, targets_bioregion)
-
-  return(targets_combined)
-}
-
-
-#' Get feature representation data with climate handling
-#'
-#' Consolidates the logic for getting feature representation data,
-#' handling both climate-smart and regular approaches, and filtering
-#' to only Feature type (not Cost columns).
-#'
-#' @param soln Solution sf object
-#' @param problem_data Problem object
-#' @param targets Targets data frame
-#' @param climate_id Climate input ID (or "NA" if not using climate)
-#' @param options App options list
-#' @param Dict Data dictionary
-#'
-#' @return Data frame with feature representation
-#'
-#' @noRd
-#'
-fget_feature_representation <- function(soln, problem_data, targets, climate_id, options, Dict) {
-
-  # Check if solution is valid
-  if (!inherits(soln, "sf")) {
-    return(NULL)
-  }
-
-  # Get feature representation based on climate approach
-  if (climate_id == "NA") {
-    targetPlotData <- spatialplanr::splnr_get_featureRep(
-      soln = soln,
-      pDat = problem_data,
-      climsmart = FALSE
-    )
+  # --- Objective function switches ---
+  if (options$obj_func == "min_shortfall") {
+    shinyjs::show(id = "switchMinShortfall")
   } else {
-    targetPlotData <- spatialplanr::splnr_get_featureRep(
-      soln = soln,
-      pDat = problem_data,
-      climsmart = TRUE,
-      climsmartApproach = options$climate_change,
-      targets = targets
-    )
+    shinyjs::hide(id = "switchMinShortfall")
   }
 
-  # Filter to only include actual features (not cost or other columns)
-  # TODO: This filtering should eventually be moved into spatialplanr::splnr_get_featureRep
-  targetPlotData <- targetPlotData %>%
-    dplyr::filter(.data$feature %in% (Dict %>%
-                                        dplyr::filter(.data$type == "Feature") %>%
-                                        dplyr::pull(.data$nameVariable)))
-
-  return(targetPlotData)
-}
-
-
-
-#' Update a checkbox group input from the feature dictionary
-#'
-#' Refreshes the choices in a checkbox group input using entries from the
-#' feature dictionary filtered by category. The category is derived by
-#' stripping the known prefix from \code{id_in} (e.g. \code{"check2"},
-#' \code{"check"}).
-#'
-#' When \code{selected} is \code{NA} (default), all choices are selected
-#' (reset behaviour). Pass an explicit character vector to select specific
-#' values, or \code{character(0)} to deselect all.
-#'
-#' @param session Shiny session object.
-#' @param id_in Character. The input ID of the checkbox group to update.
-#' @param Dict Data frame. The feature dictionary (must contain columns
-#'   \code{category}, \code{nameCommon}, \code{nameVariable}).
-#' @param selected Character or NA. The selected value(s) after update.
-#'   When \code{NA} (default) all choices are selected.
-#'
-#' @noRd
-#'
-fupdate_checkbox <- function(session, id_in, Dict, selected = NA) {
-
-  # Derive category by stripping the longest matching prefix first so that
-  # "check2" is tried before "check" (avoids partial-match ambiguity).
-  if (stringr::str_starts(id_in, "check2")) {
-    cat <- stringr::str_remove(id_in, "^check2")
-  } else if (stringr::str_starts(id_in, "check")) {
-    cat <- stringr::str_remove(id_in, "^check")
+  if (options$obj_func == "min_set") {
+    shinyjs::show(id = "switchMinSet")
   } else {
-    cat <- id_in
+    shinyjs::hide(id = "switchMinSet")
   }
 
-  choice <- Dict %>%
-    dplyr::filter(.data$category == cat) %>%
-    dplyr::select("nameCommon", "nameVariable") %>%
-    tibble::deframe()
+  # --- Optional feature switches (no-op if element absent) ---
+  if (isTRUE(options$switchBoundaryPenalty)) {
+    shinyjs::show(id = "switchBoundaryPenalty")
+  }
 
-  sel <- if (is.na(selected)) unlist(choice) else selected
+  if (isTRUE(options$include_bioregion)) {
+    shinyjs::show(id = "switchBioregions")
+  }
 
-  shiny::updateCheckboxGroupInput(
-    session  = session,
-    inputId  = id_in,
-    choices  = choice,
-    selected = sel
+  if (isTRUE(options$include_lockedArea)) {
+    shinyjs::show(id = "switchConstraints")
+  }
+
+  # --- Target slider visibility ---
+  switch(options$targetsBy,
+    "master"     = shinyjs::show(id = "switchMasterTargets"),
+    "category"   = shinyjs::show(id = "switchCategoryTargets"),
+    "individual" = shinyjs::show(id = "switchIndividualTargets")
   )
-}
 
-
-
-
-#' Reset all slider inputs to their initial values
-#'
-#' @param session Shiny session object.
-#' @param slider_vars Data frame. Pre-computed slider metadata from
-#'   \code{cfg$sidebar$scenario$slider_vars} or
-#'   \code{cfg$sidebar$compare$Vars} / \code{Vars2}. Must contain columns
-#'   \code{id_in} and \code{targetInitial}.
-#'
-#' @noRd
-#'
-fresetSlider <- function(session, slider_vars) {
-  purrr::walk2(
-    .x = slider_vars$id_in,
-    .y = slider_vars$targetInitial,
-    .f = \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y)
-  )
-}
-
-
-
-
-
-# Check the number of features --------------------------------------------
-
-#' Check the number of features
-#'
-#' Counts the number of feature columns in \code{dat} by looking up which
-#' column names appear in \code{Dict} as type \code{"Feature"} or
-#' \code{"Bioregion"}. Falls back to the legacy prefix-exclusion approach
-#' when \code{Dict} is not supplied (for backwards compatibility).
-#'
-#' @param dat An \code{sf} object or data frame containing the problem data.
-#' @param Dict Optional data frame. The feature dictionary. When supplied,
-#'   only columns whose \code{nameVariable} appears in \code{Dict} with
-#'   \code{type \%in\% c("Feature", "Bioregion")} are counted.
-#'
-#' @noRd
-#'
-fCheckFeatureNo <- function(dat, Dict = NULL) {
-
-  dat_plain <- sf::st_drop_geometry(dat)
-
-  if (!is.null(Dict)) {
-    feature_vars <- Dict %>%
-      dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
-      dplyr::pull("nameVariable")
-    f_no <- sum(names(dat_plain) %in% feature_vars)
-  } else {
-    # Legacy fallback: exclude Cost_ prefix and "metric" column
-    f_no <- dat_plain %>%
-      dplyr::select(
-        -tidyselect::starts_with("Cost_"),
-        -tidyselect::any_of("metric")
-      ) %>%
-      ncol()
+  # --- Tab visibility ---
+  if (!isTRUE(options$include_climateChange) && !is.null(tab_climate)) {
+    shiny::hideTab(inputId = "tabs", target = tab_climate, session = session)
   }
 
-  return(f_no)
+  if (!isTRUE(options$include_explore) && !is.null(tab_explore)) {
+    shiny::hideTab(inputId = "tabs", target = tab_explore, session = session)
+  }
+
+  if (!isTRUE(options$include_ess) && !is.null(tab_ess)) {
+    shiny::hideTab(inputId = "tabs", target = tab_ess, session = session)
+  }
+
+  if (!isTRUE(options$include_report) && !is.null(tab_report)) {
+    shiny::hideTab(inputId = "tabs", target = tab_report, session = session)
+  }
+
+  if (!isTRUE(options$include_log) && !is.null(tab_log)) {
+    shiny::hideTab(inputId = "tabs", target = tab_log, session = session)
+  }
+
+  invisible(NULL)
 }
 
 
-#' Get the names of the locked In variables
+#' Render a Quarto report and stream it to a Shiny download handler
+#'
+#' Encapsulates the boilerplate shared by the scenario and comparison report
+#' download handlers:
+#' \enumerate{
+#'   \item Show a progress notification and spinner in \code{output$reportStatus}.
+#'   \item Resolve the QMD template via \code{system.file()} with a local
+#'     \code{inst/} fallback.
+#'   \item Save each ggplot in \code{plots} as a PNG and each data frame in
+#'     \code{tables} as a CSV into \code{tempdir()}.
+#'   \item Copy the QMD into a fresh temp sub-directory and call
+#'     \code{quarto::quarto_render()}, passing the saved file paths plus any
+#'     additional scalar \code{params} as \code{execute_params}.
+#'   \item Copy the rendered HTML to \code{file} (the path Shiny expects).
+#'   \item Show a success or error notification and update
+#'     \code{output$reportStatus}.
+#' }
+#'
+#' The names of \code{plots} and \code{tables} become the \code{execute_params}
+#' keys for the file paths: plot names get a \code{"_plot_path"} suffix
+#' (e.g. \code{list(solution = p)} → param key \code{"solution_plot_path"}),
+#' and table names get a \code{"_table_path"} suffix
+#' (e.g. \code{list(details = d)} → param key \code{"details_table_path"}).
+#' These must match the \code{params:} block in the QMD template.
+#' Additional scalar params are passed through \code{params} unchanged.
+#'
+#' @param file Character. The file path provided by Shiny's
+#'   \code{downloadHandler} \code{content} function.
+#' @param output Shiny output list from the enclosing \code{moduleServer}.
+#'   Used to update \code{output$reportStatus}.
+#' @param template_name Character. Filename of the QMD template inside
+#'   \code{inst/app/} (e.g. \code{"report_scenario.qmd"}).
+#' @param notification_id Character. ID passed to
+#'   \code{shiny::showNotification()} / \code{shiny::removeNotification()}.
+#' @param notification_msg Character. Message shown in the progress
+#'   notification while the report is rendering.
+#' @param tmp_dir_prefix Character. Prefix for the temporary render directory
+#'   (e.g. \code{"qrender_"} or \code{"qrender_compare_"}).
+#' @param plots Named list of ggplot objects (or \code{NULL} entries).  Each
+#'   non-\code{NULL} entry is saved as a PNG; the param key is
+#'   \code{paste0(name, "_plot_path")}.
+#' @param tables Named list of data frames (or \code{NULL} entries).  Each
+#'   non-\code{NULL} entry is saved as a CSV; the param key is
+#'   \code{paste0(name, "_table_path")}.
+#' @param params Named list of additional scalar values passed directly to
+#'   \code{execute_params} (e.g. \code{list(solver_log = "...", cost_id = "x")}).
+#' @param ts Character. Timestamp string used to make temp file names unique.
+#'   Typically \code{analysisTime()}.
+#'
+#' @return Invisibly \code{NULL}. Called for its side-effects.
 #'
 #' @noRd
 #'
-get_lockIn <- function(input, num = "") {
+frender_report <- function(file, output, template_name, notification_id,
+                           notification_msg, tmp_dir_prefix,
+                           plots, tables, params, ts) {
 
-  # Are there locked in areas in the app
-  inps <- names(input) %>%
-    stringr::str_subset(paste0("check", num, "LI_"))
+  # 1. Progress notification + spinner
+  shiny::showNotification(
+    notification_msg,
+    duration    = NULL,
+    closeButton = FALSE,
+    id          = notification_id,
+    type        = "message"
+  )
+  output$reportStatus <- shiny::renderUI({
+    shiny::tagList(
+      shiny::icon("spinner", class = "fa-spin"),
+      shiny::span(" Generating report\u2026")
+    )
+  })
 
-  # Which ones (if any) are selected?
-  n_inps <- purrr::map_vec(inps, \(x) input[[x]])
+  # 2. Resolve template
+  template_path <- system.file("app", template_name, package = "shinyplanr")
+  if (template_path == "" || !file.exists(template_path)) {
+    template_path <- file.path("inst", "app", template_name)
+  }
+  if (!file.exists(template_path)) {
+    shiny::removeNotification(notification_id)
+    shiny::showNotification(
+      paste0("Report template not found: ", template_name),
+      type     = "error",
+      duration = 10
+    )
+    return(invisible(NULL))
+  }
 
-  # Get the selected names
-  LI <- inps[n_inps] %>%
-    stringr::str_remove_all(paste0("check", num, "LI_"))
+  out_dir <- tempdir()
 
-  return(LI)
+  # 3a. Save plots → build path params
+  plot_paths <- purrr::imap(plots, function(plt, nm) {
+    if (is.null(plt)) return(NULL)
+    path <- file.path(out_dir, paste0(nm, "_", ts, ".png"))
+    try(
+      ggplot2::ggsave(path, plot = plt, width = 10, height = 8,
+                      dpi = 150, bg = "white"),
+      silent = TRUE
+    )
+    path
+  })
+
+  # 3b. Save tables → build path params
+  table_paths <- purrr::imap(tables, function(tbl, nm) {
+    if (is.null(tbl)) return(NULL)
+    path <- file.path(out_dir, paste0(nm, "_", ts, ".csv"))
+    try(utils::write.csv(tbl, path, row.names = FALSE), silent = TRUE)
+    path
+  })
+
+  # Rename to *_plot_path / *_table_path keys for execute_params,
+  # matching the param names declared in the QMD templates.
+  path_params <- c(
+    stats::setNames(plot_paths,  paste0(names(plot_paths),  "_plot_path")),
+    stats::setNames(table_paths, paste0(names(table_paths), "_table_path"))
+  )
+
+  # 4. Render
+  tryCatch({
+    tmp_dir <- file.path(tempdir(), paste0(tmp_dir_prefix, ts))
+    if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE)
+    tmp_qmd <- file.path(tmp_dir, template_name)
+    file.copy(template_path, tmp_qmd, overwrite = TRUE)
+
+    quarto::quarto_render(
+      input       = tmp_qmd,
+      output_file = "report.html",
+      execute_params = c(path_params, params)
+    )
+
+    # 5. Copy rendered HTML to Shiny's expected path
+    out_html <- file.path(tmp_dir, "report.html")
+    if (!file.exists(out_html)) stop("Rendered report not found at ", out_html)
+    file.copy(out_html, file, overwrite = TRUE)
+
+    # 6a. Success
+    shiny::removeNotification(notification_id)
+    shiny::showNotification("Report generated successfully!",
+                            type = "message", duration = 3)
+    output$reportStatus <- shiny::renderUI({
+      shiny::tagList(
+        shiny::icon("check-circle"),
+        shiny::span(paste(" Report generated at",
+                          format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
+      )
+    })
+  }, error = function(e) {
+    # 6b. Error
+    shiny::removeNotification(notification_id)
+    shiny::showNotification(
+      paste("Error generating report:", e$message),
+      type = "error", duration = 10
+    )
+    output$reportStatus <- shiny::renderUI({
+      shiny::tagList(
+        shiny::icon("exclamation-triangle"),
+        shiny::span(paste(" Error generating report:", e$message))
+      )
+    })
+  })
+
+  invisible(NULL)
 }
 
 
-#' Get the names of the locked Out variables
+#' Create a tab-visit cache for a plot or table reactive
+#'
+#' Encapsulates the repeated three-part pattern used throughout the scenario and
+#' comparison modules:
+#' \enumerate{
+#'   \item A \code{reactiveVal(NULL)} that stores the last evaluated result.
+#'   \item An \code{observeEvent} on \code{input[[tabs_id]]} that populates the
+#'     cache when the user navigates to \code{tab_id}.
+#' }
+#'
+#' The cache is used by the report download handler so that plots do not need to
+#' be re-evaluated at download time if the user has already visited the tab.
+#'
+#' Must be called from inside \code{shiny::moduleServer()} so that the observer
+#' is correctly bound to the active session.
+#'
+#' @param gg_reactive A reactive expression (no parentheses) that returns the
+#'   plot or table object to cache.
+#' @param tab_id The value of the tab panel (as set in \code{tabPanel(value = ...)})
+#'   that should trigger cache population.
+#' @param input Shiny input object from the enclosing \code{moduleServer}.
+#' @param tabs_id Character. The input ID of the \code{tabsetPanel} to watch.
+#'   Default \code{"tabs"}.
+#'
+#' @return A \code{reactiveVal} initialised to \code{NULL}. Assign the return
+#'   value to a named variable (e.g. \code{costPlotData_cache <- fmake_tab_cache(...)}).
 #'
 #' @noRd
 #'
-get_lockOut <- function(input, num = "") {
+fmake_tab_cache <- function(gg_reactive, tab_id, input, tabs_id = "tabs") {
+  cache <- shiny::reactiveVal(NULL)
 
-  # Are there locked out areas in the app
-  inps <- names(input) %>%
-    stringr::str_subset(paste0("check", num, "LO_"))
+  shiny::observeEvent(input[[tabs_id]], {
+    if (input[[tabs_id]] == tab_id) {
+      val <- tryCatch(gg_reactive(), error = function(e) NULL)
+      if (!is.null(val)) cache(val)
+    }
+  })
 
-  # Which ones (if any) are selected?
-  n_inps <- purrr::map_vec(inps, \(x) input[[x]])
-
-  # Get the selected names
-  LO <- inps[n_inps] %>%
-    stringr::str_remove_all(paste0("check", num, "LO_"))
-
-  return(LO)
+  cache
 }
 
 
+#' Set up paired lock-in / lock-out observers
+#'
+#' For each conservation feature that appears in both the lock-in and lock-out
+#' checkbox lists, registers a pair of \code{observeEvent} handlers so that
+#' enabling one automatically disables the other (mutual exclusion).
+#'
+#' This helper must be called from inside \code{shiny::moduleServer()} so that
+#' the observers are correctly bound to the active session.
+#'
+#' @param input Shiny input object (from the enclosing \code{moduleServer}).
+#' @param check_lockIn Data frame. Output of \code{fcreate_check()} for the
+#'   lock-in type. Must contain column \code{id_in}.
+#' @param check_lockOut Data frame. Output of \code{fcreate_check()} for the
+#'   lock-out type. Must contain column \code{id_in}.
+#' @param li_prefix Character. The prefix used in lock-in input IDs
+#'   (e.g. \code{"checkLI_"} for scenario, \code{"check1LI_"} for compare
+#'   scenario 1).
+#' @param lo_prefix Character. The prefix used in lock-out input IDs
+#'   (e.g. \code{"checkLO_"} for scenario, \code{"check1LO_"} for compare
+#'   scenario 1).
+#'
+#' @return Invisibly \code{NULL}. Called for its side-effect of registering
+#'   Shiny observers.
+#'
+#' @noRd
+#'
+fsetup_lock_observers <- function(input, check_lockIn, check_lockOut,
+                                  li_prefix, lo_prefix) {
+  get_feature <- function(id, prefix) stringr::str_remove(id, prefix)
+
+  lockIn_features  <- purrr::map_chr(check_lockIn$id_in,  get_feature, prefix = li_prefix)
+  lockOut_features <- purrr::map_chr(check_lockOut$id_in, get_feature, prefix = lo_prefix)
+
+  shared_features <- intersect(lockIn_features, lockOut_features)
+
+  purrr::walk(shared_features, function(feat) {
+    lockInId  <- paste0(li_prefix, feat)
+    lockOutId <- paste0(lo_prefix, feat)
+    shiny::observeEvent(input[[lockInId]], {
+      shinyjs::toggleState(lockOutId)
+    }, ignoreInit = TRUE)
+    shiny::observeEvent(input[[lockOutId]], {
+      shinyjs::toggleState(lockInId)
+    }, ignoreInit = TRUE)
+  })
+
+  invisible(NULL)
+}
 
 
 
@@ -321,19 +357,26 @@ get_lockOut <- function(input, num = "") {
 #' @param gg_reactive A \strong{reactive} (callable, no parentheses) that
 #'   returns the current ggplot object or data frame. Evaluated lazily inside
 #'   the \code{content} function so it always reflects the latest analysis.
-#' @param gg_prefix Character. Filename prefix (e.g. \code{"Solution"}).
-#'   Use \code{"DataSummary"} to trigger CSV download instead of PNG.
+#' @param gg_prefix Character. Filename prefix (e.g. \code{"Solution"},
+#'   \code{"DataSummary"}).
 #' @param time_date_reactive A \strong{reactive} or \strong{reactiveVal}
 #'   (callable, no parentheses) that returns a timestamp string used in the
 #'   filename. Evaluated lazily inside \code{filename}.
+#' @param type Character. Either \code{"plot"} (default, saves a PNG via
+#'   \code{ggplot2::ggsave()}) or \code{"table"} (saves a CSV via
+#'   \code{readr::write_csv()}).
 #' @param width,height Numeric. PNG dimensions in inches. Default 19 × 18.
+#'   Ignored when \code{type = "table"}.
 #'
 #' @noRd
 #'
 fDownloadPlotServer <- function(gg_reactive, gg_prefix, time_date_reactive,
+                                type = c("plot", "table"),
                                 width = 19, height = 18) {
 
-  if (gg_prefix != "DataSummary") {
+  type <- match.arg(type)
+
+  if (type == "plot") {
 
     dlPlot <- shiny::downloadHandler(
       filename = function() {

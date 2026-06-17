@@ -196,24 +196,24 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   LI <- get_lockIn(input, num = compare_id)
 
   if (length(LI) > 0) {
-    for (idx in 1:length(LI)){
-      p1 <- p1 %>%
-        prioritizr::add_locked_in_constraints(as.logical(raw_sf[[LI[idx]]]))
-    } # End loop
-  } # End Lock In
-
-
+    p1 <- purrr::reduce(
+      LI,
+      \(prob, li) prob %>% prioritizr::add_locked_in_constraints(as.logical(raw_sf[[li]])),
+      .init = p1
+    )
+  }
 
   ## Do Locked Out Regions ----------------------------------------------------
 
   LO <- get_lockOut(input, num = compare_id)
 
   if (length(LO) > 0) {
-    for (idx in 1:length(LO)){
-      p1 <- p1 %>%
-        prioritizr::add_locked_out_constraints(as.logical(raw_sf[[LO[idx]]]))
-    } # End loop
-  } # End Lock Out
+    p1 <- purrr::reduce(
+      LO,
+      \(prob, lo) prob %>% prioritizr::add_locked_out_constraints(as.logical(raw_sf[[lo]])),
+      .init = p1
+    )
+  }
 
 
   rm(p_dat)

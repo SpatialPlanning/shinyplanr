@@ -98,12 +98,12 @@ create_shinyplanr_template <- function(
   }
 
   # Copy default logos to the logos directory.
-  # These are placeholder files — the deployer replaces them with their own images.
+  # These are placeholder files - the deployer replaces them with their own images.
   #
-  #   logo_navbar.png  → top-left of the navbar on every page
-  #   logo_welcome.png → inline image in the welcome page (shinyplanr_1welcome1.md)
-  #   logo_funder.png  → primary "Funded by" logo in the welcome page footer
-  #   logo_funder2.png → optional second funder logo (default: UQ logo)
+  #   logo_navbar.png  - top-left of the navbar on every page
+  #   logo_welcome.png - inline image in the welcome page (shinyplanr_1welcome1.md)
+  #   logo_funder.png  - primary "Funded by" logo in the welcome page footer
+  #   logo_funder2.png - optional second funder logo (default: UQ logo)
   #                      comment out file_logo_funder2 in 3_setup_app.R to hide it
   logos_dir <- file.path(setup_dir, "logos")
 
@@ -915,7 +915,7 @@ create_shinyplanr_template <- function(
     "  include_report = TRUE,",
     "",
     "  ## Optional tabs",
-    "  include_ess     = FALSE,  # Ecosystem Services tab — set TRUE if Dict contains EcosystemServices rows",
+    "  include_ess     = FALSE,  # Ecosystem Services tab - set TRUE if Dict contains EcosystemServices rows",
     "  include_explore = TRUE,  # Explore tab",
     "  include_log     = TRUE,  # Log tab",
     "",
@@ -978,7 +978,7 @@ create_shinyplanr_template <- function(
     'if (!dir.exists("www")) dir.create("www", recursive = TRUE)',
     "",
     "# Maps each option key to its fixed destination filename in www/.",
-    "# The filenames in www/ are what the running app loads — do not change them.",
+    "# The filenames in www/ are what the running app loads - do not change them.",
     "logo_map <- list(",
     '  file_logo_navbar  = "logo_navbar.png",',
     '  file_logo_welcome = "logo_welcome.png",',
@@ -998,7 +998,7 @@ create_shinyplanr_template <- function(
     "}",
     "",
     "# Derive show_logo_funder2: TRUE only if the file was successfully copied.",
-    "# This is set automatically — do not set it manually in shinyplanr_options.",
+    "# This is set automatically - do not set it manually in shinyplanr_options.",
     "shinyplanr_options$show_logo_funder2 <- file.exists(file.path(\"www\", \"logo_funder2.png\"))",
     "",
     "# Copy custom CSS override if present (overrides package default styling)",
@@ -1294,7 +1294,8 @@ create_shinyplanr_template <- function(
 
   if (include_mpas) {
     dict_rows <- c(dict_rows,
-      "Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas."
+      "Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas.",
+      "Marine Protected Areas,mpas,Protected Areas,MPAs,LockOut,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas."
     )
   }
 
@@ -1383,7 +1384,7 @@ create_shinyplanr_template <- function(
     "| File in setup/logos/ | Where it appears in the app | Notes |",
     "|----------------------|----------------------------|-------|",
     "| `logo_navbar.png`     | Top-left of the navbar on every page | Recommended height: 40 px; white/transparent background works best |",
-    "| `logo_welcome.png`    | Inline image in the welcome page (`shinyplanr_1welcome1.md`) | Embedded as `<img src=\"www/logo_welcome.png\">` — edit that file to resize or remove |",
+    "| `logo_welcome.png`    | Inline image in the welcome page (`shinyplanr_1welcome1.md`) | Embedded as `<img src=\"www/logo_welcome.png\">` - edit that file to resize or remove |",
     "| `logo_funder.png`     | Primary logo in the welcome page footer \"Funded by\" section | Links to `funder_url` in `3_setup_app.R` |",
     "| `uq-logo-white.png`   | Optional second logo in the welcome page footer | Default is the UQ logo. To use a different image, replace this file and update `file_logo_funder2` in `3_setup_app.R`. To hide it entirely, comment out `file_logo_funder2`. |",
     "",

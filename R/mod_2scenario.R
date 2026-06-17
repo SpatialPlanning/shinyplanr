@@ -37,11 +37,11 @@ mod_2scenario_ui <- function(id, cfg) {
   shiny::sidebarLayout(
     shiny::sidebarPanel(
 
-      # shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
-      #                     width = "100%", class = "btn btn-outline-primary",
-      #                     style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
-      # ),
-      # shiny::hr(style = "border-top: 1px solid #000000;"),
+      shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
+                          width = "100%", class = "btn btn-outline-primary",
+                          style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
+      ),
+      shiny::hr(style = "border-top: 1px solid #000000;"),
 
 
       shinyjs::hidden(div(
@@ -80,13 +80,6 @@ mod_2scenario_ui <- function(id, cfg) {
 
 
       # Define Objective Function -----
-
-      # shinyjs::hidden(div(
-      #   id = ns("switchMinSet"),
-      #   shiny::p("The objective function used here is ......."),
-      #   shiny::h4("Minimum Set"),
-      #   shiny::p("All targets will be met for the smallest possible cost.")
-      # )),
 
       shinyjs::hidden(div(
         id = ns("switchMinShortfall"),
@@ -328,84 +321,23 @@ mod_2scenario_server <- function(id, cfg) {
 
     . <- NULL
 
-    # Define all switches ----
-    # I wonder if I can move these to a function as I can use the same
-    # switches in mod3 as well.
-
-    ## Define objective function ----
-    if (options$obj_func == "min_shortfall") {
-      shinyjs::show(id = "switchMinShortfall")
-    } else {
-      shinyjs::hide(id = "switchMinShortfall")
-    }
-
-    # I have turned this off. I don't think we want a description of the min_set
-    # unless specifically asked for
-    # if (options$obj_func == "min_set") {
-    #   shinyjs::show(id = "switchMinSet")
-    # } else {
-    #   shinyjs::hide(id = "switchMinSet")
-    # }
-
-
-    ## Turn on Boundary Penalty -----
-    if (isTRUE(options$switchBoundaryPenalty)) {
-      shinyjs::show(id = "switchBoundaryPenalty")
-    }
-
-    ## Turn on Bioregions -----
-    if (isTRUE(options$include_bioregion)) {
-      shinyjs::show(id = "switchBioregions")
-    }
-
-    ## Hide the Climate tab if climate change is not enabled.
-    ## The climate UI section is rendered conditionally in the UI (if/else), so no show/hide needed here.
-    if (!isTRUE(options$include_climateChange)) {
-      shiny::hideTab(inputId = "tabs", target = "6", session = session)
-    }
-
-    ## Turn off Explore tab ----
-    if (!isTRUE(options$include_explore)) {
-      shiny::hideTab(inputId = "tabs", target = "4", session = session)
-    }
-
-    ## Turn off Ecosystem Services tab ----
-    if (!isTRUE(options$include_ess)) {
-      shiny::hideTab(inputId = "tabs", target = "5", session = session)
-    }
-
-    ## Turn off Report tab ----
-    if (!isTRUE(options$include_report)) {
-      shiny::hideTab(inputId = "tabs", target = "10", session = session)
-    }
-
-    ## Turn off Log tab ----
-    if (!isTRUE(options$include_log)) {
-      shiny::hideTab(inputId = "tabs", target = "8", session = session)
-    }
-
-    ## Turn on Locked In/Out Constraints ----
-    if (isTRUE(options$include_lockedArea)) {
-      shinyjs::show(id = "switchConstraints")
-    }
+    # Apply all UI show/hide switches driven by options ----
+    fapply_ui_switches(options, session,
+                       tab_climate = "6",
+                       tab_explore = "4",
+                       tab_ess     = "5",
+                       tab_report  = "10",
+                       tab_log     = "8")
 
     observeEvent(input$disconnect, {
       session$close()
     })
-
 
     # Go back to the first tab and top of page when analyse is clicked.
     shiny::observeEvent(input$analyse, {
       shiny::updateTabsetPanel(session, "tabs", selected = "1")
       shinyjs::runjs("window.scrollTo(0, 0)")
     })
-
-
-    switch(options$targetsBy,
-           "master" = shinyjs::show(id = "switchMasterTargets"), # Hide Individual targets,
-           "category" = shinyjs::show(id = "switchCategoryTargets"), # Show Category targets
-           "individual" = shinyjs::show(id = "switchIndividualTargets") # Hide Individual targets
-    )
 
 
 
@@ -438,34 +370,21 @@ mod_2scenario_server <- function(id, cfg) {
     })
 
 
-    # Reset Features
+    # Reset all slider groups so the full state is clean regardless of which
+    # target mode (master / category / individual) is currently active.
     shiny::observeEvent(input$resetSlider, {
-      fresetSlider(session, slider_vars)
+      fresetSlider(session, slider_vars)      # individual feature sliders
+      fresetSlider(session, slider_varsCat)   # per-category master sliders
+      shiny::updateSliderInput(               # single master slider
+        session = session,
+        inputId = "masterSli",
+        value   = round(mean(Dict$targetInitial, na.rm = TRUE))
+      )
     }, ignoreInit = TRUE)
 
-    # Generic lock-in/lock-out toggling for all features
-    # Pair lock-in/lock-out toggling only for matching features
-    lockIn_ids <- check_lockIn$id_in
-    lockOut_ids <- check_lockOut$id_in
-
-    # Extract feature names from input IDs (assumes format 'checkLI_feature')
-    get_feature <- function(id, prefix) stringr::str_remove(id, prefix)
-    lockIn_features <- purrr::map_chr(lockIn_ids, get_feature, prefix = "checkLI_")
-    lockOut_features <- purrr::map_chr(lockOut_ids, get_feature, prefix = "checkLO_")
-
-    # For each feature present in both lock-in and lock-out, set up paired observers
-    # so they can't both be enabled at the same time
-    shared_features <- intersect(lockIn_features, lockOut_features)
-    purrr::walk(shared_features, function(feat) {
-      lockInId <- paste0("checkLI_", feat)
-      lockOutId <- paste0("checkLO_", feat)
-      shiny::observeEvent(input[[lockInId]], {
-        shinyjs::toggleState(lockOutId)
-      }, ignoreInit = TRUE)
-      shiny::observeEvent(input[[lockOutId]], {
-        shinyjs::toggleState(lockInId)
-      }, ignoreInit = TRUE)
-    })
+    # Set up paired lock-in/lock-out mutual exclusion observers
+    fsetup_lock_observers(input, check_lockIn, check_lockOut,
+                          li_prefix = "checkLI_", lo_prefix = "checkLO_")
 
 
 
@@ -648,16 +567,9 @@ mod_2scenario_server <- function(id, cfg) {
 
     # Cache for report — populated on tab visit using the already-memoised gg_Target().
     # The report uses whatever sort the user last selected (input$checkSort).
-    gg_Target_cache <- shiny::reactiveVal(NULL)
-
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 2) {
-        # gg_Target() hits bindCache — no recomputation if the user has already
-        # visited this tab with the current sort selection.
-        val <- tryCatch(gg_Target(), error = function(e) NULL)
-        if (!is.null(val)) gg_Target_cache(val)
-      }
-    })
+    # gg_Target() hits bindCache — no recomputation if the user has already
+    # visited this tab with the current sort selection.
+    gg_Target_cache <- fmake_tab_cache(gg_Target, tab_id = 2, input = input)
 
     output$gg_targetPlot <- shiny::renderPlot({
       gg_Target()
@@ -705,14 +617,7 @@ mod_2scenario_server <- function(id, cfg) {
       shiny::bindEvent(input$analyse)
 
     # Cache populated on tab visit
-    costPlotData_cache <- shiny::reactiveVal(NULL)
-
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 3) {
-        val <- tryCatch(costPlotData(), error = function(e) NULL)
-        if (!is.null(val)) costPlotData_cache(val)
-      }
-    })
+    costPlotData_cache <- fmake_tab_cache(costPlotData, tab_id = 3, input = input)
 
     output$gg_cost <- shiny::renderPlot({
       costPlotData()
@@ -751,14 +656,7 @@ mod_2scenario_server <- function(id, cfg) {
       shiny::bindEvent(input$analyse)
 
     # Cache populated on tab visit
-    ggr_clim_cache <- shiny::reactiveVal(NULL)
-
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 6) {
-        val <- tryCatch(ggr_clim(), error = function(e) NULL)
-        if (!is.null(val)) ggr_clim_cache(val)
-      }
-    })
+    ggr_clim_cache <- fmake_tab_cache(ggr_clim, tab_id = 6, input = input)
 
     output$gg_clim <- shiny::renderPlot({
       clim <- input$climateid %||% "NA"
@@ -796,54 +694,14 @@ mod_2scenario_server <- function(id, cfg) {
     # Table of Targets --------------------------------------------------------
 
     DataTabler <- shiny::reactive({
-
       # Consume the shared targetPlotData reactive — fget_feature_representation
       # has already been called (and cached) by gg_Target; no duplicate work here.
-      tpd <- targetPlotData()
-
-      # Return NULL if no data
-      if (is.null(tpd)) {
-        return(NULL)
-      }
-
-      # Create named vector to do the replacement
-      rpl <- Dict %>%
-        dplyr::filter(.data$nameVariable %in% tpd$feature) %>%
-        dplyr::select("nameVariable", "nameCommon") %>%
-        dplyr::mutate(nameVariable = stringr::str_c("^", .data$nameVariable, "$")) %>%
-        tibble::deframe()
-
-      # TODO Add category to spatialplanr::splnr_get_featureRep and remove from splnr_plot_featureRep
-      FeaturestoSave <- tpd %>%
-        dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
-        dplyr::mutate(
-          value = as.integer(round(.data$relative_held * 100)),
-          target = as.integer(round(.data$target * 100))
-        ) %>%
-        dplyr::select("category", "feature", "target", "value", "incidental") %>%
-        dplyr::rename(
-          Feature = .data$feature,
-          `Protection (%)` = .data$value,
-          `Target (%)` = .data$target,
-          Incidental = .data$incidental,
-          Category = .data$category
-        ) %>%
-        dplyr::arrange(.data$Category, .data$Feature) %>%
-        dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
-
-      return(FeaturestoSave)
+      fformat_feature_table(targetPlotData(), Dict)
     }) %>%
       shiny::bindEvent(input$analyse)
 
     # Cache populated on tab visit
-    DataTabler_cache <- shiny::reactiveVal(NULL)
-
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 7) {
-        val <- tryCatch(DataTabler(), error = function(e) NULL)
-        if (!is.null(val)) DataTabler_cache(val)
-      }
-    })
+    DataTabler_cache <- fmake_tab_cache(DataTabler, tab_id = 7, input = input)
 
     output$DataTable <- shiny::renderTable({
       DataTabler()
@@ -858,7 +716,7 @@ mod_2scenario_server <- function(id, cfg) {
     output$dlPlot7 <- fDownloadPlotServer(gg_reactive = DataTabler,
                                           gg_prefix = "DataSummary",
                                           time_date_reactive = analysisTime,
-                                          width = 16, height = 10)
+                                          type = "table")
 
 
     # Ecosystem Services Tab -------------------------------------------------
@@ -991,134 +849,36 @@ mod_2scenario_server <- function(id, cfg) {
         paste0("Scenario_Report_", analysisTime(), ".html")
       },
       content = function(file) {
-        # Show progress notification
-        shiny::showNotification(
-          "Generating report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
-          duration = NULL,
-          closeButton = FALSE,
-          id = "report_progress",
-          type = "message"
-        )
-
-        # Update UI status while generating
-        output$reportStatus <- shiny::renderUI({
-          shiny::tagList(
-            shiny::icon("spinner", class = "fa-spin"),
-            shiny::span(" Generating report\u2026")
-          )
-        })
-
-        # Get the template path
-        template_path <- system.file("app", "report_scenario.qmd", package = "shinyplanr")
-
-        # If not found in installed package, try local inst/ directory
-        if (template_path == "" || !file.exists(template_path)) {
-          template_path <- "inst/app/report_scenario.qmd"
-        }
-
-        # Check if template exists
-        if (!file.exists(template_path)) {
-          shiny::removeNotification("report_progress")
-          shiny::showNotification(
-            "Report template not found. Please ensure report_scenario.qmd exists.",
-            type = "error",
-            duration = 10
-          )
-          return(NULL)
-        }
+        ts <- analysisTime()
 
         # Use tab-visit caches where available; fall back to evaluating the reactive
-        sol_plot  <- plot_data1_cache()  %||% tryCatch(plot_data1(),   error = function(e) NULL)
-        tgt_plot  <- gg_Target_cache()   %||% tryCatch(gg_Target(),    error = function(e) NULL)
-        cst_plot  <- costPlotData_cache() %||% tryCatch(costPlotData(), error = function(e) NULL)
-        clim_plot <- ggr_clim_cache()    %||% tryCatch(
-          if ((input$climateid %||% "NA") != "NA") ggr_clim() else NULL,
-          error = function(e) NULL
+        frender_report(
+          file             = file,
+          output           = output,
+          template_name    = "report_scenario.qmd",
+          notification_id  = "report_progress",
+          notification_msg = "Generating report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
+          tmp_dir_prefix   = "qrender_",
+          plots = list(
+            solution = plot_data1_cache()   %||% tryCatch(plot_data1(),    error = function(e) NULL),
+            target   = gg_Target_cache()    %||% tryCatch(gg_Target(),     error = function(e) NULL),
+            cost     = costPlotData_cache() %||% tryCatch(costPlotData(),  error = function(e) NULL),
+            climate  = ggr_clim_cache()     %||% tryCatch(
+              if ((input$climateid %||% "NA") != "NA") ggr_clim() else NULL,
+              error = function(e) NULL
+            )
+          ),
+          tables = list(
+            details = DataTabler_cache() %||% tryCatch(DataTabler(), error = function(e) NULL)
+          ),
+          params = list(
+            solver_log = tryCatch(paste0(solveLog(), collapse = "\n"), error = function(e) ""),
+            cost_id    = input$costid,
+            climate_id = input$climateid,
+            timestamp  = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+          ),
+          ts = ts
         )
-        det_table <- DataTabler_cache()  %||% tryCatch(DataTabler(),   error = function(e) NULL)
-
-        # Create file paths
-        ts <- analysisTime()
-        out_dir <- tempdir()
-        sol_path  <- if (!is.null(sol_plot))  file.path(out_dir, paste0("solution_", ts, ".png"))  else NULL
-        tgt_path  <- if (!is.null(tgt_plot))  file.path(out_dir, paste0("targets_", ts, ".png"))   else NULL
-        cst_path  <- if (!is.null(cst_plot))  file.path(out_dir, paste0("cost_", ts, ".png"))      else NULL
-        clim_path <- if (!is.null(clim_plot)) file.path(out_dir, paste0("climate_", ts, ".png"))   else NULL
-        det_path  <- if (!is.null(det_table)) file.path(out_dir, paste0("details_", ts, ".csv"))   else NULL
-
-        # Save plots if present
-        try({ if (!is.null(sol_path))  ggplot2::ggsave(sol_path,  plot = sol_plot,  width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-        try({ if (!is.null(tgt_path))  ggplot2::ggsave(tgt_path,  plot = tgt_plot,  width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-        try({ if (!is.null(cst_path))  ggplot2::ggsave(cst_path,  plot = cst_plot,  width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-        try({ if (!is.null(clim_path)) ggplot2::ggsave(clim_path, plot = clim_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-
-        # Save details table if present
-        try({ if (!is.null(det_path)) utils::write.csv(det_table, det_path, row.names = FALSE) }, silent = TRUE)
-
-        # Consolidate solver log as a single string
-        solver_log_txt <- tryCatch({ paste0(solveLog(), collapse = "\n") }, error = function(e) "")
-
-        # Render the report by copying the QMD into a temp directory and rendering there
-        tryCatch({
-          tmp_dir <- file.path(tempdir(), paste0("qrender_", ts))
-          if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE)
-          tmp_qmd <- file.path(tmp_dir, "report_scenario.qmd")
-          file.copy(template_path, tmp_qmd, overwrite = TRUE)
-
-          # Render in temp location; Quarto expects output_file to be a filename (no path)
-          quarto::quarto_render(
-            input = tmp_qmd,
-            output_file = "report.html",
-            execute_params = list(
-              # Prefer file paths to avoid cross-session object passing
-              solution_plot_path = sol_path,
-              target_plot_path   = tgt_path,
-              cost_plot_path     = cst_path,
-              climate_plot_path  = clim_path,
-              details_table_path = det_path,
-              # Keep text/scalars as plain params
-              solver_log = solver_log_txt,
-              cost_id    = input$costid,
-              climate_id = input$climateid,
-              timestamp  = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-            )
-          )
-
-          # Copy the rendered HTML to the file path expected by Shiny
-          out_html <- file.path(tmp_dir, "report.html")
-          if (!file.exists(out_html)) stop("Rendered report not found at ", out_html)
-          file.copy(out_html, file, overwrite = TRUE)
-
-          shiny::removeNotification("report_progress")
-          shiny::showNotification(
-            "Report generated successfully!",
-            type = "message",
-            duration = 3
-          )
-
-          # Update UI with success message
-          output$reportStatus <- shiny::renderUI({
-            shiny::tagList(
-              shiny::icon("check-circle"),
-              shiny::span(paste(" Report generated at", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
-            )
-          })
-        }, error = function(e) {
-          shiny::removeNotification("report_progress")
-          shiny::showNotification(
-            paste("Error generating report:", e$message),
-            type = "error",
-            duration = 10
-          )
-
-          # Update UI with error
-          output$reportStatus <- shiny::renderUI({
-            shiny::tagList(
-              shiny::icon("exclamation-triangle"),
-              shiny::span(paste(" Error generating report:", e$message))
-            )
-          })
-        })
       }
     )
 

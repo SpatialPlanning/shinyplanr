@@ -126,16 +126,6 @@ mod_3compare_ui <- function(id, cfg) {
           )
         )
       },
-      #
-      #       shinyjs::hidden(div(
-      #         id = ns("switchConstraints"),
-      #         shiny::h2("3. Constraints"),
-      #         shiny::splitLayout(
-      #           fcustom_checkCategory(check_lockIn, labelNum = 3),
-      #           fcustom_checkCategory(check_lockIn2, labelNum = 3)
-      #         ),
-      # )),
-
 
       shinyjs::hidden(div(
         id = ns("switchConstraints"),
@@ -348,38 +338,20 @@ mod_3compare_server <- function(id, cfg) {
     check_lockOut  <- sidebar$check_lockOut
     check_lockOut2 <- sidebar$check_lockOut2
 
-    # Hide the Climate tab if climate change is not enabled.
-    # The climate UI section is rendered conditionally in the UI (if/else), so no show/hide needed here.
-    if (!isTRUE(options$include_climateChange)) {
-      shiny::hideTab(inputId = "tabs", target = "7", session = session)
-    }
+    # Declare all reactiveVals at the top so they are available to all observers
+    # and handlers below, regardless of evaluation order.
+    analysisTime <- shiny::reactiveVal("")
+    solveLog1    <- shiny::reactiveVal(character(0))
+    solveLog2    <- shiny::reactiveVal(character(0))
 
-    ## Define objective function
-    if (options$obj_func == "min_shortfall") {
-      shinyjs::show(id = "switchMinShortfall")
-    } else {
-      shinyjs::hide(id = "switchMinShortfall")
-    }
-
-    if (options$obj_func == "min_set") {
-      shinyjs::show(id = "switchMinSet")
-    } else {
-      shinyjs::hide(id = "switchMinSet")
-    }
-
-    # Hide the Report tab if include_report is FALSE
-    if (!isTRUE(options$include_report)) {
-      shiny::hideTab(inputId = "tabs", target = "10", session = session)
-    }
-
-    ## Turn off Log tab ----
-    if (!isTRUE(options$include_log)) {
-      shiny::hideTab(inputId = "tabs", target = "9", session = session)
-    }
-
-    if (isTRUE(options$include_lockedArea)) { # dont make observeEvent because it's a global variable
-      shinyjs::show(id = "switchConstraints")
-    }
+    # Apply all UI show/hide switches driven by options ----
+    # Note: switches for elements not yet in the compare UI (switchBoundaryPenalty,
+    # switchBioregions, switchMasterTargets, etc.) are silently ignored by shinyjs
+    # until those features are added to this module.
+    fapply_ui_switches(options, session,
+                       tab_climate = "7",
+                       tab_report  = "10",
+                       tab_log     = "9")
 
     shiny::observeEvent(input$disconnect, {
       session$close()
@@ -398,44 +370,11 @@ mod_3compare_server <- function(id, cfg) {
     })
 
 
-    # TODO I would like to turn this into a function
-
-    # Generic lock-in/lock-out toggling for all features (Scenario 1)
-    # Pair lock-in/lock-out toggling only for matching features (Scenario 1)
-    lockIn_ids1 <- check_lockIn$id_in
-    lockOut_ids1 <- check_lockOut$id_in
-    get_feature <- function(id, prefix) stringr::str_remove(id, prefix)
-    lockIn_features1 <- purrr::map_chr(lockIn_ids1, get_feature, prefix = "check1LI_")
-    lockOut_features1 <- purrr::map_chr(lockOut_ids1, get_feature, prefix = "check1LO_")
-    shared_features1 <- intersect(lockIn_features1, lockOut_features1)
-    purrr::walk(shared_features1, function(feat) {
-      lockInId <- paste0("check1LI_", feat)
-      lockOutId <- paste0("check1LO_", feat)
-      shiny::observeEvent(input[[lockInId]], {
-        shinyjs::toggleState(lockOutId)
-      }, ignoreInit = TRUE)
-      shiny::observeEvent(input[[lockOutId]], {
-        shinyjs::toggleState(lockInId)
-      }, ignoreInit = TRUE)
-    })
-
-    # Generic lock-in/lock-out toggling for all features (Scenario 2)
-    # Pair lock-in/lock-out toggling only for matching features (Scenario 2)
-    lockIn_ids2 <- check_lockIn2$id_in
-    lockOut_ids2 <- check_lockOut2$id_in
-    lockIn_features2 <- purrr::map_chr(lockIn_ids2, get_feature, prefix = "check2LI_")
-    lockOut_features2 <- purrr::map_chr(lockOut_ids2, get_feature, prefix = "check2LO_")
-    shared_features2 <- intersect(lockIn_features2, lockOut_features2)
-    purrr::walk(shared_features2, function(feat) {
-      lockInId <- paste0("check2LI_", feat)
-      lockOutId <- paste0("check2LO_", feat)
-      shiny::observeEvent(input[[lockInId]], {
-        shinyjs::toggleState(lockOutId)
-      }, ignoreInit = TRUE)
-      shiny::observeEvent(input[[lockOutId]], {
-        shinyjs::toggleState(lockInId)
-      }, ignoreInit = TRUE)
-    })
+    # Set up paired lock-in/lock-out mutual exclusion observers for each scenario
+    fsetup_lock_observers(input, check_lockIn,  check_lockOut,
+                          li_prefix = "check1LI_", lo_prefix = "check1LO_")
+    fsetup_lock_observers(input, check_lockIn2, check_lockOut2,
+                          li_prefix = "check2LI_", lo_prefix = "check2LO_")
 
 
 
@@ -476,11 +415,7 @@ mod_3compare_server <- function(id, cfg) {
     })
 
 
-    analysisTime <- shiny::reactiveVal("")
-
     # Solve the problems and capture logs -------------------------------------------------------
-    solveLog1 <- shiny::reactiveVal(character(0))
-    solveLog2 <- shiny::reactiveVal(character(0))
 
     solution1 <- shiny::reactive({
       res <- fsolve_with_log(p1Data(), cost_id = input$costid1)
@@ -732,16 +667,9 @@ mod_3compare_server <- function(id, cfg) {
 
     # Cache for report — populated on tab visit using the already-memoised ggr_target().
     # The report uses whatever sort the user last selected (input$checkSort).
-    ggr_target_cache <- shiny::reactiveVal(NULL)
-
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 3) {
-        # ggr_target() hits bindCache — no recomputation if already visited with
-        # the current sort selection.
-        val <- tryCatch(ggr_target(), error = function(e) NULL)
-        if (!is.null(val)) ggr_target_cache(val)
-      }
-    })
+    # ggr_target() hits bindCache — no recomputation if already visited with
+    # the current sort selection.
+    ggr_target_cache <- fmake_tab_cache(ggr_target, tab_id = 3, input = input)
 
     output$gg_target <- shiny::renderPlot({
       ggr_target()
@@ -793,14 +721,7 @@ mod_3compare_server <- function(id, cfg) {
     }) %>% shiny::bindEvent(input$analyse)
 
     # Cache populated on tab visit
-    ggr_cost_cache <- shiny::reactiveVal(NULL)
-
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 4) {
-        val <- tryCatch(ggr_cost(), error = function(e) NULL)
-        if (!is.null(val)) ggr_cost_cache(val)
-      }
-    })
+    ggr_cost_cache <- fmake_tab_cache(ggr_cost, tab_id = 4, input = input)
 
     output$gg_cost <- shiny::renderPlot({
       ggr_cost()
@@ -843,14 +764,7 @@ mod_3compare_server <- function(id, cfg) {
       shiny::bindEvent(input$analyse)
 
     # Cache populated on tab visit
-    ggr_clim_cache <- shiny::reactiveVal(NULL)
-
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 7) {
-        val <- tryCatch(ggr_clim(), error = function(e) NULL)
-        if (!is.null(val)) ggr_clim_cache(val)
-      }
-    })
+    ggr_clim_cache <- fmake_tab_cache(ggr_clim, tab_id = 7, input = input)
 
     output$gg_clim <- shiny::renderPlot({
       clim1 <- input$climateid1 %||% "NA"
@@ -888,58 +802,19 @@ mod_3compare_server <- function(id, cfg) {
     ## Details / Feature Summary Table -----------------------------------------
 
     DataTabler <- shiny::reactive({
-
       # Consume the shared targetPlotData reactives — fget_feature_representation
       # has already been called (and cached) by ggr_target; no duplicate work here.
-      tpd1 <- targetPlotData1() %>%
-        dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
+      tbl1 <- fformat_feature_table(targetPlotData1(), Dict, suffix = " 1")
+      tbl2 <- fformat_feature_table(targetPlotData2(), Dict, suffix = " 2")
 
-      tpd2 <- targetPlotData2() %>%
-        dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
+      if (is.null(tbl1) || is.null(tbl2)) return(NULL)
 
-      if (is.null(tpd1) || is.null(tpd2)) return(NULL)
-
-      rpl <- Dict %>%
-        dplyr::filter(.data$nameVariable %in% unique(c(tpd1$feature, tpd2$feature))) %>%
-        dplyr::select("nameVariable", "nameCommon") %>%
-        dplyr::mutate(nameVariable = stringr::str_c("^", .data$nameVariable, "$")) %>%
-        tibble::deframe()
-
-      FeaturestoSave1 <- tpd1 %>%
-        dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
-        dplyr::mutate(value = as.integer(round(.data$relative_held * 100)),
-                      target = as.integer(round(.data$target * 100))) %>%
-        dplyr::select("category", "feature", "target", "value", "incidental") %>%
-        dplyr::rename(Feature = .data$feature, `Protection 1 (%)` = .data$value,
-                      `Target 1 (%)` = .data$target, `Incidental 1` = .data$incidental,
-                      Category = .data$category) %>%
-        dplyr::arrange(.data$Category, .data$Feature) %>%
-        dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
-
-      FeaturestoSave2 <- tpd2 %>%
-        dplyr::left_join(Dict %>% dplyr::select("nameVariable", "category"), by = c("feature" = "nameVariable")) %>%
-        dplyr::mutate(value = as.integer(round(.data$relative_held * 100)),
-                      target = as.integer(round(.data$target * 100))) %>%
-        dplyr::select("category", "feature", "target", "value", "incidental") %>%
-        dplyr::rename(Feature = .data$feature, `Protection 2 (%)` = .data$value,
-                      `Target 2 (%)` = .data$target, `Incidental 2` = .data$incidental,
-                      Category = .data$category) %>%
-        dplyr::arrange(.data$Category, .data$Feature) %>%
-        dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
-
-      dplyr::full_join(FeaturestoSave1, FeaturestoSave2, by = c("Category", "Feature"))
+      dplyr::full_join(tbl1, tbl2, by = c("Category", "Feature"))
     }) %>%
       shiny::bindEvent(input$analyse)
 
     # Cache populated on tab visit
-    DataTabler_cache <- shiny::reactiveVal(NULL)
-
-    shiny::observeEvent(input$tabs, {
-      if (input$tabs == 8) {
-        val <- tryCatch(DataTabler(), error = function(e) NULL)
-        if (!is.null(val)) DataTabler_cache(val)
-      }
-    })
+    DataTabler_cache <- fmake_tab_cache(DataTabler, tab_id = 8, input = input)
 
     output$DataTable <- shiny::renderTable({
       DataTabler()
@@ -949,7 +824,8 @@ mod_3compare_server <- function(id, cfg) {
     output$hdr_DetsData <- shiny::renderText("Feature Summary") %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot8 <- fDownloadPlotServer(gg_reactive = DataTabler, gg_prefix = "DataSummary", time_date_reactive = analysisTime, width = 16, height = 10)
+    output$dlPlot8 <- fDownloadPlotServer(gg_reactive = DataTabler, gg_prefix = "DataSummary",
+                                          time_date_reactive = analysisTime, type = "table")
 
     ## Log Tab -----------------------------------------------------------------
     # Render log text for Scenario 1
@@ -988,132 +864,39 @@ mod_3compare_server <- function(id, cfg) {
         paste0("Comparison_Report_", analysisTime(), ".html")
       },
       content = function(file) {
-        # Show progress notification
-        shiny::showNotification(
-          "Generating comparison report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
-            duration = NULL,
-            closeButton = FALSE,
-            id = "report_progress_compare",
-            type = "message"
-          )
+        ts <- analysisTime()
 
-          # Update UI status while generating
-          output$reportStatus <- shiny::renderUI({
-            shiny::tagList(
-              shiny::icon("spinner", class = "fa-spin"),
-              shiny::span(" Generating comparison report\u2026")
-            )
-          })
-
-          # Resolve template path
-
-          # Resolve template path
-          template_path <- system.file("app", "report_compare.qmd", package = "shinyplanr")
-          if (template_path == "" || !file.exists(template_path)) {
-            template_path <- "inst/app/report_compare.qmd"
-          }
-          if (!file.exists(template_path)) {
-            shiny::removeNotification("report_progress_compare")
-            shiny::showNotification(
-              "Comparison report template not found (report_compare.qmd).",
-              type = "error",
-              duration = 10
-            )
-            return(NULL)
-          }
-
-          # Use tab-visit caches where available; fall back to evaluating the reactive
-          ts <- analysisTime()
-          out_dir <- tempdir()
-          comp_plot   <- ggr_comp_cache()   %||% tryCatch(ggr_comp(),   error = function(e) NULL)
-          soln_plot   <- ggr_soln_cache()   %||% tryCatch(ggr_soln(),   error = function(e) NULL)
-          target_plot <- ggr_target_cache() %||% tryCatch(ggr_target(), error = function(e) NULL)
-          cost_plot   <- ggr_cost_cache()   %||% tryCatch(ggr_cost(),   error = function(e) NULL)
-          climate_plot <- ggr_clim_cache()  %||% tryCatch(ggr_clim(),   error = function(e) NULL)
-          details_tbl <- DataTabler_cache() %||% tryCatch(DataTabler(), error = function(e) NULL)
-
-          comp_path <- if (!is.null(comp_plot)) file.path(out_dir, paste0("compare_", ts, ".png")) else NULL
-          soln_path <- if (!is.null(soln_plot)) file.path(out_dir, paste0("solutions_", ts, ".png")) else NULL
-          target_path <- if (!is.null(target_plot)) file.path(out_dir, paste0("targets_", ts, ".png")) else NULL
-          cost_path <- if (!is.null(cost_plot)) file.path(out_dir, paste0("cost_", ts, ".png")) else NULL
-          climate_path <- if (!is.null(climate_plot)) file.path(out_dir, paste0("climate_", ts, ".png")) else NULL
-          details_path <- if (!is.null(details_tbl)) file.path(out_dir, paste0("details_", ts, ".csv")) else NULL
-
-          # Save plots/tables
-          try({ if (!is.null(comp_path)) ggplot2::ggsave(comp_path, plot = comp_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-          try({ if (!is.null(soln_path)) ggplot2::ggsave(soln_path, plot = soln_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-          try({ if (!is.null(target_path)) ggplot2::ggsave(target_path, plot = target_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-          try({ if (!is.null(cost_path)) ggplot2::ggsave(cost_path, plot = cost_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-          try({ if (!is.null(climate_path)) ggplot2::ggsave(climate_path, plot = climate_plot, width = 10, height = 8, dpi = 150, bg = "white") }, silent = TRUE)
-          try({ if (!is.null(details_path)) utils::write.csv(details_tbl, details_path, row.names = FALSE) }, silent = TRUE)
-
-          # Solver logs
-          solver_log1_txt <- tryCatch({ paste0(solveLog1(), collapse = "\n") }, error = function(e) "")
-          solver_log2_txt <- tryCatch({ paste0(solveLog2(), collapse = "\n") }, error = function(e) "")
-
-          # Render in temp dir
-          tryCatch({
-            tmp_dir <- file.path(tempdir(), paste0("qrender_compare_", ts))
-            if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE)
-            tmp_qmd <- file.path(tmp_dir, "report_compare.qmd")
-            file.copy(template_path, tmp_qmd, overwrite = TRUE)
-
-            quarto::quarto_render(
-              input = tmp_qmd,
-              output_file = "report.html",
-              execute_params = list(
-                comp_plot_path   = comp_path,
-                soln_plot_path   = soln_path,
-                target_plot_path = target_path,
-                cost_plot_path   = cost_path,
-                climate_plot_path = climate_path,
-                details_table_path = details_path,
-                solver_log1 = solver_log1_txt,
-                solver_log2 = solver_log2_txt,
-                cost_id1 = input$costid1,
-                cost_id2 = input$costid2,
-                climate_id1 = input$climateid1,
-                climate_id2 = input$climateid2,
-                timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-              )
-            )
-
-            out_html <- file.path(tmp_dir, "report.html")
-            if (!file.exists(out_html)) stop("Rendered comparison report not found at ", out_html)
-            file.copy(out_html, file, overwrite = TRUE)
-
-            shiny::removeNotification("report_progress_compare")
-            shiny::showNotification(
-              "Comparison report generated successfully!",
-              type = "message",
-              duration = 3
-            )
-
-            # Update UI with success message
-            output$reportStatus <- shiny::renderUI({
-              shiny::tagList(
-                shiny::icon("check-circle"),
-                shiny::span(paste(" Report generated at", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
-              )
-            })
-          }, error = function(e) {
-            shiny::removeNotification("report_progress_compare")
-            shiny::showNotification(
-              paste("Error generating comparison report:", e$message),
-              type = "error",
-              duration = 10
-            )
-
-            # Update UI with error
-            output$reportStatus <- shiny::renderUI({
-              shiny::tagList(
-                shiny::icon("exclamation-triangle"),
-                shiny::span(paste(" Error generating comparison report:", e$message))
-              )
-            })
-          })
-        }
-      )
+        # Use tab-visit caches where available; fall back to evaluating the reactive
+        frender_report(
+          file             = file,
+          output           = output,
+          template_name    = "report_compare.qmd",
+          notification_id  = "report_progress_compare",
+          notification_msg = "Generating comparison report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
+          tmp_dir_prefix   = "qrender_compare_",
+          plots = list(
+            comp    = ggr_comp_cache()   %||% tryCatch(ggr_comp(),   error = function(e) NULL),
+            soln    = ggr_soln_cache()   %||% tryCatch(ggr_soln(),   error = function(e) NULL),
+            target  = ggr_target_cache() %||% tryCatch(ggr_target(), error = function(e) NULL),
+            cost    = ggr_cost_cache()   %||% tryCatch(ggr_cost(),   error = function(e) NULL),
+            climate = ggr_clim_cache()   %||% tryCatch(ggr_clim(),   error = function(e) NULL)
+          ),
+          tables = list(
+            details = DataTabler_cache() %||% tryCatch(DataTabler(), error = function(e) NULL)
+          ),
+          params = list(
+            solver_log1 = tryCatch(paste0(solveLog1(), collapse = "\n"), error = function(e) ""),
+            solver_log2 = tryCatch(paste0(solveLog2(), collapse = "\n"), error = function(e) ""),
+            cost_id1    = input$costid1,
+            cost_id2    = input$costid2,
+            climate_id1 = input$climateid1,
+            climate_id2 = input$climateid2,
+            timestamp   = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+          ),
+          ts = ts
+        )
+      }
+    )
 
   }) # end moduleServer
 } # end mod_3compare_server
