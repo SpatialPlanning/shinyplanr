@@ -103,7 +103,8 @@ options <- list(
   include_explore = FALSE,
   include_log = FALSE,
   include_bioregion = FALSE,
-  show_uq_logo = TRUE,
+  show_logo_funder2 = FALSE,  # derived by 3_setup_app.R; FALSE in stub (no www/)
+  funder2_url = "https://spatialplanning.github.io",
   include_climateChange = FALSE,
   climate_change = 0,
   include_lockedArea = FALSE,

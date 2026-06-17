@@ -1,7 +1,9 @@
 Welcome
 -------
 
-<img src="www/logo2.png" style="width:25%;float:right">
+<!-- Logo image: replace setup/logos/logo_welcome.png with your own image.
+     Run setup/3_setup_app.R to copy it to www/logo_welcome.png. -->
+<img src="www/logo_welcome.png" style="width:25%;float:right">
 
 Welcome to shinyplanr — an interactive tool for marine spatial planning (MSP). This application allows you to explore conservation planning scenarios, set protection targets for habitats and species, and visualize the trade-offs between conservation goals and human uses of the ocean.
 

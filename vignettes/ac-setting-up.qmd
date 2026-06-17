@@ -309,12 +309,17 @@ options <- list(
   ## Funder link (opens when funder logo is clicked)
   funder_url = "https://spatialplanning.github.io",
 
-  ## Logo and data file locations (relative to setup/)
-  file_logo        = file.path(setup_dir, "logos", "logo.png"),
-  file_logo2       = file.path(setup_dir, "logos", "logo2.png"),
-  file_logo3       = file.path(setup_dir, "logos", "logo3.png"),
-  file_logo_funder = file.path(setup_dir, "logos", "logo_funder.png"),
-  file_data        = file.path(data_path, paste0(country, "_RawData.rda")),
+  ## Logo file locations (relative to setup/logos/)
+  #   logo_navbar.png  -- top-left of the navbar on every page
+  #   logo_welcome.png -- inline image in the welcome page
+  #   logo_funder.png  -- primary "Funded by" logo in the welcome footer
+  #   uq-logo-white.png -- optional second funder logo (comment out to hide)
+  file_logo_navbar  = file.path(setup_dir, "logos", "logo_navbar.png"),
+  file_logo_welcome = file.path(setup_dir, "logos", "logo_welcome.png"),
+  file_logo_funder  = file.path(setup_dir, "logos", "logo_funder.png"),
+  file_logo_funder2 = file.path(setup_dir, "logos", "uq-logo-white.png"),
+  funder2_url       = "https://spatialplanning.github.io",
+  file_data         = file.path(data_path, paste0(country, "_RawData.rda")),
   
   ## Module switches
   mod_1welcome  = TRUE,
@@ -324,8 +329,7 @@ options <- list(
   mod_5coverage = TRUE,
   mod_6help     = TRUE,
   
-  ## UQ logo in welcome footer
-  show_uq_logo = TRUE,   # Set FALSE to hide the UQ logo
+  ## Second funder logo (optional — comment out file_logo_funder2 above to hide)
 
   ## Features
   include_report = TRUE,

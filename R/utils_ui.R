@@ -284,23 +284,6 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
   return(shinyList)
 }
 
-#' Custom Drop Down for Cost
-#'
-#' @noRd
-#'
-fcustom_cost <- function(id, id_in, Dict) {
-  choice <- Dict %>%
-    dplyr::filter(.data$type == "Cost") %>%
-    dplyr::select("nameCommon", "nameVariable") %>%
-    tibble::deframe()
-
-  shiny::selectInput(shiny::NS(namespace = id, id = id_in),
-                     label = NULL,
-                     choices = choice,
-                     multiple = FALSE
-  )
-}
-
 #
 #
 # #' Custom Drop Down for Climate

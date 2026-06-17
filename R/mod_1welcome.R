@@ -76,18 +76,18 @@ mod_1welcome_ui <- function(id, cfg) {
             class = "funding-section",
             shiny::h5("Funded by:", class = "funding-title"),
             shiny::div(
-              class = "funding-logos",
-              a(img(src = "www/logo_funder.png",
-                    alt = "Funder Logo"),
-                href = options$funder_url,
-                target = "_blank"),
-              if (isTRUE(options$show_uq_logo)) {
-                a(img(src = "www/uq-logo-white.png",
-                      alt = "UQ Logo"),
-                  href = "https://spatialplanning.github.io",
-                  target = "_blank")
-              }
-            )
+                class = "funding-logos",
+                a(img(src = "www/logo_funder.png",
+                      alt = "Funder Logo"),
+                  href = options$funder_url,
+                  target = "_blank"),
+                if (isTRUE(options$show_logo_funder2)) {
+                  a(img(src = "www/logo_funder2.png",
+                        alt = "Second Funder Logo"),
+                    href = options$funder2_url %||% "#",
+                    target = "_blank")
+                }
+              )
           )
         )
       )
