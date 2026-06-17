@@ -149,7 +149,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       prioritizr::add_min_set_objective() %>%
       prioritizr::add_relative_targets(0) %>%
       prioritizr::add_binary_decisions() %>%
-      prioritizr::add_cbc_solver(verbose = TRUE)
+      prioritizr::add_default_solver(verbose = TRUE)
 
   }
 
@@ -164,7 +164,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       prioritizr::add_min_set_objective() %>%
       prioritizr::add_relative_targets(targets$target) %>%
       prioritizr::add_binary_decisions() %>%
-      prioritizr::add_cbc_solver(verbose = TRUE)
+      prioritizr::add_default_solver(verbose = TRUE)
 
   } else if (options$obj_func == "min_shortfall") {
 
@@ -186,7 +186,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       prioritizr::add_min_shortfall_objective(budget = (budget_value/100) * total_cost) %>% # Create budget from total_cost and %
       prioritizr::add_relative_targets(targets$target) %>%
       prioritizr::add_binary_decisions() %>%
-      prioritizr::add_cbc_solver(verbose = TRUE)
+      prioritizr::add_default_solver(verbose = TRUE)
 
   } # End objective function selection
 

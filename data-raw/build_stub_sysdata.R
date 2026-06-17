@@ -108,7 +108,7 @@ options <- list(
   climate_change = 0,
   include_lockedArea = FALSE,
   targetsBy = "individual",
-  obj_func = "min_shortfall",
+  obj_func = "min_set",
   cCRS = "ESRI:54009"
 )
 

@@ -38,8 +38,8 @@ Imports:
     config (>= 0.3.1),
     dplyr,
     ggplot2,
-    gridExtra,
     golem (>= 0.4.1),
+    highs,
     htmltools,
     leaflet,
     magrittr,
@@ -47,7 +47,6 @@ Imports:
     prioritizr,
     purrr,
     quarto,
-    rcbc,
     reactable,
     readr,
     rlang,
@@ -65,12 +64,14 @@ Imports:
     tidyselect,
     withr
 Suggests:
+    kableExtra,
     knitr,
+    rcbc,
     renv,
     rstudioapi,
     spelling,
     testthat (>= 3.0.0)
-Remotes: 
+Remotes:
     github::dirkschumacher/rcbc,
     github::dreamRs/shinyWidgets,
     github::spatialplanning/spatialplanr
