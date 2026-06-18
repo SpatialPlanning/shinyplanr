@@ -186,3 +186,39 @@ test_that("load_config() invisibly returns the config list", {
   expect_equal(result$schema_version, 2L)
   expect_equal(result$options$app_title, "Test App")
 })
+
+test_that("load_config() normalises stale agr so dplyr::select keeps geometry", {
+  # Reproduce the stale-agr condition: build an sf via st_set_geometry() which
+  # sets agr to all-NA, then corrupt the factor so it behaves as if loaded from
+  # an RDS saved in a different R session.
+  plain_df <- data.frame(feature_A = c(0.8, 0.2))
+  geom <- sf::st_sfc(
+    sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
+    sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
+    crs = "ESRI:54009"
+  )
+  # st_set_geometry produces agr = NA (all-NA factor) — the stale state
+  stale_sf <- sf::st_set_geometry(plain_df, geom)
+
+  cfg <- make_valid_config()
+  cfg$raw_sf <- stale_sf
+
+  tmp <- tempfile(fileext = ".rds")
+  saveRDS(cfg, tmp)
+  on.exit(unlink(tmp), add = TRUE)
+
+  suppressMessages(load_config(tmp))
+
+  # After load_config, raw_sf in the config env must have a clean agr so that
+  # dplyr::select keeps geometry stickily (the bug that caused the crashes).
+  loaded_sf <- shinyplanr:::shinyplanr_config$raw_sf
+  selected  <- dplyr::select(loaded_sf, "feature_A")
+  expect_true(
+    inherits(selected, "sf"),
+    label = "dplyr::select keeps geometry after load_config normalises agr"
+  )
+  expect_true(
+    attr(loaded_sf, "sf_column") %in% names(selected),
+    label = "geometry column present after select"
+  )
+})

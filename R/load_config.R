@@ -41,6 +41,20 @@ load_config <- function(config_path = "config/shinyplanr_config.rds") {
   # Validate schema version and required keys — stops with clear error if wrong
   .validate_config(config, config_path)
 
+  # Normalise the agr (attribute-geometry-relationship) factor on every sf
+  # object in the config.  When an sf is saved to RDS in one R session and
+  # loaded in another, the agr factor's internal integer codes can become
+  # inconsistent with its levels.  sf's dplyr method uses agr to reconstruct
+  # the sf after select(); a stale agr causes geometry to be silently dropped
+  # instead of kept stickily, which crashes fCheckFeatureNo, splnr_plot, and
+  # any other code that calls dplyr::select() on the loaded sf objects.
+  # st_set_agr(x, "constant") rebuilds the factor cleanly; "constant" is the
+  # correct value for all planning-unit attributes (feature presence/absence,
+  # cost values, etc. are constant per geometry).
+  config <- lapply(config, function(x) {
+    if (inherits(x, "sf")) sf::st_set_agr(x, "constant") else x
+  })
+
   # Store all config objects in the dedicated shinyplanr_config environment.
   # This environment's *binding* in the namespace is locked (you cannot
   # replace the env object itself), but the environment it points to is NOT
