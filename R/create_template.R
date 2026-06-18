@@ -107,14 +107,22 @@ create_shinyplanr_template <- function(
   #                      comment out file_logo_funder2 in 3_setup_app.R to hide it
   logos_dir <- file.path(setup_dir, "logos")
 
-  default_logo <- system.file("man", "figures", "logo.png", package = "shinyplanr")
-  if (default_logo == "") {
-    default_logo <- file.path("man", "figures", "logo.png")
+  navbar_logo <- system.file("app", "www", "logo_navbar.png", package = "shinyplanr")
+  if (navbar_logo == "") {
+    navbar_logo <- file.path("inst", "app", "www", "logo_navbar.png")
   }
-  if (file.exists(default_logo)) {
-    file.copy(default_logo, file.path(logos_dir, "logo_navbar.png"),  overwrite = FALSE)
-    file.copy(default_logo, file.path(logos_dir, "logo_welcome.png"), overwrite = FALSE)
-    message("Copied default navbar/welcome logos to: ", logos_dir)
+  if (file.exists(navbar_logo)) {
+    file.copy(navbar_logo, file.path(logos_dir, "logo_navbar.png"), overwrite = FALSE)
+    message("Copied default navbar logo to: ", logos_dir)
+  }
+
+  welcome_logo <- system.file("app", "www", "logo_welcome.png", package = "shinyplanr")
+  if (welcome_logo == "") {
+    welcome_logo <- file.path("inst", "app", "www", "logo_welcome.png")
+  }
+  if (file.exists(welcome_logo)) {
+    file.copy(welcome_logo, file.path(logos_dir, "logo_welcome.png"), overwrite = FALSE)
+    message("Copied default welcome logo to: ", logos_dir)
   }
 
   funder_logo <- system.file("app", "www", "logo_funder.png", package = "shinyplanr")
@@ -138,6 +146,15 @@ create_shinyplanr_template <- function(
   if (file.exists(uq_logo)) {
     file.copy(uq_logo, file.path(logos_dir, "uq-logo-white.png"), overwrite = FALSE)
     message("Copied default second funder logo (UQ) to: ", logos_dir)
+  }
+
+  favicon <- system.file("app", "www", "favicon.png", package = "shinyplanr")
+  if (favicon == "") {
+    favicon <- file.path("inst", "app", "www", "favicon.png")
+  }
+  if (file.exists(favicon)) {
+    file.copy(favicon, file.path(logos_dir, "favicon.png"), overwrite = FALSE)
+    message("Copied default favicon to: ", logos_dir)
   }
 
   # Generate files
@@ -896,12 +913,14 @@ create_shinyplanr_template <- function(
     "  #   logo_navbar.png  -- top-left of the navbar on every page",
     "  #   logo_welcome.png -- inline image in the welcome page (shinyplanr_1welcome1.md)",
     "  #   logo_funder.png  -- 'Funded by' section in the welcome page footer",
+    "  #   favicon.png      -- browser tab icon (16x16 or 32x32 px PNG recommended)",
     "  #",
     "  # The option values are the SOURCE paths (in setup/logos/).",
     "  # This script copies them to www/ with the same filenames.",
     '  file_logo_navbar  = file.path(setup_dir, "logos", "logo_navbar.png"),',
     '  file_logo_welcome = file.path(setup_dir, "logos", "logo_welcome.png"),',
     '  file_logo_funder  = file.path(setup_dir, "logos", "logo_funder.png"),',
+    '  file_favicon      = file.path(setup_dir, "logos", "favicon.png"),',
     '  file_data        = file.path(data_path, paste0(country, "_RawData.rda")),',
     "",
     "  ## Module switches (TRUE = enabled, FALSE = disabled)",
@@ -985,7 +1004,8 @@ create_shinyplanr_template <- function(
     '  file_logo_navbar  = "logo_navbar.png",',
     '  file_logo_welcome = "logo_welcome.png",',
     '  file_logo_funder  = "logo_funder.png",',
-    '  file_logo_funder2 = "logo_funder2.png"',
+    '  file_logo_funder2 = "logo_funder2.png",',
+    '  file_favicon      = "favicon.png"',
     ")",
     "",
     "for (opt_name in names(logo_map)) {",
@@ -1212,57 +1232,33 @@ create_shinyplanr_template <- function(
     'message("Run shiny::runApp() to test, or source(\'deploy.R\') to deploy.")',
     "",
     "# =============================================================================",
-    "# CLEAN UP AND RESTART",
+    "# CLEAN UP",
     "# =============================================================================",
     "#",
     "# The setup scripts leave large objects (dat_sf, raw_sf, shinyplanr_options,",
     "# etc.) in the global environment. Running the app in the same R session",
     "# without clearing these can cause hard-to-diagnose crashes because some",
     "# names shadow base R functions (e.g. a variable named 'options' would shadow",
-    "# base::options()). We therefore restart R (in RStudio/Positron) or remove",
-    "# the known problematic objects (in other environments) before opening app.R.",
+    "# base::options()). Remove the known objects, then restart R before running",
+    "# the app.",
     "",
+    "rm(list = intersect(",
+    "  ls(),",
+    "  c('shinyplanr_options', 'config_list', 'dat_sf', 'raw_sf', 'bndry',",
+    "    'coast', 'overlay', 'Dict', 'Dict_raw', 'vars', 'sidebar', 'tx', 'map_theme',",
+    "    'bar_theme', 'tx_1footer', 'tx_2solution', 'tx_2targets', 'tx_2cost',",
+    "    'tx_2climate', 'tx_2ess', 'tx_6faq', 'tx_6technical', 'tx_6changelog',",
+    "    'zero_cols', 'logo_map', 'opt_name', 'src', 'dst', 'custom_css_src',",
+    "    'content_dir', 'tx_1footer_path', 'country', 'setup_dir', 'data_path')",
+    "))",
+    "message('\\nSetup objects removed from global environment.')",
+    "message('IMPORTANT: Please restart R before running the app.')",
+    "message('  Session > Restart R  (or Ctrl/Cmd+Shift+F10 in RStudio)')",
+    "message('Then open app.R and run shiny::runApp() to test the app.')",
+    "",
+    "# Open app.R so it is ready to run after the user restarts R.",
     "if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {",
-    "  # RStudio / Positron: restart the session cleanly, then open app.R.",
-    "  # The .Rprofile hook (if renv is active) will re-activate the project",
-    "  # automatically after the restart.",
-    "  #",
-    "  # IMPORTANT: Delete console_actions files before restarting.",
-    "  # RStudio appends all console output to .Rproj.user/<id>/ctx/<ctx>/console_actions",
-    "  # as a streaming JSON log. When restartSession() kills R, the file may be",
-    "  # truncated mid-write, leaving invalid JSON. On the next startup RStudio tries",
-    "  # to parse it and crashes with 'Error restoring session (console_actions)'.",
-    "  # Deleting the file is safe: it only holds the console display history and",
-    "  # RStudio silently starts a fresh log when the file is absent.",
-    "  local({",
-    "    ca_files <- list.files(",
-    "      path       = file.path(getwd(), '.Rproj.user'),",
-    "      pattern    = '^console_actions$',",
-    "      recursive  = TRUE,",
-    "      full.names = TRUE",
-    "    )",
-    "    if (length(ca_files) > 0L) {",
-    "      file.remove(ca_files)",
-    "      message('Cleared ', length(ca_files), ' console_actions file(s) to prevent session-restore crash.')",
-    "    }",
-    "  })",
-    "  message('\\nRestarting R session to clear setup objects before running the app...')",
-    "  message('app.R will open automatically after the restart.')",
-    "  rstudioapi::restartSession(command = \"rstudioapi::navigateToFile('app.R')\")",
-    "} else {",
-    "  # Non-RStudio environment (e.g. VSCode, terminal): remove known objects",
-    "  # that could shadow base R functions or consume unnecessary memory.",
-    "  rm(list = intersect(",
-    "    ls(),",
-    "    c('shinyplanr_options', 'config_list', 'dat_sf', 'raw_sf', 'bndry',",
-    "      'coast', 'overlay', 'Dict', 'Dict_raw', 'vars', 'sidebar', 'tx', 'map_theme',",
-    "      'bar_theme', 'tx_1footer', 'tx_2solution', 'tx_2targets', 'tx_2cost',",
-    "      'tx_2climate', 'tx_2ess', 'tx_6faq', 'tx_6technical', 'tx_6changelog',",
-    "      'zero_cols', 'logo_map', 'opt_name', 'src', 'dst', 'custom_css_src',",
-    "      'content_dir', 'tx_1footer_path', 'country', 'setup_dir', 'data_path')",
-    "  ))",
-    "  message('\\nSetup objects removed from global environment.')",
-    "  message('Open app.R and run shiny::runApp() to test the app.')",
+    "  rstudioapi::navigateToFile('app.R')",
     "}",
     ""
   )
@@ -1430,6 +1426,7 @@ create_shinyplanr_template <- function(
     "| `logo_welcome.png`    | Inline image in the welcome page (`shinyplanr_1welcome1.md`) | Embedded as `<img src=\"www/logo_welcome.png\">` - edit that file to resize or remove |",
     "| `logo_funder.png`     | Primary logo in the welcome page footer \"Funded by\" section | Links to `funder_url` in `3_setup_app.R` |",
     "| `uq-logo-white.png`   | Optional second logo in the welcome page footer | Default is the UQ logo. To use a different image, replace this file and update `file_logo_funder2` in `3_setup_app.R`. To hide it entirely, comment out `file_logo_funder2`. |",
+    "| `favicon.png`         | Browser tab icon | Recommended size: 32x32 px PNG. Replace with your own icon and re-run `3_setup_app.R`. |",
     "",
     "## How to customise",
     "",
