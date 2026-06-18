@@ -7,8 +7,11 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![R-CMD-check](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/R-CMD-check.yaml)
-[![test-coverage](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/test-coverage.yaml)
+[![R-CMD-check](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/MacOS.yaml/badge.svg)](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/MacOS.yaml)
+[![R-CMD-check](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/Ubuntu.yaml/badge.svg)](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/Ubuntu.yaml)
+[![R-CMD-check](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/Windows.yaml/badge.svg)](https://github.com/SpatialPlanning/shinyplanr/actions/workflows/Windows.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/SpatialPlanning/shinyplanr/graph/badge.svg)](https://app.codecov.io/gh/SpatialPlanning/shinyplanr)
 <!-- badges: end -->
 
 `shinyplanr` is an R package that provides a ready-to-deploy web
