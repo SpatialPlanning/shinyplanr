@@ -18,27 +18,64 @@ This chapter guides deployers through the process of setting up a new *shinyplan
 The setup process creates a **standalone deployment project** — a separate R project that holds your region-specific data and configuration. You do not need to modify or fork the shinyplanr package source code.
 :::
 
+## The shinyplanr ecosystem
+
+*shinyplanr* sits at the end of a pipeline of interconnected R packages. Understanding which package does what will help you navigate the setup scripts.
+
+```{mermaid}
+flowchart LR
+    A[oceandatr] -->|spatial data| B[spatialgridr]
+    B -->|planning grid| C[spatialplanr]
+    C -->|climate-smart features| D[prioritizr]
+    D -->|optimal solutions| E[shinyplanr]
+```
+
+| Package | Role in setup |
+|---------|--------------|
+| [*oceandatr*](https://emlab-ucsb.github.io/oceandatr/) | Downloads marine spatial data (bathymetry, geomorphology, coral habitat, EEZ boundaries) |
+| [*spatialgridr*](https://emlab-ucsb.github.io/spatialgridr/) | Creates hexagonal or square planning unit grids and regrids data to them |
+| [*spatialplanr*](https://spatialplanning.github.io/spatialplanr/) | Climate-smart planning utilities, MPA retrieval, distance-to-coast cost layers |
+| [*prioritizr*](https://prioritizr.net/) | Integer linear programming solver for spatial prioritisation |
+| *shinyplanr* | Shiny application wrapping prioritizr with an interactive interface |
+
+You do not need to use all of these packages — if you have your own spatial data, you can skip *oceandatr* and *spatialgridr* and load data directly. The setup scripts are pre-populated with code for the most common workflow.
+
 ## Overview of the Setup Process
 
-Setting up *shinyplanr* for a new region involves the following steps:
+Before starting, install *shinyplanr* once in any R session (see [Prerequisites](#prerequisites) below). Then the setup process has seven steps:
 
 1. **Create a deployment project** using `create_shinyplanr_template()`
-2. **Install packages** by running `setup/1_setup_enviro.R`
+2. **Install packages** by opening the new project and running `setup/1_setup_enviro.R`
 3. **Prepare spatial data** by editing `setup/2_setup_data.R`
 4. **Configure app options** by editing `setup/3_setup_app.R`
 5. **Define features** by editing `Dict_Feature.csv`
-5. **Customise help text** by editing markdown files
-6. **Test locally** before deployment
+6. **Customise help text** by editing markdown files in `setup/content/`
+7. **Test locally** before deployment
+
+::: callout-important
+## Two projects, two contexts
+Step 1 is run **in your current R session** (any project). Steps 2–7 are run **inside the new deployment project**. Keep this distinction in mind throughout — running scripts in the wrong project is the most common source of confusion.
+:::
 
 ## Prerequisites
 
 Before starting, ensure you have:
 
-- R and RStudio installed
-- The *shinyplanr* package installed from GitHub
-- Other supporting packages installed (e.g. _oceandatr_ and _spatialgridr_)
+- R (≥ 4.1) and RStudio installed
+- A GitHub Personal Access Token (PAT) stored in your keychain — needed to install packages from GitHub. See [Step 2: Install Packages](#sec-setup-enviro) for details.
 - A geographic boundary for your region of interest
-- Spatial data for features you wish to include
+- Spatial data for features you wish to include (or internet access to download them via *oceandatr*)
+
+Install *shinyplanr* from GitHub before proceeding:
+
+```r
+# install.packages("pak")
+pak::pak("SpatialPlanning/shinyplanr")
+```
+
+::: callout-note
+You only need to install *shinyplanr* once in your main R library. The deployment project's `setup/1_setup_enviro.R` script installs packages *inside the deployment project* using `renv` — it does not reinstall *shinyplanr* in your main library.
+:::
 
 ## Step 1: Create a Deployment Project {#sec-create-template}
 
@@ -123,7 +160,35 @@ Open `Fiji/Fiji.Rproj` in RStudio to work inside the deployment project. All sub
 
 The `config/` and `www/` folders are **auto-generated** when you run `setup/3_setup_app.R` — do not edit them directly. Everything you need to customise lives inside `setup/`.
 
-## Step 2: Prepare Spatial Data {#sec-setup-data}
+## Step 2: Install Packages {#sec-setup-enviro}
+
+The `setup/1_setup_enviro.R` script installs all required packages inside the deployment project and locks their versions with `renv`. Run it once after opening the project for the first time.
+
+### What 1_setup_enviro.R does
+
+The script performs these steps in order:
+
+1. **Checks for Quarto CLI** — the app uses Quarto to generate downloadable reports. If Quarto is not installed, a warning is shown. Download from [quarto.org](https://quarto.org/docs/get-started/).
+2. **Sets up GitHub credentials** — packages are installed from GitHub. The script uses `gitcreds` to read your GitHub PAT from the system keychain. If no PAT is found, it prompts you to paste one. See the script comments for instructions on creating a PAT.
+3. **Installs GitHub-only packages** — `shinyplanr`, `spatialplanr`, `shinyWidgets`, and (if `oceandatr = TRUE`) `oceandatr` and `spatialgridr`.
+4. **Installs CRAN packages** — all remaining dependencies.
+5. **Verifies installs** — checks that critical packages loaded correctly. Stops with a clear error if any failed.
+6. **Runs `renv::snapshot()`** — writes `renv.lock`, locking all package versions for reproducible deployment.
+
+::: callout-important
+## Run 1_setup_enviro.R even if packages are already installed
+The `renv::snapshot()` at the end of the script writes `renv.lock`. Without this file, Posit Connect cannot install the correct package versions when you deploy. Always run `1_setup_enviro.R` to completion before deploying.
+:::
+
+### Running 1_setup_enviro.R
+
+1. Open the deployment project (`Fiji.Rproj`) in RStudio
+2. Open `setup/1_setup_enviro.R`
+3. Click **Source** (or Ctrl/Cmd + Shift + Enter)
+4. Follow any prompts for GitHub credentials
+5. Wait for all packages to install and `renv.lock` to be written
+
+## Step 3: Prepare Spatial Data {#sec-setup-data}
 
 The `setup/2_setup_data.R` script processes your raw spatial data into the format required by *shinyplanr*.
 
@@ -236,9 +301,11 @@ cost <- dat_sf %>%
   dplyr::select(geometry) %>%
   spatialplanr::splnr_get_distCoast(custom_coast = coast) %>%
   dplyr::mutate(
-    Cost_Area = PU_Area,          # Equal area cost
-    Cost_Distance = coastDistance_km
-  )
+    cost_area     = PU_Area,          # Equal area cost
+    cost_distance = coastDistance_km
+  ) %>%
+  dplyr::select(-coastDistance_km) %>%
+  sf::st_drop_geometry()
 ```
 
 #### Locked-In Areas (MPAs)
@@ -290,22 +357,27 @@ save(dat_sf, bndry, coast,
 The first run of *oceandatr* functions may download large datasets. Ensure you have a stable internet connection and sufficient disk space.
 :::
 
-## Step 3: Configure App Options {#sec-setup-app}
+## Step 4: Configure App Options {#sec-setup-app}
 
 The `setup/3_setup_app.R` script configures how the *shinyplanr* application behaves and generates the config file loaded at runtime.
 
 ### The Options List
 
-The `options` list controls application settings, allowing you to define text, switch modules on/off and decide on display options:
+The `shinyplanr_options` list controls application settings, allowing you to define text, switch modules on/off and decide on display options:
+
+::: callout-note
+## Why `shinyplanr_options` and not `options`?
+The variable is deliberately named `shinyplanr_options` rather than `options` to avoid shadowing `base::options()`, which is a core R function. If a variable named `options` existed in the global environment and you then ran the app in the same R session, any internal code calling `options()` would find the list instead of the function and crash immediately.
+:::
 
 ```r
-options <- list(
-  
-  ## General Options
-  app_title = "Fiji: shinyplanr",
-  nav_title = "Fiji Spatial Planning",
-  navbar = list(theme = "dark"),
-  
+shinyplanr_options <- list(
+
+  ## General
+  app_title  = "Fiji: shinyplanr",
+  nav_title  = "Fiji Spatial Planning",
+  navbar = list(theme = "dark"),  # "light" or "dark"
+
   ## Funder link (opens when funder logo is clicked)
   funder_url = "https://spatialplanning.github.io",
 
@@ -313,36 +385,35 @@ options <- list(
   #   logo_navbar.png  -- top-left of the navbar on every page
   #   logo_welcome.png -- inline image in the welcome page
   #   logo_funder.png  -- primary "Funded by" logo in the welcome footer
-  #   uq-logo-white.png -- optional second funder logo (comment out to hide)
+  #   favicon.png      -- browser tab icon
   file_logo_navbar  = file.path(setup_dir, "logos", "logo_navbar.png"),
   file_logo_welcome = file.path(setup_dir, "logos", "logo_welcome.png"),
   file_logo_funder  = file.path(setup_dir, "logos", "logo_funder.png"),
   file_logo_funder2 = file.path(setup_dir, "logos", "uq-logo-white.png"),
   funder2_url       = "https://spatialplanning.github.io",
+  file_favicon      = file.path(setup_dir, "logos", "favicon.png"),
   file_data         = file.path(data_path, paste0(country, "_RawData.rda")),
-  
-  ## Module switches
+
+  ## Module switches (TRUE = enabled, FALSE = disabled)
   mod_1welcome  = TRUE,
   mod_2scenario = TRUE,
   mod_3compare  = TRUE,
   mod_4features = TRUE,
   mod_5coverage = TRUE,
   mod_6help     = TRUE,
-  
-  ## Second funder logo (optional — comment out file_logo_funder2 above to hide)
 
   ## Features
-  include_report = TRUE,
-  include_bioregion = FALSE,
+  include_report        = TRUE,
+  include_bioregion     = FALSE,
   include_climateChange = FALSE,
-  include_lockedArea = TRUE,
-  
+  include_lockedArea    = TRUE,
+
   ## Target grouping
   targetsBy = "individual",  # "individual", "category", or "master"
-  
+
   ## Objective function
-  obj_func = "min_shortfall",  # "min_set" or "min_shortfall"
-  
+  obj_func = "min_set",  # "min_set" or "min_shortfall"
+
   ## Geographic options
   cCRS = "+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84"
 )
@@ -396,15 +467,44 @@ After configuring options:
 2. Run `setup/3_setup_app.R` in RStudio (from inside the deployment project)
 3. The script will:
    - Copy logos from `setup/logos/` to `www/`
-   - Load and validate the feature dictionary
-   - Process spatial data
+   - Load and validate the feature dictionary (`validate_dict()`)
+   - Process and validate spatial data (`validate_shinyplanr_data()`)
    - Save all configuration to **`config/shinyplanr_config.rds`**
 
 ::: callout-note
-The old approach wrote data into the package source via `usethis::use_data()`. The new approach saves a single `.rds` config file that `load_config()` reads at app startup — no package rebuild required.
+The config file approach means you never need to rebuild or reinstall the *shinyplanr* package when you change your data or options. Re-run `setup/3_setup_app.R` and the updated config is picked up immediately on the next `shiny::runApp()`.
 :::
 
-## Step 4: The Feature Dictionary {#sec-dict-feature}
+### Validation {#sec-validation}
+
+`setup/3_setup_app.R` runs two validation checks automatically before saving the config:
+
+**`validate_dict()`** checks the feature dictionary (`Dict_Feature.csv`):
+
+- All required columns are present
+- `includeApp` and `includeJust` are logical (`TRUE`/`FALSE`), not `1`/`0` or text
+- All `type` values are from the known set (`Feature`, `Cost`, `LockIn`, etc.)
+- `nameVariable` is unique within each type
+- At least one `Feature` row has `includeApp == TRUE`
+- Active `Feature` rows have target values in the 0–100 range
+
+**`validate_shinyplanr_data()`** checks the assembled config:
+
+- All `Dict` variables are present as columns in `raw_sf`
+- CRS is consistent across `raw_sf`, `bndry`, and `options$cCRS`
+- No feature columns are all-zero or all-`NA`
+- Text content fields are character strings
+
+If either check fails, the script stops with a clear error message. The most common causes are:
+
+| Error | Likely cause | Fix |
+|-------|-------------|-----|
+| `"Variable 'X' not found in raw_sf"` | `nameVariable` in `Dict_Feature.csv` does not match a column in `dat_sf` | Check spelling, case, and underscores |
+| `"Column 'X' is all zeros"` | Feature data was not downloaded or processed correctly | Re-run `2_setup_data.R` and check the data |
+| `"CRS mismatch"` | `cCRS` in options does not match the CRS of `raw_sf` | Ensure `cCRS` matches the `crs` used in `2_setup_data.R` |
+| `"targetInitial out of range"` | A target value in `Dict_Feature.csv` is outside 0–100 | Fix the value in `Dict_Feature.csv` |
+
+## Step 5: The Feature Dictionary {#sec-dict-feature}
 
 The `setup/Dict_Feature.csv` file defines all data layers and their properties. This is the central configuration for what features, costs, and constraints appear in the application.
 
@@ -443,11 +543,16 @@ The `setup/Dict_Feature.csv` file defines all data layers and their properties. 
 nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
 Coral Reef,coral_reef,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
 Seagrass,seagrass,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
-Equal Area Cost,Cost_Area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost."
-Fishing Effort,fishing_cost,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,hours,"Higher values indicate more fishing activity."
+Equal Area Cost,cost_area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost based on their area."
+Distance to Coast,cost_distance,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,km,"Cost based on distance from the coast."
 Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
 Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."
 ```
+
+::: callout-important
+## Variable names must match exactly
+The `nameVariable` column must **exactly match** column names in your spatial data (`dat_sf`). The generated template uses lowercase snake_case (e.g. `cost_area`, `cost_distance`). Check for spelling differences, case sensitivity, and spaces vs underscores.
+:::
 
 ### Common Issues
 
@@ -460,7 +565,7 @@ The `nameVariable` column must **exactly match** column names in your spatial da
 - Spaces vs underscores
 :::
 
-## Step 5: Customise Content {#sec-content-files}
+## Step 6: Customise Content {#sec-content-files}
 
 The `setup/content/` folder contains text and other content files that appear in the application. Markdown (`.md`) files are the primary format, but you can also store PDFs, images, or other reference material here.
 
@@ -497,7 +602,7 @@ Multiple welcome page tabs can be configured:
 
 Edit these files with region-specific information before deployment. You can also place additional files (PDFs, images) in `setup/content/` and reference them from markdown.
 
-## Step 6: Test Locally
+## Step 7: Test Locally
 
 Before deploying, test the application locally from within the deployment project:
 
@@ -531,15 +636,15 @@ Run `shiny::runApp()` from **inside the deployment project** (i.e. with `Fiji.Rp
 
 ## Summary
 
-Setting up *shinyplanr* for a new region involves:
+Install *shinyplanr* first (see [Prerequisites](#prerequisites)), then follow these seven steps:
 
-1. **Creating a deployment project** with `create_shinyplanr_template()`
-2. **Installing packages** with `setup/1_setup_enviro.R`
-3. **Preparing data** in `setup/2_setup_data.R`
-4. **Configuring options** in `setup/3_setup_app.R` (outputs `config/shinyplanr_config.rds`)
-4. **Defining features** in `Dict_Feature.csv`
-5. **Customising text** in markdown files
-6. **Testing** the application locally with `shiny::runApp()`
+1. **Create a deployment project** with `create_shinyplanr_template()`
+2. **Install packages** with `setup/1_setup_enviro.R` (writes `renv.lock`)
+3. **Prepare data** in `setup/2_setup_data.R`
+4. **Configure options** in `setup/3_setup_app.R` (outputs `config/shinyplanr_config.rds`)
+5. **Define features** in `Dict_Feature.csv`
+6. **Customise text** in markdown files in `setup/content/`
+7. **Test** the application locally with `shiny::runApp()`
 
 Once testing is complete, proceed to the [Deployment vignette](ad-deployment.html) for instructions on locking package versions and deploying to Posit Connect.
 

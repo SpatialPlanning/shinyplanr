@@ -12,11 +12,12 @@
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="ac-setting-up_files/libs/quarto-html/popper.min.js"></script><script src="ac-setting-up_files/libs/quarto-html/tippy.umd.min.js"></script><link href="ac-setting-up_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ac-setting-up_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<script src="ac-setting-up_files/libs/quarto-diagram/mermaid.min.js"></script><script src="ac-setting-up_files/libs/quarto-diagram/mermaid-init.js"></script><link href="ac-setting-up_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Setting Up shinyplanr for Your Region">
 <meta property="og:image" content="https://spatialplanning.github.io/shinyplanr/logo.png">
 </head>
@@ -28,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">shinyplanr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +43,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Manual</h6></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Documentation</h6></li>
     <li><a class="dropdown-item" href="../articles/aa-introduction.html">Introduction to Spatial Planning</a></li>
     <li><a class="dropdown-item" href="../articles/ab-using-shinyplanr.html">Using the shinyplanr Application</a></li>
     <li><a class="dropdown-item" href="../articles/ac-setting-up.html">Setting Up shinyplanr for Your Region</a></li>
@@ -84,41 +85,111 @@
 <p>The setup process creates a <strong>standalone deployment project</strong> — a separate R project that holds your region-specific data and configuration. You do not need to modify or fork the shinyplanr package source code.</p>
 </blockquote>
 </div>
-<section class="level2"><h2 id="overview-of-the-setup-process">Overview of the Setup Process<a class="anchor" aria-label="anchor" href="#overview-of-the-setup-process"></a>
+<section class="level2"><h2 id="the-shinyplanr-ecosystem">The shinyplanr ecosystem<a class="anchor" aria-label="anchor" href="#the-shinyplanr-ecosystem"></a>
 </h2>
-<p>Setting up <em>shinyplanr</em> for a new region involves the following steps:</p>
+<p><em>shinyplanr</em> sits at the end of a pipeline of interconnected R packages. Understanding which package does what will help you navigate the setup scripts.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p>
+<figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    A[oceandatr] --&gt;|spatial data| B[spatialgridr]
+    B --&gt;|planning grid| C[spatialplanr]
+    C --&gt;|climate-smart features| D[prioritizr]
+    D --&gt;|optimal solutions| E[shinyplanr]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<table class="table caption-top">
+<thead><tr class="header">
+<th>Package</th>
+<th>Role in setup</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://emlab-ucsb.github.io/oceandatr/" class="external-link"><em>oceandatr</em></a></td>
+<td>Downloads marine spatial data (bathymetry, geomorphology, coral habitat, EEZ boundaries)</td>
+</tr>
+<tr class="even">
+<td><a href="https://emlab-ucsb.github.io/spatialgridr/" class="external-link"><em>spatialgridr</em></a></td>
+<td>Creates hexagonal or square planning unit grids and regrids data to them</td>
+</tr>
+<tr class="odd">
+<td><a href="https://spatialplanning.github.io/spatialplanr/" class="external-link"><em>spatialplanr</em></a></td>
+<td>Climate-smart planning utilities, MPA retrieval, distance-to-coast cost layers</td>
+</tr>
+<tr class="even">
+<td><a href="https://prioritizr.net/" class="external-link"><em>prioritizr</em></a></td>
+<td>Integer linear programming solver for spatial prioritisation</td>
+</tr>
+<tr class="odd">
+<td><em>shinyplanr</em></td>
+<td>Shiny application wrapping prioritizr with an interactive interface</td>
+</tr>
+</tbody>
+</table>
+<p>You do not need to use all of these packages — if you have your own spatial data, you can skip <em>oceandatr</em> and <em>spatialgridr</em> and load data directly. The setup scripts are pre-populated with code for the most common workflow.</p>
+</section><section class="level2"><h2 id="overview-of-the-setup-process">Overview of the Setup Process<a class="anchor" aria-label="anchor" href="#overview-of-the-setup-process"></a>
+</h2>
+<p>Before starting, install <em>shinyplanr</em> once in any R session (see <a href="#prerequisites">Prerequisites</a> below). Then the setup process has seven steps:</p>
 <ol type="1">
 <li>
 <strong>Create a deployment project</strong> using <code><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template()</a></code>
 </li>
 <li>
-<strong>Prepare spatial data</strong> by editing <code>setup-data.R</code>
+<strong>Install packages</strong> by opening the new project and running <code>setup/1_setup_enviro.R</code>
 </li>
 <li>
-<strong>Configure app options</strong> by editing <code>setup-app.R</code>
+<strong>Prepare spatial data</strong> by editing <code>setup/2_setup_data.R</code>
+</li>
+<li>
+<strong>Configure app options</strong> by editing <code>setup/3_setup_app.R</code>
 </li>
 <li>
 <strong>Define features</strong> by editing <code>Dict_Feature.csv</code>
 </li>
 <li>
-<strong>Customise help text</strong> by editing markdown files</li>
+<strong>Customise help text</strong> by editing markdown files in <code>setup/content/</code>
+</li>
 <li>
 <strong>Test locally</strong> before deployment</li>
-</ol></section><section class="level2"><h2 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
+</ol>
+<div>
+<blockquote>
+<p><strong>Two projects, two contexts</strong></p>
+<p>Step 1 is run <strong>in your current R session</strong> (any project). Steps 2–7 are run <strong>inside the new deployment project</strong>. Keep this distinction in mind throughout — running scripts in the wrong project is the most common source of confusion.</p>
+</blockquote>
+</div>
+</section><section class="level2"><h2 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
 </h2>
 <p>Before starting, ensure you have:</p>
 <ul>
-<li>R and RStudio installed</li>
-<li>The <em>shinyplanr</em> package installed from GitHub</li>
-<li>Other supporting packages installed (e.g. <em>oceandatr</em> and <em>spatialgridr</em>)</li>
+<li>R (≥ 4.1) and RStudio installed</li>
+<li>A GitHub Personal Access Token (PAT) stored in your keychain — needed to install packages from GitHub. See <a href="#sec-setup-enviro">Step 2: Install Packages</a> for details.</li>
 <li>A geographic boundary for your region of interest</li>
-<li>Spatial data for features you wish to include</li>
-</ul></section><section class="level2"><h2 id="sec-create-template">Step 1: Create a Deployment Project<a class="anchor" aria-label="anchor" href="#sec-create-template"></a>
+<li>Spatial data for features you wish to include (or internet access to download them via <em>oceandatr</em>)</li>
+</ul>
+<p>Install <em>shinyplanr</em> from GitHub before proceeding:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"SpatialPlanning/shinyplanr"</span><span class="op">)</span></span></code></pre></div>
+<div>
+<blockquote>
+<p><strong>Note</strong></p>
+<p>You only need to install <em>shinyplanr</em> once in your main R library. The deployment project’s <code>setup/1_setup_enviro.R</code> script installs packages <em>inside the deployment project</em> using <code>renv</code> — it does not reinstall <em>shinyplanr</em> in your main library.</p>
+</blockquote>
+</div>
+</section><section class="level2"><h2 id="sec-create-template">Step 1: Create a Deployment Project<a class="anchor" aria-label="anchor" href="#sec-create-template"></a>
 </h2>
 <p>The <code><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template()</a></code> function generates a complete, standalone deployment project for your region.</p>
 <section class="level3"><h3 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h3>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://spatialplanning.github.io/shinyplanr">shinyplanr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template</a></span><span class="op">(</span></span>
@@ -226,11 +297,12 @@
 ├── app.R                          ← App entry point (do not edit)
 ├── deploy.R                       ← Deployment to Posit Connect
 ├── Fiji.Rproj                     ← Open this in RStudio
-├── config/                        ← AUTO-GENERATED by setup-app.R
-├── www/                           ← AUTO-GENERATED by setup-app.R
+├── config/                        ← AUTO-GENERATED by setup/3_setup_app.R
+├── www/                           ← AUTO-GENERATED by setup/3_setup_app.R
 └── setup/                         ← Everything you edit lives here
-    ├── setup-data.R               ← Step 1: prepare spatial data
-    ├── setup-app.R                ← Step 2: configure the app
+    ├── 1_setup_enviro.R           ← Step 1: install packages + renv
+    ├── 2_setup_data.R             ← Step 2: prepare spatial data
+    ├── 3_setup_app.R              ← Step 3: configure the app
     ├── Dict_Feature.csv           ← Feature definitions
     ├── data/                      ← Place raw spatial data files here
     ├── logos/                     ← Place logo image files here
@@ -244,16 +316,51 @@
 <p>Open <code>Fiji/Fiji.Rproj</code> in RStudio to work inside the deployment project. All subsequent scripts should be run <strong>from within the project</strong>, not from the shinyplanr package directory.</p>
 </blockquote>
 </div>
-<p>The <code>config/</code> and <code>www/</code> folders are <strong>auto-generated</strong> when you run <code>setup/setup-app.R</code> — do not edit them directly. Everything you need to customise lives inside <code>setup/</code>.</p>
-</section></section><section class="level2"><h2 id="sec-setup-data">Step 2: Prepare Spatial Data<a class="anchor" aria-label="anchor" href="#sec-setup-data"></a>
+<p>The <code>config/</code> and <code>www/</code> folders are <strong>auto-generated</strong> when you run <code>setup/3_setup_app.R</code> — do not edit them directly. Everything you need to customise lives inside <code>setup/</code>.</p>
+</section></section><section class="level2"><h2 id="sec-setup-enviro">Step 2: Install Packages<a class="anchor" aria-label="anchor" href="#sec-setup-enviro"></a>
 </h2>
-<p>The <code>setup/setup-data.R</code> script processes your raw spatial data into the format required by <em>shinyplanr</em>.</p>
-<section class="level3"><h3 id="understanding-setup-data-r">Understanding setup-data.R<a class="anchor" aria-label="anchor" href="#understanding-setup-data-r"></a>
+<p>The <code>setup/1_setup_enviro.R</code> script installs all required packages inside the deployment project and locks their versions with <code>renv</code>. Run it once after opening the project for the first time.</p>
+<section class="level3"><h3 id="what-1_setup_enviro-r-does">What 1_setup_enviro.R does<a class="anchor" aria-label="anchor" href="#what-1_setup_enviro-r-does"></a>
 </h3>
-<p>Open <code>setup/setup-data.R</code> in RStudio (from within the deployment project). The script contains several sections:</p>
+<p>The script performs these steps in order:</p>
+<ol type="1">
+<li>
+<strong>Checks for Quarto CLI</strong> — the app uses Quarto to generate downloadable reports. If Quarto is not installed, a warning is shown. Download from <a href="https://quarto.org/docs/get-started/" class="external-link">quarto.org</a>.</li>
+<li>
+<strong>Sets up GitHub credentials</strong> — packages are installed from GitHub. The script uses <code>gitcreds</code> to read your GitHub PAT from the system keychain. If no PAT is found, it prompts you to paste one. See the script comments for instructions on creating a PAT.</li>
+<li>
+<strong>Installs GitHub-only packages</strong> — <code>shinyplanr</code>, <code>spatialplanr</code>, <code>shinyWidgets</code>, and (if <code>oceandatr = TRUE</code>) <code>oceandatr</code> and <code>spatialgridr</code>.</li>
+<li>
+<strong>Installs CRAN packages</strong> — all remaining dependencies.</li>
+<li>
+<strong>Verifies installs</strong> — checks that critical packages loaded correctly. Stops with a clear error if any failed.</li>
+<li>
+<strong>Runs <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code></strong> — writes <code>renv.lock</code>, locking all package versions for reproducible deployment.</li>
+</ol>
+<div>
+<blockquote>
+<p><strong>Run 1_setup_enviro.R even if packages are already installed</strong></p>
+<p>The <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code> at the end of the script writes <code>renv.lock</code>. Without this file, Posit Connect cannot install the correct package versions when you deploy. Always run <code>1_setup_enviro.R</code> to completion before deploying.</p>
+</blockquote>
+</div>
+</section><section class="level3"><h3 id="running-1_setup_enviro-r">Running 1_setup_enviro.R<a class="anchor" aria-label="anchor" href="#running-1_setup_enviro-r"></a>
+</h3>
+<ol type="1">
+<li>Open the deployment project (<code>Fiji.Rproj</code>) in RStudio</li>
+<li>Open <code>setup/1_setup_enviro.R</code>
+</li>
+<li>Click <strong>Source</strong> (or Ctrl/Cmd + Shift + Enter)</li>
+<li>Follow any prompts for GitHub credentials</li>
+<li>Wait for all packages to install and <code>renv.lock</code> to be written</li>
+</ol></section></section><section class="level2"><h2 id="sec-setup-data">Step 3: Prepare Spatial Data<a class="anchor" aria-label="anchor" href="#sec-setup-data"></a>
+</h2>
+<p>The <code>setup/2_setup_data.R</code> script processes your raw spatial data into the format required by <em>shinyplanr</em>.</p>
+<section class="level3"><h3 id="understanding-2_setup_data-r">Understanding 2_setup_data.R<a class="anchor" aria-label="anchor" href="#understanding-2_setup_data-r"></a>
+</h3>
+<p>Open <code>setup/2_setup_data.R</code> in RStudio (from within the deployment project). The script contains several sections:</p>
 <section class="level4"><h4 id="basic-parameters">Basic Parameters<a class="anchor" aria-label="anchor" href="#basic-parameters"></a>
 </h4>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">country</span>    <span class="op">&lt;-</span> <span class="st">"Fiji"</span></span>
 <span><span class="va">crs</span>        <span class="op">&lt;-</span> <span class="st">"+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84 +units=m +no_defs"</span></span>
 <span><span class="va">resolution</span> <span class="op">&lt;-</span> <span class="fl">20000L</span>  <span class="co"># Planning unit size in metres</span></span>
@@ -263,19 +370,19 @@
 </section><section class="level4"><h4 id="boundaries">Boundaries<a class="anchor" aria-label="anchor" href="#boundaries"></a>
 </h4>
 <p>If you set <code>oceandatr = TRUE</code>, the template includes code to download your EEZ boundary:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get EEZ boundary from Marine Regions database</span></span>
 <span><span class="va">eez</span> <span class="op">&lt;-</span> <span class="fu">spatialgridr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/spatialgridr/reference/get_boundary.html" class="external-link">get_boundary</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">country</span>, type <span class="op">=</span> <span class="st">"eez"</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span>crs <span class="op">=</span> <span class="va">crs</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/sf.html" class="external-link">st_sf</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>For custom boundaries, replace this with:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bndry</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="st">"my_boundary.gpkg"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span>crs <span class="op">=</span> <span class="va">crs</span><span class="op">)</span></span></code></pre></div>
 </section><section class="level4"><h4 id="planning-unit-grid">Planning Unit Grid<a class="anchor" aria-label="anchor" href="#planning-unit-grid"></a>
 </h4>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">PUs</span> <span class="op">&lt;-</span> <span class="fu">spatialgridr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/spatialgridr/reference/get_grid.html" class="external-link">get_grid</a></span><span class="op">(</span></span>
 <span>  boundary <span class="op">=</span> <span class="va">eez</span>,</span>
 <span>  crs <span class="op">=</span> <span class="va">crs</span>,</span>
@@ -293,22 +400,22 @@
 </ul></section><section class="level4"><h4 id="feature-data">Feature Data<a class="anchor" aria-label="anchor" href="#feature-data"></a>
 </h4>
 <p>If using <em>oceandatr</em>, the template downloads several data layers:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Bathymetry / Depth zones</span></span>
-<span><span class="va">bathymetry</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_bathymetry.html" class="external-link">get_bathymetry</a></span><span class="op">(</span></span>
+<span><span class="va">bathymetry</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu">get_bathymetry</span><span class="op">(</span></span>
 <span>  spatial_grid <span class="op">=</span> <span class="va">PUs</span>,</span>
 <span>  classify_bathymetry <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Geomorphology</span></span>
-<span><span class="va">geomorphology</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_geomorphology.html" class="external-link">get_geomorphology</a></span><span class="op">(</span></span>
+<span><span class="va">geomorphology</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu">get_geomorphology</span><span class="op">(</span></span>
 <span>  spatial_grid <span class="op">=</span> <span class="va">PUs</span></span>
 <span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Seamounts (with buffer)</span></span>
-<span><span class="va">seamounts</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_seamounts.html" class="external-link">get_seamounts</a></span><span class="op">(</span></span>
+<span><span class="va">seamounts</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu">get_seamounts</span><span class="op">(</span></span>
 <span>  spatial_grid <span class="op">=</span> <span class="va">PUs</span>,</span>
 <span>  buffer <span class="op">=</span> <span class="fl">30000</span></span>
 <span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
@@ -316,7 +423,7 @@
 </section><section class="level4"><h4 id="adding-custom-data">Adding Custom Data<a class="anchor" aria-label="anchor" href="#adding-custom-data"></a>
 </h4>
 <p>To add your own spatial data layers:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example: Load habitat data from shapefile</span></span>
 <span><span class="va">habitat</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="st">"habitat.gpkg"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">spatialgridr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/spatialgridr/reference/get_data_in_grid.html" class="external-link">get_data_in_grid</a></span><span class="op">(</span></span>
@@ -336,18 +443,20 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 </section><section class="level4"><h4 id="cost-layers">Cost Layers<a class="anchor" aria-label="anchor" href="#cost-layers"></a>
 </h4>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate distance to coast</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="va">dat_sf</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">geometry</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">spatialplanr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/spatialplanr/man/splnr_get_distCoast.html" class="external-link">splnr_get_distCoast</a></span><span class="op">(</span>custom_coast <span class="op">=</span> <span class="va">coast</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
-<span>    Cost_Area <span class="op">=</span> <span class="va">PU_Area</span>,          <span class="co"># Equal area cost</span></span>
-<span>    Cost_Distance <span class="op">=</span> <span class="va">coastDistance_km</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>    cost_area     <span class="op">=</span> <span class="va">PU_Area</span>,          <span class="co"># Equal area cost</span></span>
+<span>    cost_distance <span class="op">=</span> <span class="va">coastDistance_km</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">coastDistance_km</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </section><section class="level4"><h4 id="locked-in-areas-mpas">Locked-In Areas (MPAs)<a class="anchor" aria-label="anchor" href="#locked-in-areas-mpas"></a>
 </h4>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mpas</span> <span class="op">&lt;-</span> <span class="fu">spatialplanr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/spatialplanr/man/splnr_get_MPAs.html" class="external-link">splnr_get_MPAs</a></span><span class="op">(</span></span>
 <span>  PlanUnits <span class="op">=</span> <span class="va">PUs</span>, </span>
 <span>  Countries <span class="op">=</span> <span class="va">country</span></span>
@@ -362,7 +471,7 @@
 </section><section class="level4"><h4 id="saving-the-data">Saving the Data<a class="anchor" aria-label="anchor" href="#saving-the-data"></a>
 </h4>
 <p>The final step combines all data and saves it:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Combine all features</span></span>
 <span><span class="va">dat_sf</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_cols.html" class="external-link">bind_cols</a></span><span class="op">(</span></span>
 <span>  <span class="va">PUs</span>,</span>
@@ -376,10 +485,10 @@
 <span><span class="co"># Save to setup/data/</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/save.html" class="external-link">save</a></span><span class="op">(</span><span class="va">dat_sf</span>, <span class="va">bndry</span>, <span class="va">coast</span>,</span>
 <span>     file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">country</span>, <span class="st">"_RawData.rda"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</section></section><section class="level3"><h3 id="running-setup-data-r">Running setup-data.R<a class="anchor" aria-label="anchor" href="#running-setup-data-r"></a>
+</section></section><section class="level3"><h3 id="running-2_setup_data-r">Running 2_setup_data.R<a class="anchor" aria-label="anchor" href="#running-2_setup_data-r"></a>
 </h3>
 <ol type="1">
-<li>Open <code>setup/setup-data.R</code> in RStudio (with the <code>.Rproj</code> open)</li>
+<li>Open <code>setup/2_setup_data.R</code> in RStudio (with the <code>.Rproj</code> open)</li>
 <li>Review and modify as needed for your data</li>
 <li>Run the entire script (Ctrl/Cmd + Shift + Enter)</li>
 <li>Check for any warnings or errors</li>
@@ -391,53 +500,62 @@
 <p>The first run of <em>oceandatr</em> functions may download large datasets. Ensure you have a stable internet connection and sufficient disk space.</p>
 </blockquote>
 </div>
-</section></section><section class="level2"><h2 id="sec-setup-app">Step 3: Configure App Options<a class="anchor" aria-label="anchor" href="#sec-setup-app"></a>
+</section></section><section class="level2"><h2 id="sec-setup-app">Step 4: Configure App Options<a class="anchor" aria-label="anchor" href="#sec-setup-app"></a>
 </h2>
-<p>The <code>setup/setup-app.R</code> script configures how the <em>shinyplanr</em> application behaves and generates the config file loaded at runtime.</p>
+<p>The <code>setup/3_setup_app.R</code> script configures how the <em>shinyplanr</em> application behaves and generates the config file loaded at runtime.</p>
 <section class="level3"><h3 id="the-options-list">The Options List<a class="anchor" aria-label="anchor" href="#the-options-list"></a>
 </h3>
-<p>The <code>options</code> list controls application settings, allowing you to define text, switch modules on/off and decide on display options:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  </span>
-<span>  <span class="co">## General Options</span></span>
-<span>  app_title <span class="op">=</span> <span class="st">"Fiji: shinyplanr"</span>,</span>
-<span>  nav_title <span class="op">=</span> <span class="st">"Fiji Spatial Planning"</span>,</span>
-<span>  navbar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>theme <span class="op">=</span> <span class="st">"dark"</span><span class="op">)</span>,</span>
-<span>  </span>
+<p>The <code>shinyplanr_options</code> list controls application settings, allowing you to define text, switch modules on/off and decide on display options:</p>
+<div>
+<blockquote>
+<p><strong>Why <code>shinyplanr_options</code> and not <code>options</code>?</strong></p>
+<p>The variable is deliberately named <code>shinyplanr_options</code> rather than <code>options</code> to avoid shadowing <code><a href="https://rdrr.io/r/base/options.html" class="external-link">base::options()</a></code>, which is a core R function. If a variable named <code>options</code> existed in the global environment and you then ran the app in the same R session, any internal code calling <code><a href="https://rdrr.io/r/base/options.html" class="external-link">options()</a></code> would find the list instead of the function and crash immediately.</p>
+</blockquote>
+</div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">shinyplanr_options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span></span>
+<span>  <span class="co">## General</span></span>
+<span>  app_title  <span class="op">=</span> <span class="st">"Fiji: shinyplanr"</span>,</span>
+<span>  nav_title  <span class="op">=</span> <span class="st">"Fiji Spatial Planning"</span>,</span>
+<span>  navbar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>theme <span class="op">=</span> <span class="st">"dark"</span><span class="op">)</span>,  <span class="co"># "light" or "dark"</span></span>
+<span></span>
 <span>  <span class="co">## Funder link (opens when funder logo is clicked)</span></span>
 <span>  funder_url <span class="op">=</span> <span class="st">"https://spatialplanning.github.io"</span>,</span>
 <span></span>
-<span>  <span class="co">## Logo and data file locations (relative to setup/)</span></span>
-<span>  file_logo        <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"logo.png"</span><span class="op">)</span>,</span>
-<span>  file_logo2       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"logo2.png"</span><span class="op">)</span>,</span>
-<span>  file_logo3       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"logo3.png"</span><span class="op">)</span>,</span>
-<span>  file_logo_funder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"logo_funder.png"</span><span class="op">)</span>,</span>
-<span>  file_data        <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">country</span>, <span class="st">"_RawData.rda"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  </span>
-<span>  <span class="co">## Module switches</span></span>
+<span>  <span class="co">## Logo file locations (relative to setup/logos/)</span></span>
+<span>  <span class="co">#   logo_navbar.png  -- top-left of the navbar on every page</span></span>
+<span>  <span class="co">#   logo_welcome.png -- inline image in the welcome page</span></span>
+<span>  <span class="co">#   logo_funder.png  -- primary "Funded by" logo in the welcome footer</span></span>
+<span>  <span class="co">#   favicon.png      -- browser tab icon</span></span>
+<span>  file_logo_navbar  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"logo_navbar.png"</span><span class="op">)</span>,</span>
+<span>  file_logo_welcome <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"logo_welcome.png"</span><span class="op">)</span>,</span>
+<span>  file_logo_funder  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"logo_funder.png"</span><span class="op">)</span>,</span>
+<span>  file_logo_funder2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"uq-logo-white.png"</span><span class="op">)</span>,</span>
+<span>  funder2_url       <span class="op">=</span> <span class="st">"https://spatialplanning.github.io"</span>,</span>
+<span>  file_favicon      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">setup_dir</span>, <span class="st">"logos"</span>, <span class="st">"favicon.png"</span><span class="op">)</span>,</span>
+<span>  file_data         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">country</span>, <span class="st">"_RawData.rda"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span></span>
+<span>  <span class="co">## Module switches (TRUE = enabled, FALSE = disabled)</span></span>
 <span>  mod_1welcome  <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  mod_2scenario <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  mod_3compare  <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  mod_4features <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  mod_5coverage <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  mod_6help     <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  </span>
-<span>  <span class="co">## UQ logo in welcome footer</span></span>
-<span>  show_uq_logo <span class="op">=</span> <span class="cn">TRUE</span>,   <span class="co"># Set FALSE to hide the UQ logo</span></span>
 <span></span>
 <span>  <span class="co">## Features</span></span>
-<span>  include_report <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  include_bioregion <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  include_report        <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_bioregion     <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  include_climateChange <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  include_lockedArea <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  </span>
+<span>  include_lockedArea    <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span></span>
 <span>  <span class="co">## Target grouping</span></span>
 <span>  targetsBy <span class="op">=</span> <span class="st">"individual"</span>,  <span class="co"># "individual", "category", or "master"</span></span>
-<span>  </span>
+<span></span>
 <span>  <span class="co">## Objective function</span></span>
-<span>  obj_func <span class="op">=</span> <span class="st">"min_shortfall"</span>,  <span class="co"># "min_set" or "min_shortfall"</span></span>
-<span>  </span>
+<span>  obj_func <span class="op">=</span> <span class="st">"min_set"</span>,  <span class="co"># "min_set" or "min_shortfall"</span></span>
+<span></span>
 <span>  <span class="co">## Geographic options</span></span>
 <span>  cCRS <span class="op">=</span> <span class="st">"+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -497,23 +615,23 @@
 </ul></section><section class="level4"><h4 id="climate-options">Climate Options<a class="anchor" aria-label="anchor" href="#climate-options"></a>
 </h4>
 <p>If climate data is available:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>include_climateChange <span class="ot">=</span> <span class="cn">TRUE</span>,</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>climate_change <span class="ot">=</span> <span class="dv">1</span>,    <span class="co"># 1 = CPA method</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>percentile <span class="ot">=</span> <span class="dv">5</span>,        <span class="co"># For percentile approach</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>direction <span class="ot">=</span> <span class="sc">-</span><span class="dv">1</span>,        <span class="co"># -1 = low values are refugia</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>refugiaTarget <span class="ot">=</span> <span class="dv">1</span></span></code></pre></div>
-</section></section><section class="level3"><h3 id="running-setup-app-r">Running setup-app.R<a class="anchor" aria-label="anchor" href="#running-setup-app-r"></a>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>include_climateChange <span class="ot">=</span> <span class="cn">TRUE</span>,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>climate_change <span class="ot">=</span> <span class="dv">1</span>,    <span class="co"># 1 = CPA method</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>percentile <span class="ot">=</span> <span class="dv">5</span>,        <span class="co"># For percentile approach</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>direction <span class="ot">=</span> <span class="sc">-</span><span class="dv">1</span>,        <span class="co"># -1 = low values are refugia</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>refugiaTarget <span class="ot">=</span> <span class="dv">1</span></span></code></pre></div>
+</section></section><section class="level3"><h3 id="running-3_setup_app-r">Running 3_setup_app.R<a class="anchor" aria-label="anchor" href="#running-3_setup_app-r"></a>
 </h3>
 <p>After configuring options:</p>
 <ol type="1">
-<li>Ensure <code>setup-data.R</code> has been run successfully</li>
-<li>Run <code>setup/setup-app.R</code> in RStudio (from inside the deployment project)</li>
+<li>Ensure <code>setup/2_setup_data.R</code> has been run successfully</li>
+<li>Run <code>setup/3_setup_app.R</code> in RStudio (from inside the deployment project)</li>
 <li>The script will:
 <ul>
 <li>Copy logos from <code>setup/logos/</code> to <code>www/</code>
 </li>
-<li>Load and validate the feature dictionary</li>
-<li>Process spatial data</li>
+<li>Load and validate the feature dictionary (<code><a href="../reference/validate_dict.html">validate_dict()</a></code>)</li>
+<li>Process and validate spatial data (<code><a href="../reference/validate_shinyplanr_data.html">validate_shinyplanr_data()</a></code>)</li>
 <li>Save all configuration to <strong><code>config/shinyplanr_config.rds</code></strong>
 </li>
 </ul>
@@ -522,10 +640,75 @@
 <div>
 <blockquote>
 <p><strong>Note</strong></p>
-<p>The old approach wrote data into the package source via <code><a href="https://usethis.r-lib.org/reference/use_data.html" class="external-link">usethis::use_data()</a></code>. The new approach saves a single <code>.rds</code> config file that <code><a href="../reference/load_config.html">load_config()</a></code> reads at app startup — no package rebuild required.</p>
+<p>The config file approach means you never need to rebuild or reinstall the <em>shinyplanr</em> package when you change your data or options. Re-run <code>setup/3_setup_app.R</code> and the updated config is picked up immediately on the next <code><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">shiny::runApp()</a></code>.</p>
 </blockquote>
 </div>
-</section></section><section class="level2"><h2 id="sec-dict-feature">Step 4: The Feature Dictionary<a class="anchor" aria-label="anchor" href="#sec-dict-feature"></a>
+</section><section class="level3"><h3 id="sec-validation">Validation<a class="anchor" aria-label="anchor" href="#sec-validation"></a>
+</h3>
+<p><code>setup/3_setup_app.R</code> runs two validation checks automatically before saving the config:</p>
+<p><strong><code><a href="../reference/validate_dict.html">validate_dict()</a></code></strong> checks the feature dictionary (<code>Dict_Feature.csv</code>):</p>
+<ul>
+<li>All required columns are present</li>
+<li>
+<code>includeApp</code> and <code>includeJust</code> are logical (<code>TRUE</code>/<code>FALSE</code>), not <code>1</code>/<code>0</code> or text</li>
+<li>All <code>type</code> values are from the known set (<code>Feature</code>, <code>Cost</code>, <code>LockIn</code>, etc.)</li>
+<li>
+<code>nameVariable</code> is unique within each type</li>
+<li>At least one <code>Feature</code> row has <code>includeApp == TRUE</code>
+</li>
+<li>Active <code>Feature</code> rows have target values in the 0–100 range</li>
+</ul>
+<p><strong><code><a href="../reference/validate_shinyplanr_data.html">validate_shinyplanr_data()</a></code></strong> checks the assembled config:</p>
+<ul>
+<li>All <code>Dict</code> variables are present as columns in <code>raw_sf</code>
+</li>
+<li>CRS is consistent across <code>raw_sf</code>, <code>bndry</code>, and <code>options$cCRS</code>
+</li>
+<li>No feature columns are all-zero or all-<code>NA</code>
+</li>
+<li>Text content fields are character strings</li>
+</ul>
+<p>If either check fails, the script stops with a clear error message. The most common causes are:</p>
+<table class="table caption-top">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 52%">
+<col style="width: 20%">
+</colgroup>
+<thead><tr class="header">
+<th>Error</th>
+<th>Likely cause</th>
+<th>Fix</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>"Variable 'X' not found in raw_sf"</code></td>
+<td>
+<code>nameVariable</code> in <code>Dict_Feature.csv</code> does not match a column in <code>dat_sf</code>
+</td>
+<td>Check spelling, case, and underscores</td>
+</tr>
+<tr class="even">
+<td><code>"Column 'X' is all zeros"</code></td>
+<td>Feature data was not downloaded or processed correctly</td>
+<td>Re-run <code>2_setup_data.R</code> and check the data</td>
+</tr>
+<tr class="odd">
+<td><code>"CRS mismatch"</code></td>
+<td>
+<code>cCRS</code> in options does not match the CRS of <code>raw_sf</code>
+</td>
+<td>Ensure <code>cCRS</code> matches the <code>crs</code> used in <code>2_setup_data.R</code>
+</td>
+</tr>
+<tr class="even">
+<td><code>"targetInitial out of range"</code></td>
+<td>A target value in <code>Dict_Feature.csv</code> is outside 0–100</td>
+<td>Fix the value in <code>Dict_Feature.csv</code>
+</td>
+</tr>
+</tbody>
+</table></section></section><section class="level2"><h2 id="sec-dict-feature">Step 5: The Feature Dictionary<a class="anchor" aria-label="anchor" href="#sec-dict-feature"></a>
 </h2>
 <p>The <code>setup/Dict_Feature.csv</code> file defines all data layers and their properties. This is the central configuration for what features, costs, and constraints appear in the application.</p>
 <section class="level3"><h3 id="dictionary-columns">Dictionary Columns<a class="anchor" aria-label="anchor" href="#dictionary-columns"></a>
@@ -645,10 +828,16 @@
 <pre class="csv"><code>nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
 Coral Reef,coral_reef,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
 Seagrass,seagrass,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
-Equal Area Cost,Cost_Area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost."
-Fishing Effort,fishing_cost,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,hours,"Higher values indicate more fishing activity."
+Equal Area Cost,cost_area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost based on their area."
+Distance to Coast,cost_distance,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,km,"Cost based on distance from the coast."
 Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
 Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."</code></pre>
+<div>
+<blockquote>
+<p><strong>Variable names must match exactly</strong></p>
+<p>The <code>nameVariable</code> column must <strong>exactly match</strong> column names in your spatial data (<code>dat_sf</code>). The generated template uses lowercase snake_case (e.g. <code>cost_area</code>, <code>cost_distance</code>). Check for spelling differences, case sensitivity, and spaces vs underscores.</p>
+</blockquote>
+</div>
 </section><section class="level3"><h3 id="common-issues">Common Issues<a class="anchor" aria-label="anchor" href="#common-issues"></a>
 </h3>
 <div>
@@ -662,7 +851,7 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 </ul>
 </blockquote>
 </div>
-</section></section><section class="level2"><h2 id="sec-content-files">Step 5: Customise Content<a class="anchor" aria-label="anchor" href="#sec-content-files"></a>
+</section></section><section class="level2"><h2 id="sec-content-files">Step 6: Customise Content<a class="anchor" aria-label="anchor" href="#sec-content-files"></a>
 </h2>
 <p>The <code>setup/content/</code> folder contains text and other content files that appear in the application. Markdown (<code>.md</code>) files are the primary format, but you can also store PDFs, images, or other reference material here.</p>
 <section class="level3"><h3 id="welcome-pages">Welcome Pages<a class="anchor" aria-label="anchor" href="#welcome-pages"></a>
@@ -751,14 +940,14 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 </tbody>
 </table>
 <p>Edit these files with region-specific information before deployment. You can also place additional files (PDFs, images) in <code>setup/content/</code> and reference them from markdown.</p>
-</section></section><section class="level2"><h2 id="step-6-test-locally">Step 6: Test Locally<a class="anchor" aria-label="anchor" href="#step-6-test-locally"></a>
+</section></section><section class="level2"><h2 id="step-7-test-locally">Step 7: Test Locally<a class="anchor" aria-label="anchor" href="#step-7-test-locally"></a>
 </h2>
 <p>Before deploying, test the application locally from within the deployment project:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># app.R does this automatically when you call shiny::runApp()</span></span>
 <span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>This reads <code>app.R</code> in the project root, which calls:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">shinyplanr</span><span class="fu">::</span><span class="fu"><a href="../reference/load_config.html">load_config</a></span><span class="op">(</span><span class="st">"config/shinyplanr_config.rds"</span><span class="op">)</span></span>
 <span><span class="fu">shinyplanr</span><span class="fu">::</span><span class="fu"><a href="../reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div>
@@ -781,23 +970,26 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 <li><label><input type="checkbox">Help text displays properly</label></li>
 </ul></section></section><section class="level2"><h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
-<p>Setting up <em>shinyplanr</em> for a new region involves:</p>
+<p>Install <em>shinyplanr</em> first (see <a href="#prerequisites">Prerequisites</a>), then follow these seven steps:</p>
 <ol type="1">
 <li>
-<strong>Creating a deployment project</strong> with <code><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template()</a></code>
+<strong>Create a deployment project</strong> with <code><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template()</a></code>
 </li>
 <li>
-<strong>Preparing data</strong> in <code>setup-data.R</code>
+<strong>Install packages</strong> with <code>setup/1_setup_enviro.R</code> (writes <code>renv.lock</code>)</li>
+<li>
+<strong>Prepare data</strong> in <code>setup/2_setup_data.R</code>
 </li>
 <li>
-<strong>Configuring options</strong> in <code>setup-app.R</code> (outputs <code>config/shinyplanr_config.rds</code>)</li>
+<strong>Configure options</strong> in <code>setup/3_setup_app.R</code> (outputs <code>config/shinyplanr_config.rds</code>)</li>
 <li>
-<strong>Defining features</strong> in <code>Dict_Feature.csv</code>
+<strong>Define features</strong> in <code>Dict_Feature.csv</code>
 </li>
 <li>
-<strong>Customising text</strong> in markdown files</li>
+<strong>Customise text</strong> in markdown files in <code>setup/content/</code>
+</li>
 <li>
-<strong>Testing</strong> the application locally with <code><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">shiny::runApp()</a></code>
+<strong>Test</strong> the application locally with <code><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">shiny::runApp()</a></code>
 </li>
 </ol>
 <p>Once testing is complete, proceed to the <a href="ad-deployment.html">Deployment vignette</a> for instructions on locking package versions and deploying to Posit Connect.</p>
@@ -805,35 +997,37 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 </h2>
 <section class="level3"><h3 id="minimum-required-files">Minimum Required Files<a class="anchor" aria-label="anchor" href="#minimum-required-files"></a>
 </h3>
-<p>After running <code>setup/setup-app.R</code>, your deployment project should contain:</p>
+<p>After running <code>setup/3_setup_app.R</code>, your deployment project should contain:</p>
 <pre><code>{Country}/
 ├── app.R                         # Auto-generated — do not edit
 ├── deploy.R                      # Deployment script
 ├── config/
-│   └── shinyplanr_config.rds     # ← key file, generated by setup-app.R
+│   └── shinyplanr_config.rds     # ← key file, generated by 3_setup_app.R
 ├── www/
 │   ├── logo.png
 │   └── logo_funder.png
 └── setup/
-    ├── setup-data.R
-    ├── setup-app.R
+    ├── 1_setup_enviro.R
+    ├── 2_setup_data.R
+    ├── 3_setup_app.R
     ├── Dict_Feature.csv
     ├── data/
-    │   └── {Country}_RawData.rda # Generated by setup-data.R
+    │   └── {Country}_RawData.rda # Generated by 2_setup_data.R
     ├── logos/
     └── content/</code></pre>
 </section><section class="level3"><h3 id="common-commands">Common Commands<a class="anchor" aria-label="anchor" href="#common-commands"></a>
 </h3>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create deployment project (run from any R session with shinyplanr loaded)</span></span>
 <span><span class="fu"><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template</a></span><span class="op">(</span>country <span class="op">=</span> <span class="st">"MyRegion"</span>, crs <span class="op">=</span> <span class="st">"EPSG:32601"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Check boundary data availability (oceandatr)</span></span>
-<span><span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/spatialgridr/reference/get_boundary.html" class="external-link">get_boundary</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"MyCountry"</span>, type <span class="op">=</span> <span class="st">"eez"</span><span class="op">)</span></span>
+<span><span class="fu">oceandatr</span><span class="fu">::</span><span class="fu">get_boundary</span><span class="op">(</span>name <span class="op">=</span> <span class="st">"MyCountry"</span>, type <span class="op">=</span> <span class="st">"eez"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Run setup scripts (from inside the deployment project)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"setup/setup-data.R"</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"setup/setup-app.R"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"setup/1_setup_enviro.R"</span><span class="op">)</span>  <span class="co"># Install packages (run once)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"setup/2_setup_data.R"</span><span class="op">)</span>    <span class="co"># Prepare spatial data</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"setup/3_setup_app.R"</span><span class="op">)</span>     <span class="co"># Configure app and generate config</span></span>
 <span></span>
 <span><span class="co"># Test the app locally</span></span>
 <span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="op">)</span></span>

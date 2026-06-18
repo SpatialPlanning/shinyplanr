@@ -1,6 +1,6 @@
 # Articles
 
-### User Manual
+### Documentation
 
 - [Introduction to Spatial
   Planning](https://spatialplanning.github.io/shinyplanr/articles/aa-introduction.md):

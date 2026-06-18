@@ -12,8 +12,8 @@
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="aa-introduction_files/libs/quarto-html/popper.min.js"></script><script src="aa-introduction_files/libs/quarto-html/tippy.umd.min.js"></script><link href="aa-introduction_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="aa-introduction_files/libs/quarto-html/light-border.css" rel="stylesheet">
@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">shinyplanr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Manual</h6></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Documentation</h6></li>
     <li><a class="dropdown-item" href="../articles/aa-introduction.html">Introduction to Spatial Planning</a></li>
     <li><a class="dropdown-item" href="../articles/ab-using-shinyplanr.html">Using the shinyplanr Application</a></li>
     <li><a class="dropdown-item" href="../articles/ac-setting-up.html">Setting Up shinyplanr for Your Region</a></li>
@@ -245,7 +245,14 @@
 <strong>Locked-in constraints</strong>: Planning units that <em>must</em> be selected (e.g., existing protected areas)</li>
 <li>
 <strong>Locked-out constraints</strong>: Planning units that <em>cannot</em> be selected (e.g., shipping lanes, urban areas)</li>
-</ul></section></section><section class="level2"><h2 id="objective-functions">Objective Functions<a class="anchor" aria-label="anchor" href="#objective-functions"></a>
+</ul>
+<div>
+<blockquote>
+<p><strong>In shinyplanr</strong></p>
+<p>Planning units, features, targets, costs, and constraints all correspond directly to controls in the <strong>Scenario</strong> tab. See <a href="ab-using-shinyplanr.html#sec-scenario-tab">Using shinyplanr</a> for a guided tour of each control.</p>
+</blockquote>
+</div>
+</section></section><section class="level2"><h2 id="objective-functions">Objective Functions<a class="anchor" aria-label="anchor" href="#objective-functions"></a>
 </h2>
 <p>The <strong>objective function</strong> defines what the prioritisation algorithm is trying to achieve. Different objectives suit different planning contexts:</p>
 <section class="level3"><h3 id="minimum-set-objective">Minimum Set Objective<a class="anchor" aria-label="anchor" href="#minimum-set-objective"></a>
@@ -334,7 +341,14 @@
 <td>More constrained</td>
 </tr>
 </tbody>
-</table></section></section><section class="level2"><h2 id="sec-climate-smart">Climate-Smart Spatial Planning<a class="anchor" aria-label="anchor" href="#sec-climate-smart"></a>
+</table>
+<div>
+<blockquote>
+<p><strong>In shinyplanr</strong></p>
+<p>The objective function is set by the deployer in <code>setup/3_setup_app.R</code> (<code>obj_func = "min_set"</code> or <code>"min_shortfall"</code>). Users see the effect through the presence or absence of a budget slider in the Scenario tab. See <a href="ac-setting-up.html#sec-setup-app">Setting Up</a> for configuration details.</p>
+</blockquote>
+</div>
+</section></section><section class="level2"><h2 id="sec-climate-smart">Climate-Smart Spatial Planning<a class="anchor" aria-label="anchor" href="#sec-climate-smart"></a>
 </h2>
 <p>Climate change poses fundamental challenges to both conservation and multiple-use planning. Species distributions are shifting, habitats are degrading, and historical baselines may no longer represent future conditions. Simultaneously, climate change affects the productivity and suitability of areas for human uses such as fisheries and aquaculture. <strong>Climate-smart spatial planning</strong> explicitly incorporates climate change considerations into prioritisation to ensure plans remain effective under future conditions <span class="citation" data-cites="buenafe2025climatesmart">(<a href="#ref-buenafe2025climatesmart" role="doc-biblioref">Buenafe et al. 2025</a>)</span>.</p>
 <section class="level3"><h3 id="why-climate-smart-planning-matters">Why Climate-Smart Planning Matters<a class="anchor" aria-label="anchor" href="#why-climate-smart-planning-matters"></a>
@@ -363,6 +377,12 @@
 <li>Ensemble model projections</li>
 </ul>
 <p>Given uncertainty in climate projections, robust planning aims to find solutions that perform well across multiple climate scenarios rather than optimising for a single projection.</p>
+<div>
+<blockquote>
+<p><strong>In shinyplanr</strong></p>
+<p>Climate-smart options appear in the Scenario tab when <code>include_climateChange = TRUE</code> is set in <code>setup/3_setup_app.R</code>. Users can select a climate layer from a dropdown to preferentially weight refugia areas. See <a href="ab-using-shinyplanr.html#sec-scenario-tab">Using shinyplanr</a> for details.</p>
+</blockquote>
+</div>
 </section></section><section class="level2"><h2 id="sec-multiple-use">Multiple-Use Spatial Planning<a class="anchor" aria-label="anchor" href="#sec-multiple-use"></a>
 </h2>
 <p>Conservation does not occur in isolation. Marine and terrestrial environments support multiple human activities including fishing, shipping, tourism, renewable energy, aquaculture, and extractive industries. Rather than viewing conservation and resource use as competing objectives, <strong>multiple-use spatial planning</strong> seeks to balance biodiversity protection with sustainable economic activities, creating spatial plans where sectors coexist or are strategically separated based on compatibility <span class="citation" data-cites="neubert2025multipleuse">(<a href="#ref-neubert2025multipleuse" role="doc-biblioref">Neubert et al. 2025</a>)</span>.</p>
@@ -527,7 +547,14 @@
 <li>Cultural heritage sites</li>
 <li>Indigenous marine territories</li>
 <li>Community resource use patterns</li>
-</ul></section></section><section class="level2"><h2 id="sec-ecosystem-services">Ecosystem Services<a class="anchor" aria-label="anchor" href="#sec-ecosystem-services"></a>
+</ul>
+<div>
+<blockquote>
+<p><strong>In shinyplanr</strong></p>
+<p>Multiple-use considerations are incorporated through cost layers (representing sectoral impacts such as fishing effort) and locked-out constraints (excluding shipping lanes, aquaculture zones, etc.). The Comparison tab allows side-by-side exploration of different cost layer choices. See <a href="ab-using-shinyplanr.html#sec-comparison-tab">Using shinyplanr</a>.</p>
+</blockquote>
+</div>
+</section></section><section class="level2"><h2 id="sec-ecosystem-services">Ecosystem Services<a class="anchor" aria-label="anchor" href="#sec-ecosystem-services"></a>
 </h2>
 <p><strong>Ecosystem services</strong> are the benefits that humans derive from ecosystems. Incorporating ecosystem services into spatial planning allows conservation to contribute to human well-being alongside biodiversity protection <span class="citation" data-cites="dabala2023mangroves">(<a href="#ref-dabala2023mangroves" role="doc-biblioref">Dabalà et al. 2023</a>)</span>.</p>
 <section class="level3"><h3 id="categories-of-ecosystem-services">Categories of Ecosystem Services<a class="anchor" aria-label="anchor" href="#categories-of-ecosystem-services"></a>
@@ -582,6 +609,12 @@
 <strong>Habitat proxies</strong>: Area of habitat types known to provide services (e.g., mangroves for coastal protection and carbon storage, seagrass for fisheries nurseries, coral reefs for tourism and biodiversity)</li>
 </ul>
 <p>By including ecosystem service layers in prioritisation, planners can identify areas that simultaneously protect biodiversity and maximise benefits to human communities. For example, protecting mangrove ecosystems can deliver multiple services: carbon storage, coastal protection from storms and erosion, critical nursery habitat for fisheries, and biodiversity conservation <span class="citation" data-cites="dabala2023mangroves">(<a href="#ref-dabala2023mangroves" role="doc-biblioref">Dabalà et al. 2023</a>)</span>. This multi-benefit approach strengthens the case for conservation by demonstrating tangible value to stakeholders.</p>
+<div>
+<blockquote>
+<p><strong>In shinyplanr</strong></p>
+<p>Ecosystem service layers appear in the <strong>Ecosystem Services</strong> tab after running an analysis, showing how much of each service is captured by the solution. They are configured in <code>Dict_Feature.csv</code> using <code>type = "EcosystemServices"</code>. See <a href="ac-setting-up.html#sec-dict-feature">Setting Up</a>.</p>
+</blockquote>
+</div>
 </section></section><section class="level2"><h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
 <p>Modern spatial prioritisation for conservation and multiple-use planning combines:</p>
@@ -609,27 +642,27 @@
 <a href="https://prioritizr.net" class="external-link"><em>prioritizr</em> website</a>: Comprehensive documentation and tutorials</li>
 <li>
 <a href="https://spatialplanning.github.io/spatialplanr/" class="external-link"><em>spatialplanr</em> package</a>: Tools for climate-smart planning</li>
-<li>
-<span class="citation" data-cites="margules2000systematic">Margules and Pressey (<a href="#ref-margules2000systematic" role="doc-biblioref">2000</a>)</span>: The foundational paper on systematic conservation planning</li>
-<li>
-<span class="citation" data-cites="jones2016incorporating">Jones et al. (<a href="#ref-jones2016incorporating" role="doc-biblioref">2016</a>)</span>: Review of climate change in spatial prioritisation</li>
+<li>Margules &amp; Pressey (2000): The foundational paper on systematic conservation planning <span class="citation" data-cites="margules2000systematic">(<a href="#ref-margules2000systematic" role="doc-biblioref">Margules and Pressey 2000</a>)</span>
+</li>
+<li>Jones et al. (2016): Review of climate change in spatial prioritisation <span class="citation" data-cites="jones2016incorporating">(<a href="#ref-jones2016incorporating" role="doc-biblioref">Jones et al. 2016</a>)</span>
+</li>
 </ul>
 <p><strong>Multiple-use spatial planning:</strong></p>
 <ul>
-<li>
-<span class="citation" data-cites="neubert2025multipleuse">Neubert et al. (<a href="#ref-neubert2025multipleuse" role="doc-biblioref">2025</a>)</span>: Comprehensive review of multiple-use planning methods and challenges</li>
-<li>
-<span class="citation" data-cites="watts2009marxan">Watts et al. (<a href="#ref-watts2009marxan" role="doc-biblioref">2009</a>)</span>: Marxan with Zones for multiple-use planning</li>
+<li>Neubert et al. (2025): Comprehensive review of multiple-use planning methods and challenges <span class="citation" data-cites="neubert2025multipleuse">(<a href="#ref-neubert2025multipleuse" role="doc-biblioref">Neubert et al. 2025</a>)</span>
+</li>
+<li>Watts et al. (2009): Marxan with Zones for multiple-use planning <span class="citation" data-cites="watts2009marxan">(<a href="#ref-watts2009marxan" role="doc-biblioref">Watts et al. 2009</a>)</span>
+</li>
 </ul>
-<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
 <div id="ref-buenafe2025climatesmart" class="csl-entry" role="listitem">
-Buenafe, Kristine Camille V, Daniel C Dunn, Anna Metaxas, David S Schoeman, Jason D Everett, Alice Pidd, Jeffrey O Hanson, et al. 2025. <span>“Current Approaches and Future Opportunities for Climate-Smart Protected Areas.”</span> <em>Nature Reviews Earth and Environment</em>. <a href="https://doi.org/10.1038/s44358-025-00041-0" class="external-link">https://doi.org/10.1038/s44358-025-00041-0</a>.
+Buenafe, Kristine Camille V, Daniel C Dunn, Anna Metaxas, et al. 2025. <span>“Current Approaches and Future Opportunities for Climate-Smart Protected Areas.”</span> <em>Nature Reviews Earth and Environment</em>, ahead of print. <a href="https://doi.org/10.1038/s44358-025-00041-0" class="external-link">https://doi.org/10.1038/s44358-025-00041-0</a>.
 </div>
 <div id="ref-dabala2023mangroves" class="csl-entry" role="listitem">
-Dabalà, Alvise, Farid Dahdouh-Guebas, Daniel C Dunn, Jason D Everett, Catherine E Lovelock, Jeffrey O Hanson, Kristine Camille V Buenafe, Sandra Neubert, and Anthony J Richardson. 2023. <span>“Priority Areas to Protect Mangroves and Maximise Ecosystem Services.”</span> <em>Nature Communications</em> 14: 5863. <a href="https://doi.org/10.1038/s41467-023-41333-3" class="external-link">https://doi.org/10.1038/s41467-023-41333-3</a>.
+Dabalà, Alvise, Farid Dahdouh-Guebas, Daniel C Dunn, et al. 2023. <span>“Priority Areas to Protect Mangroves and Maximise Ecosystem Services.”</span> <em>Nature Communications</em> 14: 5863. <a href="https://doi.org/10.1038/s41467-023-41333-3" class="external-link">https://doi.org/10.1038/s41467-023-41333-3</a>.
 </div>
 <div id="ref-hanson2025prioritizr" class="csl-entry" role="listitem">
-Hanson, Jeffrey O, Richard Schuster, Matthew Strimas-Mackey, Nina Morrell, Brandon PM Edwards, Peter Arcese, Joseph R Bennett, and Hugh P Possingham. 2025. <span>“Systematic Conservation Prioritization with the Prioritizr r Package.”</span> <em>Conservation Biology</em> 39: e14376. <a href="https://doi.org/10.1111/cobi.14376" class="external-link">https://doi.org/10.1111/cobi.14376</a>.
+Hanson, Jeffrey O, Richard Schuster, Matthew Strimas-Mackey, et al. 2025. <span>“Systematic Conservation Prioritization with the Prioritizr r Package.”</span> <em>Conservation Biology</em> 39: e14376. <a href="https://doi.org/10.1111/cobi.14376" class="external-link">https://doi.org/10.1111/cobi.14376</a>.
 </div>
 <div id="ref-jones2016incorporating" class="csl-entry" role="listitem">
 Jones, Kendall R, James EM Watson, Hugh P Possingham, and Carissa J Klein. 2016. <span>“Incorporating Climate Change into Spatial Conservation Prioritisation: A Review.”</span> <em>Biological Conservation</em> 194: 121–30.
@@ -638,10 +671,10 @@ Jones, Kendall R, James EM Watson, Hugh P Possingham, and Carissa J Klein. 2016.
 Margules, Christopher R, and Robert L Pressey. 2000. <span>“Systematic Conservation Planning.”</span> <em>Nature</em> 405 (6783): 243–53.
 </div>
 <div id="ref-neubert2025multipleuse" class="csl-entry" role="listitem">
-Neubert, Sandra, Jennifer McGowan, Kristian Metcalfe, Jeffrey O Hanson, Kristine Camille V Buenafe, Alvise Dabalà, Daniel C Dunn, et al. 2025. <span>“Multiple-Use Spatial Planning for Sustainable Development and Conservation.”</span> <em>Trends in Ecology and Evolution</em>. <a href="https://doi.org/10.1016/j.tree.2025.09.007" class="external-link">https://doi.org/10.1016/j.tree.2025.09.007</a>.
+Neubert, Sandra, Jennifer McGowan, Kristian Metcalfe, et al. 2025. <span>“Multiple-Use Spatial Planning for Sustainable Development and Conservation.”</span> <em>Trends in Ecology and Evolution</em>, ahead of print. <a href="https://doi.org/10.1016/j.tree.2025.09.007" class="external-link">https://doi.org/10.1016/j.tree.2025.09.007</a>.
 </div>
 <div id="ref-watts2009marxan" class="csl-entry" role="listitem">
-Watts, Matthew E, Ian R Ball, Romola S Stewart, Carissa J Klein, Kerrie Wilson, Charles Steinback, Reinaldo Lourival, Lindsay Kircher, and Hugh P Possingham. 2009. <span>“Marxan with Zones: Software for Optimal Conservation Based Land-and Sea-Use Zoning.”</span> <em>Environmental Modelling &amp; Software</em> 24 (12): 1513–21.
+Watts, Matthew E, Ian R Ball, Romola S Stewart, et al. 2009. <span>“Marxan with Zones: Software for Optimal Conservation Based Land-and Sea-Use Zoning.”</span> <em>Environmental Modelling &amp; Software</em> 24 (12): 1513–21.
 </div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

@@ -18,13 +18,13 @@ Source:
 [`DESCRIPTION`](https://github.com/SpatialPlanning/shinyplanr/blob/HEAD/DESCRIPTION)
 
 Everett J, Richardson A, Neubert S, Dunn D (2026). *shinyplanr: Spatial
-Planning in Shiny*. R package version 0.1.2,
+Planning in Shiny*. R package version 0.1.5,
 <https://spatialplanning.github.io/shinyplanr>.
 
     @Manual{,
       title = {shinyplanr: Spatial Planning in Shiny},
       author = {Jason D. Everett and Anthony J. Richardson and Sandra Neubert and Daniel C. Dunn},
       year = {2026},
-      note = {R package version 0.1.2},
+      note = {R package version 0.1.5},
       url = {https://spatialplanning.github.io/shinyplanr},
     }

@@ -11,10 +11,12 @@
 <url><loc>https://spatialplanning.github.io/shinyplanr/authors.html</loc></url>
 <url><loc>https://spatialplanning.github.io/shinyplanr/index.html</loc></url>
 <url><loc>https://spatialplanning.github.io/shinyplanr/reference/create_shinyplanr_template.html</loc></url>
+<url><loc>https://spatialplanning.github.io/shinyplanr/reference/get_schema_version.html</loc></url>
 <url><loc>https://spatialplanning.github.io/shinyplanr/reference/index.html</loc></url>
 <url><loc>https://spatialplanning.github.io/shinyplanr/reference/load_config.html</loc></url>
 <url><loc>https://spatialplanning.github.io/shinyplanr/reference/pipe.html</loc></url>
 <url><loc>https://spatialplanning.github.io/shinyplanr/reference/run_app.html</loc></url>
+<url><loc>https://spatialplanning.github.io/shinyplanr/reference/validate_dict.html</loc></url>
 <url><loc>https://spatialplanning.github.io/shinyplanr/reference/validate_shinyplanr_data.html</loc></url>
 </urlset>
 

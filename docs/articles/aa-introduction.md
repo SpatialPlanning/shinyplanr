@@ -245,6 +245,13 @@ implications of allocating areas to different management regimes.
 - **Locked-out constraints**: Planning units that *cannot* be selected
   (e.g., shipping lanes, urban areas)
 
+> **In shinyplanr**
+>
+> Planning units, features, targets, costs, and constraints all
+> correspond directly to controls in the **Scenario** tab. See [Using
+> shinyplanr](https://spatialplanning.github.io/shinyplanr/articles/ab-using-shinyplanr.html#sec-scenario-tab)
+> for a guided tour of each control.
+
 ## Objective Functions
 
 The **objective function** defines what the prioritisation algorithm is
@@ -323,6 +330,15 @@ supports multiple commercial and open-source solvers including:
 | Reproducibility | Deterministic      | Stochastic            |
 | Flexibility     | Highly flexible    | More constrained      |
 
+> **In shinyplanr**
+>
+> The objective function is set by the deployer in `setup/3_setup_app.R`
+> (`obj_func = "min_set"` or `"min_shortfall"`). Users see the effect
+> through the presence or absence of a budget slider in the Scenario
+> tab. See [Setting
+> Up](https://spatialplanning.github.io/shinyplanr/articles/ac-setting-up.html#sec-setup-app)
+> for configuration details.
+
 ## Climate-Smart Spatial Planning
 
 Climate change poses fundamental challenges to both conservation and
@@ -376,6 +392,15 @@ These can be identified using:
 Given uncertainty in climate projections, robust planning aims to find
 solutions that perform well across multiple climate scenarios rather
 than optimising for a single projection.
+
+> **In shinyplanr**
+>
+> Climate-smart options appear in the Scenario tab when
+> `include_climateChange = TRUE` is set in `setup/3_setup_app.R`. Users
+> can select a climate layer from a dropdown to preferentially weight
+> refugia areas. See [Using
+> shinyplanr](https://spatialplanning.github.io/shinyplanr/articles/ab-using-shinyplanr.html#sec-scenario-tab)
+> for details.
 
 ## Multiple-Use Spatial Planning
 
@@ -598,6 +623,15 @@ human activities:
 - Indigenous marine territories
 - Community resource use patterns
 
+> **In shinyplanr**
+>
+> Multiple-use considerations are incorporated through cost layers
+> (representing sectoral impacts such as fishing effort) and locked-out
+> constraints (excluding shipping lanes, aquaculture zones, etc.). The
+> Comparison tab allows side-by-side exploration of different cost layer
+> choices. See [Using
+> shinyplanr](https://spatialplanning.github.io/shinyplanr/articles/ab-using-shinyplanr.html#sec-comparison-tab).
+
 ## Ecosystem Services
 
 **Ecosystem services** are the benefits that humans derive from
@@ -653,6 +687,14 @@ fisheries, and biodiversity conservation ([Dabalà et al.
 strengthens the case for conservation by demonstrating tangible value to
 stakeholders.
 
+> **In shinyplanr**
+>
+> Ecosystem service layers appear in the **Ecosystem Services** tab
+> after running an analysis, showing how much of each service is
+> captured by the solution. They are configured in `Dict_Feature.csv`
+> using `type = "EcosystemServices"`. See [Setting
+> Up](https://spatialplanning.github.io/shinyplanr/articles/ac-setting-up.html#sec-dict-feature).
+
 ## Summary
 
 Modern spatial prioritisation for conservation and multiple-use planning
@@ -691,34 +733,33 @@ explains how to set up *shinyplanr* for new regions.
 - [*spatialplanr*
   package](https://spatialplanning.github.io/spatialplanr/): Tools for
   climate-smart planning
-- Margules and Pressey ([2000](#ref-margules2000systematic)): The
-  foundational paper on systematic conservation planning
-- Jones et al. ([2016](#ref-jones2016incorporating)): Review of climate
-  change in spatial prioritisation
+- Margules & Pressey (2000): The foundational paper on systematic
+  conservation planning ([Margules and Pressey
+  2000](#ref-margules2000systematic))
+- Jones et al. (2016): Review of climate change in spatial
+  prioritisation ([Jones et al. 2016](#ref-jones2016incorporating))
 
 **Multiple-use spatial planning:**
 
-- Neubert et al. ([2025](#ref-neubert2025multipleuse)): Comprehensive
-  review of multiple-use planning methods and challenges
-- Watts et al. ([2009](#ref-watts2009marxan)): Marxan with Zones for
-  multiple-use planning
+- Neubert et al. (2025): Comprehensive review of multiple-use planning
+  methods and challenges ([Neubert et al.
+  2025](#ref-neubert2025multipleuse))
+- Watts et al. (2009): Marxan with Zones for multiple-use planning
+  ([Watts et al. 2009](#ref-watts2009marxan))
 
-Buenafe, Kristine Camille V, Daniel C Dunn, Anna Metaxas, David S
-Schoeman, Jason D Everett, Alice Pidd, Jeffrey O Hanson, et al. 2025.
+Buenafe, Kristine Camille V, Daniel C Dunn, Anna Metaxas, et al. 2025.
 “Current Approaches and Future Opportunities for Climate-Smart Protected
-Areas.” *Nature Reviews Earth and Environment*.
+Areas.” *Nature Reviews Earth and Environment*, ahead of print.
 <https://doi.org/10.1038/s44358-025-00041-0>.
 
-Dabalà, Alvise, Farid Dahdouh-Guebas, Daniel C Dunn, Jason D Everett,
-Catherine E Lovelock, Jeffrey O Hanson, Kristine Camille V Buenafe,
-Sandra Neubert, and Anthony J Richardson. 2023. “Priority Areas to
-Protect Mangroves and Maximise Ecosystem Services.” *Nature
-Communications* 14: 5863. <https://doi.org/10.1038/s41467-023-41333-3>.
+Dabalà, Alvise, Farid Dahdouh-Guebas, Daniel C Dunn, et al. 2023.
+“Priority Areas to Protect Mangroves and Maximise Ecosystem Services.”
+*Nature Communications* 14: 5863.
+<https://doi.org/10.1038/s41467-023-41333-3>.
 
-Hanson, Jeffrey O, Richard Schuster, Matthew Strimas-Mackey, Nina
-Morrell, Brandon PM Edwards, Peter Arcese, Joseph R Bennett, and Hugh P
-Possingham. 2025. “Systematic Conservation Prioritization with the
-Prioritizr r Package.” *Conservation Biology* 39: e14376.
+Hanson, Jeffrey O, Richard Schuster, Matthew Strimas-Mackey, et al.
+2025. “Systematic Conservation Prioritization with the Prioritizr r
+Package.” *Conservation Biology* 39: e14376.
 <https://doi.org/10.1111/cobi.14376>.
 
 Jones, Kendall R, James EM Watson, Hugh P Possingham, and Carissa J
@@ -728,14 +769,11 @@ Prioritisation: A Review.” *Biological Conservation* 194: 121–30.
 Margules, Christopher R, and Robert L Pressey. 2000. “Systematic
 Conservation Planning.” *Nature* 405 (6783): 243–53.
 
-Neubert, Sandra, Jennifer McGowan, Kristian Metcalfe, Jeffrey O Hanson,
-Kristine Camille V Buenafe, Alvise Dabalà, Daniel C Dunn, et al. 2025.
+Neubert, Sandra, Jennifer McGowan, Kristian Metcalfe, et al. 2025.
 “Multiple-Use Spatial Planning for Sustainable Development and
-Conservation.” *Trends in Ecology and Evolution*.
+Conservation.” *Trends in Ecology and Evolution*, ahead of print.
 <https://doi.org/10.1016/j.tree.2025.09.007>.
 
-Watts, Matthew E, Ian R Ball, Romola S Stewart, Carissa J Klein, Kerrie
-Wilson, Charles Steinback, Reinaldo Lourival, Lindsay Kircher, and Hugh
-P Possingham. 2009. “Marxan with Zones: Software for Optimal
-Conservation Based Land-and Sea-Use Zoning.” *Environmental Modelling &
-Software* 24 (12): 1513–21.
+Watts, Matthew E, Ian R Ball, Romola S Stewart, et al. 2009. “Marxan
+with Zones: Software for Optimal Conservation Based Land-and Sea-Use
+Zoning.” *Environmental Modelling & Software* 24 (12): 1513–21.

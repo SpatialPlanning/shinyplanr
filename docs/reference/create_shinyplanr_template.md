@@ -2,7 +2,7 @@
 
 Creates a standalone deployment project for a new region. The project
 contains all the files a practitioner needs to prepare their spatial
-data, configure the app, test locally, and deploy to Posit Connect —
+data, configure the app, test locally, and deploy to Posit Connect –
 without modifying the shinyplanr package source code.
 
 ## Usage
@@ -67,7 +67,7 @@ create_shinyplanr_template(
   Character. Path where the deployment project folder will be created.
   Defaults to `file.path("..", country)`, creating a sibling directory
   to the current working directory. The deployer opens this folder as
-  their R project — it is **not** inside the shinyplanr package source.
+  their R project - it is **not** inside the shinyplanr package source.
 
 - use_renv:
 
