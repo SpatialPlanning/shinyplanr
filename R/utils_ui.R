@@ -12,7 +12,7 @@
 #'   \code{targetInitial}, \code{justification}, \code{includeApp},
 #'   \code{includeJust}).
 #' @param name_check Character. Prefix for slider input IDs (e.g.
-#'   \code{"sli_"}, \code{"sli2_"}).
+#'   \code{"sli_"} for Scenario, \code{"sli1_"} / \code{"sli2_"} for Compare).
 #' @param categoryOut Logical. If \code{TRUE} (default \code{FALSE}), include
 #'   \code{category} and \code{categoryID} columns in the output.
 #' @param byCategory Logical. If \code{TRUE}, collapse to one row per category
@@ -165,7 +165,7 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #'
 fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCategory = TRUE) {
 
-  if (nrow(varsIn) == 0) return(NULL)
+  if (is.null(varsIn) || nrow(varsIn) == 0) return(NULL)
 
   ctgs <- unique(varsIn$category)
 

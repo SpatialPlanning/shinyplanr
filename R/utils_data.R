@@ -91,7 +91,7 @@ fget_category <- function(Dict) {
 #' @param Dict Data frame. The feature dictionary (must contain columns
 #'   \code{type} and \code{nameVariable}).
 #' @param name_check Character. Prefix used to build slider input IDs
-#'   (e.g. \code{"sli_"} for the Scenario module, \code{"sli2_"} for Compare).
+#'   (e.g. \code{"sli_"} for the Scenario module, \code{"sli1_"} / \code{"sli2_"} for Compare).
 #' @param dataType Character. The \code{type} value(s) in \code{Dict} to
 #'   include (default \code{"Feature"}).
 #'
@@ -124,7 +124,7 @@ fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature")
 #' This replaces ~30 lines of duplicated code in both Scenario and Compare modules.
 #'
 #' @param input Shiny input object
-#' @param name_check Prefix for slider inputs (e.g., "sli_", "sli2_")
+#' @param name_check Prefix for slider inputs (e.g., \code{"sli_"} for Scenario, \code{"sli1_"} / \code{"sli2_"} for Compare)
 #' @param Dict The data dictionary
 #'
 #' @noRd

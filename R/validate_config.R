@@ -563,7 +563,7 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     is.list(sidebar[["scenario"]]) &&
     is.list(sidebar[["compare"]]) &&
     is.data.frame(sidebar[["scenario"]][["slider_vars"]]) &&
-    is.data.frame(sidebar[["compare"]][["Vars"]]) &&
+    is.data.frame(sidebar[["compare"]][["Vars1"]]) &&
     is.data.frame(sidebar[["compare"]][["Vars2"]])
   )
   .check(
@@ -575,6 +575,46 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       "  Re-run setup-app.R to regenerate the config."
     )
   )
+
+  # -------------------------------------------------------------------------
+  # 8c. Dict has at least one Bioregion row (only when include_bioregion is TRUE)
+  # -------------------------------------------------------------------------
+  if (isTRUE(opts[["include_bioregion"]]) && is.data.frame(Dict)) {
+    n_bioregion_rows <- sum(Dict$type == "Bioregion", na.rm = TRUE)
+    .check(
+      "Dict_has_bioregion_rows",
+      n_bioregion_rows >= 1,
+      paste0(
+        "options$include_bioregion is TRUE but Dict contains no rows with ",
+        "type == \"Bioregion\".\n",
+        "  Add at least one Bioregion row to Dict_Feature.csv and re-run ",
+        "setup-app.R."
+      )
+    )
+  }
+
+  # -------------------------------------------------------------------------
+  # 8d. sidebar bioregion structure (only when include_bioregion is TRUE)
+  # -------------------------------------------------------------------------
+  if (isTRUE(opts[["include_bioregion"]]) && isTRUE(sidebar_ok)) {
+    bioregion_sidebar_ok <- (
+      is.data.frame(sidebar[["scenario"]][["slider_varsBioR"]]) &&
+      is.data.frame(sidebar[["compare"]][["slider_varsBioR1"]]) &&
+      is.data.frame(sidebar[["compare"]][["slider_varsBioR2"]])
+    )
+    .check(
+      "sidebar_bioregion_structure",
+      bioregion_sidebar_ok,
+      paste0(
+        "options$include_bioregion is TRUE but sidebar is missing bioregion ",
+        "slider data frames.\n",
+        "  Expected: sidebar$scenario$slider_varsBioR, ",
+        "sidebar$compare$slider_varsBioR1, sidebar$compare$slider_varsBioR2.\n",
+        "  Re-run setup-app.R to regenerate the config."
+      )
+    )
+  }
+
 
   # -------------------------------------------------------------------------
   # 9. All tx_* text fields are character strings
