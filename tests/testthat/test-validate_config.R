@@ -515,20 +515,22 @@ test_that("validate_dict() fails check 3 when type contains a completely unknown
 
 test_that("validate_dict() passes check 3 for all known type values", {
   d <- make_valid_dict()
-  # Add rows for every known type to confirm none are rejected
+  # Add rows for every known type to confirm none are rejected.
+  # "Climate" rows hold metric columns (SST trend etc.) used in the
+  # climate-smart dropdown -- they are not features and have no targets.
   extra <- data.frame(
-    nameCommon    = c("LO", "Bio", "ESS", "Just"),
-    nameVariable  = c("lock_out_var", "bio_var", "ess_var", "just_var"),
-    category      = c("C", "C", "C", "C"),
-    categoryID    = c("C", "C", "C", "C"),
-    type          = c("LockOut", "Bioregion", "EcosystemServices", "Justification"),
-    targetInitial = c(NA, NA, NA, NA),
-    targetMin     = c(NA, NA, NA, NA),
-    targetMax     = c(NA, NA, NA, NA),
-    includeApp    = c(TRUE, TRUE, TRUE, FALSE),
-    includeJust   = c(TRUE, TRUE, TRUE, FALSE),
-    units         = c("", "", "", ""),
-    justification = c(".", ".", ".", "."),
+    nameCommon    = c("LO", "Bio", "ESS", "Just", "SST Trend"),
+    nameVariable  = c("lock_out_var", "bio_var", "ess_var", "just_var", "sst_trend"),
+    category      = c("C", "C", "C", "C", "Climate"),
+    categoryID    = c("C", "C", "C", "C", "Climate"),
+    type          = c("LockOut", "Bioregion", "EcosystemServices", "Justification", "Climate"),
+    targetInitial = c(NA, NA, NA, NA, NA),
+    targetMin     = c(NA, NA, NA, NA, NA),
+    targetMax     = c(NA, NA, NA, NA, NA),
+    includeApp    = c(TRUE, TRUE, TRUE, FALSE, TRUE),
+    includeJust   = c(TRUE, TRUE, TRUE, FALSE, TRUE),
+    units         = c("", "", "", "", ""),
+    justification = c(".", ".", ".", ".", "."),
     stringsAsFactors = FALSE
   )
   d2 <- rbind(d, extra)
