@@ -22,12 +22,13 @@ mod_2scenario_ui <- function(id, cfg) {
     LI_num <- "3"
   }
 
-  # Use pre-computed sidebar vars from config (avoids duplicate computation)
-  slider_vars     <- sidebar$slider_vars
-  slider_varsBioR <- sidebar$slider_varsBioR
-  slider_varsCat  <- sidebar$slider_varsCat
-  check_lockIn    <- sidebar$check_lockIn
-  check_lockOut   <- sidebar$check_lockOut
+  # Unpack all pre-computed sidebar vars from config into the local environment.
+  # rlang::env_bind() splices the named list so each key becomes a local variable
+  # (e.g. sidebar$slider_vars -> slider_vars, sidebar$check_lockIn -> check_lockIn, etc.).
+
+  slider_vars <- slider_varsBioR <- slider_varsCat <- check_lockIn <- check_lockOut <- NULL
+
+  rlang::env_bind(environment(), !!!sidebar)
 
 
 
@@ -36,17 +37,15 @@ mod_2scenario_ui <- function(id, cfg) {
   # actionLink("sidebar_button","",icon = icon("bars")
   shiny::sidebarLayout(
     shiny::sidebarPanel(
-
-      shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
-                          width = "100%", class = "btn btn-outline-primary",
-                          style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
-      ),
-      shiny::hr(style = "border-top: 1px solid #000000;"),
-
-
+      width = 4,
       shinyjs::hidden(div(
         id = ns("switchMasterTargets"),
         shiny::h2("1. Select Master Target"),
+        shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
+                            width = "100%", class = "btn btn-outline-primary",
+                            style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
+        ),
+        shiny::hr(style = "border-top: 1px solid #000000;"),
         shiny::sliderInput(inputId = ns("masterSli"), label = NULL,
                            min = min(Dict$targetMin, na.rm = TRUE), max = max(Dict$targetMax, na.rm = TRUE),
                            step = 5,
@@ -56,12 +55,22 @@ mod_2scenario_ui <- function(id, cfg) {
       shinyjs::hidden(div(
         id = ns("switchCategoryTargets"),
         shiny::h2("1. Select Category Targets"),
+        shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
+                            width = "100%", class = "btn btn-outline-primary",
+                            style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
+        ),
+        shiny::hr(style = "border-top: 1px solid #000000;"),
         fcustom_sliderCategory(slider_varsCat, labelNum = 1, byCategory = TRUE),
       )),
 
       shinyjs::hidden(div(
         id = ns("switchIndividualTargets"),
         shiny::h2("1. Select Feature Targets"),
+        shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
+                            width = "100%", class = "btn btn-outline-primary",
+                            style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
+        ),
+        shiny::hr(style = "border-top: 1px solid #000000;"),
         fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
       )),
 
@@ -150,8 +159,8 @@ mod_2scenario_ui <- function(id, cfg) {
                             style = "display: block; float: left; padding:4px; font-size:150%;"
         ),
         right = "71%", bottom = "1%", left = "5%"
-      ),
-      width = 4),
+      )
+    ),
     shiny::mainPanel(
       tabsetPanel(
         id = ns("tabs"),
@@ -344,12 +353,13 @@ mod_2scenario_server <- function(id, cfg) {
 
 
 
-    # Use pre-computed sidebar vars from config (avoids duplicate computation)
-    slider_vars     <- sidebar$slider_vars
-    slider_varsBioR <- sidebar$slider_varsBioR
-    slider_varsCat  <- sidebar$slider_varsCat
-    check_lockIn    <- sidebar$check_lockIn
-    check_lockOut   <- sidebar$check_lockOut
+    # Unpack all pre-computed sidebar vars from config into the local environment.
+    # rlang::env_bind() splices the named list so each key becomes a local variable
+    # (e.g. sidebar$slider_vars -> slider_vars, sidebar$check_lockIn -> check_lockIn, etc.).
+    slider_vars <- slider_varsBioR <- slider_varsCat <- check_lockIn <- check_lockOut <- NULL
+
+
+    rlang::env_bind(environment(), !!!sidebar)
 
 
 
@@ -536,7 +546,7 @@ mod_2scenario_server <- function(id, cfg) {
       content  = function(file) fdownload_solution_geojson(solution(), file)
     )
 
- 
+
 
     ## Target Plot -------------------------------------------------------------
 

@@ -21,9 +21,6 @@ mod_4features_ui <- function(id, cfg) {
                              name_check = "checkftd_",
                              categoryOut = TRUE)
 
-
-
-
   # shiny::tagList(
   shiny::tabsetPanel(
     id = ns("tabs4"),

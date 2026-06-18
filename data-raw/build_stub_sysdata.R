@@ -171,18 +171,24 @@ sidebar <- list(
                                                  "checkLO_", categoryOut = TRUE)
   ),
   compare = list(
-    Vars            = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
-                                               categoryOut = TRUE),
-    Vars2           = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
-                                               categoryOut = TRUE),
-    check_lockIn    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
-                                                 "check1LI_", categoryOut = TRUE),
-    check_lockIn2   = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
-                                                 "check2LI_", categoryOut = TRUE),
-    check_lockOut   = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
-                                                 "check1LO_", categoryOut = TRUE),
-    check_lockOut2  = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
-                                                 "check2LO_", categoryOut = TRUE)
+    Vars1             = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
+                                                 categoryOut = TRUE),
+    Vars2             = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
+                                                 categoryOut = TRUE),
+    slider_varsBioR1  = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
+                                                 categoryOut = TRUE, byCategory = TRUE,
+                                                 dataType = "Bioregion"),
+    slider_varsBioR2  = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
+                                                 categoryOut = TRUE, byCategory = TRUE,
+                                                 dataType = "Bioregion"),
+    check_lockIn1     = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
+                                                   "check1LI_", categoryOut = TRUE),
+    check_lockIn2     = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
+                                                   "check2LI_", categoryOut = TRUE),
+    check_lockOut1    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
+                                                   "check1LO_", categoryOut = TRUE),
+    check_lockOut2    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
+                                                   "check2LO_", categoryOut = TRUE)
   )
 )
 

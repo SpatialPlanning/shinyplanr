@@ -56,7 +56,7 @@ fupdate_checkbox <- function(session, id_in, Dict, selected = NA) {
 #' @param session Shiny session object.
 #' @param slider_vars Data frame. Pre-computed slider metadata from
 #'   \code{cfg$sidebar$scenario$slider_vars} or
-#'   \code{cfg$sidebar$compare$Vars} / \code{Vars2}. Must contain columns
+#'   \code{cfg$sidebar$compare$Vars1} / \code{Vars2}. Must contain columns
 #'   \code{id_in} and \code{targetInitial}.
 #'
 #' @noRd

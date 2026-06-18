@@ -165,7 +165,7 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #'
 fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCategory = TRUE) {
 
-  if (nrow(varsIn) == 0) return(NULL)
+  if (is.null(varsIn) || nrow(varsIn) == 0) return(NULL)
 
   ctgs <- unique(varsIn$category)
 

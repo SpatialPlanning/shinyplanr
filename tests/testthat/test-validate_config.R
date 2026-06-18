@@ -33,11 +33,11 @@ make_valid_config_v2 <- function() {
       check_lockOut   = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
     ),
     compare = list(
-      Vars           = fcreate_vars("3compare_ui_1", Dict, "sli_",  categoryOut = TRUE),
+      Vars1          = fcreate_vars("3compare_ui_1", Dict, "sli_",  categoryOut = TRUE),
       Vars2          = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
-      check_lockIn   = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check1LI_", categoryOut = TRUE),
+      check_lockIn1  = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check1LI_", categoryOut = TRUE),
       check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check2LI_", categoryOut = TRUE),
-      check_lockOut  = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
+      check_lockOut1 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
       check_lockOut2 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
     )
   )

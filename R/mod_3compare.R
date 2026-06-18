@@ -22,15 +22,12 @@ mod_3compare_ui <- function(id, cfg) {
     LI_num <- "3"
   }
 
-  # Use pre-computed sidebar vars from config (avoids duplicate computation)
-  Vars           <- sidebar$Vars
-  Vars2          <- sidebar$Vars2
-  check_lockIn   <- sidebar$check_lockIn
-  check_lockIn2  <- sidebar$check_lockIn2
-  check_lockOut  <- sidebar$check_lockOut
-  check_lockOut2 <- sidebar$check_lockOut2
+  # Unpack all pre-computed sidebar vars from config into the local environment.
+  # rlang::env_bind() splices the named list so each key becomes a local variable
+  # (e.g. sidebar$Vars1 -> Vars1).
+  Vars1 <- Vars2 <- slider_varsBioR1 <- slider_varsBioR2 <- check_lockIn1 <- check_lockIn2 <- check_lockOut1 <- check_lockOut2 <- NULL
 
-
+  rlang::env_bind(environment(), !!!sidebar)
 
 
 
@@ -52,10 +49,23 @@ mod_3compare_ui <- function(id, cfg) {
                           style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
       ),
       shiny::splitLayout(
-        fcustom_sliderCategory(Vars, labelNum = 1),
+        fcustom_sliderCategory(Vars1, labelNum = 1),
         fcustom_sliderCategory(Vars2, labelNum = 1, labelCategory = FALSE)
       ),
-      #   purrr::pmap(Vars, fcustom_slider),
+
+      shinyjs::hidden(div(
+        id = ns("switchBioregions"),
+        # Hidden by default; shown by the server only when options$include_bioregion
+        # is TRUE (see utils_server.R fapply_ui_switches()). No UI-level conditional
+        # is needed because shinyjs::hidden() already prevents rendering until shown.
+        shiny::h3(paste0("1.", length(unique(Vars1$category)) + 1, " Bioregions")),
+        shiny::splitLayout(
+          fcustom_sliderCategory(slider_varsBioR1, labelNum = 1, byCategory = TRUE),
+          fcustom_sliderCategory(slider_varsBioR2, labelNum = 1, byCategory = TRUE,
+                                 labelCategory = FALSE)
+        ),
+      )),
+
       shiny::h2("2. Select Cost Layer"),
       shiny::splitLayout(
         # This was needed to account for cost not expanding inside splitlayout
@@ -131,14 +141,14 @@ mod_3compare_ui <- function(id, cfg) {
         id = ns("switchConstraints"),
         shiny::h2(paste0(LI_num,". Constraints")),
         shiny::p("You can also lock-in or lock-out some pre-defined areas to ensure they are either specifically included (lock-in) or excluded (lock-out) from the protected area. Planning Units outside these areas will be selected if needed to meet the targets."),
-        if (nrow(check_lockIn) > 0 || nrow(check_lockIn2) > 0) shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
-        if (nrow(check_lockIn) > 0 || nrow(check_lockIn2) > 0) shiny::splitLayout(
-          fcustom_checkCategory(check_lockIn),
+        if (nrow(check_lockIn1) > 0 || nrow(check_lockIn2) > 0) shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
+        if (nrow(check_lockIn1) > 0 || nrow(check_lockIn2) > 0) shiny::splitLayout(
+          fcustom_checkCategory(check_lockIn1),
           fcustom_checkCategory(check_lockIn2)
         ),
-        if (nrow(check_lockOut) > 0 || nrow(check_lockOut2) > 0) shiny::h3(paste0(LI_num, ".2 Locked-Out Areas")),
-        if (nrow(check_lockOut) > 0 || nrow(check_lockOut2) > 0) shiny::splitLayout(
-          fcustom_checkCategory(check_lockOut),
+        if (nrow(check_lockOut1) > 0 || nrow(check_lockOut2) > 0) shiny::h3(paste0(LI_num, ".2 Locked-Out Areas")),
+        if (nrow(check_lockOut1) > 0 || nrow(check_lockOut2) > 0) shiny::splitLayout(
+          fcustom_checkCategory(check_lockOut1),
           fcustom_checkCategory(check_lockOut2)
         )
       )),
@@ -332,11 +342,12 @@ mod_3compare_server <- function(id, cfg) {
     ns <- session$ns
     . <- NULL
 
-    # Use pre-computed sidebar vars from config (avoids duplicate computation)
-    check_lockIn   <- sidebar$check_lockIn
-    check_lockIn2  <- sidebar$check_lockIn2
-    check_lockOut  <- sidebar$check_lockOut
-    check_lockOut2 <- sidebar$check_lockOut2
+    # Unpack all pre-computed sidebar vars from config into the local environment.
+    # rlang::env_bind() splices the named list so each key becomes a local variable
+    # (e.g. sidebar$Vars1 -> Vars1, sidebar$check_lockIn1 -> check_lockIn1, etc.).
+    Vars1 <- Vars2 <- slider_varsBioR1 <- slider_varsBioR2 <- check_lockIn1 <- check_lockIn2 <- check_lockOut1 <- check_lockOut2 <- NULL
+
+    rlang::env_bind(environment(), !!!sidebar)
 
     # Declare all reactiveVals at the top so they are available to all observers
     # and handlers below, regardless of evaluation order.
@@ -346,7 +357,7 @@ mod_3compare_server <- function(id, cfg) {
 
     # Apply all UI show/hide switches driven by options ----
     # Note: switches for elements not yet in the compare UI (switchBoundaryPenalty,
-    # switchBioregions, switchMasterTargets, etc.) are silently ignored by shinyjs
+    # switchMasterTargets, etc.) are silently ignored by shinyjs
     # until those features are added to this module.
     fapply_ui_switches(options, session,
                        tab_climate = "7",
@@ -358,8 +369,8 @@ mod_3compare_server <- function(id, cfg) {
     })
 
     shiny::observeEvent(input$resetSlider, {
-      fresetSlider(session, sidebar$Vars)
-      fresetSlider(session, sidebar$Vars2)
+      fresetSlider(session, Vars1)
+      fresetSlider(session, Vars2)
     }, ignoreInit = TRUE)
 
     # On analyse: capture timestamp, reset to first tab, scroll to top.
@@ -371,7 +382,7 @@ mod_3compare_server <- function(id, cfg) {
 
 
     # Set up paired lock-in/lock-out mutual exclusion observers for each scenario
-    fsetup_lock_observers(input, check_lockIn,  check_lockOut,
+    fsetup_lock_observers(input, check_lockIn1, check_lockOut1,
                           li_prefix = "check1LI_", lo_prefix = "check1LO_")
     fsetup_lock_observers(input, check_lockIn2, check_lockOut2,
                           li_prefix = "check2LI_", lo_prefix = "check2LO_")
