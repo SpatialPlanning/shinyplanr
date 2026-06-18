@@ -558,7 +558,7 @@ create_shinyplanr_template <- function(
     '  "leaflet", "htmltools", "patchwork", "gridExtra", "reactable",',
     '  "shinyalert", "shinycssloaders", "shinydisconnect", "shinyjs",',
     '  "prioritizr", "highs", "rnaturalearth", "rnaturalearthdata", "units",',
-    '  "quarto", "withr", "rsconnect", "ggridges"',
+    '  "quarto", "withr", "rsconnect", "ggridges", "kableExtra"',
     "), prompt = FALSE)",
     "",
     "# =============================================================================",
