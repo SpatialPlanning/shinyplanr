@@ -174,15 +174,17 @@ fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
 #' Get feature representation data with climate handling
 #'
 #' Consolidates the logic for getting feature representation data,
-#' handling both climate-smart and regular approaches, and filtering
-#' to only Feature type (not Cost columns).
+#' handling both climate-smart and regular approaches.
+#' All features in the problem (including those with target = 0) are returned;
+#' zero-target features are flagged as incidental by
+#' \code{spatialplanr::splnr_get_featureRep()}.
 #'
 #' @param soln Solution sf object
 #' @param problem_data Problem object
 #' @param targets Targets data frame
 #' @param climate_id Climate input ID (or "NA" if not using climate)
 #' @param options App options list
-#' @param Dict Data dictionary
+#' @param Dict Data dictionary (unused here; retained for API consistency)
 #'
 #' @return Data frame with feature representation
 #'
@@ -195,7 +197,11 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
     return(NULL)
   }
 
-  # Get feature representation based on climate approach
+  # Get feature representation based on climate approach.
+  # splnr_get_featureRep() uses eval_feature_representation_summary() internally,
+  # which only reads the solution column — it does not pick up cost, climate, or
+  # other non-feature columns from soln. All features in the problem (including
+  # those with target = 0) are returned and flagged correctly as incidental.
   if (climate_id == "NA") {
     targetPlotData <- spatialplanr::splnr_get_featureRep(
       soln = soln,
@@ -211,13 +217,6 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
       targets = targets
     )
   }
-
-  # Filter to only include actual features (not cost or other columns)
-  # TODO: This filtering should eventually be moved into spatialplanr::splnr_get_featureRep
-  targetPlotData <- targetPlotData %>%
-    dplyr::filter(.data$feature %in% (Dict %>%
-                                        dplyr::filter(.data$type == "Feature") %>%
-                                        dplyr::pull(.data$nameVariable)))
 
   return(targetPlotData)
 }
