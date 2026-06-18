@@ -87,10 +87,13 @@ validate_dict <- function(Dict, strict = TRUE) {
     invisible(passed)
   }
 
-  # Known valid type values -- update this vector if new types are added to the app
+  # Known valid type values -- update this vector if new types are added to the app.
+  # "Climate" rows hold metric columns (e.g. SST trend) used to populate the
+  # climate-smart dropdown in mod_2scenario and mod_3compare. They are not
+  # features and have no targets, but their nameVariable must exist in raw_sf.
   .known_types <- c(
     "Feature", "Cost", "LockIn", "LockOut",
-    "Bioregion", "EcosystemServices", "Justification"
+    "Bioregion", "EcosystemServices", "Justification", "Climate"
   )
 
   # ---------------------------------------------------------------------------
@@ -399,8 +402,10 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # -------------------------------------------------------------------------
   if (inherits(raw_sf, "sf") && is.data.frame(Dict)) {
 
+    # "Climate" columns are selected at runtime by fdefine_problem() when the
+    # user picks a climate metric, so they must be present in raw_sf.
     types_with_cols <- c("Feature", "Cost", "LockIn", "LockOut", "Bioregion",
-                         "EcosystemServices")
+                         "EcosystemServices", "Climate")
     dict_vars <- Dict %>%
       dplyr::filter(.data$type %in% types_with_cols) %>%
       dplyr::pull("nameVariable")
