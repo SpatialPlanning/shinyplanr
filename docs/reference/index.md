@@ -22,8 +22,12 @@ Functions for validating configuration and spatial data.
 
 - [`validate_shinyplanr_data()`](https://spatialplanning.github.io/shinyplanr/reference/validate_shinyplanr_data.md)
   : Validate a shinyplanr deployment configuration before saving
+- [`validate_dict()`](https://spatialplanning.github.io/shinyplanr/reference/validate_dict.md)
+  : Validate a shinyplanr feature dictionary (Dict_Feature.csv)
 
 ## Utilities
 
 - [`` `%>%` ``](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)
   : Pipe operator
+- [`get_schema_version()`](https://spatialplanning.github.io/shinyplanr/reference/get_schema_version.md)
+  : Return the current shinyplanr config schema version

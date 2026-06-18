@@ -16,6 +16,8 @@ This chapter guides you through using the *shinyplanr* web application. We cover
 
 ## Overview
 
+The typical workflow for a *shinyplanr* analysis is: open the **Scenario** tab → set targets for each feature → choose a cost layer → optionally apply constraints → click **Run Analysis** → explore results across the output tabs → use the **Comparison** tab to run two scenarios side-by-side and examine trade-offs. Each of these steps is explained in detail below.
+
 When you open a *shinyplanr* application, you will see a navigation bar at the top with several tabs. The exact tabs available depend on how the application has been configured for your region, but typically include:
 
 - **Welcome**: Introduction and overview
@@ -185,7 +187,7 @@ An interactive Leaflet map allowing you to:
 - Toggle between base map layers
 - Examine specific features in selected areas
 
-![](images/InteractiveTab.png){width=70%}
+![](images/ExploreTab.png){width=70%}
 
 A draggable panel allows you to select which features to display on the map.
 
@@ -436,6 +438,14 @@ Details about:
 - Ensure targets are realistic (not 100% for all features)
 - Check that constraint options are compatible
 - Try reducing the budget slightly
+
+### Solution is Infeasible
+
+The solver log shows "infeasible" when the problem has no valid solution. Common causes:
+
+- **Targets too high**: A feature target of 100% combined with locked-out areas that contain that feature makes the problem impossible. Reduce targets or remove conflicting constraints.
+- **Budget too low** (minimum shortfall objective): The budget is so small that no planning units can be selected. Increase the budget percentage.
+- **Conflicting constraints**: The same planning unit is both locked-in and locked-out. Check your constraint selections.
 
 ### Results Look Unexpected
 

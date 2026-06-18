@@ -153,6 +153,11 @@ When no specific cost data are available, **equal area cost** assigns the same c
 - **Locked-in constraints**: Planning units that *must* be selected (e.g., existing protected areas)
 - **Locked-out constraints**: Planning units that *cannot* be selected (e.g., shipping lanes, urban areas)
 
+::: {.callout-tip}
+## In shinyplanr
+Planning units, features, targets, costs, and constraints all correspond directly to controls in the **Scenario** tab. See [Using shinyplanr](ab-using-shinyplanr.html#sec-scenario-tab) for a guided tour of each control.
+:::
+
 ## Objective Functions
 
 The **objective function** defines what the prioritisation algorithm is trying to achieve. Different objectives suit different planning contexts:
@@ -207,6 +212,11 @@ The *prioritizr* R package [@hanson2025prioritizr] provides a flexible interface
 | Reproducibility | Deterministic | Stochastic |
 | Flexibility | Highly flexible | More constrained |
 
+::: {.callout-tip}
+## In shinyplanr
+The objective function is set by the deployer in `setup/3_setup_app.R` (`obj_func = "min_set"` or `"min_shortfall"`). Users see the effect through the presence or absence of a budget slider in the Scenario tab. See [Setting Up](ac-setting-up.html#sec-setup-app) for configuration details.
+:::
+
 ## Climate-Smart Spatial Planning {#sec-climate-smart}
 
 Climate change poses fundamental challenges to both conservation and multiple-use planning. Species distributions are shifting, habitats are degrading, and historical baselines may no longer represent future conditions. Simultaneously, climate change affects the productivity and suitability of areas for human uses such as fisheries and aquaculture. **Climate-smart spatial planning** explicitly incorporates climate change considerations into prioritisation to ensure plans remain effective under future conditions [@buenafe2025climatesmart].
@@ -239,6 +249,11 @@ Climate-smart planning ensures that spatial allocations—whether for conservati
 - Ensemble model projections
 
 Given uncertainty in climate projections, robust planning aims to find solutions that perform well across multiple climate scenarios rather than optimising for a single projection.
+
+::: {.callout-tip}
+## In shinyplanr
+Climate-smart options appear in the Scenario tab when `include_climateChange = TRUE` is set in `setup/3_setup_app.R`. Users can select a climate layer from a dropdown to preferentially weight refugia areas. See [Using shinyplanr](ab-using-shinyplanr.html#sec-scenario-tab) for details.
+:::
 
 ## Multiple-Use Spatial Planning {#sec-multiple-use}
 
@@ -395,6 +410,10 @@ Understanding current and potential ocean uses requires spatial data on human ac
 - Indigenous marine territories
 - Community resource use patterns
 
+::: {.callout-tip}
+## In shinyplanr
+Multiple-use considerations are incorporated through cost layers (representing sectoral impacts such as fishing effort) and locked-out constraints (excluding shipping lanes, aquaculture zones, etc.). The Comparison tab allows side-by-side exploration of different cost layer choices. See [Using shinyplanr](ab-using-shinyplanr.html#sec-comparison-tab).
+:::
 
 ## Ecosystem Services {#sec-ecosystem-services}
 
@@ -436,6 +455,11 @@ Ecosystem services can be represented spatially through:
 
 By including ecosystem service layers in prioritisation, planners can identify areas that simultaneously protect biodiversity and maximise benefits to human communities. For example, protecting mangrove ecosystems can deliver multiple services: carbon storage, coastal protection from storms and erosion, critical nursery habitat for fisheries, and biodiversity conservation [@dabala2023mangroves]. This multi-benefit approach strengthens the case for conservation by demonstrating tangible value to stakeholders.
 
+::: {.callout-tip}
+## In shinyplanr
+Ecosystem service layers appear in the **Ecosystem Services** tab after running an analysis, showing how much of each service is captured by the solution. They are configured in `Dict_Feature.csv` using `type = "EcosystemServices"`. See [Setting Up](ac-setting-up.html#sec-dict-feature).
+:::
+
 ## Summary
 
 Modern spatial prioritisation for conservation and multiple-use planning combines:
@@ -457,10 +481,10 @@ The [Using shinyplanr vignette](ab-using-shinyplanr.html) explains how to use *s
 
 - [*prioritizr* website](https://prioritizr.net): Comprehensive documentation and tutorials
 - [*spatialplanr* package](https://spatialplanning.github.io/spatialplanr/): Tools for climate-smart planning
-- @margules2000systematic: The foundational paper on systematic conservation planning
-- @jones2016incorporating: Review of climate change in spatial prioritisation
+- Margules & Pressey (2000): The foundational paper on systematic conservation planning [@margules2000systematic]
+- Jones et al. (2016): Review of climate change in spatial prioritisation [@jones2016incorporating]
 
 **Multiple-use spatial planning:**
 
-- @neubert2025multipleuse: Comprehensive review of multiple-use planning methods and challenges
-- @watts2009marxan: Marxan with Zones for multiple-use planning
+- Neubert et al. (2025): Comprehensive review of multiple-use planning methods and challenges [@neubert2025multipleuse]
+- Watts et al. (2009): Marxan with Zones for multiple-use planning [@watts2009marxan]

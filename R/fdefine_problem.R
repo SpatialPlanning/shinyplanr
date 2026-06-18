@@ -42,11 +42,14 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   # while clim_col is the actual column name string used when climate is active.
 
   # Create sf object with features/cost -------------------------------------
+  # Note: geometry is sticky in sf — dplyr::select() always retains it
+  # automatically. Explicitly naming "geometry" in all_of() treats it as a
+  # regular column, which corrupts the sf_column attribute on plain-data.frame-
+  # backed sf objects (e.g. those built via st_set_geometry() in setup scripts).
   out_sf <- raw_sf %>%
     dplyr::select(
       tidyselect::all_of(c(targets$feature,
-                           input[[paste0("costid", compare_id)]],
-                           "geometry")))
+                           input[[paste0("costid", compare_id)]])))
 
   # Create options for climate-smart ----
   if (is.null(clim_input) || is.na(clim_input) || clim_input == "NA") { # Not Climate-smart
@@ -70,7 +73,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
         features = out_sf %>%
           dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col), "geometry"),
+        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
         metric_col = clim_col,
         percentile = options$percentile,
         targets = targets,
@@ -81,7 +84,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       CS_Approach <- spatialplanr::splnr_climate_featureApproach(
         features = out_sf %>%
           dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col), "geometry"),
+        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
         metric_col = clim_col,
         percentile = options$percentile,
         targets = targets,
@@ -92,7 +95,7 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
         features = out_sf %>%
           dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col), "geometry"),
+        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
         metric_col = clim_col,
         percentile = options$percentile,
         targets = targets,

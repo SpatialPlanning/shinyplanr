@@ -54,213 +54,25 @@ MyRegion/                        ← Your deployment project root
 └── .Rprofile                    ← renv activation (if using renv)
 ```
 
-## Step 1: Create the Deployment Project {#sec-deploy-create}
+## Steps 1–7: Set Up the Deployment Project
 
-From within an R session (not necessarily inside the shinyplanr package), call `create_shinyplanr_template()`:
+Before deploying, you need to create and configure your deployment project. This is covered in full in the [Setting Up vignette](ac-setting-up.html). In summary (install *shinyplanr* first — see the Prerequisites in that vignette):
 
-```r
-library(shinyplanr)
-
-create_shinyplanr_template(
-  country    = "MyRegion",
-  crs        = "+proj=cea +lon_0=160 +lat_ts=-20 +datum=WGS84 +units=m +no_defs",
-  oceandatr  = TRUE,
-  output_dir = "../MyRegion"   # creates a sibling directory
-)
-```
-
-This will:
-
-- Create the full directory structure shown above
-- Generate `1_setup_enviro.R`, `2_setup_data.R`, `3_setup_app.R`, and `Dict_Feature.csv` as starting-point templates
-- Copy markdown help-text templates from the package
-- Generate `app.R`, `deploy.R`, and `MyRegion.Rproj`
-- Initialise `renv` (bare mode) if `use_renv = TRUE` (the default)
-
-### Key parameters
-
-| Parameter | Default | Notes |
-|-----------|---------|-------|
-| `country` | *(required)* | Used for folder names, titles, and file names |
-| `crs` | `"ESRI:54009"` | Use an equal-area projection for your region — see [Projection Wizard](https://projectionwizard.org) |
-| `oceandatr` | `TRUE` | Include automatic data download from the *oceandatr* package |
-| `resolution` | `20000` | Planning unit size in metres |
-| `include_climate` | `TRUE` | Include climate-smart planning scaffolding |
-| `include_cost` | `TRUE` | Include cost layer setup |
-| `include_mpas` | `TRUE` | Include MPA locked-in area setup |
-| `output_dir` | `"../country"` | Where to create the project (default: sibling of working dir) |
-| `use_renv` | `TRUE` | Initialise renv for reproducible deployment |
-| `create_rproj` | `TRUE` | Create an RStudio `.Rproj` file |
-
-## Step 2: Open the Deployment Project {#sec-deploy-open}
-
-Open the newly created project in RStudio or VSCode:
-
-::: panel-tabset
-### RStudio
-
-**File → Open Project → `MyRegion/MyRegion.Rproj`**
-
-Or from the terminal:
-
-```bash
-open ../MyRegion/MyRegion.Rproj
-```
-
-### VSCode
-
-```bash
-code ../MyRegion
-```
-
-:::
+1. **Create the project**: `create_shinyplanr_template(country = "MyRegion", crs = "...")`
+2. **Install packages**: open the new project and run `setup/1_setup_enviro.R`
+3. **Prepare data**: edit and run `setup/2_setup_data.R`
+4. **Configure the app**: edit and run `setup/3_setup_app.R` — this generates `config/shinyplanr_config.rds`
+5. **Define features**: edit `Dict_Feature.csv`
+6. **Customise content**: edit markdown files in `setup/content/`
+7. **Test locally**: `shiny::runApp()` from inside the deployment project
 
 ::: callout-important
-All subsequent steps should be run **from inside the deployment project**, not from the shinyplanr package directory.
+All setup scripts must be run **from inside the deployment project** (i.e. with `MyRegion.Rproj` open in RStudio), not from the shinyplanr package directory.
 :::
 
-## Step 3: Prepare Spatial Data {#sec-deploy-data}
+Once the app runs correctly locally, proceed with the deployment steps below.
 
-Edit and run `setup/2_setup_data.R`. This script:
-
-1. Downloads or loads your spatial data
-2. Creates a hexagonal planning unit grid
-3. Calculates feature values for each planning unit
-4. Saves everything to `setup/data/MyRegion_RawData.rda`
-
-The script is pre-populated with code appropriate for your `oceandatr` setting. At minimum, you will need to:
-
-- Confirm the country name matches the [Marine Regions](https://marineregions.org/gazetteer.php) database (for `oceandatr = TRUE`), or load your own boundary file
-- Adjust the resolution if needed
-- Add any region-specific features not covered by oceandatr
-
-```r
-# Run from inside the deployment project:
-source("setup/2_setup_data.R")
-```
-
-## Step 4: Configure the App {#sec-deploy-config}
-
-Edit and run `setup/3_setup_app.R`. This script:
-
-1. Defines all app options (titles, colours, module switches, CRS)
-2. Copies logo files from `setup/logos/` to `www/`
-3. Loads the spatial data and feature dictionary
-4. Reads content files from `setup/content/`
-5. Saves everything to **`config/shinyplanr_config.rds`**
-
-Key sections to customise in `setup/3_setup_app.R`:
-
-### App options
-
-```r
-setup_dir <- "setup"
-data_path <- file.path(setup_dir, "data")
-
-options <- list(
-  app_title  = "MyRegion: shinyplanr",
-  nav_title  = "MyRegion Spatial Planning",
-  funder_url = "https://my-funder.org",
-
-  # Logo files (relative to setup/logos/)
-  file_logo_navbar  = file.path(setup_dir, "logos", "logo_navbar.png"),
-  file_logo_welcome = file.path(setup_dir, "logos", "logo_welcome.png"),
-  file_logo_funder  = file.path(setup_dir, "logos", "logo_funder.png"),
-  file_logo_funder2 = file.path(setup_dir, "logos", "uq-logo-white.png"),
-  funder2_url       = "https://spatialplanning.github.io",
-
-  # Module switches
-  mod_1welcome  = TRUE,
-  mod_2scenario = TRUE,
-  mod_3compare  = TRUE,
-  mod_4features = TRUE,
-  mod_5coverage = TRUE,
-  mod_6help     = TRUE,
-
-  # Planning settings
-  obj_func = "min_shortfall",  # or "min_set"
-  cCRS     = "EPSG:32757"
-)
-```
-
-### Logos
-
-Replace the placeholder files in `setup/logos/` with your own, then re-run
-`setup/3_setup_app.R` to copy them to `www/`. See `setup/logos/README.md` for
-a full description of each slot.
-
-| File in `setup/logos/` | Where it appears |
-|------------------------|-----------------|
-| `logo_navbar.png` | Top-left of the navbar on every page |
-| `logo_welcome.png` | Inline image in the welcome page (`shinyplanr_1welcome1.md`) |
-| `logo_funder.png` | Primary logo in the welcome page footer "Funded by" section |
-| `uq-logo-white.png` | Optional second logo in the welcome page footer (default: UQ logo). Comment out `file_logo_funder2` in `3_setup_app.R` to hide it. |
-
-### Content files
-
-Edit the files in `setup/content/` to customise the text shown in each panel of the app. The templates contain placeholder text with instructions. You can also add PDFs, images, or other reference material to this folder.
-
-| File | Where it appears |
-|------|-----------------|
-| `shinyplanr_1welcome1.md` – `5.md` | Welcome page tabs |
-| `shinyplanr_1footer.md` | Welcome page footer |
-| `shinyplanr_2solution.md` | Solution panel help |
-| `shinyplanr_2targets.md` | Targets panel help |
-| `shinyplanr_2cost.md` | Cost panel help |
-| `shinyplanr_2climate.md` | Climate panel help |
-| `shinyplanr_2ecosystemServices.md` | ESS panel help |
-| `shinyplanr_6faq.md` | FAQ tab |
-| `shinyplanr_6technical.md` | Technical notes tab |
-| `shinyplanr_6changelog.md` | Changelog tab |
-
-### Feature dictionary
-
-Edit `setup/Dict_Feature.csv` to define which features appear in the app, their display names, target ranges, and justification text. Key columns:
-
-| Column | Description |
-|--------|-------------|
-| `nameCommon` | Display name shown in the app |
-| `nameVariable` | Exact column name in `dat_sf` |
-| `category` | Feature group (used for grouping sliders) |
-| `categoryID` | Short category code |
-| `type` | `"Feature"`, `"Cost"`, or `"LockIn"` |
-| `targetInitial` | Default conservation target (%) |
-| `targetMin` / `targetMax` | Slider range |
-| `includeApp` | `TRUE` to include in the app |
-
-After editing, run:
-
-```r
-source("setup/3_setup_app.R")
-```
-
-## Step 5: Test Locally {#sec-deploy-test}
-
-Run the app locally to check everything looks correct:
-
-```r
-shiny::runApp()
-```
-
-This reads `app.R` in the project root, which calls:
-
-```r
-shinyplanr::load_config("config/shinyplanr_config.rds")
-shinyplanr::run_app()
-```
-
-The app should open in your browser. Check that:
-
-- All features appear in the feature list
-- Logos display correctly
-- Help text renders properly
-- The optimisation runs without errors (click **Run Analysis**)
-
-::: callout-tip
-If you see errors about missing objects, check that `setup/3_setup_app.R` completed without errors and that `config/shinyplanr_config.rds` exists and is not empty.
-:::
-
-## Step 6: Lock Package Versions with renv {#sec-deploy-renv}
+## Step 8: Lock Package Versions with renv {#sec-deploy-renv}
 
 Before deploying, lock the exact versions of all packages used (including shinyplanr) to ensure the deployed app is identical to your local test:
 
@@ -269,6 +81,11 @@ renv::snapshot()
 ```
 
 This writes `renv.lock`. **Commit this file** to version control if you are using git.
+
+::: callout-note
+## When to run renv::snapshot()
+`setup/1_setup_enviro.R` already calls `renv::snapshot()` at the end of its run. You only need to re-run it manually if you have added or updated packages since then. Always run `renv::snapshot()` from **inside the deployment project**, not from the shinyplanr package directory.
+:::
 
 ::: callout-important
 **Why this matters:** When you deploy to Posit Connect, it installs packages fresh from GitHub. Without `renv.lock`, it could install a newer version of shinyplanr that is incompatible with your config file. The lock file pins the exact GitHub commit SHA used during local testing.
@@ -288,7 +105,7 @@ source("deploy.R")              # Deploy
 
 If the new version has an incompatible config schema, `load_config()` will print a clear error message explaining what changed.
 
-## Step 7: Set Up Posit Connect {#sec-deploy-posit-setup}
+## Step 9: Set Up Posit Connect {#sec-deploy-posit-setup}
 
 You only need to do this once per Posit Connect account:
 
@@ -304,7 +121,7 @@ rsconnect::setAccountInfo(
 )
 ```
 
-## Step 8: Deploy to Posit Connect {#sec-deploy-deploy}
+## Step 10: Deploy to Posit Connect {#sec-deploy-deploy}
 
 Run the deployment script:
 

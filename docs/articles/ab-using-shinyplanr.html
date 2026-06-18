@@ -12,8 +12,8 @@
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="ab-using-shinyplanr_files/libs/quarto-html/popper.min.js"></script><script src="ab-using-shinyplanr_files/libs/quarto-html/tippy.umd.min.js"></script><link href="ab-using-shinyplanr_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ab-using-shinyplanr_files/libs/quarto-html/light-border.css" rel="stylesheet">
@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">shinyplanr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Manual</h6></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Documentation</h6></li>
     <li><a class="dropdown-item" href="../articles/aa-introduction.html">Introduction to Spatial Planning</a></li>
     <li><a class="dropdown-item" href="../articles/ab-using-shinyplanr.html">Using the shinyplanr Application</a></li>
     <li><a class="dropdown-item" href="../articles/ac-setting-up.html">Setting Up shinyplanr for Your Region</a></li>
@@ -80,6 +80,7 @@
     <p>This chapter guides you through using the <em>shinyplanr</em> web application. We cover each module (tab) of the application, explaining the available options and how to interpret results.</p>
 <section class="level2"><h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
+<p>The typical workflow for a <em>shinyplanr</em> analysis is: open the <strong>Scenario</strong> tab → set targets for each feature → choose a cost layer → optionally apply constraints → click <strong>Run Analysis</strong> → explore results across the output tabs → use the <strong>Comparison</strong> tab to run two scenarios side-by-side and examine trade-offs. Each of these steps is explained in detail below.</p>
 <p>When you open a <em>shinyplanr</em> application, you will see a navigation bar at the top with several tabs. The exact tabs available depend on how the application has been configured for your region, but typically include:</p>
 <ul>
 <li>
@@ -238,7 +239,7 @@
 <li>Toggle between base map layers</li>
 <li>Examine specific features in selected areas</li>
 </ul>
-<p><img src="images/InteractiveTab.png" style="width:70.0%"></p>
+<p><img src="images/ExploreTab.png" style="width:70.0%"></p>
 <p>A draggable panel allows you to select which features to display on the map.</p>
 </section><section class="level4"><h4 id="targets-tab">Targets Tab<a class="anchor" aria-label="anchor" href="#targets-tab"></a>
 </h4>
@@ -460,6 +461,16 @@
 <li>Ensure targets are realistic (not 100% for all features)</li>
 <li>Check that constraint options are compatible</li>
 <li>Try reducing the budget slightly</li>
+</ul></section><section class="level3"><h3 id="solution-is-infeasible">Solution is Infeasible<a class="anchor" aria-label="anchor" href="#solution-is-infeasible"></a>
+</h3>
+<p>The solver log shows “infeasible” when the problem has no valid solution. Common causes:</p>
+<ul>
+<li>
+<strong>Targets too high</strong>: A feature target of 100% combined with locked-out areas that contain that feature makes the problem impossible. Reduce targets or remove conflicting constraints.</li>
+<li>
+<strong>Budget too low</strong> (minimum shortfall objective): The budget is so small that no planning units can be selected. Increase the budget percentage.</li>
+<li>
+<strong>Conflicting constraints</strong>: The same planning unit is both locked-in and locked-out. Check your constraint selections.</li>
 </ul></section><section class="level3"><h3 id="results-look-unexpected">Results Look Unexpected<a class="anchor" aria-label="anchor" href="#results-look-unexpected"></a>
 </h3>
 <ul>

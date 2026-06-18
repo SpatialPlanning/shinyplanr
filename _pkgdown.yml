@@ -21,8 +21,8 @@ navbar:
       aria-label: GitHub
 
 articles:
-- title: "User Manual"
-  navbar: "Manual"
+- title: "Documentation"
+  navbar: "Documentation"
   contents:
   - aa-introduction
   - ab-using-shinyplanr
@@ -45,7 +45,9 @@ reference:
   desc: "Functions for validating configuration and spatial data."
   contents:
   - validate_shinyplanr_data
+  - validate_dict
 
 - title: "Utilities"
   contents:
   - '`%>%`'
+  - get_schema_version

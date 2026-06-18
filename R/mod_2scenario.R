@@ -769,7 +769,7 @@ mod_2scenario_server <- function(id, cfg) {
         dplyr::summarise(TotalValue = sum(.data$Value, na.rm = TRUE), .by = "nameVariable")
 
       # Calculate value in selected planning units (solution)
-      ess_values <- sf::st_join(raw_sf %>% dplyr::select(dplyr::all_of(c(ess_layers, "geometry"))),
+      ess_values <- sf::st_join(raw_sf %>% dplyr::select(dplyr::all_of(ess_layers)), # geometry is sticky
                                 solution(),
                                 join = sf::st_equals) %>%
         dplyr::filter(.data$solution_1 == 1) %>%
