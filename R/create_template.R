@@ -183,12 +183,14 @@ create_shinyplanr_template <- function(
   message("      \u2514\u2500\u2500 content/          \u2190 edit markdown/content files here")
   message("")
 
-  # Switch to the new project in the same RStudio window (newSession defaults
-  # to FALSE, matching golem / RStudio's "New Project" wizard behaviour).
-  # RStudio closes the current project and reopens in the same window.
-  # The .Rprofile hook fires in the new session and opens 1_setup_enviro.R.
-  # If prompted "Save workspace?", click "Don't Save".
+  # When use_renv = TRUE, renv::init() calls rstudioapi::openProject() itself
+  # at the end of initialisation, switching RStudio to the new project
+  # automatically. No further action is needed here.
+  #
+  # When use_renv = FALSE (or renv is not installed), we open the project
+  # ourselves so the user lands in the new project immediately.
   if (isTRUE(create_rproj) &&
+      !isTRUE(use_renv) &&
       !isTRUE(getOption("shinyplanr.testing", FALSE)) &&
       identical(Sys.getenv("TESTTHAT"), "") &&
       requireNamespace("rstudioapi", quietly = TRUE) &&
@@ -199,11 +201,11 @@ create_shinyplanr_template <- function(
     )
     message("Switching to ", country, ".Rproj in RStudio...")
     message("(If prompted 'Save workspace?', click 'Don't Save')")
-    message("setup/1_setup_enviro.R will open automatically.")
     rstudioapi::openProject(rproj_path)
   } else if (!isTRUE(create_rproj)) {
+    rproj_path <- normalizePath(output_dir)
     message("Next steps:")
-    message("1. Open the project folder: ", normalizePath(output_dir))
+    message("1. Open the project folder: ", rproj_path)
     message("2. Source setup/1_setup_enviro.R")
     message("   (installs all packages, writes renv.lock, opens step 2)")
     message("3. Source setup/2_setup_data.R")
@@ -214,7 +216,7 @@ create_shinyplanr_template <- function(
     message("6. Deploy: source('deploy.R')")
     message("")
     message("See the shinyplanr manual (Chapter 4) for detailed instructions.")
-  } else {
+  } else if (!isTRUE(use_renv)) {
     rproj_path <- normalizePath(
       file.path(output_dir, paste0(country, ".Rproj")),
       mustWork = FALSE
@@ -222,7 +224,6 @@ create_shinyplanr_template <- function(
     message("Next steps:")
     message("1. Open the project:")
     message("   File > Open Project > ", rproj_path)
-    message("   (setup/1_setup_enviro.R will open automatically)")
     message("2. Source setup/1_setup_enviro.R")
     message("   (installs all packages, writes renv.lock, opens step 2)")
     message("3. Source setup/2_setup_data.R")
@@ -234,6 +235,8 @@ create_shinyplanr_template <- function(
     message("")
     message("See the shinyplanr manual (Chapter 4) for detailed instructions.")
   }
+  # use_renv = TRUE: renv::init() has already called openProject() and
+  # switched to the new project. R is restarting — no further messages needed.
 
   invisible(output_dir)
 }
@@ -380,58 +383,36 @@ create_shinyplanr_template <- function(
 
       # Create renv infrastructure only. Package installation happens in
       # 1_setup_enviro.R once the user is inside the activated project.
+      #
+      # renv::init() calls rstudioapi::openProject() at the end of
+      # initialisation (via renv_restart_request), which switches RStudio to
+      # the new project. This is the correct behaviour — the user lands in the
+      # new project automatically and can then open 1_setup_enviro.R.
       renv::init(bare = TRUE)
 
       # Prepend global .Renviron loading so user-level env vars (e.g.
       # GITHUB_PAT) are available inside the isolated renv session.
       # renv's .Rprofile only sources renv/activate.R; without this line
       # the GitHub PAT stored in ~/.Renviron is invisible to renv::install().
-      rprofile_path_tmp <- file.path(proj, ".Rprofile")
-      existing_rp <- if (file.exists(rprofile_path_tmp)) {
-        readLines(rprofile_path_tmp, warn = FALSE)
-      } else {
-        character(0)
-      }
-      writeLines(
-        c(
-          "# Load global ~/.Renviron so GITHUB_PAT and other user env vars are",
-          "# available inside the renv project session (added by shinyplanr).",
-          'if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")',
-          "",
-          existing_rp
-        ),
-        rprofile_path_tmp
-      )
-
-      # Append a one-time startup hook to .Rprofile.
-      # When the user opens the project, this opens 1_setup_enviro.R as a tab
-      # then removes itself so it never fires again.
       #
-      # renv::init(bare = TRUE) restricts .libPaths() to the project library
-      # (empty), so requireNamespace("rstudioapi") fails even though rstudioapi
-      # is installed. The fix: load rstudioapi from .Library (the base R system
-      # library that renv never removes from the search path).
-      hook <- paste(c(
-        "",
-        "# --- shinyplanr one-time startup hook (auto-removes after first run) ---",
-        "local({",
-        "  if (interactive() && nzchar(Sys.getenv('RSTUDIO'))) {",
-        "    api <- tryCatch(",
-        "      loadNamespace('rstudioapi', lib.loc = c(.libPaths(), .Library)),",
-        "      error = function(e) NULL",
-        "    )",
-        "    if (!is.null(api) && api$isAvailable())",
-        "      api$navigateToFile('setup/1_setup_enviro.R')",
-        "  }",
-        "  rp    <- readLines('.Rprofile', warn = FALSE)",
-        "  start <- grep('shinyplanr one-time startup hook', rp)[1L]",
-        "  if (!is.na(start)) writeLines(rp[seq_len(start - 1L)], '.Rprofile')",
-        "})",
-        "# --- end shinyplanr hook ---"
-      ), collapse = "\n")
-
+      # Note: renv::init() calls openProject() which restarts R, so this code
+      # only runs in non-RStudio environments (e.g. terminal / CI) where
+      # renv falls back to a simple restartR rather than openProject.
+      # In those cases the .Rprofile edit is still useful for subsequent runs.
       rprofile_path <- file.path(proj, ".Rprofile")
-      cat(hook, "\n", file = rprofile_path, append = TRUE)
+      if (file.exists(rprofile_path)) {
+        existing_rp <- readLines(rprofile_path, warn = FALSE)
+        writeLines(
+          c(
+            "# Load global ~/.Renviron so GITHUB_PAT and other user env vars are",
+            "# available inside the renv project session (added by shinyplanr).",
+            'if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")',
+            "",
+            existing_rp
+          ),
+          rprofile_path
+        )
+      }
 
       message("\nrenv infrastructure created. Open ", basename(proj),
               ".Rproj and run setup/1_setup_enviro.R to install packages.")
@@ -1245,6 +1226,26 @@ create_shinyplanr_template <- function(
     "  # RStudio / Positron: restart the session cleanly, then open app.R.",
     "  # The .Rprofile hook (if renv is active) will re-activate the project",
     "  # automatically after the restart.",
+    "  #",
+    "  # IMPORTANT: Delete console_actions files before restarting.",
+    "  # RStudio appends all console output to .Rproj.user/<id>/ctx/<ctx>/console_actions",
+    "  # as a streaming JSON log. When restartSession() kills R, the file may be",
+    "  # truncated mid-write, leaving invalid JSON. On the next startup RStudio tries",
+    "  # to parse it and crashes with 'Error restoring session (console_actions)'.",
+    "  # Deleting the file is safe: it only holds the console display history and",
+    "  # RStudio silently starts a fresh log when the file is absent.",
+    "  local({",
+    "    ca_files <- list.files(",
+    "      path       = file.path(getwd(), '.Rproj.user'),",
+    "      pattern    = '^console_actions$',",
+    "      recursive  = TRUE,",
+    "      full.names = TRUE",
+    "    )",
+    "    if (length(ca_files) > 0L) {",
+    "      file.remove(ca_files)",
+    "      message('Cleared ', length(ca_files), ' console_actions file(s) to prevent session-restore crash.')",
+    "    }",
+    "  })",
     "  message('\\nRestarting R session to clear setup objects before running the app...')",
     "  message('app.R will open automatically after the restart.')",
     "  rstudioapi::restartSession(command = \"rstudioapi::navigateToFile('app.R')\")",

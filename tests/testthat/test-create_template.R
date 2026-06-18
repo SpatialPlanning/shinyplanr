@@ -373,3 +373,66 @@ test_that("Dict_Feature.csv contains no MPA rows when include_mpas = FALSE", {
     label = "Dict_Feature.csv should not contain LockOut rows when include_mpas = FALSE"
   )
 })
+
+# ---------------------------------------------------------------------------
+# .Rprofile: ~/.Renviron prepend is written when use_renv = TRUE
+#
+# renv::init() is mocked to write only the minimal .Rprofile that renv
+# produces (source("renv/activate.R")), without network calls or restarts.
+# We verify that .init_renv() prepends the ~/.Renviron loading line so that
+# GITHUB_PAT and other user env vars are available inside the renv session.
+# ---------------------------------------------------------------------------
+
+test_that(".Rprofile gets ~/.Renviron prepend when use_renv = TRUE", {
+  skip_if_not_installed("renv")
+
+  out_dir <- file.path(tempdir(), paste0("shinyplanr_RenvProfile_", Sys.getpid()))
+  on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+  # Mock renv::init() to write the minimal .Rprofile renv would produce,
+  # without actually initialising renv or triggering a session restart.
+  local_mocked_bindings(
+    init = function(...) {
+      dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+      rprofile <- file.path(out_dir, ".Rprofile")
+      writeLines('source("renv/activate.R")', rprofile)
+      invisible(out_dir)
+    },
+    .package = "renv"
+  )
+
+  suppressMessages(
+    create_shinyplanr_template(
+      country      = "RenvProfile",
+      output_dir   = out_dir,
+      use_renv     = TRUE,
+      create_rproj = FALSE
+    )
+  )
+
+  rprofile_path <- file.path(out_dir, ".Rprofile")
+  expect_true(file.exists(rprofile_path),
+              label = ".Rprofile should exist when use_renv = TRUE")
+
+  rprofile_text <- paste(readLines(rprofile_path, warn = FALSE), collapse = "\n")
+
+  expect_true(
+    grepl("readRenviron", rprofile_text),
+    label = ".Rprofile should prepend ~/.Renviron loading"
+  )
+  expect_true(
+    grepl('source\\("renv/activate\\.R"\\)', rprofile_text),
+    label = ".Rprofile should retain renv's source() line"
+  )
+  expect_false(
+    grepl("shinyplanr one-time startup hook", rprofile_text),
+    label = ".Rprofile should NOT contain the removed startup hook"
+  )
+
+  # ~/.Renviron load must appear before renv activate so it is available
+  # when renv/activate.R runs.
+  renviron_pos <- regexpr("readRenviron",                    rprofile_text)
+  activate_pos <- regexpr('source\\("renv/activate\\.R"\\)', rprofile_text)
+  expect_true(renviron_pos < activate_pos,
+              label = "~/.Renviron load should appear before renv activate")
+})
