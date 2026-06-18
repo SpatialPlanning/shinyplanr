@@ -57,7 +57,7 @@ Imports:
     shinydisconnect,
     shinyjs,
     shinyWidgets,
-    spatialplanr (>= 0.6.9),
+    spatialplanr (>= 0.7.5),
     stringr,
     tibble,
     tidyr,

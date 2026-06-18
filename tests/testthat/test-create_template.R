@@ -260,6 +260,32 @@ test_that("create_shinyplanr_template() succeeds with oceandatr = FALSE", {
 })
 
 # ---------------------------------------------------------------------------
+# 3_setup_app.R content: include_ess defaults to FALSE
+# ---------------------------------------------------------------------------
+
+test_that("3_setup_app.R sets include_ess = FALSE by default", {
+  out_dir <- file.path(tempdir(), paste0("shinyplanr_EssTest_", Sys.getpid()))
+  on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+  suppressMessages(
+    create_shinyplanr_template(
+      country      = "EssTest",
+      output_dir   = out_dir,
+      use_renv     = FALSE,
+      create_rproj = FALSE
+    )
+  )
+
+  setup_app <- readLines(file.path(out_dir, "setup", "3_setup_app.R"), warn = FALSE)
+  setup_app_text <- paste(setup_app, collapse = "\n")
+
+  expect_true(
+    grepl("include_ess\\s*=\\s*FALSE", setup_app_text),
+    label = "3_setup_app.R should default include_ess to FALSE (no ESS data in default Dict)"
+  )
+})
+
+# ---------------------------------------------------------------------------
 # 3_setup_app.R content: uses public get_schema_version() not :::
 # ---------------------------------------------------------------------------
 
@@ -287,5 +313,63 @@ test_that("3_setup_app.R references get_schema_version() without ::: operator", 
   expect_true(
     grepl("get_schema_version()", setup_app_text, fixed = TRUE),
     label = "3_setup_app.R should call shinyplanr::get_schema_version()"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Dict_Feature.csv content: MPA LockIn and LockOut rows
+# ---------------------------------------------------------------------------
+
+test_that("Dict_Feature.csv contains both LockIn and LockOut MPA rows when include_mpas = TRUE", {
+  out_dir <- file.path(tempdir(), paste0("shinyplanr_MpaDict_", Sys.getpid()))
+  on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+  suppressMessages(
+    create_shinyplanr_template(
+      country      = "MpaDict",
+      output_dir   = out_dir,
+      use_renv     = FALSE,
+      create_rproj = FALSE,
+      include_mpas = TRUE
+    )
+  )
+
+  dict_path <- file.path(out_dir, "setup", "Dict_Feature.csv")
+  dict_text <- paste(readLines(dict_path, warn = FALSE), collapse = "\n")
+
+  expect_true(
+    grepl("mpas.*LockIn", dict_text),
+    label = "Dict_Feature.csv should contain an mpas LockIn row"
+  )
+  expect_true(
+    grepl("mpas.*LockOut", dict_text),
+    label = "Dict_Feature.csv should contain an mpas LockOut row"
+  )
+})
+
+test_that("Dict_Feature.csv contains no MPA rows when include_mpas = FALSE", {
+  out_dir <- file.path(tempdir(), paste0("shinyplanr_NoMpaDict_", Sys.getpid()))
+  on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+  suppressMessages(
+    create_shinyplanr_template(
+      country      = "NoMpaDict",
+      output_dir   = out_dir,
+      use_renv     = FALSE,
+      create_rproj = FALSE,
+      include_mpas = FALSE
+    )
+  )
+
+  dict_path <- file.path(out_dir, "setup", "Dict_Feature.csv")
+  dict_text <- paste(readLines(dict_path, warn = FALSE), collapse = "\n")
+
+  expect_false(
+    grepl("LockIn", dict_text),
+    label = "Dict_Feature.csv should not contain LockIn rows when include_mpas = FALSE"
+  )
+  expect_false(
+    grepl("LockOut", dict_text),
+    label = "Dict_Feature.csv should not contain LockOut rows when include_mpas = FALSE"
   )
 })

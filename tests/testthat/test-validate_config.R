@@ -59,7 +59,8 @@ make_valid_config_v2 <- function() {
       include_explore       = FALSE,
       include_log           = FALSE,
       include_bioregion     = FALSE,
-      show_uq_logo          = FALSE,
+      show_logo_funder2     = FALSE,
+      funder2_url           = "https://spatialplanning.github.io",
       include_climateChange = FALSE,
       climate_change        = 0L,
       include_lockedArea    = FALSE,
@@ -377,4 +378,284 @@ test_that("validate_shinyplanr_data() stops immediately when config_list is not 
     validate_shinyplanr_data("not_a_list"),
     regexp = "is.list"
   )
+})
+
+
+# ===========================================================================
+# validate_dict() tests
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Helper: build a minimal valid full (unfiltered) Dict
+# ---------------------------------------------------------------------------
+
+make_valid_dict <- function() {
+  data.frame(
+    nameCommon    = c("Feature A", "Feature B (off)", "Equal Area Cost", "MPAs"),
+    nameVariable  = c("feature_A", "feature_B", "cost_area", "mpas"),
+    category      = c("Habitat", "Habitat", "Cost", "Protected Areas"),
+    categoryID    = c("Hab", "Hab", "Cost", "MPAs"),
+    type          = c("Feature", "Feature", "Cost", "LockIn"),
+    targetInitial = c(30, 30, NA, NA),
+    targetMin     = c(0,  0,  NA, NA),
+    targetMax     = c(85, 85, NA, NA),
+    includeApp    = c(TRUE, FALSE, TRUE, TRUE),
+    includeJust   = c(TRUE, TRUE,  TRUE, TRUE),
+    units         = c("", "", "", ""),
+    justification = c("Stub A.", "Stub B.", "Equal area.", "Existing MPAs."),
+    stringsAsFactors = FALSE
+  )
+}
+
+# ---------------------------------------------------------------------------
+# Happy path
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() passes for a fully valid Dict (strict)", {
+  d <- make_valid_dict()
+  expect_message(
+    result <- validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+  expect_true(result)
+})
+
+test_that("validate_dict() returns named list of TRUEs in non-strict mode", {
+  d <- make_valid_dict()
+  result <- suppressMessages(validate_dict(d, strict = FALSE))
+  expect_type(result, "list")
+  expect_true(all(unlist(result)))
+})
+
+# ---------------------------------------------------------------------------
+# stopifnot: Dict is not a data frame
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() stops immediately when Dict is not a data frame", {
+  expect_error(
+    validate_dict("not_a_dataframe"),
+    regexp = "is.data.frame"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Check 1: Required columns missing
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() fails check 1 when a required column is missing", {
+  d <- make_valid_dict()
+  d$justification <- NULL  # remove a required column
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "Dict_required_columns"
+  )
+})
+
+test_that("validate_dict() skips remaining checks after missing-column failure (non-strict)", {
+  d <- make_valid_dict()
+  d$includeApp <- NULL
+  result <- suppressWarnings(suppressMessages(validate_dict(d, strict = FALSE)))
+  # Only the required-columns check should be recorded; others are skipped
+  expect_false(isTRUE(result[["Dict_required_columns"]]))
+  expect_null(result[["includeApp_is_logical"]])
+})
+
+# ---------------------------------------------------------------------------
+# Check 2: includeApp / includeJust are logical
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() fails check 2 when includeApp is integer (Excel 1/0)", {
+  d <- make_valid_dict()
+  d$includeApp <- as.integer(d$includeApp)  # 1L / 0L, as Excel would produce
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "includeApp_is_logical"
+  )
+})
+
+test_that("validate_dict() fails check 2 when includeApp is character", {
+  d <- make_valid_dict()
+  d$includeApp <- as.character(d$includeApp)  # "TRUE" / "FALSE"
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "includeApp_is_logical"
+  )
+})
+
+test_that("validate_dict() fails check 2 when includeJust is integer", {
+  d <- make_valid_dict()
+  d$includeJust <- as.integer(d$includeJust)
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "includeJust_is_logical"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Check 3: type values from known set
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() fails check 3 when type contains a lowercase typo", {
+  d <- make_valid_dict()
+  d$type[1] <- "feature"  # lowercase — common typo
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "Dict_type_values_known"
+  )
+})
+
+test_that("validate_dict() fails check 3 when type contains a completely unknown value", {
+  d <- make_valid_dict()
+  d$type[2] <- "Habitat"  # not a valid type
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "Dict_type_values_known"
+  )
+})
+
+test_that("validate_dict() passes check 3 for all known type values", {
+  d <- make_valid_dict()
+  # Add rows for every known type to confirm none are rejected
+  extra <- data.frame(
+    nameCommon    = c("LO", "Bio", "ESS", "Just"),
+    nameVariable  = c("lock_out_var", "bio_var", "ess_var", "just_var"),
+    category      = c("C", "C", "C", "C"),
+    categoryID    = c("C", "C", "C", "C"),
+    type          = c("LockOut", "Bioregion", "EcosystemServices", "Justification"),
+    targetInitial = c(NA, NA, NA, NA),
+    targetMin     = c(NA, NA, NA, NA),
+    targetMax     = c(NA, NA, NA, NA),
+    includeApp    = c(TRUE, TRUE, TRUE, FALSE),
+    includeJust   = c(TRUE, TRUE, TRUE, FALSE),
+    units         = c("", "", "", ""),
+    justification = c(".", ".", ".", "."),
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, extra)
+  expect_message(
+    validate_dict(d2, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Check 4: nameVariable unique within type
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() fails check 4 when nameVariable is duplicated within a type", {
+  d <- make_valid_dict()
+  # Add a second Feature row with the same nameVariable as the first
+  dup_row <- d[1, ]
+  d2 <- rbind(d, dup_row)
+  expect_error(
+    suppressMessages(validate_dict(d2, strict = TRUE)),
+    regexp = "nameVariable_unique_within_type"
+  )
+})
+
+test_that("validate_dict() passes check 4 when same nameVariable appears in LockIn AND LockOut", {
+  d <- make_valid_dict()
+  # MPAs legitimately appear as both LockIn and LockOut
+  lockout_row <- data.frame(
+    nameCommon    = "MPAs",
+    nameVariable  = "mpas",  # same nameVariable as the LockIn row
+    category      = "Protected Areas",
+    categoryID    = "MPAs",
+    type          = "LockOut",  # different type — should NOT trigger duplicate check
+    targetInitial = NA_real_,
+    targetMin     = NA_real_,
+    targetMax     = NA_real_,
+    includeApp    = TRUE,
+    includeJust   = TRUE,
+    units         = "",
+    justification = "Existing MPAs.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, lockout_row)
+  expect_message(
+    validate_dict(d2, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Check 5: At least one active Feature row
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() fails check 5 when no Feature rows have includeApp == TRUE", {
+  d <- make_valid_dict()
+  d$includeApp[d$type == "Feature"] <- FALSE  # disable all features
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "at_least_one_active_feature"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Check 6: Active Feature target values in 0-100 range
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() fails check 6 when an active Feature has targetMin < 0", {
+  d <- make_valid_dict()
+  d$targetMin[d$type == "Feature" & d$includeApp][1] <- -5
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "active_feature_targets_in_range"
+  )
+})
+
+test_that("validate_dict() fails check 6 when an active Feature has targetMax > 100", {
+  d <- make_valid_dict()
+  d$targetMax[d$type == "Feature" & d$includeApp][1] <- 110
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "active_feature_targets_in_range"
+  )
+})
+
+test_that("validate_dict() passes check 6 when an inactive Feature has out-of-range targets", {
+  # includeApp == FALSE rows are not checked for target range — they are not
+  # used in the app and the deployer may have left them with placeholder values.
+  d <- make_valid_dict()
+  d$targetMax[d$type == "Feature" & !d$includeApp][1] <- 999
+  expect_message(
+    validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# strict = FALSE: collects all failures, returns named list, warns not errors
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() with strict=FALSE returns list and warns on failure", {
+  d <- make_valid_dict()
+  # Add a second active Feature so that corrupting type[1] does not also
+  # trigger the at_least_one_active_feature check (which would produce a
+  # second, unexpected warning and cause the test to fail).
+  extra_feature <- data.frame(
+    nameCommon = "Feature C", nameVariable = "feature_C",
+    category = "Habitat", categoryID = "Hab", type = "Feature",
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = TRUE, includeJust = TRUE,
+    units = "", justification = "Stub C.",
+    stringsAsFactors = FALSE
+  )
+  d <- rbind(d, extra_feature)
+  d$type[1] <- "feature"  # unknown type — feature_C keeps Check 5 passing
+  expect_warning(
+    result <- suppressMessages(validate_dict(d, strict = FALSE)),
+    regexp = "Dict_type_values_known"
+  )
+  expect_type(result, "list")
+  expect_false(isTRUE(result[["Dict_type_values_known"]]))
+})
+
+test_that("validate_dict() with strict=FALSE continues past first failure", {
+  d <- make_valid_dict()
+  d$type[1]        <- "feature"  # check 3 failure
+  d$includeApp     <- as.integer(d$includeApp)  # check 2 failure
+  result <- suppressWarnings(suppressMessages(validate_dict(d, strict = FALSE)))
+  expect_false(isTRUE(result[["includeApp_is_logical"]]))
+  expect_false(isTRUE(result[["Dict_type_values_known"]]))
 })

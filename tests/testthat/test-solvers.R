@@ -12,6 +12,20 @@
 # A helper wraps this so every test gets the mocks automatically.
 
 # ---------------------------------------------------------------------------
+# Skip entire file if no solver backend is available.
+# prioritizr::add_default_solver() requires at least one of: highs, gurobi,
+# rcbc, cplexAPI, lpsymphony, Rsymphony.  Without any solver the tests cannot
+# run and would produce misleading failures.
+# ---------------------------------------------------------------------------
+solver_available <- any(vapply(
+  c("highs", "gurobi", "rcbc", "cplexAPI", "lpsymphony", "Rsymphony"),
+  requireNamespace, logical(1L), quietly = TRUE
+))
+if (!solver_available) {
+  skip("No solver backend available (need highs, gurobi, rcbc, or similar)")
+}
+
+# ---------------------------------------------------------------------------
 # Shared test fixtures
 # ---------------------------------------------------------------------------
 
@@ -34,6 +48,8 @@ make_test_sf <- function() {
 # Minimal prioritizr min_set problem (2 features, 4 PUs).
 # Two features are required: prioritizr::presolve_check() rejects single-feature
 # problems as ecologically meaningless, causing fsolve_problem() to return NULL.
+# Uses add_default_solver() so the tests run with whatever solver is installed
+# (highs, gurobi, rcbc, etc.) without requiring a specific backend.
 make_test_problem <- function(raw_sf = make_test_sf()) {
   prioritizr::problem(
     x           = raw_sf,
@@ -43,7 +59,7 @@ make_test_problem <- function(raw_sf = make_test_sf()) {
     prioritizr::add_min_set_objective() |>
     prioritizr::add_relative_targets(0.5) |>
     prioritizr::add_binary_decisions() |>
-    prioritizr::add_cbc_solver(verbose = FALSE)
+    prioritizr::add_default_solver(verbose = FALSE)
 }
 
 # Helper: run expr with shinyjs::runjs and shinyalert::shinyalert mocked.
@@ -111,7 +127,7 @@ test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fail
       prioritizr::add_min_set_objective() |>
       prioritizr::add_relative_targets(0.5) |>
       prioritizr::add_binary_decisions() |>
-      prioritizr::add_cbc_solver(verbose = FALSE)
+      prioritizr::add_default_solver(verbose = FALSE)
   )
 
   alert_called <- FALSE
@@ -200,7 +216,7 @@ test_that("fsolve_with_log() returns NULL solution and logs failure for infeasib
       prioritizr::add_min_set_objective() |>
       prioritizr::add_relative_targets(0.5) |>
       prioritizr::add_binary_decisions() |>
-      prioritizr::add_cbc_solver(verbose = FALSE)
+      prioritizr::add_default_solver(verbose = FALSE)
   )
 
   local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")

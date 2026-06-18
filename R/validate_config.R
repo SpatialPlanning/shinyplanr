@@ -1,3 +1,294 @@
+#' Validate a shinyplanr feature dictionary (Dict_Feature.csv)
+#'
+#' Runs structural checks on the raw (unfiltered) feature dictionary read from
+#' \code{Dict_Feature.csv} in \code{setup/3_setup_app.R}, \strong{before} the
+#' \code{includeApp} filter is applied.  Call this immediately after
+#' \code{readr::read_csv()} and before \code{dplyr::filter(includeApp)}.
+#'
+#' Catching problems here -- before the data is loaded -- gives the deployer
+#' the clearest possible error messages, because the issue is in the CSV they
+#' just edited rather than buried inside a spatial data pipeline.
+#'
+#' @section Checks performed:
+#' \itemize{
+#'   \item All required columns are present in \code{Dict}.
+#'   \item \code{includeApp} and \code{includeJust} columns are logical
+#'     (\code{TRUE}/\code{FALSE}), not character or integer.  A common mistake
+#'     is editing the CSV in Excel, which can convert \code{TRUE} to \code{1}
+#'     or \code{"TRUE"} (character), causing \code{dplyr::filter(includeApp)}
+#'     to silently drop all rows.
+#'   \item All values in the \code{type} column are from the known set
+#'     (\code{"Feature"}, \code{"Cost"}, \code{"LockIn"}, \code{"LockOut"},
+#'     \code{"Bioregion"}, \code{"EcosystemServices"}, \code{"Justification"}).
+#'     A typo like \code{"feature"} (lowercase) silently excludes a row from
+#'     all app processing.
+#'   \item \code{nameVariable} is unique within each \code{type}.  Duplicates
+#'     cause silent bugs in \code{prioritizr} (duplicate feature columns) and
+#'     duplicate slider input IDs in the Shiny UI.  Note: the same
+#'     \code{nameVariable} may legitimately appear in both \code{"LockIn"} and
+#'     \code{"LockOut"} rows (e.g. MPAs) -- uniqueness is only enforced within
+#'     each type.
+#'   \item At least one row has \code{includeApp == TRUE} and
+#'     \code{type == "Feature"}.  An app with no active features cannot run a
+#'     prioritisation.
+#'   \item All rows with \code{includeApp == TRUE} and
+#'     \code{type == "Feature"} have \code{targetMin}, \code{targetMax}, and
+#'     \code{targetInitial} values in the 0--100 range.  Out-of-range values
+#'     cause \code{prioritizr} to error at solve time.
+#' }
+#'
+#' @param Dict A data frame.  The raw (unfiltered) feature dictionary, typically
+#'   the direct output of
+#'   \code{readr::read_csv(file.path(setup_dir, "Dict_Feature.csv"))}.
+#' @param strict Logical.  If \code{TRUE} (default), stops immediately with a
+#'   clear, actionable error message on the first failed check.  If
+#'   \code{FALSE}, all checks are run and a summary report is returned
+#'   invisibly; \code{warning()} is called for each failure.
+#'
+#' @return When \code{strict = FALSE}, invisibly returns a named list of
+#'   logical values (\code{TRUE} = passed, \code{FALSE} = failed) for each
+#'   check.  When \code{strict = TRUE}, returns \code{invisible(TRUE)} if all
+#'   checks pass.
+#'
+#' @examples
+#' \dontrun{
+#' # In setup/3_setup_app.R, immediately after reading the CSV:
+#' Dict_raw <- readr::read_csv(file.path(setup_dir, "Dict_Feature.csv"))
+#' shinyplanr::validate_dict(Dict_raw)
+#'
+#' Dict <- Dict_raw |>
+#'   dplyr::filter(includeApp) |>
+#'   dplyr::arrange(type, categoryID, nameCommon)
+#' }
+#'
+#' @export
+validate_dict <- function(Dict, strict = TRUE) {
+
+  stopifnot(is.data.frame(Dict))
+
+  results  <- list()
+  messages <- character(0)
+
+  # Helper: record a check result (mirrors the pattern in validate_shinyplanr_data)
+  .check <- function(name, passed, msg = NULL) {
+    results[[name]] <<- passed
+    if (!passed) {
+      full_msg <- if (is.null(msg)) name else paste0("[Dict check '", name, "'] ", msg)
+      messages <<- c(messages, full_msg)
+      if (isTRUE(strict)) {
+        stop(
+          "validate_dict() failed check '", name, "'.\n\n",
+          full_msg, "\n\n",
+          "Fix Dict_Feature.csv and re-run setup/3_setup_app.R.",
+          call. = FALSE
+        )
+      }
+    }
+    invisible(passed)
+  }
+
+  # Known valid type values -- update this vector if new types are added to the app
+  .known_types <- c(
+    "Feature", "Cost", "LockIn", "LockOut",
+    "Bioregion", "EcosystemServices", "Justification"
+  )
+
+  # ---------------------------------------------------------------------------
+  # Check 1: Required columns are present
+  # ---------------------------------------------------------------------------
+  required_cols <- c(
+    "nameCommon", "nameVariable", "category", "categoryID",
+    "type", "targetInitial", "targetMin", "targetMax",
+    "includeApp", "includeJust", "justification"
+  )
+
+  missing_cols <- setdiff(required_cols, names(Dict))
+  .check(
+    "Dict_required_columns",
+    length(missing_cols) == 0,
+    if (length(missing_cols) > 0)
+      paste0(
+        "Dict_Feature.csv is missing required column(s): ",
+        paste(missing_cols, collapse = ", "), ".\n",
+        "  Expected columns: ", paste(required_cols, collapse = ", "), ".\n",
+        "  Check that the CSV has not been accidentally edited to remove a ",
+        "column header."
+      )
+  )
+
+  # Guard: remaining checks require the required columns to be present.
+  # In strict mode we have already stopped above; in non-strict mode we skip
+  # the remaining checks because they would produce misleading errors.
+  if (!isTRUE(results[["Dict_required_columns"]])) {
+    message(
+      "validate_dict(): skipping remaining checks because required columns ",
+      "are missing."
+    )
+    return(invisible(as.list(results)))
+  }
+
+  # ---------------------------------------------------------------------------
+  # Check 2: includeApp and includeJust are logical
+  # ---------------------------------------------------------------------------
+  include_app_ok  <- is.logical(Dict$includeApp)
+  include_just_ok <- is.logical(Dict$includeJust)
+
+  .check(
+    "includeApp_is_logical",
+    include_app_ok,
+    paste0(
+      "The 'includeApp' column in Dict_Feature.csv must contain TRUE or FALSE ",
+      "(logical), but found class: ", class(Dict$includeApp)[1], ".\n",
+      "  This commonly happens when the CSV is opened and saved in Excel, ",
+      "which converts TRUE/FALSE to 1/0 or the text \"TRUE\"/\"FALSE\".\n",
+      "  Fix: open Dict_Feature.csv in a plain text editor and ensure the ",
+      "column contains only TRUE or FALSE (no quotes, no 1/0)."
+    )
+  )
+
+  .check(
+    "includeJust_is_logical",
+    include_just_ok,
+    paste0(
+      "The 'includeJust' column in Dict_Feature.csv must contain TRUE or FALSE ",
+      "(logical), but found class: ", class(Dict$includeJust)[1], ".\n",
+      "  Fix: open Dict_Feature.csv in a plain text editor and ensure the ",
+      "column contains only TRUE or FALSE (no quotes, no 1/0)."
+    )
+  )
+
+  # ---------------------------------------------------------------------------
+  # Check 3: All type values are from the known set
+  # ---------------------------------------------------------------------------
+  unknown_types <- setdiff(unique(Dict$type), .known_types)
+  .check(
+    "Dict_type_values_known",
+    length(unknown_types) == 0,
+    if (length(unknown_types) > 0)
+      paste0(
+        "Dict_Feature.csv contains unknown value(s) in the 'type' column: ",
+        paste(paste0('"', unknown_types, '"'), collapse = ", "), ".\n",
+        "  Valid types are: ",
+        paste(paste0('"', .known_types, '"'), collapse = ", "), ".\n",
+        "  A typo (e.g. \"feature\" instead of \"Feature\") will silently ",
+        "exclude that row from all app processing, including sliders, targets, ",
+        "and constraints.\n",
+        "  Affected nameVariable(s): ",
+        paste(Dict$nameVariable[!Dict$type %in% .known_types], collapse = ", ")
+      )
+  )
+
+  # ---------------------------------------------------------------------------
+  # Check 4: nameVariable is unique within each type
+  # ---------------------------------------------------------------------------
+  dup_check <- Dict |>
+    dplyr::group_by(.data$type, .data$nameVariable) |>
+    dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
+    dplyr::filter(.data$n > 1)
+
+  .check(
+    "nameVariable_unique_within_type",
+    nrow(dup_check) == 0,
+    if (nrow(dup_check) > 0)
+      paste0(
+        nrow(dup_check), " nameVariable value(s) appear more than once within ",
+        "the same type in Dict_Feature.csv:\n",
+        paste(
+          sprintf(
+            "  type='%s', nameVariable='%s' (%d times)",
+            dup_check$type, dup_check$nameVariable, dup_check$n
+          ),
+          collapse = "\n"
+        ), "\n",
+        "  Duplicate nameVariable values within a type cause duplicate slider ",
+        "input IDs in the Shiny UI and silent errors in prioritizr.\n",
+        "  Note: the same nameVariable CAN appear in both 'LockIn' and ",
+        "'LockOut' rows (e.g. MPAs) -- duplicates are only checked within ",
+        "each type."
+      )
+  )
+
+  # ---------------------------------------------------------------------------
+  # Check 5: At least one active Feature row exists
+  # ---------------------------------------------------------------------------
+  # Only meaningful when includeApp is logical; skip if Check 2 failed.
+  if (isTRUE(results[["includeApp_is_logical"]])) {
+    n_active_features <- sum(Dict$includeApp & Dict$type == "Feature", na.rm = TRUE)
+    .check(
+      "at_least_one_active_feature",
+      n_active_features >= 1,
+      paste0(
+        "Dict_Feature.csv has no rows with type == \"Feature\" AND ",
+        "includeApp == TRUE.\n",
+        "  The app cannot run a prioritisation without at least one active ",
+        "feature.\n",
+        "  Fix: set includeApp = TRUE for at least one Feature row in ",
+        "Dict_Feature.csv."
+      )
+    )
+  }
+
+  # ---------------------------------------------------------------------------
+  # Check 6: Active Feature rows have target values in 0-100 range
+  # ---------------------------------------------------------------------------
+  # Only meaningful when includeApp is logical; skip if Check 2 failed.
+  if (isTRUE(results[["includeApp_is_logical"]])) {
+    active_features <- Dict |>
+      dplyr::filter(.data$includeApp, .data$type == "Feature") |>
+      dplyr::select("nameVariable", "targetMin", "targetMax", "targetInitial")
+
+    if (nrow(active_features) > 0) {
+      out_of_range <- active_features |>
+        dplyr::filter(
+          (!is.na(.data$targetMin)     & (.data$targetMin     < 0 | .data$targetMin     > 100)) |
+          (!is.na(.data$targetMax)     & (.data$targetMax     < 0 | .data$targetMax     > 100)) |
+          (!is.na(.data$targetInitial) & (.data$targetInitial < 0 | .data$targetInitial > 100))
+        ) |>
+        dplyr::pull("nameVariable")
+
+      .check(
+        "active_feature_targets_in_range",
+        length(out_of_range) == 0,
+        if (length(out_of_range) > 0)
+          paste0(
+            length(out_of_range), " active Feature row(s) in Dict_Feature.csv ",
+            "have target values outside the 0-100 range:\n",
+            "  ", paste(out_of_range, collapse = ", "), "\n",
+            "  targetMin, targetMax, and targetInitial must all be between 0 ",
+            "and 100 (inclusive).\n",
+            "  These values are used as percentage targets in the ",
+            "prioritisation slider UI."
+          )
+      )
+    }
+  }
+
+  # ---------------------------------------------------------------------------
+  # Summary
+  # ---------------------------------------------------------------------------
+  n_checks <- length(results)
+  n_passed <- sum(unlist(results))
+  n_failed <- n_checks - n_passed
+
+  if (n_failed == 0) {
+    message(
+      "validate_dict(): all ", n_checks, " checks passed. ",
+      "Dict_Feature.csv is valid."
+    )
+  } else {
+    for (msg in messages) {
+      warning(msg, call. = FALSE)
+    }
+    message(
+      "validate_dict(): ", n_failed, " of ", n_checks,
+      " check(s) failed (see warnings above)."
+    )
+  }
+
+  invisible(if (strict) TRUE else as.list(results))
+}
+
+
 #' Validate a shinyplanr deployment configuration before saving
 #'
 #' Runs a comprehensive set of checks on a config list produced by

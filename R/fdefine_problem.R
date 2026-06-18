@@ -34,8 +34,11 @@
 fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_",
                             clim_input, compare_id = "") {
 
-  #TODO Still need to check on how clim_input is being used here in this function.
-  # Many commands expect NA or T/F but it seems like we pass in the input$climateid
+  # Note on clim_input: this argument is checked with
+  # is.null(clim_input) || is.na(clim_input) || clim_input == "NA" below.
+  # input$climateid is read separately as clim_col. The two are consistent —
+  # clim_input is the sentinel value that signals "no climate-smart planning",
+  # while clim_col is the actual column name string used when climate is active.
 
   # Create sf object with features/cost -------------------------------------
   out_sf <- raw_sf %>%
@@ -50,53 +53,51 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   } else { # Climate-smart
 
-    # Add climate data and run climate approach --------------------------------------------------------
+  # Add climate data and run climate approach --------------------------------------------------------
 
-    # Validate that climate column exists in raw_sf
-    clim_col <- input[[paste0("climateid", compare_id)]]
+  # Validate that climate column exists in raw_sf
+  clim_col <- input[[paste0("climateid", compare_id)]]
 
-    if (!clim_col %in% names(raw_sf)) {
-      warning(paste0("Climate column '", clim_col, "' not found in spatial data. Proceeding without climate-smart planning."))
-      p_dat <- out_sf
-    } else {
-      # TODO Rewrite the functions to allow other names of climate columns
-      # Rename column based on user selection
-      # Note: Must keep geometry column for sf operations
-      climate_sf <- raw_sf %>%
-        dplyr::select("metric" = clim_col, "geometry")
-
-      # TODO Update these functions in spatialplanr to remove climate_sf and instead pass a column name....
-      # We shouldn't need to name the column 'metric'
-      if (options$climate_change == 1) { # CPA approach
-        CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
-          features = out_sf %>%
-            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-          metric = climate_sf,
-          percentile = options$percentile,
-          targets = targets,
-          direction = options$direction,
-          refugiaTarget = options$refugiaTarget
-        )
-      } else if (options$climate_change == 2) { # feature approach
-        CS_Approach <- spatialplanr::splnr_climate_featureApproach(
-          features = out_sf %>%
-            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-          metric = climate_sf,
-          percentile = options$percentile,
-          targets = targets,
-          direction = options$direction,
-          refugiaTarget = options$refugiaTarget
-        )
-      } else if (options$climate_change == 3) { # percentile approach
-        CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
-          features = out_sf %>%
-            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-          metric = climate_sf,
-          percentile = options$percentile,
-          targets = targets,
-          direction = options$direction
-        )
-      }
+  if (!clim_col %in% names(raw_sf)) {
+    warning(paste0("Climate column '", clim_col, "' not found in spatial data. Proceeding without climate-smart planning."))
+    p_dat <- out_sf
+  } else {
+    # Pass raw_sf directly with metric_col so spatialplanr can select the
+    # correct column internally. This avoids creating a throwaway climate_sf
+    # object with a hard-coded "metric" column name.
+    if (options$climate_change == 1) { # CPA approach
+      CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
+        features = out_sf %>%
+          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col), "geometry"),
+        metric_col = clim_col,
+        percentile = options$percentile,
+        targets = targets,
+        direction = options$direction,
+        refugiaTarget = options$refugiaTarget
+      )
+    } else if (options$climate_change == 2) { # feature approach
+      CS_Approach <- spatialplanr::splnr_climate_featureApproach(
+        features = out_sf %>%
+          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col), "geometry"),
+        metric_col = clim_col,
+        percentile = options$percentile,
+        targets = targets,
+        direction = options$direction,
+        refugiaTarget = options$refugiaTarget
+      )
+    } else if (options$climate_change == 3) { # percentile approach
+      CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
+        features = out_sf %>%
+          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col), "geometry"),
+        metric_col = clim_col,
+        percentile = options$percentile,
+        targets = targets,
+        direction = options$direction
+      )
+    }
 
       # Get targets
       targets <- CS_Approach$Targets # New targets df with CS targets
@@ -168,8 +169,11 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   } else if (options$obj_func == "min_shortfall") {
 
-    # Calculate total value of current cost layer
-    # TODO make this a reactive and then this only needs to be done when cost layer changes
+    # Calculate total value of current cost layer.
+    # Note: fdefine_problem() is called inside solution(), which is bound to
+    # input$analyse. total_cost is therefore already only recalculated when the
+    # user clicks Analyse. A separate reactive would require passing total_cost
+    # as an argument here, adding complexity for negligible performance gain.
     total_cost <- p_dat %>%
       sf::st_drop_geometry() %>%
       dplyr::select(input[[paste0("costid", compare_id)]]) %>%
@@ -196,24 +200,24 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   LI <- get_lockIn(input, num = compare_id)
 
   if (length(LI) > 0) {
-    for (idx in 1:length(LI)){
-      p1 <- p1 %>%
-        prioritizr::add_locked_in_constraints(as.logical(raw_sf[[LI[idx]]]))
-    } # End loop
-  } # End Lock In
-
-
+    p1 <- purrr::reduce(
+      LI,
+      \(prob, li) prob %>% prioritizr::add_locked_in_constraints(as.logical(raw_sf[[li]])),
+      .init = p1
+    )
+  }
 
   ## Do Locked Out Regions ----------------------------------------------------
 
   LO <- get_lockOut(input, num = compare_id)
 
   if (length(LO) > 0) {
-    for (idx in 1:length(LO)){
-      p1 <- p1 %>%
-        prioritizr::add_locked_out_constraints(as.logical(raw_sf[[LO[idx]]]))
-    } # End loop
-  } # End Lock Out
+    p1 <- purrr::reduce(
+      LO,
+      \(prob, lo) prob %>% prioritizr::add_locked_out_constraints(as.logical(raw_sf[[lo]])),
+      .init = p1
+    )
+  }
 
 
   rm(p_dat)

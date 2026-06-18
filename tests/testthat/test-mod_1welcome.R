@@ -38,22 +38,22 @@ test_that("mod_1welcome_ui() includes a funder logo image tag", {
   expect_match(html, "logo_funder\\.png", perl = TRUE)
 })
 
-test_that("mod_1welcome_ui() shows UQ logo when options$show_uq_logo is TRUE", {
-  cfg_uq <- cfg
-  cfg_uq$options <- modifyList(cfg$options, list(show_uq_logo = TRUE))
+test_that("mod_1welcome_ui() shows second funder logo when options$show_logo_funder2 is TRUE", {
+  cfg_f2 <- cfg
+  cfg_f2$options <- modifyList(cfg$options, list(show_logo_funder2 = TRUE))
 
-  ui   <- mod_1welcome_ui(id = "test_uq", cfg = cfg_uq)
+  ui   <- mod_1welcome_ui(id = "test_f2", cfg = cfg_f2)
   html <- as.character(ui)
-  expect_match(html, "uq-logo-white\\.png", perl = TRUE)
+  expect_match(html, "logo_funder2\\.png", perl = TRUE)
 })
 
-test_that("mod_1welcome_ui() hides UQ logo when options$show_uq_logo is FALSE", {
-  cfg_nouq <- cfg
-  cfg_nouq$options <- modifyList(cfg$options, list(show_uq_logo = FALSE))
+test_that("mod_1welcome_ui() hides second funder logo when options$show_logo_funder2 is FALSE", {
+  cfg_nof2 <- cfg
+  cfg_nof2$options <- modifyList(cfg$options, list(show_logo_funder2 = FALSE))
 
-  ui   <- mod_1welcome_ui(id = "test_nouq", cfg = cfg_nouq)
+  ui   <- mod_1welcome_ui(id = "test_nof2", cfg = cfg_nof2)
   html <- as.character(ui)
-  expect_false(grepl("uq-logo-white\\.png", html))
+  expect_false(grepl("logo_funder2\\.png", html))
 })
 
 test_that("mod_1welcome_ui() renders a tabsetPanel when tx$welcome has multiple entries", {

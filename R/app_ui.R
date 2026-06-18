@@ -74,7 +74,7 @@ app_ui <- function(request) {
       list(
         id     = "navbar",
         title  = shiny::a(
-          shiny::img(src = "www/logo.png", height = 40, class = "navbar-logo"),
+          shiny::img(src = "www/logo_navbar.png", height = 40, class = "navbar-logo"),
           options$nav_title
         ),
         header = shiny::tagList(
@@ -112,9 +112,9 @@ golem_add_external_resources <- function(options) {
 
   # If running from a deployment project, register the deployment www/ at the
   # SAME prefix. Shiny's addResourcePath() replaces the previous registration,
-  # so deployment logos (logo.png, logo2.png, etc.) will override the package
-  # defaults. All required files (uq-logo-white.png, etc.) are copied to the
-  # deployment www/ by setup-app.R.
+  # so deployment logos (logo_navbar.png, logo_welcome.png, etc.) will override
+  # the package defaults. All required files are copied to the deployment www/
+  # by setup/3_setup_app.R.
   if (dir.exists("www")) {
     shiny::addResourcePath("www", normalizePath("www", mustWork = FALSE))
   }

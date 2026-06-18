@@ -97,33 +97,47 @@ create_shinyplanr_template <- function(
     }
   }
 
-  # Copy default logo to logos directory
+  # Copy default logos to the logos directory.
+  # These are placeholder files - the deployer replaces them with their own images.
+  #
+  #   logo_navbar.png  - top-left of the navbar on every page
+  #   logo_welcome.png - inline image in the welcome page (shinyplanr_1welcome1.md)
+  #   logo_funder.png  - primary "Funded by" logo in the welcome page footer
+  #   logo_funder2.png - optional second funder logo (default: UQ logo)
+  #                      comment out file_logo_funder2 in 3_setup_app.R to hide it
+  logos_dir <- file.path(setup_dir, "logos")
+
   default_logo <- system.file("man", "figures", "logo.png", package = "shinyplanr")
   if (default_logo == "") {
     default_logo <- file.path("man", "figures", "logo.png")
   }
-  logos_dir <- file.path(setup_dir, "logos")
   if (file.exists(default_logo)) {
-    file.copy(default_logo, file.path(logos_dir, "logo.png"),  overwrite = FALSE)
-    file.copy(default_logo, file.path(logos_dir, "logo2.png"), overwrite = FALSE)
-    file.copy(default_logo, file.path(logos_dir, "logo3.png"), overwrite = FALSE)
-    message("Copied default logo to: ", logos_dir)
+    file.copy(default_logo, file.path(logos_dir, "logo_navbar.png"),  overwrite = FALSE)
+    file.copy(default_logo, file.path(logos_dir, "logo_welcome.png"), overwrite = FALSE)
+    message("Copied default navbar/welcome logos to: ", logos_dir)
   }
 
-  # Copy default funder logo
-  funder_logo <- system.file("app", "www", "FunderLogo.png", package = "shinyplanr")
+  funder_logo <- system.file("app", "www", "logo_funder.png", package = "shinyplanr")
   if (funder_logo == "") {
-    funder_logo <- file.path("inst", "app", "www", "FunderLogo.png")
+    funder_logo <- file.path("inst", "app", "www", "logo_funder.png")
   }
   if (file.exists(funder_logo)) {
     file.copy(funder_logo, file.path(logos_dir, "logo_funder.png"), overwrite = FALSE)
-    message("Copied funder logo to: ", logos_dir)
+    message("Copied default funder logo to: ", logos_dir)
   }
 
-  # Copy UQ logo to project www/ (needed at runtime)
+  # Copy UQ logo as the default second funder logo.
+  # It is placed in setup/logos/ as uq-logo-white.png so the deployer can
+  # immediately see it is the UQ logo. They can replace it with any image
+  # and point file_logo_funder2 at the new file, or comment out
+  # file_logo_funder2 in 3_setup_app.R to show only one funder logo.
   uq_logo <- system.file("app", "www", "uq-logo-white.png", package = "shinyplanr")
+  if (uq_logo == "") {
+    uq_logo <- file.path("inst", "app", "www", "uq-logo-white.png")
+  }
   if (file.exists(uq_logo)) {
-    file.copy(uq_logo, file.path(output_dir, "www", "uq-logo-white.png"), overwrite = FALSE)
+    file.copy(uq_logo, file.path(logos_dir, "uq-logo-white.png"), overwrite = FALSE)
+    message("Copied default second funder logo (UQ) to: ", logos_dir)
   }
 
   # Generate files
@@ -134,6 +148,7 @@ create_shinyplanr_template <- function(
   .write_dict_feature(setup_dir, oceandatr, include_cost, include_mpas)
   .write_content_templates(setup_dir, country)
   .write_custom_css(setup_dir)
+  .write_logos_readme(logos_dir)
   .write_app_r(output_dir, country)
   .write_deploy_r(output_dir, country)
 
@@ -524,7 +539,7 @@ create_shinyplanr_template <- function(
     '  "leaflet", "htmltools", "patchwork", "gridExtra", "reactable",',
     '  "shinyalert", "shinycssloaders", "shinydisconnect", "shinyjs",',
     '  "prioritizr", "highs", "rnaturalearth", "rnaturalearthdata", "units",',
-    '  "quarto", "withr", "rsconnect"',
+    '  "quarto", "withr", "rsconnect", "ggridges"',
     "), prompt = FALSE)",
     "",
     "# =============================================================================",
@@ -854,8 +869,14 @@ create_shinyplanr_template <- function(
     "# =============================================================================",
     "# APP OPTIONS",
     "# =============================================================================",
+    "#",
+    "# NOTE: This variable is named 'shinyplanr_options' (not 'options') to avoid",
+    "# shadowing base::options(), which is a function. If 'options' were used here",
+    "# and you ran the app in the same R session without restarting, any code that",
+    "# calls options() internally (e.g. withr, purrr) would find the list instead",
+    "# of the function and crash R immediately.",
     "",
-    "options <- list(",
+    "shinyplanr_options <- list(",
     "",
     "  ## General",
     paste0('  app_title  = "', country, ': shinyplanr",'),
@@ -866,10 +887,19 @@ create_shinyplanr_template <- function(
     '  funder_url = "https://spatialplanning.github.io",',
     "",
     "  ## Logo file locations (relative to setup/logos/)",
-    '  file_logo        = file.path(setup_dir, "logos", "logo.png"),',
-    '  file_logo2       = file.path(setup_dir, "logos", "logo2.png"),',
-    '  file_logo3       = file.path(setup_dir, "logos", "logo3.png"),',
-    '  file_logo_funder = file.path(setup_dir, "logos", "logo_funder.png"),',
+    "  #",
+    "  # Replace the placeholder images in setup/logos/ with your own files,",
+    "  # then re-run this script to copy them to www/.",
+    "  #",
+    "  #   logo_navbar.png  -- top-left of the navbar on every page",
+    "  #   logo_welcome.png -- inline image in the welcome page (shinyplanr_1welcome1.md)",
+    "  #   logo_funder.png  -- 'Funded by' section in the welcome page footer",
+    "  #",
+    "  # The option values are the SOURCE paths (in setup/logos/).",
+    "  # This script copies them to www/ with the same filenames.",
+    '  file_logo_navbar  = file.path(setup_dir, "logos", "logo_navbar.png"),',
+    '  file_logo_welcome = file.path(setup_dir, "logos", "logo_welcome.png"),',
+    '  file_logo_funder  = file.path(setup_dir, "logos", "logo_funder.png"),',
     '  file_data        = file.path(data_path, paste0(country, "_RawData.rda")),',
     "",
     "  ## Module switches (TRUE = enabled, FALSE = disabled)",
@@ -885,15 +915,20 @@ create_shinyplanr_template <- function(
     "  include_report = TRUE,",
     "",
     "  ## Optional tabs",
-    "  include_ess     = TRUE,  # Ecosystem Services tab",
+    "  include_ess     = FALSE,  # Ecosystem Services tab - set TRUE if Dict contains EcosystemServices rows",
     "  include_explore = TRUE,  # Explore tab",
     "  include_log     = TRUE,  # Log tab",
     "",
     "  ## Bioregion stratification",
     "  include_bioregion = FALSE,",
     "",
-    "  ## UQ logo in welcome footer",
-    "  show_uq_logo = TRUE,   # Set FALSE to hide the UQ logo",
+    "  ## Second funder logo in welcome footer (optional)",
+    "  # The default is the UQ logo (shinyplanr was developed at UQ).",
+    "  # Replace setup/logos/uq-logo-white.png with your own image and update",
+    "  # the path below, or comment out file_logo_funder2 to show only one",
+    "  # funder logo.",
+    '  file_logo_funder2 = file.path(setup_dir, "logos", "uq-logo-white.png"),',
+    '  funder2_url       = "https://spatialplanning.github.io",',
     "",
     "  ## Institution text in welcome footer",
     '  # institution_text = "This application was developed by researchers at My Institution."',
@@ -942,23 +977,29 @@ create_shinyplanr_template <- function(
     "",
     'if (!dir.exists("www")) dir.create("www", recursive = TRUE)',
     "",
+    "# Maps each option key to its fixed destination filename in www/.",
+    "# The filenames in www/ are what the running app loads - do not change them.",
     "logo_map <- list(",
-    '  file_logo        = "logo.png",',
-    '  file_logo2       = "logo2.png",',
-    '  file_logo3       = "logo3.png",',
-    '  file_logo_funder = "logo_funder.png"',
+    '  file_logo_navbar  = "logo_navbar.png",',
+    '  file_logo_welcome = "logo_welcome.png",',
+    '  file_logo_funder  = "logo_funder.png",',
+    '  file_logo_funder2 = "logo_funder2.png"',
     ")",
     "",
     "for (opt_name in names(logo_map)) {",
-    "  src <- options[[opt_name]]",
+    "  src <- shinyplanr_options[[opt_name]]",
     "  dst <- file.path(\"www\", logo_map[[opt_name]])",
     "  if (!is.null(src) && file.exists(src)) {",
     "    file.copy(src, dst, overwrite = TRUE)",
-    "    message(\"Copied logo: \", basename(src))",
-    "  } else {",
+    "    message(\"Copied logo: \", basename(src), \" -> \", dst)",
+    "  } else if (!is.null(src)) {",
     "    message(\"Logo not found (skipping): \", src)",
     "  }",
     "}",
+    "",
+    "# Derive show_logo_funder2: TRUE only if the file was successfully copied.",
+    "# This is set automatically - do not set it manually in shinyplanr_options.",
+    "shinyplanr_options$show_logo_funder2 <- file.exists(file.path(\"www\", \"logo_funder2.png\"))",
     "",
     "# Copy custom CSS override if present (overrides package default styling)",
     "# Edit setup/content/custom.css to change colours, fonts, etc.",
@@ -972,8 +1013,23 @@ create_shinyplanr_template <- function(
     "# =============================================================================",
     "# FEATURE DICTIONARY",
     "# =============================================================================",
+    "#",
+    "# Step 1: Read the full (unfiltered) CSV and validate its structure.",
+    "# validate_dict() checks that:",
+    "#   - All required columns are present",
+    "#   - includeApp and includeJust are logical (TRUE/FALSE), not 1/0 or text",
+    "#   - All type values are from the known set (Feature, Cost, LockIn, etc.)",
+    "#   - nameVariable is unique within each type",
+    "#   - At least one Feature row has includeApp == TRUE",
+    "#   - Active Feature rows have target values in the 0-100 range",
+    "#",
+    "# Fix any errors reported here before proceeding.",
     "",
-    'Dict <- readr::read_csv(file.path(setup_dir, "Dict_Feature.csv")) %>%',
+    'Dict_raw <- readr::read_csv(file.path(setup_dir, "Dict_Feature.csv"))',
+    "shinyplanr::validate_dict(Dict_raw)",
+    "",
+    "# Step 2: Filter to active rows and sort for consistent UI ordering.",
+    "Dict <- Dict_raw %>%",
     "  dplyr::filter(includeApp) %>%",
     "  dplyr::arrange(.data$type, .data$categoryID, .data$nameCommon)",
     "",
@@ -985,7 +1041,7 @@ create_shinyplanr_template <- function(
     "# LOAD AND PROCESS SPATIAL DATA",
     "# =============================================================================",
     "",
-    "load(options$file_data)",
+    "load(shinyplanr_options$file_data)",
     "",
     "raw_sf <- dat_sf %>%",
     "  sf::st_drop_geometry() %>%",
@@ -1102,7 +1158,7 @@ create_shinyplanr_template <- function(
     "",
     "config_list <- list(",
     "  schema_version = shinyplanr::get_schema_version(),",
-    "  options        = options,",
+    "  options        = shinyplanr_options,",
     "  map_theme      = map_theme,",
     "  bar_theme      = bar_theme,",
     "  Dict           = Dict,",
@@ -1147,9 +1203,38 @@ create_shinyplanr_template <- function(
     'message("\\nConfig saved: config/shinyplanr_config.rds")',
     'message("Run shiny::runApp() to test, or source(\'deploy.R\') to deploy.")',
     "",
-    "# Open app.R to test -------------------------------------------------------",
+    "# =============================================================================",
+    "# CLEAN UP AND RESTART",
+    "# =============================================================================",
+    "#",
+    "# The setup scripts leave large objects (dat_sf, raw_sf, shinyplanr_options,",
+    "# etc.) in the global environment. Running the app in the same R session",
+    "# without clearing these can cause hard-to-diagnose crashes because some",
+    "# names shadow base R functions (e.g. a variable named 'options' would shadow",
+    "# base::options()). We therefore restart R (in RStudio/Positron) or remove",
+    "# the known problematic objects (in other environments) before opening app.R.",
+    "",
     "if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {",
-    "  rstudioapi::navigateToFile('app.R')",
+    "  # RStudio / Positron: restart the session cleanly, then open app.R.",
+    "  # The .Rprofile hook (if renv is active) will re-activate the project",
+    "  # automatically after the restart.",
+    "  message('\\nRestarting R session to clear setup objects before running the app...')",
+    "  message('app.R will open automatically after the restart.')",
+    "  rstudioapi::restartSession(command = \"rstudioapi::navigateToFile('app.R')\")",
+    "} else {",
+    "  # Non-RStudio environment (e.g. VSCode, terminal): remove known objects",
+    "  # that could shadow base R functions or consume unnecessary memory.",
+    "  rm(list = intersect(",
+    "    ls(),",
+    "    c('shinyplanr_options', 'config_list', 'dat_sf', 'raw_sf', 'bndry',",
+    "      'coast', 'overlay', 'Dict', 'Dict_raw', 'vars', 'sidebar', 'tx', 'map_theme',",
+    "      'bar_theme', 'tx_1footer', 'tx_2solution', 'tx_2targets', 'tx_2cost',",
+    "      'tx_2climate', 'tx_2ess', 'tx_6faq', 'tx_6technical', 'tx_6changelog',",
+    "      'zero_cols', 'logo_map', 'opt_name', 'src', 'dst', 'custom_css_src',",
+    "      'content_dir', 'tx_1footer_path', 'country', 'setup_dir', 'data_path')",
+    "  ))",
+    "  message('\\nSetup objects removed from global environment.')",
+    "  message('Open app.R and run shiny::runApp() to test the app.')",
     "}",
     ""
   )
@@ -1224,7 +1309,8 @@ create_shinyplanr_template <- function(
 
   if (include_mpas) {
     dict_rows <- c(dict_rows,
-      "Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas."
+      "Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas.",
+      "Marine Protected Areas,mpas,Protected Areas,MPAs,LockOut,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas."
     )
   }
 
@@ -1296,4 +1382,54 @@ create_shinyplanr_template <- function(
   }
 
   message("Copied ", copied_count, " content template files to setup/content/")
+}
+
+
+# ---- Logos README writer -----------------------------------------------------
+
+.write_logos_readme <- function(logos_dir) {
+  content <- c(
+    "# setup/logos/",
+    "",
+    "Place your logo image files here, then re-run `setup/3_setup_app.R` to",
+    "copy them to `www/` where the running app can load them.",
+    "",
+    "## Logo slots",
+    "",
+    "| File in setup/logos/ | Where it appears in the app | Notes |",
+    "|----------------------|----------------------------|-------|",
+    "| `logo_navbar.png`     | Top-left of the navbar on every page | Recommended height: 40 px; white/transparent background works best |",
+    "| `logo_welcome.png`    | Inline image in the welcome page (`shinyplanr_1welcome1.md`) | Embedded as `<img src=\"www/logo_welcome.png\">` - edit that file to resize or remove |",
+    "| `logo_funder.png`     | Primary logo in the welcome page footer \"Funded by\" section | Links to `funder_url` in `3_setup_app.R` |",
+    "| `uq-logo-white.png`   | Optional second logo in the welcome page footer | Default is the UQ logo. To use a different image, replace this file and update `file_logo_funder2` in `3_setup_app.R`. To hide it entirely, comment out `file_logo_funder2`. |",
+    "",
+    "## How to customise",
+    "",
+    "1. Replace any placeholder image with your own `.png` file.",
+    "2. Update the corresponding path in `setup/3_setup_app.R` if you use a",
+    "   different filename.",
+    "3. To hide the second funder logo, comment out `file_logo_funder2` in",
+    "   `setup/3_setup_app.R`.",
+    "4. Re-run `setup/3_setup_app.R` to copy updated logos to `www/`.",
+    "",
+    "## Image format",
+    "",
+    "PNG is recommended. SVG is not supported by all browsers in `<img>` tags.",
+    "White or transparent backgrounds work best on the dark navbar.",
+    "",
+    "## The welcome page image",
+    "",
+    "The `logo_welcome.png` image is embedded directly in",
+    "`setup/content/shinyplanr_1welcome1.md` as:",
+    "",
+    "```html",
+    "<img src=\"www/logo_welcome.png\" style=\"width:25%;float:right\">",
+    "```",
+    "",
+    "Edit that file to change the size, position, or remove the image entirely."
+  )
+
+  dst_file <- file.path(logos_dir, "README.md")
+  writeLines(content, dst_file)
+  message("Created: ", dst_file)
 }

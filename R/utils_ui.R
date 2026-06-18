@@ -53,7 +53,7 @@ fcreate_vars <- function(id, Dict, name_check = "check",
 
       vars <- vars %>%
         dplyr::summarise(id = dplyr::first(.data$id),
-                         id_in = paste0("master_sli_", dplyr::first(.data$categoryID)),
+                         id_in = paste0("master_", name_check, dplyr::first(.data$categoryID)),
                          nameCommon = dplyr::first(.data$category),
                          targetMin = min(.data$targetMin, na.rm = TRUE),
                          targetMax = max(.data$targetMax, na.rm = TRUE),
@@ -107,25 +107,6 @@ fcreate_check <- function(id, Dict, idType, name_check = "check", categoryOut = 
 
   return(vars)
 }
-
-#
-# #' Title
-# #'
-# #' @noRd
-# #'
-# fcustom_checkboxGroup <- function(id, id_in, Dict, titl) {
-#   Dict <- Dict %>%
-#     dplyr::select("nameCommon", "nameVariable") %>%
-#     tibble::deframe()
-#
-#   shiny::checkboxGroupInput(shiny::NS(namespace = id, id = id_in),
-#                             shiny::h5(titl),
-#                             choices = Dict,
-#                             selected = unlist(Dict)
-#   )
-# }
-
-
 
 #' Create a single \code{sliderInput} for a conservation feature
 #'
@@ -184,13 +165,15 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #'
 fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCategory = TRUE) {
 
+  if (nrow(varsIn) == 0) return(NULL)
+
   ctgs <- unique(varsIn$category)
 
   if (isFALSE(byCategory)){
 
     shinyList <- vector("list", length = length(ctgs) * 2)
 
-    for (ctg in 1:length(ctgs)) {
+    for (ctg in seq_along(ctgs)) {
       feats <- varsIn %>%
         dplyr::filter(.data$category == ctgs[ctg]) %>%
         dplyr::select(-c("category", "categoryID"))
@@ -209,7 +192,7 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCa
 
     shinyList <- vector("list", length = length(ctgs))
 
-    for (ctg in 1:length(ctgs)) {
+    for (ctg in seq_along(ctgs)) {
       feats <- varsIn %>%
         dplyr::filter(.data$category == ctgs[ctg]) %>%
         dplyr::select(-"category")
@@ -249,6 +232,8 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCa
 #'
 fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
 
+  if (nrow(varsIn) == 0) return(NULL)
+
   fcustom_checkbox <- function(id, id_in, nameCommon, value = FALSE) {
     shinyWidgets::prettyCheckbox(
       inputId = shiny::NS(namespace = id, id = id_in),
@@ -264,7 +249,7 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
 
   shinyList <- vector("list", length = length(ctgs) * 2)
 
-  for (ctg in 1:length(ctgs)) {
+  for (ctg in seq_along(ctgs)) {
     feats <- varsIn %>%
       dplyr::filter(.data$category == ctgs[ctg]) %>%
       dplyr::select(-"category")
@@ -283,45 +268,6 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
 
   return(shinyList)
 }
-
-#' Custom Drop Down for Cost
-#'
-#' @noRd
-#'
-fcustom_cost <- function(id, id_in, Dict) {
-  choice <- Dict %>%
-    dplyr::filter(.data$type == "Cost") %>%
-    dplyr::select("nameCommon", "nameVariable") %>%
-    tibble::deframe()
-
-  shiny::selectInput(shiny::NS(namespace = id, id = id_in),
-                     label = NULL,
-                     choices = choice,
-                     multiple = FALSE
-  )
-}
-
-#
-#
-# #' Custom Drop Down for Climate
-# #'
-# #' @noRd
-# #'
-# fcustom_climate <- function(id, id_in, Dict) {
-#   choice <- Dict %>%
-#     dplyr::filter(.data$type == "Climate") %>%
-#     dplyr::select("nameCommon", "nameVariable") %>%
-#     dplyr::add_row(nameCommon = "Don't consider", .before = 1) %>%
-#     tibble::deframe()
-#
-#   shiny::selectInput(shiny::NS(namespace = id, id = id_in),
-#                      label = NULL, #shiny::h3(" "),
-#                      choices = choice,
-#                      multiple = FALSE
-#   )
-# }
-
-
 
 #' Fancy dropdown menu with categories
 #'
