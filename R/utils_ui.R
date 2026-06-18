@@ -12,7 +12,7 @@
 #'   \code{targetInitial}, \code{justification}, \code{includeApp},
 #'   \code{includeJust}).
 #' @param name_check Character. Prefix for slider input IDs (e.g.
-#'   \code{"sli_"}, \code{"sli2_"}).
+#'   \code{"sli_"} for Scenario, \code{"sli1_"} / \code{"sli2_"} for Compare).
 #' @param categoryOut Logical. If \code{TRUE} (default \code{FALSE}), include
 #'   \code{category} and \code{categoryID} columns in the output.
 #' @param byCategory Logical. If \code{TRUE}, collapse to one row per category

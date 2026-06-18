@@ -394,7 +394,7 @@ mod_3compare_server <- function(id, cfg) {
     # Get Target Data
     targetData1 <- shiny::reactive({
 
-      targets <- fget_targets_with_bioregions(input, name_check = "sli_", Dict = Dict)
+      targets <- fget_targets_with_bioregions(input, name_check = "sli1_", Dict = Dict)
       return(targets)
     })
 

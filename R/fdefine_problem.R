@@ -19,7 +19,8 @@
 #' @param input Shiny input object. Used to read cost, climate, budget, and
 #'   lock-in/lock-out input values.
 #' @param name_check Character. Prefix for slider input IDs. Default
-#'   \code{"sli_"}.
+#'   \code{"sli_"} (Scenario module). Compare module passes \code{"sli1_"} or
+#'   \code{"sli2_"} explicitly.
 #' @param clim_input Character. Value of the climate dropdown input. Pass
 #'   \code{"NA"} (as a string) when climate-smart planning is not selected.
 #' @param compare_id Character. Suffix appended to input IDs when called from
