@@ -53,11 +53,11 @@ fformat_feature_table <- function(tpd, Dict, suffix = "") {
     ) %>%
     dplyr::select("category", "feature", "target", "value", "incidental") %>%
     dplyr::rename(
-      Category                              = .data$category,
-      Feature                               = .data$feature,
-      !!paste0("Target", suffix, " (%)")    := .data$target,
-      !!paste0("Protection", suffix, " (%)") := .data$value,
-      !!paste0("Incidental", suffix)        := .data$incidental
+      Category                              = "category",
+      Feature                               = "feature",
+      !!paste0("Target", suffix, " (%)")    := "target",
+      !!paste0("Protection", suffix, " (%)") := "value",
+      !!paste0("Incidental", suffix)        := "incidental"
     ) %>%
     dplyr::arrange(.data$Category, .data$Feature) %>%
     dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
@@ -72,7 +72,7 @@ fget_category <- function(Dict) {
   category <- Dict %>%
     dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
     dplyr::select("nameVariable", "category") %>%
-    dplyr::rename(feature = .data$nameVariable)
+    dplyr::rename(feature = "nameVariable")
 
   return(category)
 }

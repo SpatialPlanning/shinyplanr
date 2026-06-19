@@ -108,7 +108,7 @@ fcalculate_coverage <- function(uploaded_sf, raw_sf, Dict) {
  # Step 1: Get feature names from Dict (type == "Feature" and includeApp == TRUE)
   feature_info <- Dict %>%
     dplyr::filter(.data$type == "Feature", .data$includeApp == TRUE) %>%
-    dplyr::select(.data$nameVariable, .data$targetInitial)
+    dplyr::select("nameVariable", "targetInitial")
 
   feature_names <- feature_info$nameVariable
 
