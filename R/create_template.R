@@ -168,6 +168,8 @@ create_shinyplanr_template <- function(
   .write_logos_readme(logos_dir)
   .write_app_r(output_dir, country)
   .write_deploy_r(output_dir, country)
+  .write_root_renvignore(output_dir)
+  .write_setup_renvignore(setup_dir)
 
   if (isTRUE(create_rproj)) {
     .write_rproj(output_dir, country)
@@ -375,6 +377,46 @@ create_shinyplanr_template <- function(
 }
 
 
+# Writes a root-level .renvignore to exclude deploy.R from renv's dependency
+# scan. deploy.R calls rsconnect::deployApp(), which would otherwise cause
+# rsconnect to be captured in renv.lock. rsconnect is a local deployment tool
+# and is not needed on Posit Connect.
+.write_root_renvignore <- function(output_dir) {
+  content <- c(
+    "# Exclude deployment script from renv dependency scanning.",
+    "# deploy.R calls rsconnect::deployApp() which is a local tool,",
+    "# not a runtime dependency of the app. Excluding it prevents rsconnect",
+    "# from being captured in renv.lock.",
+    "deploy.R"
+  )
+  file_path <- file.path(output_dir, ".renvignore")
+  writeLines(content, file_path)
+  message("Created: ", file_path)
+}
+
+
+# Writes setup/.renvignore to exclude the entire setup/ directory from renv's
+# dependency scan. The setup/ scripts reference data-preparation packages
+# (oceandatr, spatialgridr, rnaturalearth, gitcreds, rstudioapi, etc.) that
+# are local tooling only — they are not runtime dependencies of the deployed
+# Shiny app. Without this file, renv::snapshot() would capture all of them in
+# renv.lock, causing Posit Connect to install unnecessary packages.
+#
+# The wildcard '*' excludes all files in setup/ regardless of what the
+# deployer adds later, which is correct: the entire directory is tooling.
+.write_setup_renvignore <- function(setup_dir) {
+  content <- c(
+    "# Exclude all setup/ scripts from renv dependency scanning.",
+    "# These scripts are local data-preparation tooling and are not",
+    "# runtime dependencies of the deployed Shiny app.",
+    "*"
+  )
+  file_path <- file.path(setup_dir, ".renvignore")
+  writeLines(content, file_path)
+  message("Created: ", file_path)
+}
+
+
 # Initialises renv (bare infrastructure only).
 # Package installation is deferred to setup/1_setup_enviro.R, which the user
 # runs interactively from inside the correctly-activated project.
@@ -545,6 +587,12 @@ create_shinyplanr_template <- function(
     "# These packages are not on CRAN. Explicit org/repo ensures renv.lock",
     "# records the correct source for Posit Connect / new-machine deployments.",
     "# renv checks its global cache first \u2014 already-cached = near-instant.",
+    "#",
+    "# WARNING: @HEAD installs the LATEST commit each time this script is run.",
+    "# Step 5 (renv::snapshot) locks the exact SHA so deployments are",
+    "# reproducible. Do NOT re-run this script unless you intend to upgrade",
+    "# shinyplanr \u2014 doing so will update to the latest HEAD and require a new",
+    "# snapshot and redeployment.",
     "",
     github_pkgs_lines,
     "",
@@ -613,7 +661,7 @@ create_shinyplanr_template <- function(
     "#",
     "# Writes renv.lock. Commit this file to version control.",
     "",
-    "renv::snapshot()",
+    "renv::snapshot(type = 'implicit')",
     "",
     'message("\\nAll packages installed. renv.lock written.")',
     'message("Next: open setup/2_setup_data.R and prepare the spatial data.")',

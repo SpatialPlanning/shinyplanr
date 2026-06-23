@@ -107,8 +107,6 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       targets <- CS_Approach$Targets # New targets df with CS targets
 
       # Create p_dat and add cost column back in.
-      # Use a row-ID left_join instead of sf::st_join(join = sf::st_equals) to avoid
-      # duplicate rows caused by floating-point geometry mismatches (same fix as spatialplanr).
       cost_col   <- input[[paste0("costid",    compare_id)]]
       clim_col_j <- input[[paste0("climateid", compare_id)]]
 

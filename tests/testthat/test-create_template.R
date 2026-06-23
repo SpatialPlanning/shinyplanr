@@ -165,6 +165,55 @@ test_that("create_shinyplanr_template() creates deploy.R in the project root", {
   expect_true(file.exists(file.path(out_dir, "deploy.R")))
 })
 
+test_that("create_shinyplanr_template() creates a root .renvignore that excludes deploy.R", {
+  out_dir <- file.path(tempdir(), paste0("shinyplanr_RenvIgnoreTest_", Sys.getpid()))
+  on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+  suppressMessages(
+    create_shinyplanr_template(
+      country      = "RenvIgnoreTest",
+      output_dir   = out_dir,
+      use_renv     = FALSE,
+      create_rproj = FALSE
+    )
+  )
+
+  renvignore_path <- file.path(out_dir, ".renvignore")
+  expect_true(file.exists(renvignore_path))
+
+  renvignore_lines <- readLines(renvignore_path, warn = FALSE)
+  expect_true(
+    any(trimws(renvignore_lines) == "deploy.R"),
+    info = ".renvignore must contain 'deploy.R' to exclude rsconnect from renv.lock"
+  )
+})
+
+test_that("create_shinyplanr_template() creates setup/.renvignore that excludes all setup/ files", {
+  out_dir <- file.path(tempdir(), paste0("shinyplanr_SetupRenvIgnoreTest_", Sys.getpid()))
+  on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+  suppressMessages(
+    create_shinyplanr_template(
+      country      = "SetupRenvIgnoreTest",
+      output_dir   = out_dir,
+      use_renv     = FALSE,
+      create_rproj = FALSE
+    )
+  )
+
+  renvignore_path <- file.path(out_dir, "setup", ".renvignore")
+  expect_true(
+    file.exists(renvignore_path),
+    label = "setup/.renvignore must exist to prevent renv scanning setup/ scripts"
+  )
+
+  renvignore_lines <- readLines(renvignore_path, warn = FALSE)
+  expect_true(
+    any(trimws(renvignore_lines) == "*"),
+    info = "setup/.renvignore must contain '*' to exclude all setup/ files from renv scanning"
+  )
+})
+
 test_that("create_shinyplanr_template() creates the three setup scripts", {
   out_dir <- file.path(tempdir(), paste0("shinyplanr_SetupTest_", Sys.getpid()))
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)

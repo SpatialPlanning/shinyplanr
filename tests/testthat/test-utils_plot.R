@@ -173,3 +173,133 @@ test_that("fplot_climate_density() returns NULL when all elements of climate_ids
 
   expect_null(result)
 })
+
+# ---------------------------------------------------------------------------
+# fplot_climate_density() — climate call path
+#
+# These tests exercise the actual spatialplanr call path and therefore require
+# ggridges. They are skipped when ggridges is absent (e.g. minimal CI images).
+#
+# Architecture note: fplot_climate_density() calls
+# spatialplanr::splnr_plot_climKernelDensity() once per active scenario
+# (not once for all scenarios combined). Each call receives a single sf object.
+# Multiple plots are stacked with patchwork::wrap_plots(ncol = 1).
+#
+# Key regression guarded: previously solution_names was passed as
+# c("solution_1", "solution_2"), but prioritizr always names its output column
+# "solution_1" regardless of scenario. Passing "solution_2" caused
+# splnr_plot_climKernelDensity_Fancy() to assert-fail with:
+#   "'soln' is missing the solution column 'solution_2'."
+# ---------------------------------------------------------------------------
+
+make_clim_soln_sf <- function(n_total = 10L, clim_col = "clim_metric") {
+  # Build a minimal sf with solution_1 (0/1) and a named climate column.
+  # Both columns are required by splnr_plot_climKernelDensity_Fancy().
+  set.seed(42L)
+  solution_col <- c(rep(1L, n_total %/% 2L), rep(0L, n_total - n_total %/% 2L))
+  clim_vals    <- stats::runif(n_total, min = 0, max = 1)
+
+  geoms <- sf::st_sfc(
+    lapply(seq_len(n_total), function(i) {
+      sf::st_polygon(list(cbind(
+        c(i - 1, i, i, i - 1, i - 1),
+        c(0, 0, 1, 1, 0)
+      )))
+    }),
+    crs = "EPSG:4326"
+  )
+
+  df <- data.frame(solution_1 = solution_col)
+  df[[clim_col]] <- clim_vals
+  sf::st_sf(df, geometry = geoms)
+}
+
+test_that("fplot_climate_density() does not error when only scenario 2 has climate (regression for solution_2 bug)", {
+  skip_if_not_installed("ggridges")
+
+  soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
+  soln2 <- make_clim_soln_sf(clim_col = "clim_metric")
+
+  # Scenario 1: no climate ("NA"); Scenario 2: has climate.
+  # fplot_climate_density() filters to active scenarios and calls
+  # splnr_plot_climKernelDensity() once with soln2 only.
+  expect_no_error(
+    shinyplanr:::fplot_climate_density(
+      soln_list      = list(soln1, soln2),
+      climate_ids    = c("NA", "clim_metric"),
+      solution_names = c("solution_1", "solution_1")
+    )
+  )
+})
+
+test_that("fplot_climate_density() does not error when both scenarios have climate", {
+  skip_if_not_installed("ggridges")
+
+  soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
+  soln2 <- make_clim_soln_sf(clim_col = "clim_metric")
+
+  # Both active: two separate splnr_plot_climKernelDensity() calls, stacked
+  # with patchwork::wrap_plots(ncol = 1).
+  expect_no_error(
+    shinyplanr:::fplot_climate_density(
+      soln_list      = list(soln1, soln2),
+      climate_ids    = c("clim_metric", "clim_metric"),
+      solution_names = c("solution_1", "solution_1")
+    )
+  )
+})
+
+test_that("fplot_climate_density() returns a ggplot when a single scenario has climate", {
+  skip_if_not_installed("ggridges")
+
+  soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
+
+  result <- shinyplanr:::fplot_climate_density(
+    soln_list      = list(soln1),
+    climate_ids    = "clim_metric",
+    solution_names = "solution_1"
+  )
+
+  expect_true(inherits(result, "gg"))
+})
+
+test_that("fplot_climate_density() returns a patchwork when two scenarios have climate", {
+  skip_if_not_installed("ggridges")
+
+  soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
+  soln2 <- make_clim_soln_sf(clim_col = "clim_metric")
+
+  result <- shinyplanr:::fplot_climate_density(
+    soln_list      = list(soln1, soln2),
+    climate_ids    = c("clim_metric", "clim_metric"),
+    solution_names = c("solution_1", "solution_1")
+  )
+
+  # patchwork objects inherit from "gg" and also from "patchwork"
+  expect_true(inherits(result, "patchwork"))
+})
+
+test_that("fplot_climate_density() uses Dict nameCommon as axis label when Dict provided", {
+  skip_if_not_installed("ggridges")
+
+  soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
+
+  # Minimal Dict with a Climate entry mapping clim_metric -> "SST Warming"
+  test_dict <- data.frame(
+    nameVariable = "clim_metric",
+    nameCommon   = "SST Warming",
+    type         = "Climate",
+    stringsAsFactors = FALSE
+  )
+
+  result <- shinyplanr:::fplot_climate_density(
+    soln_list      = list(soln1),
+    climate_ids    = "clim_metric",
+    solution_names = "solution_1",
+    Dict           = test_dict
+  )
+
+  # The x-axis label should be the nameCommon, not the raw column name.
+  # ggplot stores the x label in plot$labels$x.
+  expect_equal(result$labels$x, "SST Warming")
+})

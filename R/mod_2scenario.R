@@ -667,9 +667,10 @@ mod_2scenario_server <- function(id, cfg) {
 
       # Use consolidated helper function for climate plotting
       fplot_climate_density(
-        soln_list = list(solution()),
-        climate_ids = c(input$climateid),
-        solution_names = c("solution_1")
+        soln_list      = list(solution()),
+        climate_ids    = input$climateid,
+        solution_names = "solution_1",
+        Dict           = Dict
       )
     }) %>%
       shiny::bindEvent(input$analyse)
@@ -768,10 +769,18 @@ mod_2scenario_server <- function(id, cfg) {
         tidyr::pivot_longer(cols = dplyr::everything(), names_to = "nameVariable", values_to = "Value") %>%
         dplyr::summarise(TotalValue = sum(.data$Value, na.rm = TRUE), .by = "nameVariable")
 
-      # Calculate value in selected planning units (solution)
-      ess_values <- sf::st_join(raw_sf %>% dplyr::select(dplyr::all_of(ess_layers)), # geometry is sticky
-                                solution(),
-                                join = sf::st_equals) %>%
+      # Calculate value in selected planning units (solution).
+      ess_values <- raw_sf %>%
+        dplyr::select(dplyr::all_of(ess_layers)) %>%
+        dplyr::mutate(.row_id = dplyr::row_number()) %>%
+        dplyr::left_join(
+          solution() %>%
+            sf::st_drop_geometry() %>%
+            dplyr::select("solution_1") %>%
+            dplyr::mutate(.row_id = dplyr::row_number()),
+          by = ".row_id"
+        ) %>%
+        dplyr::select(-".row_id") %>%
         dplyr::filter(.data$solution_1 == 1) %>%
         dplyr::select(dplyr::all_of(ess_layers)) %>%
         sf::st_drop_geometry() %>%
