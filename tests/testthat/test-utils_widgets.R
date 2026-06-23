@@ -38,9 +38,9 @@ test_that("get_lockIn() returns empty character vector when no checkLI_ inputs e
 
 test_that("get_lockIn() returns empty vector when all checkLI_ inputs are FALSE", {
   input <- list(
-    checkLI_mpas    = FALSE,
+    checkLI_mpas = FALSE,
     checkLI_reserves = FALSE,
-    sli_feature_A   = 30
+    sli_feature_A = 30
   )
 
   result <- shinyplanr:::get_lockIn(input, num = "")
@@ -85,7 +85,7 @@ test_that("get_lockIn() respects num suffix for comparison module (num = '1')", 
   input <- list(
     check1LI_mpas     = TRUE,
     check1LI_reserves = FALSE,
-    checkLI_mpas      = TRUE   # scenario module input — should be ignored
+    checkLI_mpas      = TRUE # scenario module input — should be ignored
   )
 
   result <- shinyplanr:::get_lockIn(input, num = "1")
@@ -97,7 +97,7 @@ test_that("get_lockIn() respects num suffix for comparison module (num = '1')", 
 test_that("get_lockIn() with num = '2' only matches check2LI_ prefix", {
   input <- list(
     check2LI_mpas = TRUE,
-    check1LI_mpas = TRUE   # different suffix — should be ignored
+    check1LI_mpas = TRUE # different suffix — should be ignored
   )
 
   result <- shinyplanr:::get_lockIn(input, num = "2")
@@ -169,7 +169,7 @@ test_that("get_lockOut() returns multiple nameVariables when multiple inputs sel
 test_that("get_lockOut() respects num suffix for comparison module (num = '1')", {
   input <- list(
     check1LO_mpas = TRUE,
-    checkLO_mpas  = TRUE   # scenario module input — should be ignored
+    checkLO_mpas  = TRUE # scenario module input — should be ignored
   )
 
   result <- shinyplanr:::get_lockOut(input, num = "1")

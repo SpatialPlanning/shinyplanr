@@ -24,7 +24,6 @@
 #' @noRd
 #'
 fupdate_checkbox <- function(session, id_in, Dict, selected = NA) {
-
   # Derive category by stripping the longest matching prefix first so that
   # "check2" is tried before "check" (avoids partial-match ambiguity).
   if (stringr::str_starts(id_in, "check2")) {
@@ -75,7 +74,6 @@ fresetSlider <- function(session, slider_vars) {
 #' @noRd
 #'
 get_lockIn <- function(input, num = "") {
-
   # Are there locked in areas in the app
   inps <- names(input) %>%
     stringr::str_subset(paste0("check", num, "LI_"))
@@ -96,7 +94,6 @@ get_lockIn <- function(input, num = "") {
 #' @noRd
 #'
 get_lockOut <- function(input, num = "") {
-
   # Are there locked out areas in the app
   inps <- names(input) %>%
     stringr::str_subset(paste0("check", num, "LO_"))

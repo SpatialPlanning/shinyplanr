@@ -10,8 +10,6 @@
 #' @noRd
 #'
 fread_uploaded_spatial <- function(file_input) {
-
-
   # Check if file input is valid
   if (is.null(file_input) || is.null(file_input$datapath)) {
     return(list(
@@ -26,67 +24,73 @@ fread_uploaded_spatial <- function(file_input) {
 
   # Determine file type from extension
 
-file_ext <- tolower(tools::file_ext(file_name))
+  file_ext <- tolower(tools::file_ext(file_name))
 
   # Validate file extension
   if (!file_ext %in% c("gpkg", "gdb", "geojson")) {
     return(list(
       success = FALSE,
       data = NULL,
-      message = paste0("Unsupported file format: .", file_ext,
-                       ". Please upload a GeoPackage (.gpkg), GeoJSON (.geojson) or File Geodatabase (.gdb).")
+      message = paste0(
+        "Unsupported file format: .", file_ext,
+        ". Please upload a GeoPackage (.gpkg), GeoJSON (.geojson) or File Geodatabase (.gdb)."
+      )
     ))
   }
 
   # Attempt to read the spatial file
-  tryCatch({
-    sf_data <- sf::st_read(file_path, quiet = TRUE)
+  tryCatch(
+    {
+      sf_data <- sf::st_read(file_path, quiet = TRUE)
 
-    # Validate that we have geometry
-    if (is.null(sf::st_geometry(sf_data)) || nrow(sf_data) == 0) {
+      # Validate that we have geometry
+      if (is.null(sf::st_geometry(sf_data)) || nrow(sf_data) == 0) {
+        return(list(
+          success = FALSE,
+          data = NULL,
+          message = "The uploaded file contains no geometries."
+        ))
+      }
+
+      # Check geometry type - we only want polygons
+      geom_types <- unique(sf::st_geometry_type(sf_data))
+
+      if (!any(geom_types %in% c("POLYGON", "MULTIPOLYGON"))) {
+        return(list(
+          success = FALSE,
+          data = NULL,
+          message = paste0(
+            "The uploaded file contains ", paste(geom_types, collapse = ", "),
+            " geometries. Only POLYGON or MULTIPOLYGON geometries are accepted."
+          )
+        ))
+      }
+
+      # Filter to only polygon geometries if mixed
+      if (length(geom_types) > 1) {
+        sf_data <- sf_data[sf::st_geometry_type(sf_data) %in% c("POLYGON", "MULTIPOLYGON"), ]
+      }
+
+      # Validate geometries
+      if (!all(sf::st_is_valid(sf_data))) {
+        # Attempt to fix invalid geometries
+        sf_data <- sf::st_make_valid(sf_data)
+      }
+
+      return(list(
+        success = TRUE,
+        data = sf_data,
+        message = NULL
+      ))
+    },
+    error = function(e) {
       return(list(
         success = FALSE,
         data = NULL,
-        message = "The uploaded file contains no geometries."
+        message = paste0("Error reading file: ", e$message)
       ))
     }
-
-    # Check geometry type - we only want polygons
-    geom_types <- unique(sf::st_geometry_type(sf_data))
-
-    if (!any(geom_types %in% c("POLYGON", "MULTIPOLYGON"))) {
-      return(list(
-        success = FALSE,
-        data = NULL,
-        message = paste0("The uploaded file contains ", paste(geom_types, collapse = ", "),
-                         " geometries. Only POLYGON or MULTIPOLYGON geometries are accepted.")
-      ))
-    }
-
-    # Filter to only polygon geometries if mixed
-    if (length(geom_types) > 1) {
-      sf_data <- sf_data[sf::st_geometry_type(sf_data) %in% c("POLYGON", "MULTIPOLYGON"), ]
-    }
-
-    # Validate geometries
-    if (!all(sf::st_is_valid(sf_data))) {
-      # Attempt to fix invalid geometries
-      sf_data <- sf::st_make_valid(sf_data)
-    }
-
-    return(list(
-      success = TRUE,
-      data = sf_data,
-      message = NULL
-    ))
-
-  }, error = function(e) {
-    return(list(
-      success = FALSE,
-      data = NULL,
-      message = paste0("Error reading file: ", e$message)
-    ))
-  })
+  )
 }
 
 
@@ -104,18 +108,17 @@ file_ext <- tolower(tools::file_ext(file_name))
 #' @noRd
 #'
 fcalculate_coverage <- function(uploaded_sf, raw_sf, Dict) {
-
- # Step 1: Get feature names from Dict (type == "Feature" and includeApp == TRUE)
+  # Step 1: Get feature names from Dict (type == "Feature" and includeApp == TRUE)
   feature_info <- Dict %>%
     dplyr::filter(.data$type == "Feature", .data$includeApp == TRUE) %>%
     dplyr::select("nameVariable", "targetInitial")
 
   feature_names <- feature_info$nameVariable
 
- # Step 2: Ensure uploaded polygons are in the same CRS as raw_sf
+  # Step 2: Ensure uploaded polygons are in the same CRS as raw_sf
   uploaded_transformed <- sf::st_transform(uploaded_sf, sf::st_crs(raw_sf))
 
- # Step 3: Determine which planning units intersect with uploaded polygons
+  # Step 3: Determine which planning units intersect with uploaded polygons
   intersects_matrix <- sf::st_intersects(raw_sf, uploaded_transformed, sparse = FALSE)
   is_covered <- apply(intersects_matrix, 1, any)
 
@@ -163,4 +166,3 @@ fcalculate_coverage <- function(uploaded_sf, raw_sf, Dict) {
 
   return(targetPlotData)
 }
-

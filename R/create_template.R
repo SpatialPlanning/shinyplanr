@@ -55,18 +55,17 @@
 #'
 #' @export
 create_shinyplanr_template <- function(
-    country,
-    crs = "ESRI:54009",
-    oceandatr = TRUE,
-    resolution = 20000,
-    include_climate = TRUE,
-    include_cost = TRUE,
-    include_mpas = TRUE,
-    output_dir = file.path("..", paste0("shinyplanr_", country)),
-    use_renv = TRUE,
-    create_rproj = TRUE
+  country,
+  crs = "ESRI:54009",
+  oceandatr = TRUE,
+  resolution = 20000,
+  include_climate = TRUE,
+  include_cost = TRUE,
+  include_mpas = TRUE,
+  output_dir = file.path("..", paste0("shinyplanr_", country)),
+  use_renv = TRUE,
+  create_rproj = TRUE
 ) {
-
   # Validate inputs
   if (missing(country) || !is.character(country) || nchar(country) == 0) {
     stop("'country' must be a non-empty character string.")
@@ -75,7 +74,7 @@ create_shinyplanr_template <- function(
     stop("'crs' must be a non-empty character string.")
   }
   if (!is.logical(oceandatr)) stop("'oceandatr' must be TRUE or FALSE.")
-  if (!is.logical(use_renv))  stop("'use_renv' must be TRUE or FALSE.")
+  if (!is.logical(use_renv)) stop("'use_renv' must be TRUE or FALSE.")
 
   # The setup/ folder holds all deployer-edited scripts and source data
   setup_dir <- file.path(output_dir, "setup")
@@ -159,8 +158,10 @@ create_shinyplanr_template <- function(
 
   # Generate files
   .write_setup_enviro(setup_dir, oceandatr)
-  .write_setup_data(setup_dir, country, crs, oceandatr, resolution,
-                    include_climate, include_cost, include_mpas)
+  .write_setup_data(
+    setup_dir, country, crs, oceandatr, resolution,
+    include_climate, include_cost, include_mpas
+  )
   .write_setup_app(setup_dir, country, crs, include_climate)
   .write_dict_feature(setup_dir, oceandatr, include_cost, include_mpas)
   .write_content_templates(setup_dir, country)
@@ -209,11 +210,11 @@ create_shinyplanr_template <- function(
   # When use_renv = FALSE (or renv is not installed), we open the project
   # ourselves so the user lands in the new project immediately.
   if (isTRUE(create_rproj) &&
-      !isTRUE(use_renv) &&
-      !isTRUE(getOption("shinyplanr.testing", FALSE)) &&
-      identical(Sys.getenv("TESTTHAT"), "") &&
-      requireNamespace("rstudioapi", quietly = TRUE) &&
-      rstudioapi::isAvailable()) {
+    !isTRUE(use_renv) &&
+    !isTRUE(getOption("shinyplanr.testing", FALSE)) &&
+    identical(Sys.getenv("TESTTHAT"), "") &&
+    requireNamespace("rstudioapi", quietly = TRUE) &&
+    rstudioapi::isAvailable()) {
     rproj_path <- normalizePath(
       file.path(output_dir, paste0(country, ".Rproj")),
       mustWork = FALSE
@@ -439,7 +440,6 @@ create_shinyplanr_template <- function(
 
   tryCatch(
     withr::with_dir(proj, {
-
       # Create renv infrastructure only. Package installation happens in
       # 1_setup_enviro.R once the user is inside the activated project.
       #
@@ -473,8 +473,10 @@ create_shinyplanr_template <- function(
         )
       }
 
-      message("\nrenv infrastructure created. Open ", basename(proj),
-              ".Rproj and run setup/1_setup_enviro.R to install packages.")
+      message(
+        "\nrenv infrastructure created. Open ", basename(proj),
+        ".Rproj and run setup/1_setup_enviro.R to install packages."
+      )
     }),
     error = function(e) {
       message(
@@ -489,7 +491,6 @@ create_shinyplanr_template <- function(
 # ---- 1_setup_enviro.R writer -------------------------------------------------
 
 .write_setup_enviro <- function(setup_dir, oceandatr = TRUE) {
-
   github_pkgs_lines <- c(
     'renv::install("SpatialPlanning/shinyplanr@HEAD", prompt = FALSE)',
     'renv::install("SpatialPlanning/spatialplanr@HEAD", prompt = FALSE)',
@@ -646,7 +647,7 @@ create_shinyplanr_template <- function(
     "    !vapply(required, requireNamespace, logical(1L), quietly = TRUE)",
     "  ]",
     "  if (length(missing_pkgs) > 0L) {",
-    '    stop(',
+    "    stop(",
     '      "The following packages failed to install:\\n  ",',
     '      paste(missing_pkgs, collapse = "\\n  "),',
     '      "\\nFix the errors above, then re-run renv::snapshot()."',
@@ -682,8 +683,7 @@ create_shinyplanr_template <- function(
 # ---- 2_setup_data.R writer ---------------------------------------------------
 
 .write_setup_data <- function(setup_dir, country, crs, oceandatr, resolution,
-                               include_climate, include_cost, include_mpas) {
-
+                              include_climate, include_cost, include_mpas) {
   # Header
   content <- c(
     "# setup/2_setup_data.R",
@@ -706,7 +706,8 @@ create_shinyplanr_template <- function(
     content <- c(content, "library(oceandatr)", "")
   }
 
-  content <- c(content,
+  content <- c(
+    content,
     "# =============================================================================",
     "# BASIC PARAMETERS",
     "# =============================================================================",
@@ -722,7 +723,8 @@ create_shinyplanr_template <- function(
 
   # Boundary and grid setup
   if (oceandatr) {
-    content <- c(content,
+    content <- c(
+      content,
       "# =============================================================================",
       "# BOUNDARIES (using oceandatr)",
       "# =============================================================================",
@@ -763,7 +765,8 @@ create_shinyplanr_template <- function(
       ""
     )
   } else {
-    content <- c(content,
+    content <- c(
+      content,
       "# =============================================================================",
       "# BOUNDARIES (custom data)",
       "# =============================================================================",
@@ -786,7 +789,8 @@ create_shinyplanr_template <- function(
   }
 
   # Feature data
-  content <- c(content,
+  content <- c(
+    content,
     "# =============================================================================",
     "# FEATURE DATA",
     "# =============================================================================",
@@ -794,7 +798,8 @@ create_shinyplanr_template <- function(
   )
 
   if (oceandatr) {
-    content <- c(content,
+    content <- c(
+      content,
       "bathymetry <- oceandatr::get_bathymetry(spatial_grid = PUs, classify_bathymetry = TRUE) # Keep geometry for bathymetry",
       "geomorphology <- oceandatr::get_geomorphology(spatial_grid = PUs) %>% sf::st_drop_geometry()",
       "knolls <- oceandatr::get_knolls(spatial_grid = PUs) %>% sf::st_drop_geometry()",
@@ -810,7 +815,8 @@ create_shinyplanr_template <- function(
       ""
     )
   } else {
-    content <- c(content,
+    content <- c(
+      content,
       "# TODO: Load and process your feature data, then combine into dat_sf",
       "# dat_sf <- dplyr::bind_cols(PUs, ...) %>%",
       "#   dplyr::mutate(across(where(is.numeric), ~replace_na(.x, 0)))",
@@ -820,7 +826,8 @@ create_shinyplanr_template <- function(
 
   # Cost data
   if (include_cost) {
-    content <- c(content,
+    content <- c(
+      content,
       "# =============================================================================",
       "# COST DATA",
       "# =============================================================================",
@@ -844,7 +851,8 @@ create_shinyplanr_template <- function(
 
   # MPA data
   if (include_mpas) {
-    content <- c(content,
+    content <- c(
+      content,
       "# =============================================================================",
       "# LOCKED-IN AREAS (MPAs)",
       "# =============================================================================",
@@ -862,7 +870,8 @@ create_shinyplanr_template <- function(
 
   # Climate data
   if (include_climate) {
-    content <- c(content,
+    content <- c(
+      content,
       "# =============================================================================",
       "# CLIMATE DATA (optional)",
       "# =============================================================================",
@@ -877,7 +886,8 @@ create_shinyplanr_template <- function(
   }
 
   # Final save
-  content <- c(content,
+  content <- c(
+    content,
     "# =============================================================================",
     "# FINAL PROCESSING AND SAVE",
     "# =============================================================================",
@@ -915,7 +925,6 @@ create_shinyplanr_template <- function(
 # ---- 3_setup_app.R writer ----------------------------------------------------
 
 .write_setup_app <- function(setup_dir, country, crs, include_climate) {
-
   content <- c(
     "# setup/3_setup_app.R",
     paste0("# Step 3: Configure shinyplanr app for: ", country),
@@ -1006,7 +1015,8 @@ create_shinyplanr_template <- function(
 
   # Climate options
   if (include_climate) {
-    content <- c(content,
+    content <- c(
+      content,
       "",
       "  ## Climate-smart planning",
       "  include_climateChange = FALSE,  # Set TRUE when climate data is available",
@@ -1017,7 +1027,8 @@ create_shinyplanr_template <- function(
     )
   }
 
-  content <- c(content,
+  content <- c(
+    content,
     "",
     "  ## Locked areas",
     "  include_lockedArea = TRUE,",
@@ -1327,7 +1338,6 @@ create_shinyplanr_template <- function(
 # ---- Dict_Feature.csv writer -------------------------------------------------
 
 .write_dict_feature <- function(setup_dir, oceandatr, include_cost, include_mpas) {
-
   if (oceandatr) {
     dict_rows <- c(
       "nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification",
@@ -1380,14 +1390,16 @@ create_shinyplanr_template <- function(
   }
 
   if (include_cost) {
-    dict_rows <- c(dict_rows,
+    dict_rows <- c(
+      dict_rows,
       "Equal Area Cost,cost_area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,All planning units have equal cost based on their area.",
       "Distance to Coast,cost_distance,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,Cost based on distance from the coast."
     )
   }
 
   if (include_mpas) {
-    dict_rows <- c(dict_rows,
+    dict_rows <- c(
+      dict_rows,
       "Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas.",
       "Marine Protected Areas,mpas,Protected Areas,MPAs,LockOut,NA,NA,NA,TRUE,TRUE,,Existing MPAs from the World Database on Protected Areas."
     )
@@ -1408,7 +1420,7 @@ create_shinyplanr_template <- function(
   }
 
   content_dir <- file.path(setup_dir, "content")
-  dst_file    <- file.path(content_dir, "custom.css")
+  dst_file <- file.path(content_dir, "custom.css")
 
   if (file.exists(template_path)) {
     file.copy(template_path, dst_file, overwrite = FALSE)

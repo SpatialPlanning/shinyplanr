@@ -15,9 +15,9 @@ make_template <- function(country = "TestIsland", ...) {
 
   suppressMessages(
     create_shinyplanr_template(
-      country    = country,
+      country = country,
       output_dir = out_dir,
-      use_renv   = FALSE,
+      use_renv = FALSE,
       create_rproj = FALSE,
       ...
     )
@@ -461,7 +461,8 @@ test_that(".Rprofile gets ~/.Renviron prepend when use_renv = TRUE", {
 
   rprofile_path <- file.path(out_dir, ".Rprofile")
   expect_true(file.exists(rprofile_path),
-              label = ".Rprofile should exist when use_renv = TRUE")
+    label = ".Rprofile should exist when use_renv = TRUE"
+  )
 
   rprofile_text <- paste(readLines(rprofile_path, warn = FALSE), collapse = "\n")
 
@@ -480,8 +481,9 @@ test_that(".Rprofile gets ~/.Renviron prepend when use_renv = TRUE", {
 
   # ~/.Renviron load must appear before renv activate so it is available
   # when renv/activate.R runs.
-  renviron_pos <- regexpr("readRenviron",                    rprofile_text)
+  renviron_pos <- regexpr("readRenviron", rprofile_text)
   activate_pos <- regexpr('source\\("renv/activate\\.R"\\)', rprofile_text)
   expect_true(renviron_pos < activate_pos,
-              label = "~/.Renviron load should appear before renv activate")
+    label = "~/.Renviron load should appear before renv activate"
+  )
 })

@@ -1,4 +1,3 @@
-
 # Climate Feature Plot ----------------------------------------------------
 #' Climate Feature Plot
 #'
@@ -23,12 +22,10 @@ create_climDataPlot <- function(df) {
 }
 
 
-
 #' Get solution text for plot
 #'
 #' @noRd
 fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
-
   # Guard: must be an sf object
   if (is.null(sDat) || !inherits(sDat, "sf")) {
     return(list("No solution could be generated for the current settings.", NULL))
@@ -51,7 +48,7 @@ fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
   # Cost text — only when a real cost column is present in the solution
   has_cost <- !is.null(cost_name) && cost_name %in% names(s_no_geom)
   if (has_cost) {
-    totalCost   <- sum(s_no_geom[[cost_name]], na.rm = TRUE)
+    totalCost <- sum(s_no_geom[[cost_name]], na.rm = TRUE)
     outsideCost <- sum(
       s_no_geom[[cost_name]][s_no_geom[[col_name]] == 0],
       na.rm = TRUE
@@ -88,7 +85,6 @@ fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
 #' @noRd
 #'
 fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay, map_theme, num = "", Dict = NULL) {
-
   # Base solution plot
   plot_out <- spatialplanr::splnr_plot_solution(
     soln = soln,
@@ -107,7 +103,7 @@ fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay,
   name_lookup <- if (!is.null(Dict)) {
     Dict %>%
       dplyr::select("nameVariable", "nameCommon") %>%
-      tibble::deframe()  # named vector: nameVariable = nameCommon
+      tibble::deframe() # named vector: nameVariable = nameCommon
   } else {
     NULL
   }
@@ -198,7 +194,6 @@ fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay,
 #'
 fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
                                   Dict = NULL) {
-
   # Filter out scenarios without climate data
   has_climate <- climate_ids != "NA"
 
@@ -207,7 +202,7 @@ fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
   }
 
   # Filter to only scenarios with climate
-  soln_filtered    <- soln_list[has_climate]
+  soln_filtered <- soln_list[has_climate]
   climate_filtered <- climate_ids[has_climate]
 
   # Default solution column name — prioritizr always produces "solution_1"
@@ -224,7 +219,7 @@ fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
     clim_lookup <- Dict %>%
       dplyr::filter(.data$type == "Climate") %>%
       dplyr::select("nameVariable", "nameCommon") %>%
-      tibble::deframe()  # named vector: nameVariable -> nameCommon
+      tibble::deframe() # named vector: nameVariable -> nameCommon
   } else {
     clim_lookup <- character(0)
   }
@@ -268,5 +263,3 @@ fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
 
   patchwork::wrap_plots(plots, ncol = 1)
 }
-
-

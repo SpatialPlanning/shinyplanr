@@ -23,12 +23,12 @@ test_that("mod_5coverage_ui() works", {
   expect_s3_class(ui, "shiny.tag")
   # Check that formals contain id and cfg
   fmls <- formals(mod_5coverage_ui)
-  expect_true("id"  %in% names(fmls))
+  expect_true("id" %in% names(fmls))
   expect_true("cfg" %in% names(fmls))
 })
 
 test_that("mod_5coverage_server() formals contain 'id' and 'cfg'", {
   fmls <- formals(mod_5coverage_server)
-  expect_true("id"  %in% names(fmls))
+  expect_true("id" %in% names(fmls))
   expect_true("cfg" %in% names(fmls))
 })

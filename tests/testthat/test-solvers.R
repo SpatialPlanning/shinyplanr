@@ -19,7 +19,8 @@
 # ---------------------------------------------------------------------------
 solver_available <- any(vapply(
   c("highs", "gurobi", "rcbc", "cplexAPI", "lpsymphony", "Rsymphony"),
-  requireNamespace, logical(1L), quietly = TRUE
+  requireNamespace, logical(1L),
+  quietly = TRUE
 ))
 if (!solver_available) {
   skip("No solver backend available (need highs, gurobi, rcbc, or similar)")
@@ -35,7 +36,7 @@ make_test_sf <- function() {
     feature_A = c(1, 0, 1, 0),
     feature_B = c(0, 1, 1, 0),
     Cost_Area = c(1, 1, 2, 1),
-    geometry  = sf::st_sfc(
+    geometry = sf::st_sfc(
       sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
       sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
       sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(1, 1, 2, 2, 1)))),
@@ -71,8 +72,11 @@ with_shiny_mocks <- function(expr, capture_alert = FALSE) {
     .package   = "shinyjs"
   )
   local_mocked_bindings(
-    shinyalert = function(...) { alert_called <<- TRUE; invisible(NULL) },
-    .package   = "shinyalert"
+    shinyalert = function(...) {
+      alert_called <<- TRUE
+      invisible(NULL)
+    },
+    .package = "shinyalert"
   )
   result <- force(expr)
   list(result = result, alert_called = alert_called)
@@ -113,7 +117,7 @@ test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fail
   # Both features must be zeroed: a single-feature problem also fails presolve,
   # so we keep two features but zero both to ensure the failure is about data
   # quality, not feature count.
-  raw_sf           <- make_test_sf()
+  raw_sf <- make_test_sf()
   raw_sf$feature_A <- 0
   raw_sf$feature_B <- 0
 
@@ -133,8 +137,11 @@ test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fail
   alert_called <- FALSE
   local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
   local_mocked_bindings(
-    shinyalert = function(...) { alert_called <<- TRUE; invisible(NULL) },
-    .package   = "shinyalert"
+    shinyalert = function(...) {
+      alert_called <<- TRUE
+      invisible(NULL)
+    },
+    .package = "shinyalert"
   )
 
   result <- shinyplanr:::fsolve_problem(prob)
@@ -203,7 +210,7 @@ test_that("fsolve_with_log() log omits cost summary when cost_id is NULL", {
 
 test_that("fsolve_with_log() returns NULL solution and logs failure for infeasible problem", {
   # Zero out both features so presolve_check() reliably fails.
-  raw_sf           <- make_test_sf()
+  raw_sf <- make_test_sf()
   raw_sf$feature_A <- 0
   raw_sf$feature_B <- 0
 
@@ -233,7 +240,7 @@ test_that("fsolve_with_log() returns NULL solution and logs failure for infeasib
 # ---------------------------------------------------------------------------
 
 test_that("fdefine_problem() returns a prioritizr problem for min_set", {
-  raw_sf  <- make_test_sf()
+  raw_sf <- make_test_sf()
   targets <- data.frame(feature = "feature_A", target = 0.5)
   options <- list(
     obj_func       = "min_set",
@@ -269,7 +276,7 @@ test_that("fdefine_problem() returns a prioritizr problem for min_set", {
 # ---------------------------------------------------------------------------
 
 test_that("fdefine_problem() returns a prioritizr problem for min_shortfall", {
-  raw_sf  <- make_test_sf()
+  raw_sf <- make_test_sf()
   targets <- data.frame(feature = "feature_A", target = 0.5)
   options <- list(
     obj_func       = "min_shortfall",
@@ -281,7 +288,7 @@ test_that("fdefine_problem() returns a prioritizr problem for min_shortfall", {
   input <- list(
     costid    = "Cost_Area",
     climateid = "NA",
-    budget    = 50   # 50% of total cost
+    budget    = 50 # 50% of total cost
   )
 
   local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
@@ -305,7 +312,7 @@ test_that("fdefine_problem() returns a prioritizr problem for min_shortfall", {
 # ---------------------------------------------------------------------------
 
 test_that("fdefine_problem() works with compare_id = '1' (Compare module suffix)", {
-  raw_sf  <- make_test_sf()
+  raw_sf <- make_test_sf()
   targets <- data.frame(feature = "feature_A", target = 0.5)
   options <- list(
     obj_func       = "min_set",
@@ -341,7 +348,7 @@ test_that("fdefine_problem() works with compare_id = '1' (Compare module suffix)
 # ---------------------------------------------------------------------------
 
 test_that("fdefine_problem() handles NULL clim_input without error", {
-  raw_sf  <- make_test_sf()
+  raw_sf <- make_test_sf()
   targets <- data.frame(feature = "feature_A", target = 0.5)
   options <- list(
     obj_func       = "min_set",
@@ -383,7 +390,7 @@ test_that("fdefine_problem() handles NULL clim_input without error", {
 # ---------------------------------------------------------------------------
 
 test_that("fdefine_problem() errors when no features are selected (known latent bug)", {
-  raw_sf  <- make_test_sf()
+  raw_sf <- make_test_sf()
   targets <- data.frame(feature = character(0), target = numeric(0))
   options <- list(
     obj_func       = "min_set",

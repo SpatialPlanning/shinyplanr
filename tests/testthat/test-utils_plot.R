@@ -23,7 +23,7 @@
 
 make_soln_sf <- function(n_selected = 2L, n_total = 5L, include_cost = TRUE) {
   solution_col <- c(rep(1L, n_selected), rep(0L, n_total - n_selected))
-  cost_col     <- rep(10, n_total)
+  cost_col <- rep(10, n_total)
 
   geoms <- sf::st_sfc(
     lapply(seq_len(n_total), function(i) {
@@ -47,8 +47,10 @@ make_soln_sf <- function(n_selected = 2L, n_total = 5L, include_cost = TRUE) {
 # ---------------------------------------------------------------------------
 
 test_that("fSolnText() returns fallback message when soln is NULL", {
-  result <- shinyplanr:::fSolnText(input = list(), sDat = NULL,
-                                    cost_name = "Cost_Area")
+  result <- shinyplanr:::fSolnText(
+    input = list(), sDat = NULL,
+    cost_name = "Cost_Area"
+  )
 
   expect_type(result, "list")
   expect_length(result, 2L)
@@ -57,8 +59,10 @@ test_that("fSolnText() returns fallback message when soln is NULL", {
 })
 
 test_that("fSolnText() returns fallback message when soln is not an sf object", {
-  result <- shinyplanr:::fSolnText(input = list(), sDat = data.frame(x = 1),
-                                    cost_name = "Cost_Area")
+  result <- shinyplanr:::fSolnText(
+    input = list(), sDat = data.frame(x = 1),
+    cost_name = "Cost_Area"
+  )
 
   expect_type(result, "list")
   expect_match(result[[1]], "No solution")
@@ -73,9 +77,11 @@ test_that("fSolnText() returns 'No solution text available' when col_name absent
   # Rename solution_1 so the default col_name is missing
   names(soln)[names(soln) == "solution_1"] <- "solution_renamed"
 
-  result <- shinyplanr:::fSolnText(input = list(), sDat = soln,
-                                    cost_name = "Cost_Area",
-                                    col_name  = "solution_1")
+  result <- shinyplanr:::fSolnText(
+    input = list(), sDat = soln,
+    cost_name = "Cost_Area",
+    col_name = "solution_1"
+  )
 
   expect_match(result[[1]], "No solution text available")
   expect_null(result[[2]])
@@ -88,8 +94,10 @@ test_that("fSolnText() returns 'No solution text available' when col_name absent
 test_that("fSolnText() returns selection percentage text when no cost column", {
   soln <- make_soln_sf(n_selected = 2L, n_total = 5L, include_cost = FALSE)
 
-  result <- shinyplanr:::fSolnText(input = list(), sDat = soln,
-                                    cost_name = NULL)
+  result <- shinyplanr:::fSolnText(
+    input = list(), sDat = soln,
+    cost_name = NULL
+  )
 
   expect_type(result, "list")
   expect_length(result, 2L)
@@ -102,8 +110,10 @@ test_that("fSolnText() computes correct selection percentage", {
   # 3 of 5 selected = 60%
   soln <- make_soln_sf(n_selected = 3L, n_total = 5L, include_cost = FALSE)
 
-  result <- shinyplanr:::fSolnText(input = list(), sDat = soln,
-                                    cost_name = NULL)
+  result <- shinyplanr:::fSolnText(
+    input = list(), sDat = soln,
+    cost_name = NULL
+  )
 
   expect_match(result[[1]], "60")
 })
@@ -115,8 +125,10 @@ test_that("fSolnText() computes correct selection percentage", {
 test_that("fSolnText() returns both solution and cost text when cost column present", {
   soln <- make_soln_sf(n_selected = 2L, n_total = 5L, include_cost = TRUE)
 
-  result <- shinyplanr:::fSolnText(input = list(), sDat = soln,
-                                    cost_name = "Cost_Area")
+  result <- shinyplanr:::fSolnText(
+    input = list(), sDat = soln,
+    cost_name = "Cost_Area"
+  )
 
   expect_type(result, "list")
   expect_length(result, 2L)
@@ -131,8 +143,10 @@ test_that("fSolnText() cost text: outside cost percentage is correct", {
   # total cost = 50, outside cost = 30 → 60%
   soln <- make_soln_sf(n_selected = 2L, n_total = 5L, include_cost = TRUE)
 
-  result <- shinyplanr:::fSolnText(input = list(), sDat = soln,
-                                    cost_name = "Cost_Area")
+  result <- shinyplanr:::fSolnText(
+    input = list(), sDat = soln,
+    cost_name = "Cost_Area"
+  )
 
   expect_match(result[[2]], "60")
 })
@@ -140,8 +154,10 @@ test_that("fSolnText() cost text: outside cost percentage is correct", {
 test_that("fSolnText() returns NULL cost text when cost_name not in solution", {
   soln <- make_soln_sf(n_selected = 2L, n_total = 5L, include_cost = FALSE)
 
-  result <- shinyplanr:::fSolnText(input = list(), sDat = soln,
-                                    cost_name = "Cost_Area")  # column absent
+  result <- shinyplanr:::fSolnText(
+    input = list(), sDat = soln,
+    cost_name = "Cost_Area"
+  ) # column absent
 
   expect_null(result[[2]])
 })
@@ -197,7 +213,7 @@ make_clim_soln_sf <- function(n_total = 10L, clim_col = "clim_metric") {
   # Both columns are required by splnr_plot_climKernelDensity_Fancy().
   set.seed(42L)
   solution_col <- c(rep(1L, n_total %/% 2L), rep(0L, n_total - n_total %/% 2L))
-  clim_vals    <- stats::runif(n_total, min = 0, max = 1)
+  clim_vals <- stats::runif(n_total, min = 0, max = 1)
 
   geoms <- sf::st_sfc(
     lapply(seq_len(n_total), function(i) {
@@ -287,8 +303,8 @@ test_that("fplot_climate_density() uses Dict nameCommon as axis label when Dict 
   # Minimal Dict with a Climate entry mapping clim_metric -> "SST Warming"
   test_dict <- data.frame(
     nameVariable = "clim_metric",
-    nameCommon   = "SST Warming",
-    type         = "Climate",
+    nameCommon = "SST Warming",
+    type = "Climate",
     stringsAsFactors = FALSE
   )
 

@@ -9,17 +9,17 @@
 
 make_valid_config <- function() {
   Dict <- data.frame(
-    nameCommon    = c("Feature A"),
-    nameVariable  = c("feature_A"),
-    category      = c("Habitat"),
-    categoryID    = c("Hab"),
-    type          = c("Feature"),
+    nameCommon = c("Feature A"),
+    nameVariable = c("feature_A"),
+    category = c("Habitat"),
+    categoryID = c("Hab"),
+    type = c("Feature"),
     targetInitial = c(30),
-    targetMin     = c(0),
-    targetMax     = c(85),
-    includeApp    = c(TRUE),
-    includeJust   = c(TRUE),
-    units         = c(""),
+    targetMin = c(0),
+    targetMax = c(85),
+    includeApp = c(TRUE),
+    includeJust = c(TRUE),
+    units = c(""),
     justification = c("A stub feature."),
     stringsAsFactors = FALSE
   )
@@ -28,21 +28,21 @@ make_valid_config <- function() {
       slider_vars     = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = FALSE),
       slider_varsBioR = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "Bioregion"),
       slider_varsCat  = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE),
-      check_lockIn    = fcreate_check("2scenario_ui_1", Dict, "LockIn",  "checkLI_", categoryOut = TRUE),
+      check_lockIn    = fcreate_check("2scenario_ui_1", Dict, "LockIn", "checkLI_", categoryOut = TRUE),
       check_lockOut   = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
     ),
     compare = list(
-      Vars1          = fcreate_vars("3compare_ui_1", Dict, "sli_",  categoryOut = TRUE),
+      Vars1          = fcreate_vars("3compare_ui_1", Dict, "sli_", categoryOut = TRUE),
       Vars2          = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
-      check_lockIn1  = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check1LI_", categoryOut = TRUE),
-      check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check2LI_", categoryOut = TRUE),
+      check_lockIn1  = fcreate_check("3compare_ui_1", Dict, "LockIn", "check1LI_", categoryOut = TRUE),
+      check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn", "check2LI_", categoryOut = TRUE),
       check_lockOut1 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
       check_lockOut2 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
     )
   )
   list(
     schema_version = 2L,
-    options        = list(
+    options = list(
       app_title             = "Test App",
       nav_title             = "Test Region",
       funder_url            = "https://example.com",
@@ -67,35 +67,35 @@ make_valid_config <- function() {
       obj_func              = "min_set",
       cCRS                  = "ESRI:54009"
     ),
-    map_theme      = ggplot2::theme_bw(),
-    bar_theme      = ggplot2::theme_bw(),
-    Dict           = Dict,
-    raw_sf         = sf::st_sf(
+    map_theme = ggplot2::theme_bw(),
+    bar_theme = ggplot2::theme_bw(),
+    Dict = Dict,
+    raw_sf = sf::st_sf(
       feature_A = c(0.8, 0.2),
-      geometry  = sf::st_sfc(
-        sf::st_polygon(list(cbind(c(0,1,1,0,0), c(0,0,1,1,0)))),
-        sf::st_polygon(list(cbind(c(1,2,2,1,1), c(0,0,1,1,0)))),
-        crs = "ESRI:54009"
-      )
-    ),
-    bndry          = sf::st_sf(
       geometry = sf::st_sfc(
-        sf::st_polygon(list(cbind(c(0,2,2,0,0), c(0,0,1,1,0)))),
+        sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
+        sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
         crs = "ESRI:54009"
       )
     ),
-    overlay        = sf::st_sf(geometry = sf::st_sfc(crs = "ESRI:54009")),
-    sidebar        = sidebar,
-    tx             = list(
+    bndry = sf::st_sf(
+      geometry = sf::st_sfc(
+        sf::st_polygon(list(cbind(c(0, 2, 2, 0, 0), c(0, 0, 1, 1, 0)))),
+        crs = "ESRI:54009"
+      )
+    ),
+    overlay = sf::st_sf(geometry = sf::st_sfc(crs = "ESRI:54009")),
+    sidebar = sidebar,
+    tx = list(
       welcome = list(list(title = "Welcome", text = "# Hello"))
     ),
-    tx_1footer    = "Footer text",
-    tx_2solution  = "",
-    tx_2targets   = "",
-    tx_2cost      = "",
-    tx_2climate   = "",
-    tx_2ess       = "",
-    tx_6faq       = "",
+    tx_1footer = "Footer text",
+    tx_2solution = "",
+    tx_2targets = "",
+    tx_2cost = "",
+    tx_2climate = "",
+    tx_2ess = "",
+    tx_6faq = "",
     tx_6technical = "",
     tx_6changelog = ""
   )
@@ -169,10 +169,10 @@ test_that("load_config() reads a valid config and assigns objects to config env"
 
   # Check that key objects were assigned into shinyplanr_config (not namespace)
   cfg_env <- shinyplanr:::shinyplanr_config
-  expect_true(exists("options",  envir = cfg_env, inherits = FALSE))
-  expect_true(exists("Dict",     envir = cfg_env, inherits = FALSE))
-  expect_true(exists("raw_sf",   envir = cfg_env, inherits = FALSE))
-  expect_true(exists("tx",       envir = cfg_env, inherits = FALSE))
+  expect_true(exists("options", envir = cfg_env, inherits = FALSE))
+  expect_true(exists("Dict", envir = cfg_env, inherits = FALSE))
+  expect_true(exists("raw_sf", envir = cfg_env, inherits = FALSE))
+  expect_true(exists("tx", envir = cfg_env, inherits = FALSE))
 })
 
 test_that("load_config() invisibly returns the config list", {
@@ -212,7 +212,7 @@ test_that("load_config() normalises stale agr so dplyr::select keeps geometry", 
   # After load_config, raw_sf in the config env must have a clean agr so that
   # dplyr::select keeps geometry stickily (the bug that caused the crashes).
   loaded_sf <- shinyplanr:::shinyplanr_config$raw_sf
-  selected  <- dplyr::select(loaded_sf, "feature_A")
+  selected <- dplyr::select(loaded_sf, "feature_A")
   expect_true(
     inherits(selected, "sf"),
     label = "dplyr::select keeps geometry after load_config normalises agr"
