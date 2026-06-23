@@ -118,16 +118,15 @@ options <- list(
 # ---------------------------------------------------------------------------
 map_theme <- theme_bw(base_size = 14) +
   theme(
-    legend.position = "right",
-    legend.direction = "vertical",
+    legend.position = "bottom",
+    legend.direction = "horizontal",
     axis.title = element_blank()
   )
 
 bar_theme <- theme_bw(base_size = 14) +
   theme(
-    legend.position = "right",
-    legend.direction = "vertical",
-    axis.title = element_blank()
+    legend.position = "top",
+    legend.direction = "horizontal"
   )
 
 # ---------------------------------------------------------------------------

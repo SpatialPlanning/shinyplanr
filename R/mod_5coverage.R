@@ -62,8 +62,9 @@ mod_5coverage_ui <- function(id, cfg) {
 #' @noRd
 mod_5coverage_server <- function(id, cfg) {
   # Extract config locals
-  raw_sf <- cfg$raw_sf
-  Dict   <- cfg$Dict
+  raw_sf    <- cfg$raw_sf
+  Dict      <- cfg$Dict
+  bar_theme <- cfg$bar_theme
 
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -197,6 +198,7 @@ mod_5coverage_server <- function(id, cfg) {
         nr = 2,
         showTarget = FALSE
       ) +
+        bar_theme +
         ggplot2::theme(
           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)

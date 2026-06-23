@@ -320,6 +320,7 @@ mod_2scenario_server <- function(id, cfg) {
   bndry        <- cfg$bndry
   overlay      <- cfg$overlay
   map_theme    <- cfg$map_theme
+  bar_theme    <- cfg$bar_theme
   sidebar      <- cfg$sidebar$scenario
   tx_2solution <- cfg$tx_2solution
   tx_2targets  <- cfg$tx_2targets
@@ -578,6 +579,7 @@ mod_2scenario_server <- function(id, cfg) {
                                           nr = 2,
                                           showTarget = TRUE,
                                           sort_by = input$checkSort) +
+        bar_theme +
         ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
                        legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
         )
@@ -616,11 +618,16 @@ mod_2scenario_server <- function(id, cfg) {
 
     costPlotData <- shiny::reactive({
 
+      # Look up the human-readable name for the selected cost layer from the dictionary.
+      cost_label <- Dict %>%
+        dplyr::filter(.data$nameVariable == input$costid) %>%
+        dplyr::pull(.data$nameCommon)
+
       #TODO Need to scale the cost data to look better on the plot.
       spatialplanr::splnr_plot_costOverlay(soln = solution(),
                                            cost = NA,
                                            costName = input$costid,
-                                           legendTitle = "Cost",
+                                           legendTitle = cost_label,
                                            plotTitle = "Solution overlaid with cost"
       ) +
         spatialplanr::splnr_gg_add(

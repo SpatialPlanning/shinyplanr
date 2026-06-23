@@ -336,6 +336,7 @@ mod_3compare_server <- function(id, cfg) {
   bndry     <- cfg$bndry
   overlay   <- cfg$overlay
   map_theme <- cfg$map_theme
+  bar_theme <- cfg$bar_theme
   sidebar   <- cfg$sidebar$compare
 
   shiny::moduleServer(id, function(input, output, session) {
@@ -666,6 +667,7 @@ mod_3compare_server <- function(id, cfg) {
                                             category = fget_category(Dict = Dict),
                                             renameFeatures = TRUE, namesToReplace = Dict,
                                             sort_by = input$checkSort) +
+          bar_theme +
           ggplot2::ggtitle("Scenario 1") +
           ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
                          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)),
@@ -674,6 +676,7 @@ mod_3compare_server <- function(id, cfg) {
                                             category = fget_category(Dict = Dict),
                                             renameFeatures = TRUE, namesToReplace = Dict,
                                             sort_by = input$checkSort) +
+          bar_theme +
           ggplot2::ggtitle("Scenario 2") +
           ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
                          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)),
@@ -712,9 +715,18 @@ mod_3compare_server <- function(id, cfg) {
 
     ggr_cost <- shiny::reactive({
 
+      # Look up the human-readable name for each selected cost layer from the dictionary.
+      cost_label1 <- Dict %>%
+        dplyr::filter(.data$nameVariable == input$costid1) %>%
+        dplyr::pull(.data$nameCommon)
+
+      cost_label2 <- Dict %>%
+        dplyr::filter(.data$nameVariable == input$costid2) %>%
+        dplyr::pull(.data$nameCommon)
+
       gg_cost1 <- spatialplanr::splnr_plot_costOverlay(soln = solution1(),
                                                        cost = NA, costName = input$costid1,
-                                                       legendTitle = "Cost",
+                                                       legendTitle = cost_label1,
                                                        plotTitle = "Solution overlaid with cost"
       ) +
         spatialplanr::splnr_gg_add(Bndry = bndry, overlay = overlay,
@@ -724,7 +736,7 @@ mod_3compare_server <- function(id, cfg) {
 
       gg_cost2 <- spatialplanr::splnr_plot_costOverlay(soln = solution2(),
                                                        cost = NA, costName = input$costid2,
-                                                       legendTitle = "Cost",
+                                                       legendTitle = cost_label2,
                                                        plotTitle = "Solution overlaid with cost"
       ) +
         spatialplanr::splnr_gg_add(Bndry = bndry, overlay = overlay,

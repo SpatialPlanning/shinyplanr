@@ -239,13 +239,18 @@ fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
   # visual comparison.
   # Use seq_along() + map() with an explicit integer index to avoid the
   # character-index issue that purrr::imap() introduces for unnamed lists.
+  #
+  # legendTitle is intentionally NULL: the colour-bar title is suppressed so
+  # the plot stays uncluttered. The human-readable label is still shown on the
+  # x-axis via xAxisLab. Callers that need a colour-bar title can pass their
+  # own value via a wrapper; this default matches the shinyplanr house style.
   plots <- purrr::map(seq_along(soln_filtered), function(i) {
     spatialplanr::splnr_plot_climKernelDensity(
       soln          = soln_filtered[[i]],
       solution_name = solution_names[[i]],
       climate_name  = climate_filtered[[i]],
       type          = "Normal",
-      legendTitle   = clim_labels[[i]],
+      legendTitle   = NULL,
       xAxisLab      = clim_labels[[i]]
     ) +
       ggplot2::theme(

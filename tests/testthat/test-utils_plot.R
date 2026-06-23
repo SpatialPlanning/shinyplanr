@@ -303,3 +303,41 @@ test_that("fplot_climate_density() uses Dict nameCommon as axis label when Dict 
   # ggplot stores the x label in plot$labels$x.
   expect_equal(result$labels$x, "SST Warming")
 })
+
+test_that("fplot_climate_density() suppresses colour-bar title by default (legendTitle = NULL)", {
+  skip_if_not_installed("ggridges")
+
+  soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
+
+  result <- shinyplanr:::fplot_climate_density(
+    soln_list      = list(soln1),
+    climate_ids    = "clim_metric",
+    solution_names = "solution_1"
+  )
+
+  # ggplot2 stores scale names in the scales list.
+  # scale_fill_viridis_c(name = NULL) leaves the name as NULL (no title).
+  # We locate the fill scale and confirm its name is NULL.
+  fill_scale <- Filter(
+    function(s) inherits(s, "ScaleContinuous") && s$aesthetics[[1]] == "fill",
+    result$scales$scales
+  )
+  expect_length(fill_scale, 1L)
+  expect_null(fill_scale[[1]]$name)
+})
+
+test_that("fplot_climate_density() x-axis label falls back to raw climate_id when Dict is NULL", {
+  skip_if_not_installed("ggridges")
+
+  soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
+
+  result <- shinyplanr:::fplot_climate_density(
+    soln_list      = list(soln1),
+    climate_ids    = "clim_metric",
+    solution_names = "solution_1"
+    # Dict intentionally omitted
+  )
+
+  # Without a Dict the raw column name is used as the x-axis label.
+  expect_equal(result$labels$x, "clim_metric")
+})
