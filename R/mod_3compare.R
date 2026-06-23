@@ -775,9 +775,10 @@ mod_3compare_server <- function(id, cfg) {
 
     ggr_clim <- shiny::reactive({
       fplot_climate_density(
-        soln_list = list(solution1(), solution2()),
-        climate_ids = c(input$climateid1, input$climateid2),
-        solution_names = c("solution_1", "solution_2")
+        soln_list      = list(solution1(), solution2()),
+        climate_ids    = c(input$climateid1, input$climateid2),
+        solution_names = c("solution_1", "solution_1"),
+        Dict           = Dict
       )
     }) %>%
       shiny::bindEvent(input$analyse)

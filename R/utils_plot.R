@@ -174,17 +174,30 @@ fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay,
 
 #' Plot climate kernel density for one or two scenarios
 #'
-#' Creates climate resilience density plots, handling single or dual scenario comparisons.
+#' Creates climate resilience density plots, handling single or dual scenario
+#' comparisons. Each active scenario produces its own plot (labelled with the
+#' human-readable \code{nameCommon} from \code{Dict}); multiple plots are
+#' stacked vertically with \code{patchwork::wrap_plots()}.
 #'
-#' @param soln_list List of solution sf objects (1 or 2)
-#' @param climate_ids Character vector of climate input IDs
-#' @param solution_names Character vector of solution column names
+#' @param soln_list List of solution sf objects (1 or 2).
+#' @param climate_ids Character vector of climate input IDs (column names in
+#'   the spatial data). Use the sentinel string \code{"NA"} for scenarios
+#'   without climate-smart planning.
+#' @param solution_names Character vector of solution column names (one per
+#'   element of \code{soln_list}). Defaults to \code{"solution_1"} for all
+#'   scenarios, which is the column name \code{prioritizr} always produces.
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{nameVariable} and \code{nameCommon}). Used to derive human-readable
+#'   axis labels. When \code{NULL} the raw \code{climate_ids} are used as
+#'   labels.
 #'
-#' @return ggplot2 object or NULL if no climate data
+#' @return A \code{ggplot2}/\code{patchwork} object, or \code{NULL} if no
+#'   scenario has an active climate layer.
 #'
 #' @noRd
 #'
-fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL) {
+fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
+                                  Dict = NULL) {
 
   # Filter out scenarios without climate data
   has_climate <- climate_ids != "NA"
@@ -194,31 +207,61 @@ fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL)
   }
 
   # Filter to only scenarios with climate
-  soln_filtered <- soln_list[has_climate]
+  soln_filtered    <- soln_list[has_climate]
   climate_filtered <- climate_ids[has_climate]
 
-  # Default solution names if not provided
+  # Default solution column name — prioritizr always produces "solution_1"
   if (is.null(solution_names)) {
     solution_names <- rep("solution_1", length(soln_filtered))
   } else {
     solution_names <- solution_names[has_climate]
   }
 
-  # Create density plot
-  ggClimDens <- spatialplanr::splnr_plot_climKernelDensity(
-    soln = soln_filtered,
-    solution_names = solution_names,
-    climate_names = climate_filtered,
-    type = "Normal",
-    legendTitle = "Climate resilience metric",
-    xAxisLab = "Climate resilience metric"
-  ) +
-    ggplot2::theme(
-      plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-      legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
-    )
+  # Build a nameVariable -> nameCommon lookup from Dict (if provided).
+  # Falls back to the raw climate_id string when Dict is NULL or the id is
+  # absent from Dict (e.g. malformed config).
+  if (!is.null(Dict)) {
+    clim_lookup <- Dict %>%
+      dplyr::filter(.data$type == "Climate") %>%
+      dplyr::select("nameVariable", "nameCommon") %>%
+      tibble::deframe()  # named vector: nameVariable -> nameCommon
+  } else {
+    clim_lookup <- character(0)
+  }
 
-  return(ggClimDens)
+  # Derive a human-readable label for each active scenario.
+  # dplyr::coalesce() falls back to the raw id when the lookup returns NA.
+  clim_labels <- dplyr::coalesce(clim_lookup[climate_filtered], climate_filtered)
+
+  # Build one plot per active scenario, then stack vertically.
+  # This allows each plot to have its own independent axis label and legend
+  # title derived from nameCommon, and keeps the y-axes aligned for easy
+  # visual comparison.
+  # Use seq_along() + map() with an explicit integer index to avoid the
+  # character-index issue that purrr::imap() introduces for unnamed lists.
+  plots <- purrr::map(seq_along(soln_filtered), function(i) {
+    spatialplanr::splnr_plot_climKernelDensity(
+      soln          = soln_filtered[[i]],
+      solution_name = solution_names[[i]],
+      climate_name  = climate_filtered[[i]],
+      type          = "Normal",
+      legendTitle   = clim_labels[[i]],
+      xAxisLab      = clim_labels[[i]]
+    ) +
+      ggplot2::theme(
+        plot.background    = ggplot2::element_rect(fill = "transparent", colour = NA),
+        legend.background  = ggplot2::element_rect(fill = "transparent", colour = NA),
+        # Change 2: viridis colour bar on the right with vertical title
+        legend.position    = "right",
+        legend.title       = ggplot2::element_text(angle = -90, hjust = 0.5, size = 13)
+      )
+  })
+
+  if (length(plots) == 1L) {
+    return(plots[[1]])
+  }
+
+  patchwork::wrap_plots(plots, ncol = 1)
 }
 
 
