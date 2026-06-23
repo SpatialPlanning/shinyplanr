@@ -22,16 +22,16 @@
 
 make_dict <- function() {
   data.frame(
-    nameCommon    = c("Feature A", "Feature B", "Cost Layer"),
-    nameVariable  = c("feature_A", "feature_B", "Cost_Area"),
-    category      = c("Habitat", "Coral", "Cost"),
-    categoryID    = c("Hab", "Cor", "Cost"),
-    type          = c("Feature", "Feature", "Cost"),
+    nameCommon = c("Feature A", "Feature B", "Cost Layer"),
+    nameVariable = c("feature_A", "feature_B", "Cost_Area"),
+    category = c("Habitat", "Coral", "Cost"),
+    categoryID = c("Hab", "Cor", "Cost"),
+    type = c("Feature", "Feature", "Cost"),
     targetInitial = c(30, 50, NA),
-    targetMin     = c(0, 0, NA),
-    targetMax     = c(85, 85, NA),
-    includeApp    = c(TRUE, TRUE, TRUE),
-    includeJust   = c(TRUE, TRUE, TRUE),
+    targetMin = c(0, 0, NA),
+    targetMax = c(85, 85, NA),
+    includeApp = c(TRUE, TRUE, TRUE),
+    includeJust = c(TRUE, TRUE, TRUE),
     justification = c("Habitat A.", "Coral B.", "Equal area."),
     stringsAsFactors = FALSE
   )
@@ -40,12 +40,12 @@ make_dict <- function() {
 make_tpd <- function() {
   # Typical output of spatialplanr::splnr_get_featureRep()
   data.frame(
-    feature       = c("feature_A", "feature_B"),
-    total_amount  = c(3, 2),
+    feature = c("feature_A", "feature_B"),
+    total_amount = c(3, 2),
     absolute_held = c(2, 1),
     relative_held = c(2 / 3, 0.5),
-    target        = c(0.30, 0.50),
-    incidental    = c(FALSE, FALSE),
+    target = c(0.30, 0.50),
+    incidental = c(FALSE, FALSE),
     stringsAsFactors = FALSE
   )
 }
@@ -67,19 +67,19 @@ test_that("fformat_feature_table() returns a data frame with expected columns (n
   result <- shinyplanr:::fformat_feature_table(make_tpd(), make_dict())
 
   expect_s3_class(result, "data.frame")
-  expect_true("Category"        %in% names(result))
-  expect_true("Feature"         %in% names(result))
-  expect_true("Target (%)"      %in% names(result))
-  expect_true("Protection (%)"  %in% names(result))
-  expect_true("Incidental"      %in% names(result))
+  expect_true("Category" %in% names(result))
+  expect_true("Feature" %in% names(result))
+  expect_true("Target (%)" %in% names(result))
+  expect_true("Protection (%)" %in% names(result))
+  expect_true("Incidental" %in% names(result))
 })
 
 test_that("fformat_feature_table() appends suffix to column names", {
   result <- shinyplanr:::fformat_feature_table(make_tpd(), make_dict(), suffix = " 1")
 
-  expect_true("Target 1 (%)"     %in% names(result))
+  expect_true("Target 1 (%)" %in% names(result))
   expect_true("Protection 1 (%)" %in% names(result))
-  expect_true("Incidental 1"     %in% names(result))
+  expect_true("Incidental 1" %in% names(result))
 })
 
 test_that("fformat_feature_table() returns correct number of rows", {
@@ -123,7 +123,7 @@ test_that("fformat_feature_table() adds Category column from Dict", {
   result <- shinyplanr:::fformat_feature_table(make_tpd(), make_dict())
 
   expect_true("Habitat" %in% result$Category)
-  expect_true("Coral"   %in% result$Category)
+  expect_true("Coral" %in% result$Category)
 })
 
 test_that("fformat_feature_table() sorts by Category then Feature", {
@@ -140,7 +140,7 @@ test_that("fformat_feature_table() sorts by Category then Feature", {
 
 test_that("fformat_feature_table() marks zero-target features as incidental", {
   tpd <- make_tpd()
-  tpd$target[1] <- 0  # feature_A has zero target
+  tpd$target[1] <- 0 # feature_A has zero target
 
   result <- shinyplanr:::fformat_feature_table(tpd, make_dict())
 
@@ -184,7 +184,7 @@ test_that("fget_category() filters to Feature and Bioregion types only", {
 
   # Should include Feature and Bioregion rows, but NOT Cost
   expect_true("feature_A" %in% result$feature)
-  expect_true("bio_1"     %in% result$feature)
+  expect_true("bio_1" %in% result$feature)
   expect_false("Cost_Area" %in% result$feature)
 })
 
@@ -217,7 +217,7 @@ make_raw_sf <- function() {
     feature_A = c(1, 0),
     feature_B = c(0, 1),
     Cost_Area = c(1, 1),
-    geometry  = sf::st_sfc(
+    geometry = sf::st_sfc(
       sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
       sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
       crs = "EPSG:4326"
@@ -227,7 +227,7 @@ make_raw_sf <- function() {
 
 test_that("fCheckFeatureNo() counts Feature columns when Dict is supplied", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()
+  Dict <- make_dict()
 
   result <- shinyplanr:::fCheckFeatureNo(raw_sf, Dict)
 

@@ -1,4 +1,3 @@
-
 #' Define conservation problem for shinyplanr
 #'
 #' Constructs a \code{prioritizr} problem object from user-selected targets,
@@ -34,7 +33,6 @@
 
 fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_",
                             clim_input, compare_id = "") {
-
   # Note on clim_input: this argument is checked with
   # is.null(clim_input) || is.na(clim_input) || clim_input == "NA" below.
   # input$climateid is read separately as clim_col. The two are consistent —
@@ -48,66 +46,68 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   # backed sf objects (e.g. those built via st_set_geometry() in setup scripts).
   out_sf <- raw_sf %>%
     dplyr::select(
-      tidyselect::all_of(c(targets$feature,
-                           input[[paste0("costid", compare_id)]])))
+      tidyselect::all_of(c(
+        targets$feature,
+        input[[paste0("costid", compare_id)]]
+      ))
+    )
 
   # Create options for climate-smart ----
   if (is.null(clim_input) || is.na(clim_input) || clim_input == "NA") { # Not Climate-smart
     p_dat <- out_sf # Create the problem data. Nothing more needed if not climate-smart
-
   } else { # Climate-smart
 
-  # Add climate data and run climate approach --------------------------------------------------------
+    # Add climate data and run climate approach --------------------------------------------------------
 
-  # Validate that climate column exists in raw_sf
-  clim_col <- input[[paste0("climateid", compare_id)]]
+    # Validate that climate column exists in raw_sf
+    clim_col <- input[[paste0("climateid", compare_id)]]
 
-  if (!clim_col %in% names(raw_sf)) {
-    warning(paste0("Climate column '", clim_col, "' not found in spatial data. Proceeding without climate-smart planning."))
-    p_dat <- out_sf
-  } else {
-    # Pass raw_sf directly with metric_col so spatialplanr can select the
-    # correct column internally. This avoids creating a throwaway climate_sf
-    # object with a hard-coded "metric" column name.
-    if (options$climate_change == 1) { # CPA approach
-      CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
-        features = out_sf %>%
-          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
-        metric_col = clim_col,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction,
-        refugiaTarget = options$refugiaTarget
-      )
-    } else if (options$climate_change == 2) { # feature approach
-      CS_Approach <- spatialplanr::splnr_climate_featureApproach(
-        features = out_sf %>%
-          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
-        metric_col = clim_col,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction,
-        refugiaTarget = options$refugiaTarget
-      )
-    } else if (options$climate_change == 3) { # percentile approach
-      CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
-        features = out_sf %>%
-          dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
-        metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
-        metric_col = clim_col,
-        percentile = options$percentile,
-        targets = targets,
-        direction = options$direction
-      )
-    }
+    if (!clim_col %in% names(raw_sf)) {
+      warning(paste0("Climate column '", clim_col, "' not found in spatial data. Proceeding without climate-smart planning."))
+      p_dat <- out_sf
+    } else {
+      # Pass raw_sf directly with metric_col so spatialplanr can select the
+      # correct column internally. This avoids creating a throwaway climate_sf
+      # object with a hard-coded "metric" column name.
+      if (options$climate_change == 1) { # CPA approach
+        CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
+          features = out_sf %>%
+            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+          metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
+          metric_col = clim_col,
+          percentile = options$percentile,
+          targets = targets,
+          direction = options$direction,
+          refugiaTarget = options$refugiaTarget
+        )
+      } else if (options$climate_change == 2) { # feature approach
+        CS_Approach <- spatialplanr::splnr_climate_featureApproach(
+          features = out_sf %>%
+            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+          metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
+          metric_col = clim_col,
+          percentile = options$percentile,
+          targets = targets,
+          direction = options$direction,
+          refugiaTarget = options$refugiaTarget
+        )
+      } else if (options$climate_change == 3) { # percentile approach
+        CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
+          features = out_sf %>%
+            dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
+          metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
+          metric_col = clim_col,
+          percentile = options$percentile,
+          targets = targets,
+          direction = options$direction
+        )
+      }
 
       # Get targets
       targets <- CS_Approach$Targets # New targets df with CS targets
 
       # Create p_dat and add cost column back in.
-      cost_col   <- input[[paste0("costid",    compare_id)]]
+      cost_col <- input[[paste0("costid", compare_id)]]
       clim_col_j <- input[[paste0("climateid", compare_id)]]
 
       # Build a plain data frame of the columns to attach, keyed by row position
@@ -141,8 +141,8 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   if (f_no == 1) { # If geometry is the only column
 
     shinyalert::shinyalert("Error", "No features have been selected. You can't run a spatial prioritization without any features.",
-                           type = "error",
-                           callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
+      type = "error",
+      callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
     )
 
     p_dat <- p_dat %>%
@@ -153,24 +153,21 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       prioritizr::add_relative_targets(0) %>%
       prioritizr::add_binary_decisions() %>%
       prioritizr::add_default_solver(verbose = TRUE)
-
   }
 
   ## Set Objective Functions -----------------------------------------------------
 
   if (options$obj_func == "min_set") {
-
-
-    p1 <- prioritizr::problem(x = p_dat,
-                              features = targets$feature, # targets ensures the features are in the correct order
-                              cost_column = input[[paste0("costid", compare_id)]]) %>%
+    p1 <- prioritizr::problem(
+      x = p_dat,
+      features = targets$feature, # targets ensures the features are in the correct order
+      cost_column = input[[paste0("costid", compare_id)]]
+    ) %>%
       prioritizr::add_min_set_objective() %>%
       prioritizr::add_relative_targets(targets$target) %>%
       prioritizr::add_binary_decisions() %>%
       prioritizr::add_default_solver(verbose = TRUE)
-
   } else if (options$obj_func == "min_shortfall") {
-
     # Calculate total value of current cost layer.
     # Note: fdefine_problem() is called inside solution(), which is bound to
     # input$analyse. total_cost is therefore already only recalculated when the
@@ -186,14 +183,15 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
     budget_id <- if (compare_id == "") "budget" else paste0("budget", compare_id)
     budget_value <- input[[budget_id]]
 
-    p1 <- prioritizr::problem(x = p_dat,
-                              features = targets$feature, # targets ensures the features are in the correct order
-                              cost_column = input[[paste0("costid", compare_id)]]) %>%
-      prioritizr::add_min_shortfall_objective(budget = (budget_value/100) * total_cost) %>% # Create budget from total_cost and %
+    p1 <- prioritizr::problem(
+      x = p_dat,
+      features = targets$feature, # targets ensures the features are in the correct order
+      cost_column = input[[paste0("costid", compare_id)]]
+    ) %>%
+      prioritizr::add_min_shortfall_objective(budget = (budget_value / 100) * total_cost) %>% # Create budget from total_cost and %
       prioritizr::add_relative_targets(targets$target) %>%
       prioritizr::add_binary_decisions() %>%
       prioritizr::add_default_solver(verbose = TRUE)
-
   } # End objective function selection
 
 
@@ -225,5 +223,4 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   rm(p_dat)
 
   return(p1)
-
 }

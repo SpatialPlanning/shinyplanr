@@ -8,7 +8,6 @@
 #'
 #' @import shiny
 mod_5coverage_ui <- function(id, cfg) {
-
   ns <- shiny::NS(id)
 
   shiny::sidebarLayout(
@@ -16,24 +15,18 @@ mod_5coverage_ui <- function(id, cfg) {
       shiny::h2("Upload Spatial File"),
       shiny::p("Upload a spatial file containing polygons to evaluate how well they conserve the features in the planning domain."),
       shiny::br(),
-
       shiny::fileInput(
         inputId = ns("uploadFile"),
         label = "Choose a spatial file",
         accept = c(".gpkg", ".gdb", ".geojson"),
         multiple = FALSE
       ),
-
       shiny::helpText("Accepted formats: GeoPackage (.gpkg), File Geodatabase (.gdb), GeoJSON (.geojson)."),
-
       shiny::br(),
       shiny::uiOutput(ns("uploadStatus")),
-
       width = 4
     ),
-
     shiny::mainPanel(
-
       shiny::h2("Coverage Analysis"),
       shiny::p("Upload a spatial file to visualise the protected area and evaluate feature coverage."),
       shiny::br(),
@@ -43,7 +36,6 @@ mod_5coverage_ui <- function(id, cfg) {
       shinycssloaders::withSpinner(
         leaflet::leafletOutput(ns("leaflet_coverage"), height = "500px")
       ),
-
       shiny::br(),
       shiny::hr(),
 
@@ -51,7 +43,6 @@ mod_5coverage_ui <- function(id, cfg) {
       shiny::h3("Feature Coverage"),
       shiny::p("This plot shows how well the uploaded polygons conserve each feature."),
       shiny::uiOutput(ns("coveragePlotContainer")),
-
       width = 8
     )
   )
@@ -63,7 +54,8 @@ mod_5coverage_ui <- function(id, cfg) {
 mod_5coverage_server <- function(id, cfg) {
   # Extract config locals
   raw_sf <- cfg$raw_sf
-  Dict   <- cfg$Dict
+  Dict <- cfg$Dict
+  bar_theme <- cfg$bar_theme
 
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -197,6 +189,7 @@ mod_5coverage_server <- function(id, cfg) {
         nr = 2,
         showTarget = FALSE
       ) +
+        bar_theme +
         ggplot2::theme(
           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
@@ -204,9 +197,12 @@ mod_5coverage_server <- function(id, cfg) {
     })
 
     # Render coverage plot output
-    output$gg_coveragePlot <- shiny::renderPlot({
-      gg_coverage()
-    }, bg = "transparent")
+    output$gg_coveragePlot <- shiny::renderPlot(
+      {
+        gg_coverage()
+      },
+      bg = "transparent"
+    )
 
     # Container that shows placeholder or plot
     output$coveragePlotContainer <- shiny::renderUI({
@@ -219,7 +215,8 @@ mod_5coverage_server <- function(id, cfg) {
           shiny::br(),
           shiny::br(),
           shiny::p("Upload a spatial file to see the feature coverage analysis.",
-                   style = "color: #666; font-style: italic;")
+            style = "color: #666; font-style: italic;"
+          )
         )
       } else {
         shinycssloaders::withSpinner(
@@ -227,7 +224,6 @@ mod_5coverage_server <- function(id, cfg) {
         )
       }
     })
-
   })
 }
 

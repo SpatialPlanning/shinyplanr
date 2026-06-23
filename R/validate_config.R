@@ -63,10 +63,9 @@
 #'
 #' @export
 validate_dict <- function(Dict, strict = TRUE) {
-
   stopifnot(is.data.frame(Dict))
 
-  results  <- list()
+  results <- list()
   messages <- character(0)
 
   # Helper: record a check result (mirrors the pattern in validate_shinyplanr_data)
@@ -109,7 +108,7 @@ validate_dict <- function(Dict, strict = TRUE) {
   .check(
     "Dict_required_columns",
     length(missing_cols) == 0,
-    if (length(missing_cols) > 0)
+    if (length(missing_cols) > 0) {
       paste0(
         "Dict_Feature.csv is missing required column(s): ",
         paste(missing_cols, collapse = ", "), ".\n",
@@ -117,6 +116,7 @@ validate_dict <- function(Dict, strict = TRUE) {
         "  Check that the CSV has not been accidentally edited to remove a ",
         "column header."
       )
+    }
   )
 
   # Guard: remaining checks require the required columns to be present.
@@ -133,7 +133,7 @@ validate_dict <- function(Dict, strict = TRUE) {
   # ---------------------------------------------------------------------------
   # Check 2: includeApp and includeJust are logical
   # ---------------------------------------------------------------------------
-  include_app_ok  <- is.logical(Dict$includeApp)
+  include_app_ok <- is.logical(Dict$includeApp)
   include_just_ok <- is.logical(Dict$includeJust)
 
   .check(
@@ -167,7 +167,7 @@ validate_dict <- function(Dict, strict = TRUE) {
   .check(
     "Dict_type_values_known",
     length(unknown_types) == 0,
-    if (length(unknown_types) > 0)
+    if (length(unknown_types) > 0) {
       paste0(
         "Dict_Feature.csv contains unknown value(s) in the 'type' column: ",
         paste(paste0('"', unknown_types, '"'), collapse = ", "), ".\n",
@@ -179,6 +179,7 @@ validate_dict <- function(Dict, strict = TRUE) {
         "  Affected nameVariable(s): ",
         paste(Dict$nameVariable[!Dict$type %in% .known_types], collapse = ", ")
       )
+    }
   )
 
   # ---------------------------------------------------------------------------
@@ -192,7 +193,7 @@ validate_dict <- function(Dict, strict = TRUE) {
   .check(
     "nameVariable_unique_within_type",
     nrow(dup_check) == 0,
-    if (nrow(dup_check) > 0)
+    if (nrow(dup_check) > 0) {
       paste0(
         nrow(dup_check), " nameVariable value(s) appear more than once within ",
         "the same type in Dict_Feature.csv:\n",
@@ -209,6 +210,7 @@ validate_dict <- function(Dict, strict = TRUE) {
         "'LockOut' rows (e.g. MPAs) -- duplicates are only checked within ",
         "each type."
       )
+    }
   )
 
   # ---------------------------------------------------------------------------
@@ -243,16 +245,16 @@ validate_dict <- function(Dict, strict = TRUE) {
     if (nrow(active_features) > 0) {
       out_of_range <- active_features |>
         dplyr::filter(
-          (!is.na(.data$targetMin)     & (.data$targetMin     < 0 | .data$targetMin     > 100)) |
-          (!is.na(.data$targetMax)     & (.data$targetMax     < 0 | .data$targetMax     > 100)) |
-          (!is.na(.data$targetInitial) & (.data$targetInitial < 0 | .data$targetInitial > 100))
+          (!is.na(.data$targetMin) & (.data$targetMin < 0 | .data$targetMin > 100)) |
+            (!is.na(.data$targetMax) & (.data$targetMax < 0 | .data$targetMax > 100)) |
+            (!is.na(.data$targetInitial) & (.data$targetInitial < 0 | .data$targetInitial > 100))
         ) |>
         dplyr::pull("nameVariable")
 
       .check(
         "active_feature_targets_in_range",
         length(out_of_range) == 0,
-        if (length(out_of_range) > 0)
+        if (length(out_of_range) > 0) {
           paste0(
             length(out_of_range), " active Feature row(s) in Dict_Feature.csv ",
             "have target values outside the 0-100 range:\n",
@@ -262,6 +264,7 @@ validate_dict <- function(Dict, strict = TRUE) {
             "  These values are used as percentage targets in the ",
             "prioritisation slider UI."
           )
+        }
       )
     }
   }
@@ -334,16 +337,15 @@ validate_dict <- function(Dict, strict = TRUE) {
 #' @examples
 #' \dontrun{
 #' # At the end of setup-app.R, before saveRDS():
-#' validate_shinyplanr_data(config_list)           # strict -- stops on failure
-#' validate_shinyplanr_data(config_list, strict = FALSE)  # report mode
+#' validate_shinyplanr_data(config_list) # strict -- stops on failure
+#' validate_shinyplanr_data(config_list, strict = FALSE) # report mode
 #' }
 #'
 #' @export
 validate_shinyplanr_data <- function(config_list, strict = TRUE) {
-
   stopifnot(is.list(config_list))
 
-  results  <- list()
+  results <- list()
   messages <- character(0)
 
   # Helper: record a check result
@@ -364,12 +366,12 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     invisible(passed)
   }
 
-  Dict    <- config_list[["Dict"]]
-  raw_sf  <- config_list[["raw_sf"]]
-  bndry   <- config_list[["bndry"]]
+  Dict <- config_list[["Dict"]]
+  raw_sf <- config_list[["raw_sf"]]
+  bndry <- config_list[["bndry"]]
   overlay <- config_list[["overlay"]]
-  opts    <- config_list[["options"]]
-  tx      <- config_list[["tx"]]
+  opts <- config_list[["options"]]
+  tx <- config_list[["tx"]]
 
   # -------------------------------------------------------------------------
   # 1. Dict required columns
@@ -391,9 +393,12 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     .check(
       "Dict_required_columns",
       length(missing_cols) == 0,
-      if (length(missing_cols) > 0)
-        paste0("Dict is missing required columns: ",
-               paste(missing_cols, collapse = ", "))
+      if (length(missing_cols) > 0) {
+        paste0(
+          "Dict is missing required columns: ",
+          paste(missing_cols, collapse = ", ")
+        )
+      }
     )
   }
 
@@ -401,11 +406,12 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # 2. raw_sf column coverage
   # -------------------------------------------------------------------------
   if (inherits(raw_sf, "sf") && is.data.frame(Dict)) {
-
     # "Climate" columns are selected at runtime by fdefine_problem() when the
     # user picks a climate metric, so they must be present in raw_sf.
-    types_with_cols <- c("Feature", "Cost", "LockIn", "LockOut", "Bioregion",
-                         "EcosystemServices", "Climate")
+    types_with_cols <- c(
+      "Feature", "Cost", "LockIn", "LockOut", "Bioregion",
+      "EcosystemServices", "Climate"
+    )
     dict_vars <- Dict %>%
       dplyr::filter(.data$type %in% types_with_cols) %>%
       dplyr::pull("nameVariable")
@@ -416,11 +422,12 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     .check(
       "raw_sf_columns_match_Dict",
       length(missing_vars) == 0,
-      if (length(missing_vars) > 0)
+      if (length(missing_vars) > 0) {
         paste0(
           length(missing_vars), " Dict variable(s) not found in raw_sf: ",
           paste(missing_vars, collapse = ", ")
         )
+      }
     )
   } else if (!inherits(raw_sf, "sf")) {
     .check("raw_sf_is_sf", FALSE, "config_list$raw_sf is not an sf object.")
@@ -430,18 +437,19 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # 3. CRS: raw_sf matches options$cCRS
   # -------------------------------------------------------------------------
   if (inherits(raw_sf, "sf") && !is.null(opts[["cCRS"]])) {
-    raw_crs_wkt  <- sf::st_crs(raw_sf)
-    target_crs   <- tryCatch(sf::st_crs(opts$cCRS), error = function(e) NA)
+    raw_crs_wkt <- sf::st_crs(raw_sf)
+    target_crs <- tryCatch(sf::st_crs(opts$cCRS), error = function(e) NA)
 
     crs_match <- !is.na(target_crs) && isTRUE(raw_crs_wkt == target_crs)
     .check(
       "raw_sf_CRS_matches_options_cCRS",
       crs_match,
-      if (!crs_match)
+      if (!crs_match) {
         paste0(
           "raw_sf CRS does not match options$cCRS ('", opts$cCRS, "').\n",
           "  raw_sf CRS: ", sf::st_crs(raw_sf)$input
         )
+      }
     )
   }
 
@@ -471,12 +479,13 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     .check(
       "bndry_CRS_matches_raw_sf",
       crs_match_bndry,
-      if (!crs_match_bndry)
+      if (!crs_match_bndry) {
         paste0(
           "bndry CRS does not match raw_sf CRS.\n",
           "  raw_sf: ", sf::st_crs(raw_sf)$input, "\n",
           "  bndry:  ", sf::st_crs(bndry)$input
         )
+      }
     )
   }
 
@@ -488,12 +497,13 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     .check(
       "overlay_CRS_matches_raw_sf",
       crs_match_overlay,
-      if (!crs_match_overlay)
+      if (!crs_match_overlay) {
         paste0(
           "overlay CRS does not match raw_sf CRS.\n",
           "  raw_sf:  ", sf::st_crs(raw_sf)$input, "\n",
           "  overlay: ", sf::st_crs(overlay)$input
         )
+      }
     )
   }
 
@@ -518,13 +528,14 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       .check(
         "no_feature_columns_all_zero_or_NA",
         length(zero_vars) == 0,
-        if (length(zero_vars) > 0)
+        if (length(zero_vars) > 0) {
           paste0(
             length(zero_vars), " Feature column(s) are all-zero or all-NA in raw_sf: ",
             paste(zero_vars, collapse = ", "), "\n",
             "These features would cause prioritizr to error. ",
             "Remove them from Dict or check your data pipeline."
           )
+        }
       )
     }
   }
@@ -534,14 +545,14 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # -------------------------------------------------------------------------
   tx_structure_ok <- (
     is.list(tx) &&
-    !is.null(tx[["welcome"]]) &&
-    is.list(tx[["welcome"]]) &&
-    length(tx[["welcome"]]) >= 1 &&
-    all(purrr::map_lgl(tx[["welcome"]], function(entry) {
-      is.list(entry) &&
-        !is.null(entry[["title"]]) && is.character(entry[["title"]]) &&
-        !is.null(entry[["text"]])  && is.character(entry[["text"]])
-    }))
+      !is.null(tx[["welcome"]]) &&
+      is.list(tx[["welcome"]]) &&
+      length(tx[["welcome"]]) >= 1 &&
+      all(purrr::map_lgl(tx[["welcome"]], function(entry) {
+        is.list(entry) &&
+          !is.null(entry[["title"]]) && is.character(entry[["title"]]) &&
+          !is.null(entry[["text"]]) && is.character(entry[["text"]])
+      }))
   )
 
   .check(
@@ -560,11 +571,11 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   sidebar <- config_list[["sidebar"]]
   sidebar_ok <- (
     is.list(sidebar) &&
-    is.list(sidebar[["scenario"]]) &&
-    is.list(sidebar[["compare"]]) &&
-    is.data.frame(sidebar[["scenario"]][["slider_vars"]]) &&
-    is.data.frame(sidebar[["compare"]][["Vars1"]]) &&
-    is.data.frame(sidebar[["compare"]][["Vars2"]])
+      is.list(sidebar[["scenario"]]) &&
+      is.list(sidebar[["compare"]]) &&
+      is.data.frame(sidebar[["scenario"]][["slider_vars"]]) &&
+      is.data.frame(sidebar[["compare"]][["Vars1"]]) &&
+      is.data.frame(sidebar[["compare"]][["Vars2"]])
   )
   .check(
     "sidebar_structure",
@@ -599,8 +610,8 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   if (isTRUE(opts[["include_bioregion"]]) && isTRUE(sidebar_ok)) {
     bioregion_sidebar_ok <- (
       is.data.frame(sidebar[["scenario"]][["slider_varsBioR"]]) &&
-      is.data.frame(sidebar[["compare"]][["slider_varsBioR1"]]) &&
-      is.data.frame(sidebar[["compare"]][["slider_varsBioR2"]])
+        is.data.frame(sidebar[["compare"]][["slider_varsBioR1"]]) &&
+        is.data.frame(sidebar[["compare"]][["slider_varsBioR2"]])
     )
     .check(
       "sidebar_bioregion_structure",
@@ -644,20 +655,21 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     if (nrow(feature_dict) > 0) {
       out_of_range <- feature_dict %>%
         dplyr::filter(
-          (!is.na(.data$targetMin)     & (.data$targetMin < 0 | .data$targetMin > 100)) |
-          (!is.na(.data$targetMax)     & (.data$targetMax < 0 | .data$targetMax > 100)) |
-          (!is.na(.data$targetInitial) & (.data$targetInitial < 0 | .data$targetInitial > 100))
+          (!is.na(.data$targetMin) & (.data$targetMin < 0 | .data$targetMin > 100)) |
+            (!is.na(.data$targetMax) & (.data$targetMax < 0 | .data$targetMax > 100)) |
+            (!is.na(.data$targetInitial) & (.data$targetInitial < 0 | .data$targetInitial > 100))
         ) %>%
         dplyr::pull("nameVariable")
 
       .check(
         "feature_targets_in_range_0_100",
         length(out_of_range) == 0,
-        if (length(out_of_range) > 0)
+        if (length(out_of_range) > 0) {
           paste0(
             length(out_of_range), " Feature(s) have target values outside 0-100: ",
             paste(out_of_range, collapse = ", ")
           )
+        }
       )
     }
   }
@@ -665,9 +677,9 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # -------------------------------------------------------------------------
   # Summary
   # -------------------------------------------------------------------------
-  n_checks  <- length(results)
-  n_passed  <- sum(unlist(results))
-  n_failed  <- n_checks - n_passed
+  n_checks <- length(results)
+  n_passed <- sum(unlist(results))
+  n_failed <- n_checks - n_passed
 
   if (n_failed == 0) {
     message(

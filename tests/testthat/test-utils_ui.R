@@ -28,16 +28,16 @@
 
 make_dict_ui <- function() {
   data.frame(
-    nameCommon    = c("Feature A", "Feature B", "Feature C"),
-    nameVariable  = c("feature_A", "feature_B", "feature_C"),
-    category      = c("Habitat", "Habitat", "Coral"),
-    categoryID    = c("Hab", "Hab", "Cor"),
-    type          = c("Feature", "Feature", "Feature"),
+    nameCommon = c("Feature A", "Feature B", "Feature C"),
+    nameVariable = c("feature_A", "feature_B", "feature_C"),
+    category = c("Habitat", "Habitat", "Coral"),
+    categoryID = c("Hab", "Hab", "Cor"),
+    type = c("Feature", "Feature", "Feature"),
     targetInitial = c(30L, 40L, 50L),
-    targetMin     = c(0L, 0L, 0L),
-    targetMax     = c(85L, 85L, 85L),
-    includeApp    = c(TRUE, TRUE, TRUE),
-    includeJust   = c(TRUE, TRUE, TRUE),
+    targetMin = c(0L, 0L, 0L),
+    targetMax = c(85L, 85L, 85L),
+    includeApp = c(TRUE, TRUE, TRUE),
+    includeJust = c(TRUE, TRUE, TRUE),
     justification = c("A.", "B.", "C."),
     stringsAsFactors = FALSE
   )
@@ -45,16 +45,16 @@ make_dict_ui <- function() {
 
 make_dict_lock <- function() {
   data.frame(
-    nameCommon    = c("MPAs", "Reserves"),
-    nameVariable  = c("mpas", "reserves"),
-    category      = c("Protected", "Protected"),
-    categoryID    = c("Prot", "Prot"),
-    type          = c("LockIn", "LockIn"),
+    nameCommon = c("MPAs", "Reserves"),
+    nameVariable = c("mpas", "reserves"),
+    category = c("Protected", "Protected"),
+    categoryID = c("Prot", "Prot"),
+    type = c("LockIn", "LockIn"),
     targetInitial = c(NA_real_, NA_real_),
-    targetMin     = c(NA_real_, NA_real_),
-    targetMax     = c(NA_real_, NA_real_),
-    includeApp    = c(TRUE, TRUE),
-    includeJust   = c(FALSE, FALSE),
+    targetMin = c(NA_real_, NA_real_),
+    targetMax = c(NA_real_, NA_real_),
+    includeApp = c(TRUE, TRUE),
+    includeJust = c(FALSE, FALSE),
     justification = c(NA_character_, NA_character_),
     stringsAsFactors = FALSE
   )
@@ -72,14 +72,14 @@ test_that("fcreate_vars() returns a data frame with expected columns (no categor
   )
 
   expect_s3_class(result, "data.frame")
-  expect_true("id"           %in% names(result))
-  expect_true("id_in"        %in% names(result))
-  expect_true("nameCommon"   %in% names(result))
-  expect_true("targetMin"    %in% names(result))
-  expect_true("targetMax"    %in% names(result))
+  expect_true("id" %in% names(result))
+  expect_true("id_in" %in% names(result))
+  expect_true("nameCommon" %in% names(result))
+  expect_true("targetMin" %in% names(result))
+  expect_true("targetMax" %in% names(result))
   expect_true("targetInitial" %in% names(result))
   # category columns should NOT be present when categoryOut = FALSE
-  expect_false("category"   %in% names(result))
+  expect_false("category" %in% names(result))
   expect_false("categoryID" %in% names(result))
 })
 
@@ -127,7 +127,7 @@ test_that("fcreate_vars() returns category columns when categoryOut = TRUE", {
     categoryOut = TRUE
   )
 
-  expect_true("category"   %in% names(result))
+  expect_true("category" %in% names(result))
   expect_true("categoryID" %in% names(result))
 })
 
@@ -228,7 +228,7 @@ test_that("fcreate_check() builds correct id_in values", {
     name_check = "checkLI_"
   )
 
-  expect_true("checkLI_mpas"     %in% result$id_in)
+  expect_true("checkLI_mpas" %in% result$id_in)
   expect_true("checkLI_reserves" %in% result$id_in)
 })
 
@@ -278,7 +278,7 @@ test_that("fcustom_sliderCategory() returns NULL when varsIn is NULL", {
 })
 
 test_that("fcustom_sliderCategory() returns NULL when varsIn has 0 rows", {
-  empty <- make_dict_ui()[0, ]  # 0-row data frame with correct columns
+  empty <- make_dict_ui()[0, ] # 0-row data frame with correct columns
   result <- shinyplanr:::fcustom_sliderCategory(empty, labelNum = 1)
   expect_null(result)
 })
@@ -311,7 +311,8 @@ test_that("fcustom_sliderCategory() labelCategory = FALSE uses invisible spacer"
   )
 
   result <- shinyplanr:::fcustom_sliderCategory(
-    vars, labelNum = 1, byCategory = FALSE, labelCategory = FALSE
+    vars,
+    labelNum = 1, byCategory = FALSE, labelCategory = FALSE
   )
 
   # shiny::HTML() returns class c("html", "character"), not "shiny.tag".

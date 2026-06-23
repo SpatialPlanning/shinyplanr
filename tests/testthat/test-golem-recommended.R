@@ -17,7 +17,7 @@ test_that("app_ui() formals contain 'request'", {
 })
 
 test_that("app_ui() always includes the Scenario tab", {
-  ui   <- app_ui()
+  ui <- app_ui()
   html <- as.character(ui)
   expect_match(html, "Scenario", fixed = TRUE)
 })
@@ -33,30 +33,30 @@ test_that("app_ui() always includes the Scenario tab", {
 
 test_that("app_ui() includes Welcome tab when options$mod_1welcome is TRUE", {
   .cfg_set_options(list(mod_1welcome = TRUE))
-  ui   <- app_ui()
+  ui <- app_ui()
   html <- as.character(ui)
   expect_match(html, "Welcome", fixed = TRUE)
 })
 
 test_that("app_ui() omits Welcome tab when options$mod_1welcome is FALSE", {
   .cfg_set_options(list(mod_1welcome = FALSE))
-  ui   <- app_ui()
+  ui <- app_ui()
   html <- as.character(ui)
   # Welcome tab panel should not be present when disabled
-  expect_false(grepl('<a.*>Welcome</a>', html, perl = TRUE) &&
-                 grepl('mod_1welcome_ui', html, fixed = TRUE))
+  expect_false(grepl("<a.*>Welcome</a>", html, perl = TRUE) &&
+    grepl("mod_1welcome_ui", html, fixed = TRUE))
 })
 
 test_that("app_ui() includes Comparison tab when options$mod_3compare is TRUE", {
   .cfg_set_options(list(mod_3compare = TRUE))
-  ui   <- app_ui()
+  ui <- app_ui()
   html <- as.character(ui)
   expect_match(html, "Comparison", fixed = TRUE)
 })
 
 test_that("app_ui() includes Help tab when options$mod_6help is TRUE", {
   .cfg_set_options(list(mod_6help = TRUE))
-  ui   <- app_ui()
+  ui <- app_ui()
   html <- as.character(ui)
   expect_match(html, "Help", fixed = TRUE)
 })

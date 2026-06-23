@@ -7,10 +7,10 @@
 # tests that call app_ui() or get_pkg_config().
 
 local({
-  pkg_env  <- asNamespace("shinyplanr")
-  cfg_env  <- shinyplanr:::shinyplanr_config
+  pkg_env <- asNamespace("shinyplanr")
+  cfg_env <- shinyplanr:::shinyplanr_config
   required <- shinyplanr:::.shinyplanr_required_keys
-  missing  <- character(0)
+  missing <- character(0)
   for (nm in required) {
     if (exists(nm, envir = pkg_env, inherits = FALSE)) {
       cfg_env[[nm]] <- get(nm, envir = pkg_env, inherits = FALSE)

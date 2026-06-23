@@ -84,7 +84,7 @@ test_that("fdownload_solution_geojson() renames solution_1 to solution", {
 })
 
 test_that("fdownload_solution_geojson() keeps existing 'solution' column unchanged", {
-  sol <- make_soln_sf("solution")  # already named 'solution'
+  sol <- make_soln_sf("solution") # already named 'solution'
   tmp <- tempfile(fileext = ".geojson")
   on.exit(unlink(tmp))
 
@@ -98,7 +98,7 @@ test_that("fdownload_solution_geojson() adds NA solution column when neither col
   # sf with no solution or solution_1 column
   sol <- sf::st_sf(
     other_col = c(1L, 0L),
-    geometry  = sf::st_sfc(
+    geometry = sf::st_sfc(
       sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
       sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
       crs = "EPSG:4326"
@@ -142,7 +142,7 @@ test_that("fdownload_solution_geojson() output contains only the solution column
 
   shinyplanr:::fdownload_solution_geojson(sol = sol, file = tmp)
 
-  written    <- sf::st_read(tmp, quiet = TRUE)
-  data_cols  <- setdiff(names(written), attr(written, "sf_column"))
+  written <- sf::st_read(tmp, quiet = TRUE)
+  data_cols <- setdiff(names(written), attr(written, "sf_column"))
   expect_equal(data_cols, "solution")
 })

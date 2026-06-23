@@ -24,7 +24,7 @@ make_raw_sf <- function() {
     feature_A = c(1, 0, 1, 0, 1),
     feature_B = c(0, 1, 1, 0, 0),
     Cost_Area = c(1, 1, 1, 1, 1),
-    geometry  = sf::st_sfc(
+    geometry = sf::st_sfc(
       sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
       sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
       sf::st_polygon(list(cbind(c(2, 3, 3, 2, 2), c(0, 0, 1, 1, 0)))),
@@ -37,16 +37,16 @@ make_raw_sf <- function() {
 
 make_dict <- function() {
   data.frame(
-    nameCommon    = c("Feature A", "Feature B"),
-    nameVariable  = c("feature_A", "feature_B"),
-    category      = c("Habitat", "Habitat"),
-    categoryID    = c("Hab", "Hab"),
-    type          = c("Feature", "Feature"),
+    nameCommon = c("Feature A", "Feature B"),
+    nameVariable = c("feature_A", "feature_B"),
+    category = c("Habitat", "Habitat"),
+    categoryID = c("Hab", "Hab"),
+    type = c("Feature", "Feature"),
     targetInitial = c(30, 50),
-    targetMin     = c(0, 0),
-    targetMax     = c(85, 85),
-    includeApp    = c(TRUE, TRUE),
-    includeJust   = c(TRUE, TRUE),
+    targetMin = c(0, 0),
+    targetMax = c(85, 85),
+    includeApp = c(TRUE, TRUE),
+    includeJust = c(TRUE, TRUE),
     justification = c("A.", "B."),
     stringsAsFactors = FALSE
   )
@@ -199,7 +199,7 @@ test_that("fread_uploaded_spatial() filters mixed geometry to polygons only", {
 
 test_that("fcalculate_coverage() returns a tibble with expected columns", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()
+  Dict <- make_dict()
 
   # Upload polygon covering the first two planning units
   uploaded_sf <- sf::st_sf(
@@ -212,13 +212,15 @@ test_that("fcalculate_coverage() returns a tibble with expected columns", {
   result <- shinyplanr:::fcalculate_coverage(uploaded_sf, raw_sf, Dict)
 
   expect_s3_class(result, "data.frame")
-  expect_named(result, c("feature", "total_amount", "absolute_held",
-                          "relative_held", "target", "incidental"))
+  expect_named(result, c(
+    "feature", "total_amount", "absolute_held",
+    "relative_held", "target", "incidental"
+  ))
 })
 
 test_that("fcalculate_coverage() returns one row per active Feature in Dict", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()
+  Dict <- make_dict()
 
   uploaded_sf <- sf::st_sf(
     geometry = sf::st_sfc(
@@ -235,7 +237,7 @@ test_that("fcalculate_coverage() returns one row per active Feature in Dict", {
 
 test_that("fcalculate_coverage() computes correct relative_held", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()
+  Dict <- make_dict()
 
   # Upload polygon covering planning units 1, 2, 3 (x = 0-3, y = 0-1)
   # feature_A values: 1, 0, 1, 0, 1 → total = 3
@@ -249,7 +251,7 @@ test_that("fcalculate_coverage() computes correct relative_held", {
   )
 
   result <- shinyplanr:::fcalculate_coverage(uploaded_sf, raw_sf, Dict)
-  row_A  <- result[result$feature == "feature_A", ]
+  row_A <- result[result$feature == "feature_A", ]
 
   expect_equal(row_A$total_amount, 3)
   expect_equal(row_A$relative_held, row_A$absolute_held / row_A$total_amount)
@@ -258,7 +260,7 @@ test_that("fcalculate_coverage() computes correct relative_held", {
 
 test_that("fcalculate_coverage() sets relative_held to 0 when total_amount is 0", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()
+  Dict <- make_dict()
 
   # Set feature_A to all zeros
   raw_sf$feature_A <- 0
@@ -271,14 +273,14 @@ test_that("fcalculate_coverage() sets relative_held to 0 when total_amount is 0"
   )
 
   result <- shinyplanr:::fcalculate_coverage(uploaded_sf, raw_sf, Dict)
-  row_A  <- result[result$feature == "feature_A", ]
+  row_A <- result[result$feature == "feature_A", ]
 
   expect_equal(row_A$relative_held, 0)
 })
 
 test_that("fcalculate_coverage() uses targetInitial / 100 as target", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()  # targetInitial = c(30, 50)
+  Dict <- make_dict() # targetInitial = c(30, 50)
 
   uploaded_sf <- sf::st_sf(
     geometry = sf::st_sfc(
@@ -295,7 +297,7 @@ test_that("fcalculate_coverage() uses targetInitial / 100 as target", {
 
 test_that("fcalculate_coverage() falls back to 0.3 target when targetInitial is NA", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()
+  Dict <- make_dict()
   Dict$targetInitial[Dict$nameVariable == "feature_A"] <- NA_real_
 
   uploaded_sf <- sf::st_sf(
@@ -312,8 +314,8 @@ test_that("fcalculate_coverage() falls back to 0.3 target when targetInitial is 
 
 test_that("fcalculate_coverage() warns for non-binary feature values", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()
-  raw_sf$feature_A <- c(0.5, 0.3, 0.8, 0.1, 0.9)  # continuous, not binary
+  Dict <- make_dict()
+  raw_sf$feature_A <- c(0.5, 0.3, 0.8, 0.1, 0.9) # continuous, not binary
 
   uploaded_sf <- sf::st_sf(
     geometry = sf::st_sfc(
@@ -330,7 +332,7 @@ test_that("fcalculate_coverage() warns for non-binary feature values", {
 
 test_that("fcalculate_coverage() sets incidental to FALSE for all rows", {
   raw_sf <- make_raw_sf()
-  Dict   <- make_dict()
+  Dict <- make_dict()
 
   uploaded_sf <- sf::st_sf(
     geometry = sf::st_sfc(
@@ -345,8 +347,8 @@ test_that("fcalculate_coverage() sets incidental to FALSE for all rows", {
 })
 
 test_that("fcalculate_coverage() transforms uploaded_sf CRS to match raw_sf", {
-  raw_sf <- make_raw_sf()  # EPSG:4326
-  Dict   <- make_dict()
+  raw_sf <- make_raw_sf() # EPSG:4326
+  Dict <- make_dict()
 
   # Create uploaded polygon in a different CRS (EPSG:3857 Web Mercator)
   # Approximate equivalent of (0,0)-(1,1) in EPSG:4326

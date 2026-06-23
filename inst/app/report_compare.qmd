@@ -100,7 +100,7 @@ if (!is.null(params$cost_plot_path) && file.exists(params$cost_plot_path)) {
 # Climate Resilience
 
 ```{r climate-section, results='asis'}
-if (!is.null(params$climate_plot_path) && file.exists(params$climate_plot_path) && !(is.null(params$climate_id1) && is.null(params$climate_id2)) && !(params$climate_id1=='NA' && params$climate_id2=='NA')) {
+if (!is.null(params$climate_plot_path) && file.exists(params$climate_plot_path) && !(is.null(params$climate_id1) && is.null(params$climate_id2)) && !(params$climate_id1 == "NA" && params$climate_id2 == "NA")) {
   cat("Kernel density estimates for the climate-resilience metric for each scenario. Higher values represent areas likely to warm less and where biodiversity is more likely to be retained.\n\n")
 } else {
   cat("Climate-smart planning was not applied in either scenario or no climate plot available.\n\n")

@@ -28,8 +28,9 @@
 #' @noRd
 #'
 fformat_feature_table <- function(tpd, Dict, suffix = "") {
-
-  if (is.null(tpd)) return(NULL)
+  if (is.null(tpd)) {
+    return(NULL)
+  }
 
   # Mark zero-target features as incidental (consistent across both modules)
   tpd <- tpd %>%
@@ -53,11 +54,11 @@ fformat_feature_table <- function(tpd, Dict, suffix = "") {
     ) %>%
     dplyr::select("category", "feature", "target", "value", "incidental") %>%
     dplyr::rename(
-      Category                              = "category",
-      Feature                               = "feature",
-      !!paste0("Target", suffix, " (%)")    := "target",
+      Category = "category",
+      Feature = "feature",
+      !!paste0("Target", suffix, " (%)") := "target",
       !!paste0("Protection", suffix, " (%)") := "value",
-      !!paste0("Incidental", suffix)        := "incidental"
+      !!paste0("Incidental", suffix) := "incidental"
     ) %>%
     dplyr::arrange(.data$Category, .data$Feature) %>%
     dplyr::mutate(Feature = stringr::str_replace_all(.data$Feature, rpl))
@@ -76,7 +77,6 @@ fget_category <- function(Dict) {
 
   return(category)
 }
-
 
 
 # Get Targets
@@ -101,7 +101,6 @@ fget_category <- function(Dict) {
 #' @noRd
 #'
 fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature") {
-
   ft <- Dict %>%
     dplyr::filter(.data$type %in% dataType) %>%
     dplyr::pull("nameVariable")
@@ -130,7 +129,6 @@ fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature")
 #' @noRd
 #'
 fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
-
   # Get feature targets
   targets <- fget_targets(input, Dict = Dict, name_check = name_check, dataType = "Feature")
 
@@ -191,7 +189,6 @@ fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
 #' @noRd
 #'
 fget_feature_representation <- function(soln, problem_data, targets, climate_id, options, Dict) {
-
   # Check if solution is valid
   if (!inherits(soln, "sf")) {
     return(NULL)
@@ -239,7 +236,6 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
 #' @noRd
 #'
 fCheckFeatureNo <- function(dat, Dict = NULL) {
-
   dat_plain <- sf::st_drop_geometry(dat)
 
   if (!is.null(Dict)) {

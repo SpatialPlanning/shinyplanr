@@ -22,12 +22,12 @@ test_that("mod_3compare_ui() works", {
   golem::expect_shinytag(ui)
   # Check that formals contain id and cfg
   fmls <- formals(mod_3compare_ui)
-  expect_true("id"  %in% names(fmls))
+  expect_true("id" %in% names(fmls))
   expect_true("cfg" %in% names(fmls))
 })
 
 test_that("mod_3compare_server() formals contain 'id' and 'cfg'", {
   fmls <- formals(mod_3compare_server)
-  expect_true("id"  %in% names(fmls))
+  expect_true("id" %in% names(fmls))
   expect_true("cfg" %in% names(fmls))
 })

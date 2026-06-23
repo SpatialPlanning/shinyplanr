@@ -30,10 +30,9 @@
 fapply_ui_switches <- function(options, session,
                                tab_climate = NULL,
                                tab_explore = NULL,
-                               tab_ess     = NULL,
-                               tab_report  = NULL,
-                               tab_log     = NULL) {
-
+                               tab_ess = NULL,
+                               tab_report = NULL,
+                               tab_log = NULL) {
   # --- Objective function switches ---
   if (options$obj_func == "min_shortfall") {
     shinyjs::show(id = "switchMinShortfall")
@@ -148,7 +147,6 @@ fapply_ui_switches <- function(options, session,
 frender_report <- function(file, output, template_name, notification_id,
                            notification_msg, tmp_dir_prefix,
                            plots, tables, params, ts) {
-
   # 1. Progress notification + spinner
   shiny::showNotification(
     notification_msg,
@@ -183,11 +181,15 @@ frender_report <- function(file, output, template_name, notification_id,
 
   # 3a. Save plots → build path params
   plot_paths <- purrr::imap(plots, function(plt, nm) {
-    if (is.null(plt)) return(NULL)
+    if (is.null(plt)) {
+      return(NULL)
+    }
     path <- file.path(out_dir, paste0(nm, "_", ts, ".png"))
     try(
-      ggplot2::ggsave(path, plot = plt, width = 10, height = 8,
-                      dpi = 150, bg = "white"),
+      ggplot2::ggsave(path,
+        plot = plt, width = 10, height = 8,
+        dpi = 150, bg = "white"
+      ),
       silent = TRUE
     )
     path
@@ -195,7 +197,9 @@ frender_report <- function(file, output, template_name, notification_id,
 
   # 3b. Save tables → build path params
   table_paths <- purrr::imap(tables, function(tbl, nm) {
-    if (is.null(tbl)) return(NULL)
+    if (is.null(tbl)) {
+      return(NULL)
+    }
     path <- file.path(out_dir, paste0(nm, "_", ts, ".csv"))
     try(utils::write.csv(tbl, path, row.names = FALSE), silent = TRUE)
     path
@@ -204,53 +208,59 @@ frender_report <- function(file, output, template_name, notification_id,
   # Rename to *_plot_path / *_table_path keys for execute_params,
   # matching the param names declared in the QMD templates.
   path_params <- c(
-    stats::setNames(plot_paths,  paste0(names(plot_paths),  "_plot_path")),
+    stats::setNames(plot_paths, paste0(names(plot_paths), "_plot_path")),
     stats::setNames(table_paths, paste0(names(table_paths), "_table_path"))
   )
 
   # 4. Render
-  tryCatch({
-    tmp_dir <- file.path(tempdir(), paste0(tmp_dir_prefix, ts))
-    if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE)
-    tmp_qmd <- file.path(tmp_dir, template_name)
-    file.copy(template_path, tmp_qmd, overwrite = TRUE)
+  tryCatch(
+    {
+      tmp_dir <- file.path(tempdir(), paste0(tmp_dir_prefix, ts))
+      if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE)
+      tmp_qmd <- file.path(tmp_dir, template_name)
+      file.copy(template_path, tmp_qmd, overwrite = TRUE)
 
-    quarto::quarto_render(
-      input       = tmp_qmd,
-      output_file = "report.html",
-      execute_params = c(path_params, params)
-    )
-
-    # 5. Copy rendered HTML to Shiny's expected path
-    out_html <- file.path(tmp_dir, "report.html")
-    if (!file.exists(out_html)) stop("Rendered report not found at ", out_html)
-    file.copy(out_html, file, overwrite = TRUE)
-
-    # 6a. Success
-    shiny::removeNotification(notification_id)
-    shiny::showNotification("Report generated successfully!",
-                            type = "message", duration = 3)
-    output$reportStatus <- shiny::renderUI({
-      shiny::tagList(
-        shiny::icon("check-circle"),
-        shiny::span(paste(" Report generated at",
-                          format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
+      quarto::quarto_render(
+        input = tmp_qmd,
+        output_file = "report.html",
+        execute_params = c(path_params, params)
       )
-    })
-  }, error = function(e) {
-    # 6b. Error
-    shiny::removeNotification(notification_id)
-    shiny::showNotification(
-      paste("Error generating report:", e$message),
-      type = "error", duration = 10
-    )
-    output$reportStatus <- shiny::renderUI({
-      shiny::tagList(
-        shiny::icon("exclamation-triangle"),
-        shiny::span(paste(" Error generating report:", e$message))
+
+      # 5. Copy rendered HTML to Shiny's expected path
+      out_html <- file.path(tmp_dir, "report.html")
+      if (!file.exists(out_html)) stop("Rendered report not found at ", out_html)
+      file.copy(out_html, file, overwrite = TRUE)
+
+      # 6a. Success
+      shiny::removeNotification(notification_id)
+      shiny::showNotification("Report generated successfully!",
+        type = "message", duration = 3
       )
-    })
-  })
+      output$reportStatus <- shiny::renderUI({
+        shiny::tagList(
+          shiny::icon("check-circle"),
+          shiny::span(paste(
+            " Report generated at",
+            format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+          ))
+        )
+      })
+    },
+    error = function(e) {
+      # 6b. Error
+      shiny::removeNotification(notification_id)
+      shiny::showNotification(
+        paste("Error generating report:", e$message),
+        type = "error", duration = 10
+      )
+      output$reportStatus <- shiny::renderUI({
+        shiny::tagList(
+          shiny::icon("exclamation-triangle"),
+          shiny::span(paste(" Error generating report:", e$message))
+        )
+      })
+    }
+  )
 
   invisible(NULL)
 }
@@ -297,9 +307,12 @@ fmake_tab_cache <- function(gg_reactive, tab_id, input, tabs_id = "tabs") {
 
   # Reset cache on every new analysis so the report handler's %||% fallback
   # re-evaluates the reactive rather than returning a plot from a prior run.
-  shiny::observeEvent(input$analyse, {
-    cache(NULL)
-  }, ignoreInit = TRUE)
+  shiny::observeEvent(input$analyse,
+    {
+      cache(NULL)
+    },
+    ignoreInit = TRUE
+  )
 
   # Populate cache when the user visits this tab.
   shiny::observeEvent(input[[tabs_id]], {
@@ -343,25 +356,30 @@ fsetup_lock_observers <- function(input, check_lockIn, check_lockOut,
                                   li_prefix, lo_prefix) {
   get_feature <- function(id, prefix) stringr::str_remove(id, prefix)
 
-  lockIn_features  <- purrr::map_chr(check_lockIn$id_in,  get_feature, prefix = li_prefix)
+  lockIn_features <- purrr::map_chr(check_lockIn$id_in, get_feature, prefix = li_prefix)
   lockOut_features <- purrr::map_chr(check_lockOut$id_in, get_feature, prefix = lo_prefix)
 
   shared_features <- intersect(lockIn_features, lockOut_features)
 
   purrr::walk(shared_features, function(feat) {
-    lockInId  <- paste0(li_prefix, feat)
+    lockInId <- paste0(li_prefix, feat)
     lockOutId <- paste0(lo_prefix, feat)
-    shiny::observeEvent(input[[lockInId]], {
-      shinyjs::toggleState(lockOutId)
-    }, ignoreInit = TRUE)
-    shiny::observeEvent(input[[lockOutId]], {
-      shinyjs::toggleState(lockInId)
-    }, ignoreInit = TRUE)
+    shiny::observeEvent(input[[lockInId]],
+      {
+        shinyjs::toggleState(lockOutId)
+      },
+      ignoreInit = TRUE
+    )
+    shiny::observeEvent(input[[lockOutId]],
+      {
+        shinyjs::toggleState(lockInId)
+      },
+      ignoreInit = TRUE
+    )
   })
 
   invisible(NULL)
 }
-
 
 
 #' Download Plot - Server Side
@@ -387,11 +405,9 @@ fsetup_lock_observers <- function(input, check_lockIn, check_lockOut,
 fDownloadPlotServer <- function(gg_reactive, gg_prefix, time_date_reactive,
                                 type = c("plot", "table"),
                                 width = 19, height = 18) {
-
   type <- match.arg(type)
 
   if (type == "plot") {
-
     dlPlot <- shiny::downloadHandler(
       filename = function() {
         paste0(gg_prefix, "_", time_date_reactive(), ".png")
@@ -406,14 +422,13 @@ fDownloadPlotServer <- function(gg_reactive, gg_prefix, time_date_reactive,
           stop("No plot available to download.")
         }
         ggplot2::ggsave(file,
-                        plot = gg,
-                        device = "png", width = width, height = height,
-                        units = "in", dpi = 400)
+          plot = gg,
+          device = "png", width = width, height = height,
+          units = "in", dpi = 400
+        )
       }
     )
-
   } else {
-
     dlPlot <- shiny::downloadHandler(
       filename = function() {
         paste0(gg_prefix, "_", time_date_reactive(), ".csv")
@@ -430,7 +445,6 @@ fDownloadPlotServer <- function(gg_reactive, gg_prefix, time_date_reactive,
         readr::write_csv(dat, file)
       }
     )
-
   }
 
   return(dlPlot)

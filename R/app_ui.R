@@ -5,7 +5,7 @@
 #' @import shiny
 #' @noRd
 app_ui <- function(request) {
-  cfg     <- get_pkg_config()
+  cfg <- get_pkg_config()
   options <- cfg$options
 
   # Build the tab list programmatically so that disabled optional tabs produce
@@ -72,8 +72,8 @@ app_ui <- function(request) {
     shiny::navbarPage,
     c(
       list(
-        id     = "navbar",
-        title  = shiny::a(
+        id = "navbar",
+        title = shiny::a(
           shiny::img(src = "www/logo_navbar.png", height = 40, class = "navbar-logo"),
           options$nav_title
         ),
@@ -90,7 +90,7 @@ app_ui <- function(request) {
             refreshColour  = "brown"
           )
         ),
-        theme    = bslib::bs_theme(version = 5),
+        theme = bslib::bs_theme(version = 5),
         selected = selected_tab
       ),
       unname(tabs)

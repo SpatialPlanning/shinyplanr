@@ -29,7 +29,6 @@
 fcreate_vars <- function(id, Dict, name_check = "check",
                          categoryOut = FALSE, byCategory = FALSE,
                          dataType = "Feature") {
-
   vars <- Dict %>%
     dplyr::filter(.data$type == dataType) %>%
     dplyr::select(-c("justification", "includeApp", "includeJust", "type")) %>%
@@ -38,7 +37,7 @@ fcreate_vars <- function(id, Dict, name_check = "check",
       id_in = paste(name_check, .data$nameVariable, sep = "")
     )
 
-  if (nrow(vars) > 0){ # If dataType doesn't exist, vars will be 0 here. Just return
+  if (nrow(vars) > 0) { # If dataType doesn't exist, vars will be 0 here. Just return
 
     if (categoryOut == TRUE) {
       vars <- vars %>%
@@ -49,16 +48,17 @@ fcreate_vars <- function(id, Dict, name_check = "check",
     }
 
 
-    if (isTRUE(byCategory) & isTRUE(categoryOut)){
-
+    if (isTRUE(byCategory) & isTRUE(categoryOut)) {
       vars <- vars %>%
-        dplyr::summarise(id = dplyr::first(.data$id),
-                         id_in = paste0("master_", name_check, dplyr::first(.data$categoryID)),
-                         nameCommon = dplyr::first(.data$category),
-                         targetMin = min(.data$targetMin, na.rm = TRUE),
-                         targetMax = max(.data$targetMax, na.rm = TRUE),
-                         targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),
-                         .by = "category")
+        dplyr::summarise(
+          id = dplyr::first(.data$id),
+          id_in = paste0("master_", name_check, dplyr::first(.data$categoryID)),
+          nameCommon = dplyr::first(.data$category),
+          targetMin = min(.data$targetMin, na.rm = TRUE),
+          targetMax = max(.data$targetMax, na.rm = TRUE),
+          targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),
+          .by = "category"
+        )
     }
   }
 
@@ -88,7 +88,6 @@ fcreate_vars <- function(id, Dict, name_check = "check",
 #' @noRd
 #'
 fcreate_check <- function(id, Dict, idType, name_check = "check", categoryOut = FALSE) {
-
   vars <- Dict %>%
     dplyr::filter(.data$type == idType) %>%
     dplyr::select(tidyselect::all_of(c("nameCommon", "nameVariable", "category"))) %>%
@@ -125,7 +124,6 @@ fcreate_check <- function(id, Dict, idType, name_check = "check", categoryOut = 
 #' @noRd
 #'
 fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetInitial) {
-
   shiny::sliderInput(
     inputId = shiny::NS(namespace = id, id = id_in),
     label = shiny::div(
@@ -138,7 +136,6 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
     value = targetInitial
   )
 }
-
 
 
 #' Build a list of sliders grouped by category
@@ -164,13 +161,13 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #' @noRd
 #'
 fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCategory = TRUE) {
-
-  if (is.null(varsIn) || nrow(varsIn) == 0) return(NULL)
+  if (is.null(varsIn) || nrow(varsIn) == 0) {
+    return(NULL)
+  }
 
   ctgs <- unique(varsIn$category)
 
-  if (isFALSE(byCategory)){
-
+  if (isFALSE(byCategory)) {
     shinyList <- vector("list", length = length(ctgs) * 2)
 
     for (ctg in seq_along(ctgs)) {
@@ -181,15 +178,13 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCa
       shinyList[ctg * 2] <- # times as many entries as you want to have for one category per list: here: title and sliders (=2); for example with gap between = 3
         list(purrr::pmap(feats, fcustom_slider))
 
-      if (isTRUE(labelCategory)){ # Show category label
+      if (isTRUE(labelCategory)) { # Show category label
         shinyList[ctg * 2 - 1] <- list(shiny::h3(paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
       } else { # Don't show category label (ie for 2 column of comparison)
         shinyList[ctg * 2 - 1] <- list(shiny::HTML("<h3>&nbsp;</h3>"))
       }
     }
-
   } else {
-
     shinyList <- vector("list", length = length(ctgs))
 
     for (ctg in seq_along(ctgs)) {
@@ -203,12 +198,6 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCa
 
   return(shinyList)
 }
-
-
-
-
-
-
 
 
 #' Build a list of checkboxes grouped by category
@@ -231,8 +220,9 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCa
 #' @noRd
 #'
 fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
-
-  if (nrow(varsIn) == 0) return(NULL)
+  if (nrow(varsIn) == 0) {
+    return(NULL)
+  }
 
   fcustom_checkbox <- function(id, id_in, nameCommon, value = FALSE) {
     shinyWidgets::prettyCheckbox(
@@ -257,12 +247,14 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
     shinyList[ctg * 2] <- # times as many entries as you want to have for one category per list: here: title and sliders (=2); for example with gap between =3
       list(purrr::pmap(feats, fcustom_checkbox, value))
 
-    if (is.null(labelNum)){
+    if (is.null(labelNum)) {
       shinyList[ctg * 2 - 1] <- list(shiny::h5(
-        ctgs[ctg]))
+        ctgs[ctg]
+      ))
     } else {
       shinyList[ctg * 2 - 1] <- list(shiny::h5(
-        paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
+        paste0(labelNum, ".", ctg, " ", ctgs[ctg])
+      ))
     }
   }
 
@@ -288,10 +280,11 @@ create_fancy_dropdown <- function(id, id_in, Dict, width = "100%") {
     purrr::map(~ (.x %>% dplyr::select("nameCommon", "nameVariable"))) %>%
     purrr::map(tibble::deframe)
 
-  shiny::selectInput(inputId = shiny::NS(namespace = id, id = id_in),
-                     label = NULL,
-                     choices = featureList,
-                     multiple = FALSE,
-                     width = width
+  shiny::selectInput(
+    inputId = shiny::NS(namespace = id, id = id_in),
+    label = NULL,
+    choices = featureList,
+    multiple = FALSE,
+    width = width
   )
 }

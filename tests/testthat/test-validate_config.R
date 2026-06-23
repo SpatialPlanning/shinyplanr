@@ -10,17 +10,17 @@
 
 make_valid_config_v2 <- function() {
   Dict <- data.frame(
-    nameCommon    = c("Feature A", "Feature B"),
-    nameVariable  = c("feature_A", "feature_B"),
-    category      = c("Habitat", "Habitat"),
-    categoryID    = c("Hab", "Hab"),
-    type          = c("Feature", "Feature"),
+    nameCommon = c("Feature A", "Feature B"),
+    nameVariable = c("feature_A", "feature_B"),
+    category = c("Habitat", "Habitat"),
+    categoryID = c("Hab", "Hab"),
+    type = c("Feature", "Feature"),
     targetInitial = c(30, 30),
-    targetMin     = c(0, 0),
-    targetMax     = c(85, 85),
-    includeApp    = c(TRUE, TRUE),
-    includeJust   = c(TRUE, TRUE),
-    units         = c("", ""),
+    targetMin = c(0, 0),
+    targetMax = c(85, 85),
+    includeApp = c(TRUE, TRUE),
+    includeJust = c(TRUE, TRUE),
+    units = c("", ""),
     justification = c("Stub A.", "Stub B."),
     stringsAsFactors = FALSE
   )
@@ -29,14 +29,14 @@ make_valid_config_v2 <- function() {
       slider_vars     = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = FALSE),
       slider_varsBioR = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "Bioregion"),
       slider_varsCat  = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE),
-      check_lockIn    = fcreate_check("2scenario_ui_1", Dict, "LockIn",  "checkLI_", categoryOut = TRUE),
+      check_lockIn    = fcreate_check("2scenario_ui_1", Dict, "LockIn", "checkLI_", categoryOut = TRUE),
       check_lockOut   = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
     ),
     compare = list(
-      Vars1          = fcreate_vars("3compare_ui_1", Dict, "sli_",  categoryOut = TRUE),
+      Vars1          = fcreate_vars("3compare_ui_1", Dict, "sli_", categoryOut = TRUE),
       Vars2          = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
-      check_lockIn1  = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check1LI_", categoryOut = TRUE),
-      check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn",  "check2LI_", categoryOut = TRUE),
+      check_lockIn1  = fcreate_check("3compare_ui_1", Dict, "LockIn", "check1LI_", categoryOut = TRUE),
+      check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn", "check2LI_", categoryOut = TRUE),
       check_lockOut1 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
       check_lockOut2 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
     )
@@ -70,17 +70,17 @@ make_valid_config_v2 <- function() {
     ),
     map_theme = ggplot2::theme_bw(),
     bar_theme = ggplot2::theme_bw(),
-    Dict    = Dict,
-    raw_sf  = sf::st_sf(
+    Dict = Dict,
+    raw_sf = sf::st_sf(
       feature_A = c(0.8, 0.2),
       feature_B = c(0.3, 0.7),
-      geometry  = sf::st_sfc(
+      geometry = sf::st_sfc(
         sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
         sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
         crs = "ESRI:54009"
       )
     ),
-    bndry   = sf::st_sf(
+    bndry = sf::st_sf(
       geometry = sf::st_sfc(
         sf::st_polygon(list(cbind(c(0, 2, 2, 0, 0), c(0, 0, 1, 1, 0)))),
         crs = "ESRI:54009"
@@ -88,16 +88,16 @@ make_valid_config_v2 <- function() {
     ),
     overlay = sf::st_sf(geometry = sf::st_sfc(crs = "ESRI:54009")),
     sidebar = sidebar,
-    tx      = list(
+    tx = list(
       welcome = list(list(title = "Welcome", text = "# Hello"))
     ),
-    tx_1footer    = "Footer text",
-    tx_2solution  = "",
-    tx_2targets   = "",
-    tx_2cost      = "",
-    tx_2climate   = "",
-    tx_2ess       = "",
-    tx_6faq       = "",
+    tx_1footer = "Footer text",
+    tx_2solution = "",
+    tx_2targets = "",
+    tx_2cost = "",
+    tx_2climate = "",
+    tx_2ess = "",
+    tx_6faq = "",
     tx_6technical = "",
     tx_6changelog = ""
   )
@@ -142,7 +142,7 @@ test_that("validate_shinyplanr_data() fails check 1 when Dict is not a data fram
 
 test_that("validate_shinyplanr_data() fails check 1 when Dict is missing required columns", {
   cfg <- make_valid_config_v2()
-  cfg$Dict <- cfg$Dict[, c("nameCommon", "nameVariable")]  # strip most columns
+  cfg$Dict <- cfg$Dict[, c("nameCommon", "nameVariable")] # strip most columns
   expect_error(
     suppressMessages(validate_shinyplanr_data(cfg, strict = TRUE)),
     regexp = "Dict_required_columns"
@@ -170,17 +170,17 @@ test_that("validate_shinyplanr_data() fails check 2 when Dict variable absent fr
   cfg <- make_valid_config_v2()
   # Add a Dict row whose nameVariable doesn't exist in raw_sf
   extra_row <- data.frame(
-    nameCommon    = "Missing Feature",
-    nameVariable  = "feature_missing",
-    category      = "Habitat",
-    categoryID    = "Hab",
-    type          = "Feature",
+    nameCommon = "Missing Feature",
+    nameVariable = "feature_missing",
+    category = "Habitat",
+    categoryID = "Hab",
+    type = "Feature",
     targetInitial = 30,
-    targetMin     = 0,
-    targetMax     = 85,
-    includeApp    = TRUE,
-    includeJust   = TRUE,
-    units         = "",
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
     justification = "Not in raw_sf.",
     stringsAsFactors = FALSE
   )
@@ -220,7 +220,7 @@ test_that("validate_shinyplanr_data() fails check 4 when bndry is not sf", {
 
 test_that("validate_shinyplanr_data() fails check 4 when bndry is empty sf", {
   cfg <- make_valid_config_v2()
-  cfg$bndry <- sf::st_sf(geometry = sf::st_sfc(crs = "ESRI:54009"))  # 0 rows
+  cfg$bndry <- sf::st_sf(geometry = sf::st_sfc(crs = "ESRI:54009")) # 0 rows
   expect_error(
     suppressMessages(validate_shinyplanr_data(cfg, strict = TRUE)),
     regexp = "bndry_is_sf"
@@ -260,7 +260,7 @@ test_that("validate_shinyplanr_data() fails check 6 when bndry CRS mismatches ra
 
 test_that("validate_shinyplanr_data() fails check 7 when a Feature column is all-zero", {
   cfg <- make_valid_config_v2()
-  cfg$raw_sf$feature_A <- 0  # all zeros
+  cfg$raw_sf$feature_A <- 0 # all zeros
   expect_error(
     suppressMessages(validate_shinyplanr_data(cfg, strict = TRUE)),
     regexp = "no_feature_columns_all_zero_or_NA"
@@ -282,7 +282,7 @@ test_that("validate_shinyplanr_data() fails check 7 when a Feature column is all
 
 test_that("validate_shinyplanr_data() fails check 8 when tx$welcome is missing", {
   cfg <- make_valid_config_v2()
-  cfg$tx <- list()  # no 'welcome' element
+  cfg$tx <- list() # no 'welcome' element
   expect_error(
     suppressMessages(validate_shinyplanr_data(cfg, strict = TRUE)),
     regexp = "tx_welcome_structure"
@@ -291,7 +291,7 @@ test_that("validate_shinyplanr_data() fails check 8 when tx$welcome is missing",
 
 test_that("validate_shinyplanr_data() fails check 8 when tx$welcome entry lacks 'title'", {
   cfg <- make_valid_config_v2()
-  cfg$tx$welcome <- list(list(text = "# Hello"))  # missing 'title'
+  cfg$tx$welcome <- list(list(text = "# Hello")) # missing 'title'
   expect_error(
     suppressMessages(validate_shinyplanr_data(cfg, strict = TRUE)),
     regexp = "tx_welcome_structure"
@@ -359,7 +359,7 @@ test_that("validate_shinyplanr_data() with strict=FALSE returns list and warns o
 
 test_that("validate_shinyplanr_data() with strict=FALSE continues past first failure", {
   cfg <- make_valid_config_v2()
-  cfg$Dict$targetMax[1] <- 110   # check 10 failure
+  cfg$Dict$targetMax[1] <- 110 # check 10 failure
   cfg$bndry <- data.frame(x = 1) # check 4 failure
   # Should not stop — both failures should appear in result
   result <- suppressWarnings(suppressMessages(
@@ -391,17 +391,17 @@ test_that("validate_shinyplanr_data() stops immediately when config_list is not 
 
 make_valid_dict <- function() {
   data.frame(
-    nameCommon    = c("Feature A", "Feature B (off)", "Equal Area Cost", "MPAs"),
-    nameVariable  = c("feature_A", "feature_B", "cost_area", "mpas"),
-    category      = c("Habitat", "Habitat", "Cost", "Protected Areas"),
-    categoryID    = c("Hab", "Hab", "Cost", "MPAs"),
-    type          = c("Feature", "Feature", "Cost", "LockIn"),
+    nameCommon = c("Feature A", "Feature B (off)", "Equal Area Cost", "MPAs"),
+    nameVariable = c("feature_A", "feature_B", "cost_area", "mpas"),
+    category = c("Habitat", "Habitat", "Cost", "Protected Areas"),
+    categoryID = c("Hab", "Hab", "Cost", "MPAs"),
+    type = c("Feature", "Feature", "Cost", "LockIn"),
     targetInitial = c(30, 30, NA, NA),
-    targetMin     = c(0,  0,  NA, NA),
-    targetMax     = c(85, 85, NA, NA),
-    includeApp    = c(TRUE, FALSE, TRUE, TRUE),
-    includeJust   = c(TRUE, TRUE,  TRUE, TRUE),
-    units         = c("", "", "", ""),
+    targetMin = c(0, 0, NA, NA),
+    targetMax = c(85, 85, NA, NA),
+    includeApp = c(TRUE, FALSE, TRUE, TRUE),
+    includeJust = c(TRUE, TRUE, TRUE, TRUE),
+    units = c("", "", "", ""),
     justification = c("Stub A.", "Stub B.", "Equal area.", "Existing MPAs."),
     stringsAsFactors = FALSE
   )
@@ -444,7 +444,7 @@ test_that("validate_dict() stops immediately when Dict is not a data frame", {
 
 test_that("validate_dict() fails check 1 when a required column is missing", {
   d <- make_valid_dict()
-  d$justification <- NULL  # remove a required column
+  d$justification <- NULL # remove a required column
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "Dict_required_columns"
@@ -466,7 +466,7 @@ test_that("validate_dict() skips remaining checks after missing-column failure (
 
 test_that("validate_dict() fails check 2 when includeApp is integer (Excel 1/0)", {
   d <- make_valid_dict()
-  d$includeApp <- as.integer(d$includeApp)  # 1L / 0L, as Excel would produce
+  d$includeApp <- as.integer(d$includeApp) # 1L / 0L, as Excel would produce
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "includeApp_is_logical"
@@ -475,7 +475,7 @@ test_that("validate_dict() fails check 2 when includeApp is integer (Excel 1/0)"
 
 test_that("validate_dict() fails check 2 when includeApp is character", {
   d <- make_valid_dict()
-  d$includeApp <- as.character(d$includeApp)  # "TRUE" / "FALSE"
+  d$includeApp <- as.character(d$includeApp) # "TRUE" / "FALSE"
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "includeApp_is_logical"
@@ -497,7 +497,7 @@ test_that("validate_dict() fails check 2 when includeJust is integer", {
 
 test_that("validate_dict() fails check 3 when type contains a lowercase typo", {
   d <- make_valid_dict()
-  d$type[1] <- "feature"  # lowercase — common typo
+  d$type[1] <- "feature" # lowercase — common typo
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "Dict_type_values_known"
@@ -506,7 +506,7 @@ test_that("validate_dict() fails check 3 when type contains a lowercase typo", {
 
 test_that("validate_dict() fails check 3 when type contains a completely unknown value", {
   d <- make_valid_dict()
-  d$type[2] <- "Habitat"  # not a valid type
+  d$type[2] <- "Habitat" # not a valid type
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "Dict_type_values_known"
@@ -519,17 +519,17 @@ test_that("validate_dict() passes check 3 for all known type values", {
   # "Climate" rows hold metric columns (SST trend etc.) used in the
   # climate-smart dropdown -- they are not features and have no targets.
   extra <- data.frame(
-    nameCommon    = c("LO", "Bio", "ESS", "Just", "SST Trend"),
-    nameVariable  = c("lock_out_var", "bio_var", "ess_var", "just_var", "sst_trend"),
-    category      = c("C", "C", "C", "C", "Climate"),
-    categoryID    = c("C", "C", "C", "C", "Climate"),
-    type          = c("LockOut", "Bioregion", "EcosystemServices", "Justification", "Climate"),
+    nameCommon = c("LO", "Bio", "ESS", "Just", "SST Trend"),
+    nameVariable = c("lock_out_var", "bio_var", "ess_var", "just_var", "sst_trend"),
+    category = c("C", "C", "C", "C", "Climate"),
+    categoryID = c("C", "C", "C", "C", "Climate"),
+    type = c("LockOut", "Bioregion", "EcosystemServices", "Justification", "Climate"),
     targetInitial = c(NA, NA, NA, NA, NA),
-    targetMin     = c(NA, NA, NA, NA, NA),
-    targetMax     = c(NA, NA, NA, NA, NA),
-    includeApp    = c(TRUE, TRUE, TRUE, FALSE, TRUE),
-    includeJust   = c(TRUE, TRUE, TRUE, FALSE, TRUE),
-    units         = c("", "", "", "", ""),
+    targetMin = c(NA, NA, NA, NA, NA),
+    targetMax = c(NA, NA, NA, NA, NA),
+    includeApp = c(TRUE, TRUE, TRUE, FALSE, TRUE),
+    includeJust = c(TRUE, TRUE, TRUE, FALSE, TRUE),
+    units = c("", "", "", "", ""),
     justification = c(".", ".", ".", ".", "."),
     stringsAsFactors = FALSE
   )
@@ -559,17 +559,17 @@ test_that("validate_dict() passes check 4 when same nameVariable appears in Lock
   d <- make_valid_dict()
   # MPAs legitimately appear as both LockIn and LockOut
   lockout_row <- data.frame(
-    nameCommon    = "MPAs",
-    nameVariable  = "mpas",  # same nameVariable as the LockIn row
-    category      = "Protected Areas",
-    categoryID    = "MPAs",
-    type          = "LockOut",  # different type — should NOT trigger duplicate check
+    nameCommon = "MPAs",
+    nameVariable = "mpas", # same nameVariable as the LockIn row
+    category = "Protected Areas",
+    categoryID = "MPAs",
+    type = "LockOut", # different type — should NOT trigger duplicate check
     targetInitial = NA_real_,
-    targetMin     = NA_real_,
-    targetMax     = NA_real_,
-    includeApp    = TRUE,
-    includeJust   = TRUE,
-    units         = "",
+    targetMin = NA_real_,
+    targetMax = NA_real_,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
     justification = "Existing MPAs.",
     stringsAsFactors = FALSE
   )
@@ -586,7 +586,7 @@ test_that("validate_dict() passes check 4 when same nameVariable appears in Lock
 
 test_that("validate_dict() fails check 5 when no Feature rows have includeApp == TRUE", {
   d <- make_valid_dict()
-  d$includeApp[d$type == "Feature"] <- FALSE  # disable all features
+  d$includeApp[d$type == "Feature"] <- FALSE # disable all features
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "at_least_one_active_feature"
@@ -644,7 +644,7 @@ test_that("validate_dict() with strict=FALSE returns list and warns on failure",
     stringsAsFactors = FALSE
   )
   d <- rbind(d, extra_feature)
-  d$type[1] <- "feature"  # unknown type — feature_C keeps Check 5 passing
+  d$type[1] <- "feature" # unknown type — feature_C keeps Check 5 passing
   expect_warning(
     result <- suppressMessages(validate_dict(d, strict = FALSE)),
     regexp = "Dict_type_values_known"
@@ -655,8 +655,8 @@ test_that("validate_dict() with strict=FALSE returns list and warns on failure",
 
 test_that("validate_dict() with strict=FALSE continues past first failure", {
   d <- make_valid_dict()
-  d$type[1]        <- "feature"  # check 3 failure
-  d$includeApp     <- as.integer(d$includeApp)  # check 2 failure
+  d$type[1] <- "feature" # check 3 failure
+  d$includeApp <- as.integer(d$includeApp) # check 2 failure
   result <- suppressWarnings(suppressMessages(validate_dict(d, strict = FALSE)))
   expect_false(isTRUE(result[["includeApp_is_logical"]]))
   expect_false(isTRUE(result[["Dict_type_values_known"]]))

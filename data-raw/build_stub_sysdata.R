@@ -26,11 +26,11 @@ library(ggplot2)
 
 centres <- data.frame(
   x = c(0, 20000, 40000, 10000, 30000),
-  y = c(0, 0,     0,     17320, 17320)
+  y = c(0, 0, 0, 17320, 17320)
 )
 
 make_hex <- function(cx, cy, r = 10000) {
-  angles <- seq(30, 330, by = 60) * pi / 180  # 6 vertices
+  angles <- seq(30, 330, by = 60) * pi / 180 # 6 vertices
   xs <- cx + r * cos(angles)
   ys <- cy + r * sin(angles)
   # Close the polygon by repeating the first coordinate
@@ -66,17 +66,17 @@ overlay <- st_sf(geometry = st_sfc(crs = "ESRI:54009"))
 # Minimal Dict
 # ---------------------------------------------------------------------------
 Dict <- data.frame(
-  nameCommon    = c("Feature A", "Feature B"),
-  nameVariable  = c("feature_A", "feature_B"),
-  category      = c("Habitat", "Habitat"),
-  categoryID    = c("Hab", "Hab"),
-  type          = c("Feature", "Feature"),
+  nameCommon = c("Feature A", "Feature B"),
+  nameVariable = c("feature_A", "feature_B"),
+  category = c("Habitat", "Habitat"),
+  categoryID = c("Hab", "Hab"),
+  type = c("Feature", "Feature"),
   targetInitial = c(30, 30),
-  targetMin     = c(0, 0),
-  targetMax     = c(85, 85),
-  includeApp    = c(TRUE, TRUE),
-  includeJust   = c(TRUE, TRUE),
-  units         = c("", ""),
+  targetMin = c(0, 0),
+  targetMax = c(85, 85),
+  includeApp = c(TRUE, TRUE),
+  includeJust = c(TRUE, TRUE),
+  units = c("", ""),
   justification = c("Stub feature A.", "Stub feature B."),
   stringsAsFactors = FALSE
 )
@@ -88,8 +88,8 @@ schema_version <- 2L
 # Options (stub)
 # ---------------------------------------------------------------------------
 options <- list(
-  app_title  = "shinyplanr (stub)",
-  nav_title  = "Stub Region",
+  app_title = "shinyplanr (stub)",
+  nav_title = "Stub Region",
   funder_url = "https://spatialplanning.github.io",
   mod_1welcome = TRUE,
   mod_2scenario = TRUE,
@@ -103,7 +103,7 @@ options <- list(
   include_explore = FALSE,
   include_log = FALSE,
   include_bioregion = FALSE,
-  show_logo_funder2 = FALSE,  # derived by 3_setup_app.R; FALSE in stub (no www/)
+  show_logo_funder2 = FALSE, # derived by 3_setup_app.R; FALSE in stub (no www/)
   funder2_url = "https://spatialplanning.github.io",
   include_climateChange = FALSE,
   climate_change = 0,
@@ -118,16 +118,15 @@ options <- list(
 # ---------------------------------------------------------------------------
 map_theme <- theme_bw(base_size = 14) +
   theme(
-    legend.position = "right",
-    legend.direction = "vertical",
+    legend.position = "bottom",
+    legend.direction = "horizontal",
     axis.title = element_blank()
   )
 
 bar_theme <- theme_bw(base_size = 14) +
   theme(
-    legend.position = "right",
-    legend.direction = "vertical",
-    axis.title = element_blank()
+    legend.position = "top",
+    legend.direction = "horizontal"
   )
 
 # ---------------------------------------------------------------------------
@@ -139,13 +138,13 @@ tx <- list(
   )
 )
 
-tx_1footer    <- "Stub footer — run `load_config()` to load real content."
-tx_2solution  <- ""
-tx_2targets   <- ""
-tx_2cost      <- ""
-tx_2climate   <- ""
-tx_2ess       <- ""
-tx_6faq       <- ""
+tx_1footer <- "Stub footer — run `load_config()` to load real content."
+tx_2solution <- ""
+tx_2targets <- ""
+tx_2cost <- ""
+tx_2climate <- ""
+tx_2ess <- ""
+tx_6faq <- ""
 tx_6technical <- ""
 tx_6changelog <- ""
 
@@ -158,37 +157,56 @@ tx_6changelog <- ""
 
 sidebar <- list(
   scenario = list(
-    slider_vars     = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
-                                                categoryOut = TRUE, byCategory = FALSE),
+    slider_vars = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
+      categoryOut = TRUE, byCategory = FALSE
+    ),
     slider_varsBioR = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
-                                                categoryOut = TRUE, byCategory = TRUE,
-                                                dataType = "Bioregion"),
-    slider_varsCat  = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
-                                                categoryOut = TRUE, byCategory = TRUE),
-    check_lockIn    = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockIn",
-                                                 "checkLI_", categoryOut = TRUE),
-    check_lockOut   = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockOut",
-                                                 "checkLO_", categoryOut = TRUE)
+      categoryOut = TRUE, byCategory = TRUE,
+      dataType = "Bioregion"
+    ),
+    slider_varsCat = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
+      categoryOut = TRUE, byCategory = TRUE
+    ),
+    check_lockIn = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockIn",
+      "checkLI_",
+      categoryOut = TRUE
+    ),
+    check_lockOut = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockOut",
+      "checkLO_",
+      categoryOut = TRUE
+    )
   ),
   compare = list(
-    Vars1             = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
-                                                 categoryOut = TRUE),
-    Vars2             = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
-                                                 categoryOut = TRUE),
-    slider_varsBioR1  = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
-                                                 categoryOut = TRUE, byCategory = TRUE,
-                                                 dataType = "Bioregion"),
-    slider_varsBioR2  = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
-                                                 categoryOut = TRUE, byCategory = TRUE,
-                                                 dataType = "Bioregion"),
-    check_lockIn1     = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
-                                                   "check1LI_", categoryOut = TRUE),
-    check_lockIn2     = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
-                                                   "check2LI_", categoryOut = TRUE),
-    check_lockOut1    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
-                                                   "check1LO_", categoryOut = TRUE),
-    check_lockOut2    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
-                                                   "check2LO_", categoryOut = TRUE)
+    Vars1 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
+      categoryOut = TRUE
+    ),
+    Vars2 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
+      categoryOut = TRUE
+    ),
+    slider_varsBioR1 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
+      categoryOut = TRUE, byCategory = TRUE,
+      dataType = "Bioregion"
+    ),
+    slider_varsBioR2 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
+      categoryOut = TRUE, byCategory = TRUE,
+      dataType = "Bioregion"
+    ),
+    check_lockIn1 = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
+      "check1LI_",
+      categoryOut = TRUE
+    ),
+    check_lockIn2 = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
+      "check2LI_",
+      categoryOut = TRUE
+    ),
+    check_lockOut1 = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
+      "check1LO_",
+      categoryOut = TRUE
+    ),
+    check_lockOut2 = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
+      "check2LO_",
+      categoryOut = TRUE
+    )
   )
 )
 

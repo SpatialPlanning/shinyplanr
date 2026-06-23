@@ -71,7 +71,6 @@ get_schema_version <- function() {
 #'
 #' @noRd
 .validate_config <- function(config, config_path) {
-
   if (!is.list(config)) {
     stop(
       "The config file does not contain a valid list: ",

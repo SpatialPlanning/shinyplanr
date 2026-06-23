@@ -9,14 +9,14 @@
 #' @import shiny
 mod_3compare_ui <- function(id, cfg) {
   # Extract config locals
-  Dict    <- cfg$Dict
+  Dict <- cfg$Dict
   options <- cfg$options
   sidebar <- cfg$sidebar$compare
 
   ns <- NS(id)
 
   # Decide numbering for optional sections
-  if (isTRUE(options$include_climateChange)){
+  if (isTRUE(options$include_climateChange)) {
     LI_num <- "4"
   } else {
     LI_num <- "3"
@@ -28,7 +28,6 @@ mod_3compare_ui <- function(id, cfg) {
   Vars1 <- Vars2 <- slider_varsBioR1 <- slider_varsBioR2 <- check_lockIn1 <- check_lockIn2 <- check_lockOut1 <- check_lockOut2 <- NULL
 
   rlang::env_bind(environment(), !!!sidebar)
-
 
 
   # tagList(
@@ -45,14 +44,13 @@ mod_3compare_ui <- function(id, cfg) {
       ),
       shiny::h2("1. Select Feature Targets"),
       shiny::actionButton(ns("resetSlider"), "Reset All Features",
-                          width = "100%", class = "btn btn-outline-primary",
-                          style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
+        width = "100%", class = "btn btn-outline-primary",
+        style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
       ),
       shiny::splitLayout(
         fcustom_sliderCategory(Vars1, labelNum = 1),
         fcustom_sliderCategory(Vars2, labelNum = 1, labelCategory = FALSE)
       ),
-
       shinyjs::hidden(div(
         id = ns("switchBioregions"),
         # Hidden by default; shown by the server only when options$include_bioregion
@@ -61,11 +59,12 @@ mod_3compare_ui <- function(id, cfg) {
         shiny::h3(paste0("1.", length(unique(Vars1$category)) + 1, " Bioregions")),
         shiny::splitLayout(
           fcustom_sliderCategory(slider_varsBioR1, labelNum = 1, byCategory = TRUE),
-          fcustom_sliderCategory(slider_varsBioR2, labelNum = 1, byCategory = TRUE,
-                                 labelCategory = FALSE)
+          fcustom_sliderCategory(slider_varsBioR2,
+            labelNum = 1, byCategory = TRUE,
+            labelCategory = FALSE
+          )
         ),
       )),
-
       shiny::h2("2. Select Cost Layer"),
       shiny::splitLayout(
         # This was needed to account for cost not expanding inside splitlayout
@@ -73,18 +72,16 @@ mod_3compare_ui <- function(id, cfg) {
         tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
         cellWidths = c("0%", "50%", "50%"), # note the 0% here at position zero...
         create_fancy_dropdown(id, "costid1", Dict %>%
-                                dplyr::filter(.data$type == "Cost")),
+          dplyr::filter(.data$type == "Cost")),
         create_fancy_dropdown(id, "costid2", Dict %>%
-                                dplyr::filter(.data$type == "Cost")),
+          dplyr::filter(.data$type == "Cost")),
       ),
-
       shinyjs::hidden(div(
         id = ns("switchMinSet"),
         shiny::h3("Minimum Set"),
         shiny::p("This analysis will use the minimum set objective which aims to find the set of
                  planning units that meets all targets for the smallest possible cost.")
       )),
-
       shinyjs::hidden(div(
         id = ns("switchMinShortfall"),
         shiny::h3("Choose a Budget"),
@@ -110,219 +107,239 @@ mod_3compare_ui <- function(id, cfg) {
           ),
         ),
       )),
-
-
-
       if (isTRUE(options$include_climateChange)) {
         div(
           shiny::h2("3. Climate-smart"),
           shiny::p("Should the spatial plan be made climate-resilient?"),
           shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
           shiny::fluidRow(
-            shiny::column(6,
-              create_fancy_dropdown(id = id,  id_in = "climateid1", Dict = Dict %>%
-                                      dplyr::filter(.data$type == "Climate") %>%
-                                      dplyr::add_row(nameCommon = "Don't consider",
-                                                     nameVariable = "NA",
-                                                     category = "Climate", .before = 1))
+            shiny::column(
+              6,
+              create_fancy_dropdown(id = id, id_in = "climateid1", Dict = Dict %>%
+                dplyr::filter(.data$type == "Climate") %>%
+                dplyr::add_row(
+                  nameCommon = "Don't consider",
+                  nameVariable = "NA",
+                  category = "Climate", .before = 1
+                ))
             ),
-            shiny::column(6,
-              create_fancy_dropdown(id = id,  id_in = "climateid2", Dict = Dict %>%
-                                      dplyr::filter(.data$type == "Climate") %>%
-                                      dplyr::add_row(nameCommon = "Don't consider",
-                                                     nameVariable = "NA",
-                                                     category = "Climate", .before = 1))
+            shiny::column(
+              6,
+              create_fancy_dropdown(id = id, id_in = "climateid2", Dict = Dict %>%
+                dplyr::filter(.data$type == "Climate") %>%
+                dplyr::add_row(
+                  nameCommon = "Don't consider",
+                  nameVariable = "NA",
+                  category = "Climate", .before = 1
+                ))
             )
           )
         )
       },
-
       shinyjs::hidden(div(
         id = ns("switchConstraints"),
-        shiny::h2(paste0(LI_num,". Constraints")),
+        shiny::h2(paste0(LI_num, ". Constraints")),
         shiny::p("You can also lock-in or lock-out some pre-defined areas to ensure they are either specifically included (lock-in) or excluded (lock-out) from the protected area. Planning Units outside these areas will be selected if needed to meet the targets."),
         if (nrow(check_lockIn1) > 0 || nrow(check_lockIn2) > 0) shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
-        if (nrow(check_lockIn1) > 0 || nrow(check_lockIn2) > 0) shiny::splitLayout(
-          fcustom_checkCategory(check_lockIn1),
-          fcustom_checkCategory(check_lockIn2)
-        ),
+        if (nrow(check_lockIn1) > 0 || nrow(check_lockIn2) > 0) {
+          shiny::splitLayout(
+            fcustom_checkCategory(check_lockIn1),
+            fcustom_checkCategory(check_lockIn2)
+          )
+        },
         if (nrow(check_lockOut1) > 0 || nrow(check_lockOut2) > 0) shiny::h3(paste0(LI_num, ".2 Locked-Out Areas")),
-        if (nrow(check_lockOut1) > 0 || nrow(check_lockOut2) > 0) shiny::splitLayout(
-          fcustom_checkCategory(check_lockOut1),
-          fcustom_checkCategory(check_lockOut2)
-        )
+        if (nrow(check_lockOut1) > 0 || nrow(check_lockOut2) > 0) {
+          shiny::splitLayout(
+            fcustom_checkCategory(check_lockOut1),
+            fcustom_checkCategory(check_lockOut2)
+          )
+        }
       )),
-
-
       shiny::br(), # Leave space for analysis button at bottom
       shiny::br(), # Leave space for analysis button at bottom
       shiny::fixedPanel(
         style = "z-index:100", # To force the button above all plots.
         shiny::actionButton(ns("analyse"), "Run Analysis", shiny::icon("paper-plane"),
-                            width = "100%", class = "btn btn-primary",
-                            style = "display: block; float: left; padding:4px; font-size:150%;"
+          width = "100%", class = "btn btn-primary",
+          style = "display: block; float: left; padding:4px; font-size:150%;"
         ),
         right = "71%", bottom = "1%", left = "5%"
       ),
     ),
-
     shiny::mainPanel(
-
       tabsetPanel(
         id = ns("tabs"),
         type = "pills",
         tabPanel("Comparison",
-                 value = 1,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the buttons above all plots.
-                   shiny::div(
-                     style = "display:flex; gap:10px; justify-content:flex-end; align-items:center;",
-                     shiny::downloadButton(ns("dlSpatialComp"), "Download Spatial File",
-                                           style = "padding:4px; font-size:120%"),
-                     shiny::downloadButton(ns("dlPlot1"), "Download Plot",
-                                           style = "padding:4px; font-size:120%")
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_comp")))),
-                 shiny::textOutput(ns("txt_comp")),
-                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_comp"), height = "600px"))
+          value = 1,
+          shiny::fixedPanel(
+            style = "z-index:100", # To force the buttons above all plots.
+            shiny::div(
+              style = "display:flex; gap:10px; justify-content:flex-end; align-items:center;",
+              shiny::downloadButton(ns("dlSpatialComp"), "Download Spatial File",
+                style = "padding:4px; font-size:120%"
+              ),
+              shiny::downloadButton(ns("dlPlot1"), "Download Plot",
+                style = "padding:4px; font-size:120%"
+              )
+            ),
+            right = "1%", bottom = "1%", left = "34%"
+          ),
+          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_comp")))),
+          shiny::textOutput(ns("txt_comp")),
+          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_comp"), height = "600px"))
         ),
         tabPanel("Scenario",
-                 value = 2,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the buttons above all plots.
-                   shiny::div(
-                     style = "display:flex; gap:10px; justify-content:flex-end; align-items:center;",
-                     shiny::downloadButton(ns("dlSpatial1"), "Download Scenario 1 Spatial",
-                                           style = "padding:4px; font-size:110%"),
-                     shiny::downloadButton(ns("dlSpatial2"), "Download Scenario 2 Spatial",
-                                           style = "padding:4px; font-size:110%"),
-                     shiny::downloadButton(ns("dlPlot2"), "Download Plot",
-                                           style = "padding:4px; font-size:120%")
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::fluidRow(
-                   shiny::span(shiny::p(shiny::textOutput(ns("txt_soln")))),
-                   shiny::column(width = 1),
-                   shiny::column(width = 4,
-                                 shiny::h2(shiny::textOutput(ns("hdr_soln1"))),
-                                 shiny::p(shiny::textOutput(ns("txt_soln1")))),
-                   shiny::column(width = 2),
-                   shiny::column(width = 4,
-                                 shiny::h2(shiny::textOutput(ns("hdr_soln2"))),
-                                 shiny::p(shiny::textOutput(ns("txt_soln2")))),
-                   shiny::column(width = 1),
-                   shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_soln"), height = "700px"))
-                 ),
+          value = 2,
+          shiny::fixedPanel(
+            style = "z-index:100", # To force the buttons above all plots.
+            shiny::div(
+              style = "display:flex; gap:10px; justify-content:flex-end; align-items:center;",
+              shiny::downloadButton(ns("dlSpatial1"), "Download Scenario 1 Spatial",
+                style = "padding:4px; font-size:110%"
+              ),
+              shiny::downloadButton(ns("dlSpatial2"), "Download Scenario 2 Spatial",
+                style = "padding:4px; font-size:110%"
+              ),
+              shiny::downloadButton(ns("dlPlot2"), "Download Plot",
+                style = "padding:4px; font-size:120%"
+              )
+            ),
+            right = "1%", bottom = "1%", left = "34%"
+          ),
+          shiny::fluidRow(
+            shiny::span(shiny::p(shiny::textOutput(ns("txt_soln")))),
+            shiny::column(width = 1),
+            shiny::column(
+              width = 4,
+              shiny::h2(shiny::textOutput(ns("hdr_soln1"))),
+              shiny::p(shiny::textOutput(ns("txt_soln1")))
+            ),
+            shiny::column(width = 2),
+            shiny::column(
+              width = 4,
+              shiny::h2(shiny::textOutput(ns("hdr_soln2"))),
+              shiny::p(shiny::textOutput(ns("txt_soln2")))
+            ),
+            shiny::column(width = 1),
+            shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_soln"), height = "700px"))
+          ),
         ),
         tabPanel("Targets",
-                 value = 3,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.=
-                   shiny::downloadButton(ns("dlPlot3"), "Download Plot",
-                                         style = "float: right; padding:4px; font-size:120%"
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_target")))),
-                 shiny::br(),
-                 shiny::selectInput(inputId = ns("checkSort"),
-                                    label = "Sort plot by:",
-                                    choices = c("Category" = "category",
-                                                # "Feature" = "feature",
-                                                "Target" = "target",
-                                                "Representation" = "representation",
-                                                "Difference from Target" = "difference"),
-                                    selected = "category",  multiple = FALSE),
-                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_target"), height = "700px"))
+          value = 3,
+          shiny::fixedPanel(
+            style = "z-index:100", # To force the button above all plots.=
+            shiny::downloadButton(ns("dlPlot3"), "Download Plot",
+              style = "float: right; padding:4px; font-size:120%"
+            ),
+            right = "1%", bottom = "1%", left = "34%"
+          ),
+          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_target")))),
+          shiny::br(),
+          shiny::selectInput(
+            inputId = ns("checkSort"),
+            label = "Sort plot by:",
+            choices = c(
+              "Category" = "category",
+              # "Feature" = "feature",
+              "Target" = "target",
+              "Representation" = "representation",
+              "Difference from Target" = "difference"
+            ),
+            selected = "category", multiple = FALSE
+          ),
+          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_target"), height = "700px"))
         ),
         tabPanel("Cost",
-                 value = 4,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.=
-                   shiny::downloadButton(ns("dlPlot4"), "Download Plot",
-                                         style = "float: right; padding:4px; font-size:120%"
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_cost")))),
-                 shiny::span(shiny::p(shiny::textOutput(ns("txt_cost")))),
-                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_cost"), height = "700px")),
+          value = 4,
+          shiny::fixedPanel(
+            style = "z-index:100", # To force the button above all plots.=
+            shiny::downloadButton(ns("dlPlot4"), "Download Plot",
+              style = "float: right; padding:4px; font-size:120%"
+            ),
+            right = "1%", bottom = "1%", left = "34%"
+          ),
+          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_cost")))),
+          shiny::span(shiny::p(shiny::textOutput(ns("txt_cost")))),
+          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_cost"), height = "700px")),
         ),
         tabPanel("Climate",
-                 value = 7,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.=
-                   shiny::downloadButton(ns("dlPlot7"), "Download Plot",
-                                         style = "float: right; padding:4px; font-size:120%"
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
-                 shiny::textOutput(ns("txt_clim")),
-                 shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "600px"))
+          value = 7,
+          shiny::fixedPanel(
+            style = "z-index:100", # To force the button above all plots.=
+            shiny::downloadButton(ns("dlPlot7"), "Download Plot",
+              style = "float: right; padding:4px; font-size:120%"
+            ),
+            right = "1%", bottom = "1%", left = "34%"
+          ),
+          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
+          shiny::textOutput(ns("txt_clim")),
+          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "600px"))
         ),
         tabPanel("Details",
-                 value = 8,
-                 shiny::fixedPanel(
-                   style = "z-index:100", # To force the button above all plots.=
-                   shiny::downloadButton(ns("dlPlot8"), "Download Table",
-                                         style = "float: right; padding:4px; font-size:120%"
-                   ),
-                   right = "1%", bottom = "1%", left = "34%"
-                 ),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsSummary")))),
-                 shiny::br(),
-                 shiny::tableOutput(ns("SummaryTable")),
-                 shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
-                 shiny::tableOutput(ns("DataTable")),
+          value = 8,
+          shiny::fixedPanel(
+            style = "z-index:100", # To force the button above all plots.=
+            shiny::downloadButton(ns("dlPlot8"), "Download Table",
+              style = "float: right; padding:4px; font-size:120%"
+            ),
+            right = "1%", bottom = "1%", left = "34%"
+          ),
+          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsSummary")))),
+          shiny::br(),
+          shiny::tableOutput(ns("SummaryTable")),
+          shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
+          shiny::tableOutput(ns("DataTable")),
         ),
         tabPanel("Report",
-                 value = 10,
-                 shiny::span(shiny::h2("Generate Analysis Report")),
-                 shiny::p("Download a comprehensive HTML report containing all analysis results from this scenario."),
-                 shiny::p("The report includes:"),
-                 shiny::tags$ul(
-                   shiny::tags$li("Comparison map"),
-                   shiny::tags$li("Solution map with constraints"),
-                   shiny::tags$li("Target achievement chart"),
-                   shiny::tags$li("Cost analysis visualization"),
-                   shiny::tags$li("Climate resilience analysis (if enabled)"),
-                   shiny::tags$li(shiny::tagList(shiny::em("prioritizr"), " log")),
-                 ),
-                 shiny::br(),
-                 shiny::downloadButton(ns("downloadReportCompare"), "Download Report",
-                                       style = "padding:10px 20px; font-size:120%"),
-                 shiny::uiOutput(ns("reportStatus")),
-                 shiny::br(),
-                 shiny::br(),
-                 shiny::p(shiny::em("Note: Report generation may take a few moments. The file will download automatically when ready."),
-                          style = "color: #666;")
+          value = 10,
+          shiny::span(shiny::h2("Generate Analysis Report")),
+          shiny::p("Download a comprehensive HTML report containing all analysis results from this scenario."),
+          shiny::p("The report includes:"),
+          shiny::tags$ul(
+            shiny::tags$li("Comparison map"),
+            shiny::tags$li("Solution map with constraints"),
+            shiny::tags$li("Target achievement chart"),
+            shiny::tags$li("Cost analysis visualization"),
+            shiny::tags$li("Climate resilience analysis (if enabled)"),
+            shiny::tags$li(shiny::tagList(shiny::em("prioritizr"), " log")),
+          ),
+          shiny::br(),
+          shiny::downloadButton(ns("downloadReportCompare"), "Download Report",
+            style = "padding:10px 20px; font-size:120%"
+          ),
+          shiny::uiOutput(ns("reportStatus")),
+          shiny::br(),
+          shiny::br(),
+          shiny::p(shiny::em("Note: Report generation may take a few moments. The file will download automatically when ready."),
+            style = "color: #666;"
+          )
         ),
         tabPanel("Log",
-                 value = 9,
-                 shiny::span(shiny::h2("Solver Logs")),
-                 shiny::textOutput(ns("txt_log_hint")),
-                 shiny::tabsetPanel(
-                   id = ns("logTabs"),
-                   type = "tabs",
-                   shiny::tabPanel("Scenario 1",
-                                   shinycssloaders::withSpinner(
-                                     shiny::verbatimTextOutput(ns("logText1"), placeholder = TRUE)
-                                   )
-                   ),
-                   shiny::tabPanel("Scenario 2",
-                                   shinycssloaders::withSpinner(
-                                     shiny::verbatimTextOutput(ns("logText2"), placeholder = TRUE)
-                                   )
-                   )
-                 )
+          value = 9,
+          shiny::span(shiny::h2("Solver Logs")),
+          shiny::textOutput(ns("txt_log_hint")),
+          shiny::tabsetPanel(
+            id = ns("logTabs"),
+            type = "tabs",
+            shiny::tabPanel(
+              "Scenario 1",
+              shinycssloaders::withSpinner(
+                shiny::verbatimTextOutput(ns("logText1"), placeholder = TRUE)
+              )
+            ),
+            shiny::tabPanel(
+              "Scenario 2",
+              shinycssloaders::withSpinner(
+                shiny::verbatimTextOutput(ns("logText2"), placeholder = TRUE)
+              )
+            )
+          )
         ),
       )
     )
-  )}
+  )
+}
 
 
 #' 3compare Server Functions
@@ -330,13 +347,14 @@ mod_3compare_ui <- function(id, cfg) {
 #' @noRd
 mod_3compare_server <- function(id, cfg) {
   # Extract config locals
-  Dict      <- cfg$Dict
-  options   <- cfg$options
-  raw_sf    <- cfg$raw_sf
-  bndry     <- cfg$bndry
-  overlay   <- cfg$overlay
+  Dict <- cfg$Dict
+  options <- cfg$options
+  raw_sf <- cfg$raw_sf
+  bndry <- cfg$bndry
+  overlay <- cfg$overlay
   map_theme <- cfg$map_theme
-  sidebar   <- cfg$sidebar$compare
+  bar_theme <- cfg$bar_theme
+  sidebar <- cfg$sidebar$compare
 
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -352,26 +370,30 @@ mod_3compare_server <- function(id, cfg) {
     # Declare all reactiveVals at the top so they are available to all observers
     # and handlers below, regardless of evaluation order.
     analysisTime <- shiny::reactiveVal("")
-    solveLog1    <- shiny::reactiveVal(character(0))
-    solveLog2    <- shiny::reactiveVal(character(0))
+    solveLog1 <- shiny::reactiveVal(character(0))
+    solveLog2 <- shiny::reactiveVal(character(0))
 
     # Apply all UI show/hide switches driven by options ----
     # Note: switches for elements not yet in the compare UI (switchBoundaryPenalty,
     # switchMasterTargets, etc.) are silently ignored by shinyjs
     # until those features are added to this module.
     fapply_ui_switches(options, session,
-                       tab_climate = "7",
-                       tab_report  = "10",
-                       tab_log     = "9")
+      tab_climate = "7",
+      tab_report  = "10",
+      tab_log     = "9"
+    )
 
     shiny::observeEvent(input$disconnect, {
       session$close()
     })
 
-    shiny::observeEvent(input$resetSlider, {
-      fresetSlider(session, Vars1)
-      fresetSlider(session, Vars2)
-    }, ignoreInit = TRUE)
+    shiny::observeEvent(input$resetSlider,
+      {
+        fresetSlider(session, Vars1)
+        fresetSlider(session, Vars2)
+      },
+      ignoreInit = TRUE
+    )
 
     # On analyse: capture timestamp, reset to first tab, scroll to top.
     shiny::observeEvent(input$analyse, {
@@ -383,17 +405,15 @@ mod_3compare_server <- function(id, cfg) {
 
     # Set up paired lock-in/lock-out mutual exclusion observers for each scenario
     fsetup_lock_observers(input, check_lockIn1, check_lockOut1,
-                          li_prefix = "check1LI_", lo_prefix = "check1LO_")
+      li_prefix = "check1LI_", lo_prefix = "check1LO_"
+    )
     fsetup_lock_observers(input, check_lockIn2, check_lockOut2,
-                          li_prefix = "check2LI_", lo_prefix = "check2LO_")
-
-
-
+      li_prefix = "check2LI_", lo_prefix = "check2LO_"
+    )
 
 
     # Get Target Data
     targetData1 <- shiny::reactive({
-
       targets <- fget_targets_with_bioregions(input, name_check = "sli1_", Dict = Dict)
       return(targets)
     })
@@ -451,7 +471,6 @@ mod_3compare_server <- function(id, cfg) {
     #### Comparison Plot ####
 
     ggr_comp <- shiny::reactive({
-
       area1 <- solution1() %>%
         dplyr::filter(.data$solution_1 == 1) %>%
         nrow()
@@ -483,8 +502,9 @@ mod_3compare_server <- function(id, cfg) {
           cropOverlay = solution1(),
           ggtheme = map_theme
         ) +
-        ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                       legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+        ggplot2::theme(
+          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
         )
     }) %>% shiny::bindEvent(input$analyse)
 
@@ -495,14 +515,20 @@ mod_3compare_server <- function(id, cfg) {
     # (evaluated after solution1()) fires exactly once per analysis run.
     ggr_comp_cache <- shiny::reactiveVal(NULL)
 
-    shiny::observeEvent(solution2(), {
-      val <- tryCatch(ggr_comp(), error = function(e) NULL)
-      if (!is.null(val)) ggr_comp_cache(val)
-    }, ignoreNULL = TRUE)
+    shiny::observeEvent(solution2(),
+      {
+        val <- tryCatch(ggr_comp(), error = function(e) NULL)
+        if (!is.null(val)) ggr_comp_cache(val)
+      },
+      ignoreNULL = TRUE
+    )
 
-    output$gg_comp <- shiny::renderPlot({
-      ggr_comp()
-    }, bg = "transparent")
+    output$gg_comp <- shiny::renderPlot(
+      {
+        ggr_comp()
+      },
+      bg = "transparent"
+    )
 
     output$dlPlot1 <- fDownloadPlotServer(gg_reactive = ggr_comp, gg_prefix = "Compare", time_date_reactive = analysisTime)
 
@@ -545,7 +571,6 @@ mod_3compare_server <- function(id, cfg) {
     #### Binary Solution Plot ####
 
     ggr_soln <- shiny::reactive({
-
       plot_soln1 <- fplot_solution_with_constraints(
         soln = solution1(), input = input, raw_sf = raw_sf,
         bndry = bndry, overlay = overlay, map_theme = map_theme, num = "1",
@@ -577,14 +602,20 @@ mod_3compare_server <- function(id, cfg) {
     # Tab 2 is always shown after analysis, so the tab observer fires too early.
     ggr_soln_cache <- shiny::reactiveVal(NULL)
 
-    shiny::observeEvent(solution2(), {
-      val <- tryCatch(ggr_soln(), error = function(e) NULL)
-      if (!is.null(val)) ggr_soln_cache(val)
-    }, ignoreNULL = TRUE)
+    shiny::observeEvent(solution2(),
+      {
+        val <- tryCatch(ggr_soln(), error = function(e) NULL)
+        if (!is.null(val)) ggr_soln_cache(val)
+      },
+      ignoreNULL = TRUE
+    )
 
-    output$gg_soln <- shiny::renderPlot({
-      ggr_soln()
-    }, bg = "transparent")
+    output$gg_soln <- shiny::renderPlot(
+      {
+        ggr_soln()
+      },
+      bg = "transparent"
+    )
 
     output$hdr_soln1 <- shiny::renderText("Scenario 1") %>%
       shiny::bindEvent(input$analyse)
@@ -658,30 +689,42 @@ mod_3compare_server <- function(id, cfg) {
       tpd1 <- targetPlotData1()
       tpd2 <- targetPlotData2()
 
-      if (is.null(tpd1) || is.null(tpd2)) return(NULL)
+      if (is.null(tpd1) || is.null(tpd2)) {
+        return(NULL)
+      }
 
       patchwork::wrap_plots(
         spatialplanr::splnr_plot_featureRep(tpd1,
-                                            nr = 2, showTarget = TRUE,
-                                            category = fget_category(Dict = Dict),
-                                            renameFeatures = TRUE, namesToReplace = Dict,
-                                            sort_by = input$checkSort) +
+          nr = 2, showTarget = TRUE,
+          category = fget_category(Dict = Dict),
+          renameFeatures = TRUE, namesToReplace = Dict,
+          sort_by = input$checkSort
+        ) +
+          bar_theme +
           ggplot2::ggtitle("Scenario 1") +
-          ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                         legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)),
+          ggplot2::theme(
+            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+          ),
         spatialplanr::splnr_plot_featureRep(tpd2,
-                                            nr = 2, showTarget = TRUE,
-                                            category = fget_category(Dict = Dict),
-                                            renameFeatures = TRUE, namesToReplace = Dict,
-                                            sort_by = input$checkSort) +
+          nr = 2, showTarget = TRUE,
+          category = fget_category(Dict = Dict),
+          renameFeatures = TRUE, namesToReplace = Dict,
+          sort_by = input$checkSort
+        ) +
+          bar_theme +
           ggplot2::ggtitle("Scenario 2") +
-          ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                         legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)),
+          ggplot2::theme(
+            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+          ),
         nrow = 1, guides = "collect"
       ) &
-        ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
-                       plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                       legend.background = ggplot2::element_rect(fill = "transparent", colour = NA))
+        ggplot2::theme(
+          legend.position = "bottom", legend.direction = "horizontal",
+          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+        )
     }) %>%
       shiny::bindCache(input$analyse, input$checkSort)
 
@@ -691,9 +734,12 @@ mod_3compare_server <- function(id, cfg) {
     # the current sort selection.
     ggr_target_cache <- fmake_tab_cache(ggr_target, tab_id = 3, input = input)
 
-    output$gg_target <- shiny::renderPlot({
-      ggr_target()
-    }, bg = "transparent")
+    output$gg_target <- shiny::renderPlot(
+      {
+        ggr_target()
+      },
+      bg = "transparent"
+    )
 
     output$hdr_target <- shiny::renderText("Targets") %>%
       shiny::bindEvent(input$analyse)
@@ -711,41 +757,65 @@ mod_3compare_server <- function(id, cfg) {
     ## Cost Plot -------------------------------------------------------------
 
     ggr_cost <- shiny::reactive({
+      # Look up the human-readable name for each selected cost layer from the dictionary.
+      cost_label1 <- Dict %>%
+        dplyr::filter(.data$nameVariable == input$costid1) %>%
+        dplyr::pull(.data$nameCommon)
 
-      gg_cost1 <- spatialplanr::splnr_plot_costOverlay(soln = solution1(),
-                                                       cost = NA, costName = input$costid1,
-                                                       legendTitle = "Cost",
-                                                       plotTitle = "Solution overlaid with cost"
-      ) +
-        spatialplanr::splnr_gg_add(Bndry = bndry, overlay = overlay,
-                                   cropOverlay = solution1(), ggtheme = map_theme) +
-        ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                       legend.background = ggplot2::element_rect(fill = "transparent", colour = NA))
+      cost_label2 <- Dict %>%
+        dplyr::filter(.data$nameVariable == input$costid2) %>%
+        dplyr::pull(.data$nameCommon)
 
-      gg_cost2 <- spatialplanr::splnr_plot_costOverlay(soln = solution2(),
-                                                       cost = NA, costName = input$costid2,
-                                                       legendTitle = "Cost",
-                                                       plotTitle = "Solution overlaid with cost"
+      gg_cost1 <- spatialplanr::splnr_plot_costOverlay(
+        soln = solution1(),
+        cost = NA, costName = input$costid1,
+        legendTitle = cost_label1,
+        plotTitle = "Solution overlaid with cost"
       ) +
-        spatialplanr::splnr_gg_add(Bndry = bndry, overlay = overlay,
-                                   cropOverlay = solution2(), ggtheme = map_theme) +
-        ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                       legend.background = ggplot2::element_rect(fill = "transparent", colour = NA))
+        spatialplanr::splnr_gg_add(
+          Bndry = bndry, overlay = overlay,
+          cropOverlay = solution1(), ggtheme = map_theme
+        ) +
+        ggplot2::theme(
+          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+        )
+
+      gg_cost2 <- spatialplanr::splnr_plot_costOverlay(
+        soln = solution2(),
+        cost = NA, costName = input$costid2,
+        legendTitle = cost_label2,
+        plotTitle = "Solution overlaid with cost"
+      ) +
+        spatialplanr::splnr_gg_add(
+          Bndry = bndry, overlay = overlay,
+          cropOverlay = solution2(), ggtheme = map_theme
+        ) +
+        ggplot2::theme(
+          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+        )
 
       patchwork::wrap_plots(gg_cost1 + ggplot2::ggtitle("Scenario 1"),
-                            gg_cost2 + ggplot2::ggtitle("Scenario 2"),
-                            nrow = 1, guides = "collect") &
-        ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal",
-                       plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-                       legend.background = ggplot2::element_rect(fill = "transparent", colour = NA))
+        gg_cost2 + ggplot2::ggtitle("Scenario 2"),
+        nrow = 1, guides = "collect"
+      ) &
+        ggplot2::theme(
+          legend.position = "bottom", legend.direction = "horizontal",
+          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+        )
     }) %>% shiny::bindEvent(input$analyse)
 
     # Cache populated on tab visit
     ggr_cost_cache <- fmake_tab_cache(ggr_cost, tab_id = 4, input = input)
 
-    output$gg_cost <- shiny::renderPlot({
-      ggr_cost()
-    }, bg = "transparent")
+    output$gg_cost <- shiny::renderPlot(
+      {
+        ggr_cost()
+      },
+      bg = "transparent"
+    )
 
     output$hdr_cost <- shiny::renderText("The Cost Layer Overlaid with Selection") %>%
       shiny::bindEvent(input$analyse)
@@ -786,11 +856,14 @@ mod_3compare_server <- function(id, cfg) {
     # Cache populated on tab visit
     ggr_clim_cache <- fmake_tab_cache(ggr_clim, tab_id = 7, input = input)
 
-    output$gg_clim <- shiny::renderPlot({
-      clim1 <- input$climateid1 %||% "NA"
-      clim2 <- input$climateid2 %||% "NA"
-      if (clim1 != "NA" || clim2 != "NA") ggr_clim()
-    }, bg = "transparent")
+    output$gg_clim <- shiny::renderPlot(
+      {
+        clim1 <- input$climateid1 %||% "NA"
+        clim2 <- input$climateid2 %||% "NA"
+        if (clim1 != "NA" || clim2 != "NA") ggr_clim()
+      },
+      bg = "transparent"
+    )
 
     output$hdr_clim <- shiny::renderText({
       clim1 <- input$climateid1 %||% "NA"
@@ -827,7 +900,9 @@ mod_3compare_server <- function(id, cfg) {
       tbl1 <- fformat_feature_table(targetPlotData1(), Dict, suffix = " 1")
       tbl2 <- fformat_feature_table(targetPlotData2(), Dict, suffix = " 2")
 
-      if (is.null(tbl1) || is.null(tbl2)) return(NULL)
+      if (is.null(tbl1) || is.null(tbl2)) {
+        return(NULL)
+      }
 
       dplyr::full_join(tbl1, tbl2, by = c("Category", "Feature"))
     }) %>%
@@ -844,13 +919,15 @@ mod_3compare_server <- function(id, cfg) {
     output$hdr_DetsData <- shiny::renderText("Feature Summary") %>%
       shiny::bindEvent(input$analyse)
 
-    output$dlPlot8 <- fDownloadPlotServer(gg_reactive = DataTabler, gg_prefix = "DataSummary",
-                                          time_date_reactive = analysisTime, type = "table")
+    output$dlPlot8 <- fDownloadPlotServer(
+      gg_reactive = DataTabler, gg_prefix = "DataSummary",
+      time_date_reactive = analysisTime, type = "table"
+    )
 
     ## Log Tab -----------------------------------------------------------------
     # Render log text for Scenario 1
     output$logText1 <- shiny::renderText({
-      solution1()  # Trigger the solve
+      solution1() # Trigger the solve
 
       log <- solveLog1()
       if (is.null(log) || length(log) == 0 || nchar(log) == 0) {
@@ -862,7 +939,7 @@ mod_3compare_server <- function(id, cfg) {
 
     # Render log text for Scenario 2
     output$logText2 <- shiny::renderText({
-      solution2()  # Trigger the solve
+      solution2() # Trigger the solve
 
       log <- solveLog2()
       if (is.null(log) || length(log) == 0 || nchar(log) == 0) {
@@ -888,18 +965,18 @@ mod_3compare_server <- function(id, cfg) {
 
         # Use tab-visit caches where available; fall back to evaluating the reactive
         frender_report(
-          file             = file,
-          output           = output,
-          template_name    = "report_compare.qmd",
-          notification_id  = "report_progress_compare",
+          file = file,
+          output = output,
+          template_name = "report_compare.qmd",
+          notification_id = "report_progress_compare",
           notification_msg = "Generating comparison report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
-          tmp_dir_prefix   = "qrender_compare_",
+          tmp_dir_prefix = "qrender_compare_",
           plots = list(
-            comp    = ggr_comp_cache()   %||% tryCatch(ggr_comp(),   error = function(e) NULL),
-            soln    = ggr_soln_cache()   %||% tryCatch(ggr_soln(),   error = function(e) NULL),
+            comp    = ggr_comp_cache() %||% tryCatch(ggr_comp(), error = function(e) NULL),
+            soln    = ggr_soln_cache() %||% tryCatch(ggr_soln(), error = function(e) NULL),
             target  = ggr_target_cache() %||% tryCatch(ggr_target(), error = function(e) NULL),
-            cost    = ggr_cost_cache()   %||% tryCatch(ggr_cost(),   error = function(e) NULL),
-            climate = ggr_clim_cache()   %||% tryCatch(ggr_clim(),   error = function(e) NULL)
+            cost    = ggr_cost_cache() %||% tryCatch(ggr_cost(), error = function(e) NULL),
+            climate = ggr_clim_cache() %||% tryCatch(ggr_clim(), error = function(e) NULL)
           ),
           tables = list(
             details = DataTabler_cache() %||% tryCatch(DataTabler(), error = function(e) NULL)
@@ -917,7 +994,6 @@ mod_3compare_server <- function(id, cfg) {
         )
       }
     )
-
   }) # end moduleServer
 } # end mod_3compare_server
 

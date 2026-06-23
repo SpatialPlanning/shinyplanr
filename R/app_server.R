@@ -6,7 +6,7 @@
 #' @noRd
 app_server <- function(input, output, session) {
   # Your application server logic
-  cfg     <- get_pkg_config()
+  cfg <- get_pkg_config()
   options <- cfg$options
 
 

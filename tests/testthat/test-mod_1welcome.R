@@ -18,7 +18,7 @@ test_that("mod_1welcome_ui() returns a shiny tag list", {
 
 test_that("mod_1welcome_ui() formals contain 'id' and 'cfg'", {
   fmls <- formals(mod_1welcome_ui)
-  expect_true("id"  %in% names(fmls))
+  expect_true("id" %in% names(fmls))
   expect_true("cfg" %in% names(fmls))
 })
 
@@ -27,13 +27,13 @@ test_that("mod_1welcome_ui() renders without error using stub cfg", {
 })
 
 test_that("mod_1welcome_ui() produces HTML containing a footer div", {
-  ui   <- mod_1welcome_ui(id = "test", cfg = cfg)
+  ui <- mod_1welcome_ui(id = "test", cfg = cfg)
   html <- as.character(ui)
   expect_match(html, "home-footer", fixed = TRUE)
 })
 
 test_that("mod_1welcome_ui() includes a funder logo image tag", {
-  ui   <- mod_1welcome_ui(id = "test", cfg = cfg)
+  ui <- mod_1welcome_ui(id = "test", cfg = cfg)
   html <- as.character(ui)
   expect_match(html, "logo_funder\\.png", perl = TRUE)
 })
@@ -42,7 +42,7 @@ test_that("mod_1welcome_ui() shows second funder logo when options$show_logo_fun
   cfg_f2 <- cfg
   cfg_f2$options <- modifyList(cfg$options, list(show_logo_funder2 = TRUE))
 
-  ui   <- mod_1welcome_ui(id = "test_f2", cfg = cfg_f2)
+  ui <- mod_1welcome_ui(id = "test_f2", cfg = cfg_f2)
   html <- as.character(ui)
   expect_match(html, "logo_funder2\\.png", perl = TRUE)
 })
@@ -51,7 +51,7 @@ test_that("mod_1welcome_ui() hides second funder logo when options$show_logo_fun
   cfg_nof2 <- cfg
   cfg_nof2$options <- modifyList(cfg$options, list(show_logo_funder2 = FALSE))
 
-  ui   <- mod_1welcome_ui(id = "test_nof2", cfg = cfg_nof2)
+  ui <- mod_1welcome_ui(id = "test_nof2", cfg = cfg_nof2)
   html <- as.character(ui)
   expect_false(grepl("logo_funder2\\.png", html))
 })
@@ -65,7 +65,7 @@ test_that("mod_1welcome_ui() renders a tabsetPanel when tx$welcome has multiple 
     )
   )
 
-  ui   <- mod_1welcome_ui(id = "test_multi", cfg = cfg_multi)
+  ui <- mod_1welcome_ui(id = "test_multi", cfg = cfg_multi)
   html <- as.character(ui)
   expect_match(html, "nav nav-pills", fixed = TRUE)
 })
@@ -78,7 +78,7 @@ test_that("mod_1welcome_ui() renders plain div when tx$welcome has a single entr
     )
   )
 
-  ui   <- mod_1welcome_ui(id = "test_single", cfg = cfg_single)
+  ui <- mod_1welcome_ui(id = "test_single", cfg = cfg_single)
   html <- as.character(ui)
   # A single entry is rendered without a tabsetPanel
   expect_false(grepl("nav nav-pills", html, fixed = TRUE))
@@ -90,7 +90,7 @@ test_that("mod_1welcome_ui() renders plain div when tx$welcome has a single entr
 
 test_that("mod_1welcome_server() has correct formals including 'cfg'", {
   fmls <- formals(mod_1welcome_server)
-  expect_true("id"  %in% names(fmls))
+  expect_true("id" %in% names(fmls))
   expect_true("cfg" %in% names(fmls))
 })
 

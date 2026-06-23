@@ -25,7 +25,6 @@
 #' shinyplanr::run_app()
 #' }
 load_config <- function(config_path = "config/shinyplanr_config.rds") {
-
   if (!file.exists(config_path)) {
     stop(
       "Config file not found: ",
