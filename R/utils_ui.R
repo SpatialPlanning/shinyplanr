@@ -278,7 +278,13 @@ create_fancy_dropdown <- function(id, id_in, Dict, width = "100%") {
     dplyr::group_split() %>%
     purrr::set_names(purrr::map_chr(., ~ .x$category[1])) %>%
     purrr::map(~ (.x %>% dplyr::select("nameCommon", "nameVariable"))) %>%
-    purrr::map(tibble::deframe)
+    purrr::imap(~ {
+      if (.y == "Climate") {
+        setNames(as.list(.x$nameVariable), .x$nameCommon)
+      } else {
+        tibble::deframe(.x)
+      }
+    })
 
   shiny::selectInput(
     inputId = shiny::NS(namespace = id, id = id_in),
