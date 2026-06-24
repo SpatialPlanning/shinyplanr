@@ -1112,7 +1112,7 @@ create_shinyplanr_template <- function(
     "# Step 2: Filter to active rows and sort for consistent UI ordering.",
     "Dict <- Dict_raw %>%",
     "  dplyr::filter(includeApp) %>%",
-    "  dplyr::arrange(.data$type, .data$categoryID, .data$nameCommon)",
+    "  dplyr::arrange(.data$type, .data$categoryID)",
     "",
     "vars <- Dict %>%",
     '  dplyr::filter(!type %in% c("Justification")) %>%',
