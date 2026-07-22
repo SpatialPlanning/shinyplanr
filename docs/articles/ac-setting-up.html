@@ -402,20 +402,20 @@
 <p>If using <em>oceandatr</em>, the template downloads several data layers:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Bathymetry / Depth zones</span></span>
-<span><span class="va">bathymetry</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu">get_bathymetry</span><span class="op">(</span></span>
+<span><span class="va">bathymetry</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_bathymetry.html" class="external-link">get_bathymetry</a></span><span class="op">(</span></span>
 <span>  spatial_grid <span class="op">=</span> <span class="va">PUs</span>,</span>
 <span>  classify_bathymetry <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Geomorphology</span></span>
-<span><span class="va">geomorphology</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu">get_geomorphology</span><span class="op">(</span></span>
+<span><span class="va">geomorphology</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_geomorphology.html" class="external-link">get_geomorphology</a></span><span class="op">(</span></span>
 <span>  spatial_grid <span class="op">=</span> <span class="va">PUs</span></span>
 <span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Seamounts (with buffer)</span></span>
-<span><span class="va">seamounts</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu">get_seamounts</span><span class="op">(</span></span>
+<span><span class="va">seamounts</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_seamounts.html" class="external-link">get_seamounts</a></span><span class="op">(</span></span>
 <span>  spatial_grid <span class="op">=</span> <span class="va">PUs</span>,</span>
 <span>  buffer <span class="op">=</span> <span class="fl">30000</span></span>
 <span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
@@ -1022,7 +1022,7 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 <span><span class="fu"><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template</a></span><span class="op">(</span>country <span class="op">=</span> <span class="st">"MyRegion"</span>, crs <span class="op">=</span> <span class="st">"EPSG:32601"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Check boundary data availability (oceandatr)</span></span>
-<span><span class="fu">oceandatr</span><span class="fu">::</span><span class="fu">get_boundary</span><span class="op">(</span>name <span class="op">=</span> <span class="st">"MyCountry"</span>, type <span class="op">=</span> <span class="st">"eez"</span><span class="op">)</span></span>
+<span><span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_boundary.html" class="external-link">get_boundary</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"MyCountry"</span>, type <span class="op">=</span> <span class="st">"eez"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Run setup scripts (from inside the deployment project)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"setup/1_setup_enviro.R"</span><span class="op">)</span>  <span class="co"># Install packages (run once)</span></span>

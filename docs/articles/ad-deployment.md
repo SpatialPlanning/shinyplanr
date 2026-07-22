@@ -156,7 +156,9 @@ Run the deployment script:
 source("deploy.R")
 ```
 
-This calls `rsconnect::deployApp()` with a curated list of files:
+This calls
+[`rsconnect::deployApp()`](https://rstudio.github.io/rsconnect/reference/deployApp.html)
+with a curated list of files:
 
 - `app.R` and `deploy.R`
 - The entire `config/` directory (containing `shinyplanr_config.rds`)
