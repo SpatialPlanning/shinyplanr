@@ -50,7 +50,7 @@ jobs:
           sudo apt-get -y install \
             libcurl4-gnutls-dev coinor-libsymphony-dev \
             libudunits2-dev libgdal-dev libgeos-dev libproj-dev libglpk-dev \
-            libgmp3-dev libmpfr-dev chromium-browser
+            libgmp3-dev libmpfr-dev chromium-browser libuv1-dev
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
