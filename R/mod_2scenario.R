@@ -1041,7 +1041,7 @@ mod_2scenario_server <- function(id, cfg) {
         # asynchronously, so reactive reads inside it may see stale values.
         bbox           <- sf::st_bbox(soln_wgs84)
         hex_selected   <- "#2ca02c"
-        hex_unselected <- "#d3d3d3"  # lightgrey
+        hex_unselected <- "#a8a8a8"  # medium grey — contrasts with CartoDB Positron basemap (#f5f5f3)
 
         # Map solution values (0/1) to an RGB matrix for WebGL rendering.
         # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with
@@ -1083,7 +1083,7 @@ mod_2scenario_server <- function(id, cfg) {
             ) %>%
             leaflet::addLegend(
               position = "bottomleft",
-              colors   = c("#2ca02c", "#d3d3d3"),
+              colors   = c("#2ca02c", "#a8a8a8"),
               labels   = c("Selected", "Not Selected"),
               title    = "Solution",
               opacity  = 0.7
