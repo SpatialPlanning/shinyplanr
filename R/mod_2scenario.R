@@ -944,7 +944,7 @@ mod_2scenario_server <- function(id, cfg) {
     ## Interactive Map Tab -----------------------------------------------------
 
     # Store the current solution sf transformed to WGS84 for Leaflet.
-    # Populated by observeEvent(solution()) so it is ready before the user
+    # Populated by observeEvent(solution()) so it is ready when the user
     # navigates to the Explore tab.
     map_solution_sf <- shiny::reactiveVal(NULL)
 
@@ -953,12 +953,6 @@ mod_2scenario_server <- function(id, cfg) {
 
     # Store panel content as a reactiveVal to avoid nested renderUI issues
     panel_content <- shiny::reactiveVal(NULL)
-
-    # Initialize the base leaflet map (runs once) - empty until solution is available
-    output$leaflet_map <- leaflet::renderLeaflet({
-      leaflet::leaflet() %>%
-        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron)
-    })
 
     # Render feature panel content from reactiveVal
     output$featurePanelContent <- shiny::renderUI({
@@ -983,6 +977,23 @@ mod_2scenario_server <- function(id, cfg) {
     }) %>%
       shiny::bindEvent(input$analyse)
 
+    # Lazy renderLeaflet: only renders when the Explore tab (value "4") is active.
+    #
+    # This eliminates the WebGL zero-canvas race condition.  When a Bootstrap tab
+    # panel is hidden (display:none), any leaflet/WebGL canvas initialised inside
+    # it has zero dimensions, causing glify to render nothing.  By gating
+    # renderLeaflet on req(input$tabs == "4"), the map is only created when the
+    # container is visible and has correct dimensions — no timing hacks needed.
+    #
+    # On every visit to the Explore tab, renderLeaflet re-runs and creates a
+    # fresh base map.  The observeEvent(input$tabs) below then immediately adds
+    # the WebGL polygon layer via leafletProxy.
+    output$leaflet_map <- leaflet::renderLeaflet({
+      shiny::req(input$tabs == "4")
+      leaflet::leaflet() %>%
+        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron)
+    })
+
     # Observer 1: prepare WGS84 solution data whenever a new analysis completes.
     # Runs regardless of which tab is active so the data is ready when the user
     # navigates to the Explore tab.  Mirrors the pattern used for plot_data1_cache
@@ -1004,12 +1015,19 @@ mod_2scenario_server <- function(id, cfg) {
       ignoreNULL = TRUE
     )
 
-    # Observer 2: draw (or redraw) the WebGL layer whenever the user navigates
-    # to the Explore tab (value = "4").  Uses the same single-observer-on-tabs
-    # pattern as fmake_tab_cache() so the trigger fires on every tab visit, not
-    # just on value changes of a compound expression.
-    # leafletProxy() requires the output to be rendered, which is guaranteed
-    # because renderLeaflet() runs unconditionally at module init.
+    # Observer 2: add the WebGL polygon layer whenever the Explore tab becomes
+    # active.  Because renderLeaflet is lazy (gated on input$tabs == "4"), the
+    # base map is created in the same reactive flush as this observer.
+    #
+    # shinyjs::delay(0) defers the leafletProxy commands to the next browser
+    # event loop tick (via a zero-millisecond setTimeout round-trip).  This
+    # guarantees the browser has processed and initialised the leaflet map from
+    # renderLeaflet before the WebGL polygon commands arrive, without introducing
+    # any perceptible delay for the user.
+    #
+    # Uses the same single-observer-on-tabs pattern as fmake_tab_cache() so the
+    # trigger fires on every tab visit, not just on value changes of a compound
+    # expression.
     shiny::observeEvent(input$tabs,
       {
         if (input$tabs != "4") {
@@ -1021,7 +1039,12 @@ mod_2scenario_server <- function(id, cfg) {
           return()
         }
 
-        bbox <- sf::st_bbox(soln_wgs84)
+        # Capture all values before the delay — shinyjs::delay() executes its
+        # body asynchronously after a browser round-trip, so reactive reads
+        # inside it may see stale or invalidated values.
+        bbox           <- sf::st_bbox(soln_wgs84)
+        hex_selected   <- "#2ca02c"
+        hex_unselected <- "#a8a8a8"  # medium grey — contrasts with CartoDB Positron basemap (#f5f5f3)
 
         # Map solution values (0/1) to an RGB matrix for WebGL rendering.
         # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with
@@ -1030,41 +1053,43 @@ mod_2scenario_server <- function(id, cfg) {
         # which uses the `color=` argument instead of `fillColor=`, silently
         # rendering all polygons the same colour.  col2rgb() + normalisation
         # ensures the matrix branch is always taken.
-        hex_selected   <- "#2ca02c"
-        hex_unselected <- "#d3d3d3"  # lightgrey
-
         fill_rgb <- t(col2rgb(
           ifelse(soln_wgs84$solution_1 == 1, hex_selected, hex_unselected)
         )) / 255  # normalise to [0, 1]; result is nrow x 3 matrix
 
-        # Update map with WebGL polygons using leafletProxy.
-        # clearGlLayers() removes the previous GL layer before adding the new one.
-        # The highlight group (SVG) is cleared separately with clearGroup().
-        leaflet::leafletProxy("leaflet_map", session = session) %>%
-          leafgl::clearGlLayers() %>%
-          leaflet::clearControls() %>%
-          leaflet::clearGroup("highlight") %>%
-          leaflet::fitBounds(
-            lng1 = as.numeric(bbox["xmin"]),
-            lat1 = as.numeric(bbox["ymin"]),
-            lng2 = as.numeric(bbox["xmax"]),
-            lat2 = as.numeric(bbox["ymax"])
-          ) %>%
-          leafgl::addGlPolygons(
-            data        = soln_wgs84,
-            layerId     = ~pu_id,
-            fillColor   = fill_rgb,
-            fillOpacity = 0.7,
-            stroke      = FALSE,
-            group       = "solution_polygons"
-          ) %>%
-          leaflet::addLegend(
-            position = "bottomleft",
-            colors   = c("#2ca02c", "#d3d3d3"),
-            labels   = c("Selected", "Not Selected"),
-            title    = "Solution",
-            opacity  = 0.7
-          )
+        # Defer proxy commands to the next browser event loop tick so the
+        # browser has initialised the leaflet map from renderLeaflet first.
+        shinyjs::delay(0, {
+          # Add WebGL polygons via leafletProxy.
+          # clearGlLayers() removes any previous GL layer (e.g. from a prior visit).
+          # The highlight group (SVG) is cleared separately with clearGroup().
+          leaflet::leafletProxy("leaflet_map", session = session) %>%
+            leafgl::clearGlLayers() %>%
+            leaflet::clearControls() %>%
+            leaflet::clearGroup("highlight") %>%
+            leaflet::fitBounds(
+              lng1 = as.numeric(bbox["xmin"]),
+              lat1 = as.numeric(bbox["ymin"]),
+              lng2 = as.numeric(bbox["xmax"]),
+              lat2 = as.numeric(bbox["ymax"])
+            ) %>%
+            leafgl::addGlPolygons(
+              data        = soln_wgs84,
+              layerId     = ~pu_id,
+              fillColor   = fill_rgb,
+              fillOpacity = 0.7,
+              stroke      = TRUE,
+              group       = "solution_polygons"
+            ) %>%
+            leaflet::addLegend(
+              position = "bottomleft",
+              colors   = c("#2ca02c", "#a8a8a8"),
+              labels   = c("Selected", "Not Selected"),
+              title    = "Solution",
+              opacity  = 0.7
+            )
+
+        })
       }
     )
 
