@@ -990,7 +990,6 @@ mod_2scenario_server <- function(id, cfg) {
     # the WebGL polygon layer via leafletProxy.
     output$leaflet_map <- leaflet::renderLeaflet({
       shiny::req(input$tabs == "4")
-      message("[Explore] renderLeaflet: creating base map")
       leaflet::leaflet() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron)
     })
@@ -1001,14 +1000,12 @@ mod_2scenario_server <- function(id, cfg) {
     # (observeEvent(solution(), ...)) elsewhere in this module.
     shiny::observeEvent(solution(),
       {
-        message("[Explore] Observer 1 fired")
         shiny::req(inherits(solution(), "sf"))
 
         soln_wgs84 <- solution() %>%
           dplyr::mutate(pu_id = dplyr::row_number()) %>%
           sf::st_transform("EPSG:4326")
 
-        message("[Explore] Observer 1: WGS84 ready, nrow=", nrow(soln_wgs84))
         map_solution_sf(soln_wgs84)
 
         # Reset interaction state for the new solution
@@ -1033,20 +1030,14 @@ mod_2scenario_server <- function(id, cfg) {
     # expression.
     shiny::observeEvent(input$tabs,
       {
-        message("[Explore] Observer 2 fired: tabs=", input$tabs,
-                " | map_solution_sf is NULL: ", is.null(map_solution_sf()))
-
         if (input$tabs != "4") {
           return()
         }
 
         soln_wgs84 <- map_solution_sf()
         if (is.null(soln_wgs84)) {
-          message("[Explore] Observer 2: map_solution_sf() is NULL, no analysis run yet")
           return()
         }
-
-        message("[Explore] Observer 2: scheduling WebGL draw")
 
         # Capture all values before the delay — shinyjs::delay() executes its
         # body asynchronously after a browser round-trip, so reactive reads
@@ -1069,8 +1060,6 @@ mod_2scenario_server <- function(id, cfg) {
         # Defer proxy commands to the next browser event loop tick so the
         # browser has initialised the leaflet map from renderLeaflet first.
         shinyjs::delay(0, {
-          message("[Explore] Observer 2: drawing WebGL layer, nrow=", nrow(soln_wgs84))
-
           # Add WebGL polygons via leafletProxy.
           # clearGlLayers() removes any previous GL layer (e.g. from a prior visit).
           # The highlight group (SVG) is cleared separately with clearGroup().
@@ -1100,7 +1089,6 @@ mod_2scenario_server <- function(id, cfg) {
               opacity  = 0.7
             )
 
-          message("[Explore] Observer 2: leafletProxy commands sent successfully")
         })
       }
     )
