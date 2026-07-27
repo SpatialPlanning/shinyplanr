@@ -943,7 +943,9 @@ mod_2scenario_server <- function(id, cfg) {
 
     ## Interactive Map Tab -----------------------------------------------------
 
-    # Store the current solution sf transformed to WGS84 for Leaflet
+    # Store the current solution sf transformed to WGS84 for Leaflet.
+    # Populated by observeEvent(solution()) so it is ready before the user
+    # navigates to the Explore tab.
     map_solution_sf <- shiny::reactiveVal(NULL)
 
     # Store the ID of the currently highlighted planning unit
@@ -951,9 +953,6 @@ mod_2scenario_server <- function(id, cfg) {
 
     # Store panel content as a reactiveVal to avoid nested renderUI issues
     panel_content <- shiny::reactiveVal(NULL)
-
-    # Flag to track if map has been initialized with solution
-    map_initialized <- shiny::reactiveVal(FALSE)
 
     # Initialize the base leaflet map (runs once) - empty until solution is available
     output$leaflet_map <- leaflet::renderLeaflet({
@@ -984,43 +983,53 @@ mod_2scenario_server <- function(id, cfg) {
     }) %>%
       shiny::bindEvent(input$analyse)
 
-    # Store the last analysis count to detect when new analysis is run
-    last_analysis_count <- shiny::reactiveVal(0)
-
-    # Update map when Map tab is selected OR when analysis is run while on Map tab
-    # This pattern matches other tabs and ensures leafletProxy works (requires rendered output)
-    shiny::observeEvent(
+    # Observer 1: prepare WGS84 solution data whenever a new analysis completes.
+    # Runs regardless of which tab is active so the data is ready when the user
+    # navigates to the Explore tab.  Mirrors the pattern used for plot_data1_cache
+    # (observeEvent(solution(), ...)) elsewhere in this module.
+    shiny::observeEvent(solution(),
       {
-        # Trigger when Map tab (value 4) is selected OR analysis is run
-        input$tabs == 4 | input$analyse > 0
-      },
-      {
-        # Only proceed if we have a valid solution
         shiny::req(inherits(solution(), "sf"))
 
-        # Check if we're on the Map tab - proxy only works when output is rendered
-        if (input$tabs != 4) {
-          return()
-        }
-
-        # Transform solution to WGS84 for Leaflet
         soln_wgs84 <- solution() %>%
           dplyr::mutate(pu_id = dplyr::row_number()) %>%
           sf::st_transform("EPSG:4326")
 
-        # Store for click handler
         map_solution_sf(soln_wgs84)
 
-        # Get bounding box for map view
+        # Reset interaction state for the new solution
+        highlighted_pu(NULL)
+        panel_content(NULL)
+      },
+      ignoreNULL = TRUE
+    )
+
+    # Observer 2: draw (or redraw) the WebGL layer whenever the user navigates
+    # to the Explore tab (value = "4").  Uses the same single-observer-on-tabs
+    # pattern as fmake_tab_cache() so the trigger fires on every tab visit, not
+    # just on value changes of a compound expression.
+    # leafletProxy() requires the output to be rendered, which is guaranteed
+    # because renderLeaflet() runs unconditionally at module init.
+    shiny::observeEvent(input$tabs,
+      {
+        if (input$tabs != "4") {
+          return()
+        }
+
+        soln_wgs84 <- map_solution_sf()
+        if (is.null(soln_wgs84)) {
+          return()
+        }
+
         bbox <- sf::st_bbox(soln_wgs84)
 
         # Map solution values (0/1) to an RGB matrix for WebGL rendering.
-        # leafgl 0.2.4 requires fillColor as either:
-        #   (a) a single "#rrggbb" hex string (same colour for all polygons), or
-        #   (b) a 3-column numeric matrix with values in [0, 1] (r, g, b per row).
-        # Per-polygon hex vectors are NOT supported — the library ignores fillColor
-        # and falls back to the `color` argument when the hex branch is taken.
-        # We use col2rgb() to convert named colours to the required matrix format.
+        # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with
+        # values in [0, 1] (r, g, b per row) for per-polygon colours.
+        # Passing a character hex vector triggers the hex branch in addGlPolygons
+        # which uses the `color=` argument instead of `fillColor=`, silently
+        # rendering all polygons the same colour.  col2rgb() + normalisation
+        # ensures the matrix branch is always taken.
         hex_selected   <- "#2ca02c"
         hex_unselected <- "#d3d3d3"  # lightgrey
 
@@ -1029,10 +1038,8 @@ mod_2scenario_server <- function(id, cfg) {
         )) / 255  # normalise to [0, 1]; result is nrow x 3 matrix
 
         # Update map with WebGL polygons using leafletProxy.
-        # leafgl::clearGlLayers() removes the previous GL layer; the highlight
-        # group (SVG) is cleared separately with leaflet::clearGroup().
-        # Note: `weight` is not a valid leafgl parameter — use `stroke = FALSE`
-        # to suppress borders (faster rendering) or omit for the default thin border.
+        # clearGlLayers() removes the previous GL layer before adding the new one.
+        # The highlight group (SVG) is cleared separately with clearGroup().
         leaflet::leafletProxy("leaflet_map", session = session) %>%
           leafgl::clearGlLayers() %>%
           leaflet::clearControls() %>%
@@ -1044,25 +1051,20 @@ mod_2scenario_server <- function(id, cfg) {
             lat2 = as.numeric(bbox["ymax"])
           ) %>%
           leafgl::addGlPolygons(
-            data       = soln_wgs84,
-            layerId    = ~pu_id,
-            fillColor  = fill_rgb,
+            data        = soln_wgs84,
+            layerId     = ~pu_id,
+            fillColor   = fill_rgb,
             fillOpacity = 0.7,
-            color      = fill_rgb,  # border same as fill; avoids dark outline artefacts
-            group      = "solution_polygons"
+            stroke      = FALSE,
+            group       = "solution_polygons"
           ) %>%
           leaflet::addLegend(
             position = "bottomleft",
-            colors = c("#2ca02c", "lightgrey"),
-            labels = c("Selected", "Not Selected"),
-            title = "Solution",
-            opacity = 0.7
+            colors   = c("#2ca02c", "#d3d3d3"),
+            labels   = c("Selected", "Not Selected"),
+            title    = "Solution",
+            opacity  = 0.7
           )
-
-        # Reset highlighted PU and panel content when new solution is loaded
-        highlighted_pu(NULL)
-        panel_content(NULL)
-        map_initialized(TRUE)
       }
     )
 
