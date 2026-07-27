@@ -120,14 +120,16 @@ mod_5coverage_server <- function(id, cfg) {
       }
     })
 
-    # Update leaflet map when spatial data is uploaded
+    # Update map when spatial data is uploaded.
+    # Uses leafgl::addGlPolygons() for WebGL rendering — much faster than SVG
+    # for large uploaded datasets (e.g. many planning units or fine-grained MPAs).
     shiny::observeEvent(uploaded_sf(), {
       sf_data <- uploaded_sf()
 
       if (is.null(sf_data)) {
-        # Clear the map if no data
+        # Clear the GL layer if no data
         leaflet::leafletProxy("leaflet_coverage", session = session) %>%
-          leaflet::clearShapes()
+          leafgl::clearGlLayers()
         return()
       }
 
@@ -138,9 +140,9 @@ mod_5coverage_server <- function(id, cfg) {
       # Get bounding box for map view
       bbox <- sf::st_bbox(sf_wgs84)
 
-      # Update map with polygons using leafletProxy
+      # Update map with WebGL polygons using leafletProxy
       leaflet::leafletProxy("leaflet_coverage", session = session) %>%
-        leaflet::clearShapes() %>%
+        leafgl::clearGlLayers() %>%
         leaflet::clearControls() %>%
         leaflet::fitBounds(
           lng1 = as.numeric(bbox["xmin"]),
@@ -148,18 +150,12 @@ mod_5coverage_server <- function(id, cfg) {
           lng2 = as.numeric(bbox["xmax"]),
           lat2 = as.numeric(bbox["ymax"])
         ) %>%
-        leaflet::addPolygons(
+        leafgl::addGlPolygons(
           data = sf_wgs84,
           fillColor = "lightgrey",
           fillOpacity = 0.7,
           color = "#000000",
           weight = 1,
-          highlightOptions = leaflet::highlightOptions(
-            weight = 2,
-            color = "#666666",
-            fillOpacity = 0.9,
-            bringToFront = TRUE
-          ),
           group = "uploaded_polygons"
         )
     })

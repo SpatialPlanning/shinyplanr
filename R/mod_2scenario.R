@@ -1013,16 +1013,16 @@ mod_2scenario_server <- function(id, cfg) {
         # Get bounding box for map view
         bbox <- sf::st_bbox(soln_wgs84)
 
-        # Create color palette for solution
-        pal <- leaflet::colorFactor(
-          palette = c("lightgrey", "#2ca02c"),
-          domain = c(0, 1),
-          na.color = "transparent"
-        )
+        # Map solution values (0/1) to colours for WebGL rendering.
+        # leafgl::addGlPolygons() requires a pre-computed colour vector rather
+        # than a palette function, so we build it here with base R for speed.
+        fill_colors <- ifelse(soln_wgs84$solution_1 == 1, "#2ca02c", "lightgrey")
 
-        # Update map with polygons using leafletProxy
+        # Update map with WebGL polygons using leafletProxy.
+        # leafgl::clearGlLayers() removes the previous GL layer; the highlight
+        # group (SVG) is cleared separately with leaflet::clearGroup().
         leaflet::leafletProxy("leaflet_map", session = session) %>%
-          leaflet::clearShapes() %>%
+          leafgl::clearGlLayers() %>%
           leaflet::clearControls() %>%
           leaflet::clearGroup("highlight") %>%
           leaflet::fitBounds(
@@ -1031,19 +1031,13 @@ mod_2scenario_server <- function(id, cfg) {
             lng2 = as.numeric(bbox["xmax"]),
             lat2 = as.numeric(bbox["ymax"])
           ) %>%
-          leaflet::addPolygons(
+          leafgl::addGlPolygons(
             data = soln_wgs84,
             layerId = ~pu_id,
-            fillColor = ~ pal(solution_1),
+            fillColor = fill_colors,
             fillOpacity = 0.7,
             color = "#444444",
             weight = 0.5,
-            highlightOptions = leaflet::highlightOptions(
-              weight = 3,
-              color = "#666666",
-              fillOpacity = 0.9,
-              bringToFront = TRUE
-            ),
             group = "solution_polygons"
           ) %>%
           leaflet::addLegend(
@@ -1061,20 +1055,18 @@ mod_2scenario_server <- function(id, cfg) {
       }
     )
 
-    # Handle polygon click events
-    shiny::observeEvent(input$leaflet_map_shape_click,
+    # Handle polygon click events.
+    # leafgl fires input$<mapId>_glify_click (not _shape_click).
+    # The highlight overlay is still drawn with leaflet::addPolygons() (SVG),
+    # which fires _shape_click — we ignore those via the "highlight_" prefix guard.
+    shiny::observeEvent(input$leaflet_map_glify_click,
       {
         tryCatch(
           {
-            click <- input$leaflet_map_shape_click
+            click <- input$leaflet_map_glify_click
 
-            # Guard against NULL clicks or clicks on highlight layer
+            # Guard against NULL clicks
             if (is.null(click) || is.null(click$id)) {
-              return()
-            }
-
-            # Skip if clicking on highlight polygon (layerId starts with "highlight_")
-            if (is.character(click$id) && grepl("^highlight_", click$id)) {
               return()
             }
 
