@@ -989,12 +989,14 @@ mod_2scenario_server <- function(id, cfg) {
     # (observeEvent(solution(), ...)) elsewhere in this module.
     shiny::observeEvent(solution(),
       {
+        message("[Explore] Observer 1 fired")
         shiny::req(inherits(solution(), "sf"))
 
         soln_wgs84 <- solution() %>%
           dplyr::mutate(pu_id = dplyr::row_number()) %>%
           sf::st_transform("EPSG:4326")
 
+        message("[Explore] Observer 1: WGS84 ready, nrow=", nrow(soln_wgs84))
         map_solution_sf(soln_wgs84)
 
         # Reset interaction state for the new solution
@@ -1012,15 +1014,20 @@ mod_2scenario_server <- function(id, cfg) {
     # because renderLeaflet() runs unconditionally at module init.
     shiny::observeEvent(input$tabs,
       {
+        message("[Explore] Observer 2 fired: tabs=", input$tabs,
+                " | map_solution_sf is NULL: ", is.null(map_solution_sf()))
+
         if (input$tabs != "4") {
           return()
         }
 
         soln_wgs84 <- map_solution_sf()
         if (is.null(soln_wgs84)) {
+          message("[Explore] Observer 2: map_solution_sf() is NULL, cannot draw")
           return()
         }
 
+        message("[Explore] Observer 2: drawing WebGL layer, nrow=", nrow(soln_wgs84))
         bbox <- sf::st_bbox(soln_wgs84)
 
         # Map solution values (0/1) to an RGB matrix for WebGL rendering.
@@ -1065,6 +1072,8 @@ mod_2scenario_server <- function(id, cfg) {
             title    = "Solution",
             opacity  = 0.7
           )
+
+        message("[Explore] Observer 2: leafletProxy commands sent successfully")
       }
     )
 
