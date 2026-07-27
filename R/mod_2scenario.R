@@ -6,6 +6,7 @@
 #'
 #' @noRd
 #'
+#' @importFrom grDevices col2rgb
 #' @importFrom rlang .data
 mod_2scenario_ui <- function(id, cfg) {
   # Extract config locals
@@ -1013,14 +1014,25 @@ mod_2scenario_server <- function(id, cfg) {
         # Get bounding box for map view
         bbox <- sf::st_bbox(soln_wgs84)
 
-        # Map solution values (0/1) to colours for WebGL rendering.
-        # leafgl::addGlPolygons() requires a pre-computed colour vector rather
-        # than a palette function, so we build it here with base R for speed.
-        fill_colors <- ifelse(soln_wgs84$solution_1 == 1, "#2ca02c", "lightgrey")
+        # Map solution values (0/1) to an RGB matrix for WebGL rendering.
+        # leafgl 0.2.4 requires fillColor as either:
+        #   (a) a single "#rrggbb" hex string (same colour for all polygons), or
+        #   (b) a 3-column numeric matrix with values in [0, 1] (r, g, b per row).
+        # Per-polygon hex vectors are NOT supported — the library ignores fillColor
+        # and falls back to the `color` argument when the hex branch is taken.
+        # We use col2rgb() to convert named colours to the required matrix format.
+        hex_selected   <- "#2ca02c"
+        hex_unselected <- "#d3d3d3"  # lightgrey
+
+        fill_rgb <- t(col2rgb(
+          ifelse(soln_wgs84$solution_1 == 1, hex_selected, hex_unselected)
+        )) / 255  # normalise to [0, 1]; result is nrow x 3 matrix
 
         # Update map with WebGL polygons using leafletProxy.
         # leafgl::clearGlLayers() removes the previous GL layer; the highlight
         # group (SVG) is cleared separately with leaflet::clearGroup().
+        # Note: `weight` is not a valid leafgl parameter — use `stroke = FALSE`
+        # to suppress borders (faster rendering) or omit for the default thin border.
         leaflet::leafletProxy("leaflet_map", session = session) %>%
           leafgl::clearGlLayers() %>%
           leaflet::clearControls() %>%
@@ -1032,13 +1044,12 @@ mod_2scenario_server <- function(id, cfg) {
             lat2 = as.numeric(bbox["ymax"])
           ) %>%
           leafgl::addGlPolygons(
-            data = soln_wgs84,
-            layerId = ~pu_id,
-            fillColor = fill_colors,
+            data       = soln_wgs84,
+            layerId    = ~pu_id,
+            fillColor  = fill_rgb,
             fillOpacity = 0.7,
-            color = "#444444",
-            weight = 0.5,
-            group = "solution_polygons"
+            color      = fill_rgb,  # border same as fill; avoids dark outline artefacts
+            group      = "solution_polygons"
           ) %>%
           leaflet::addLegend(
             position = "bottomleft",

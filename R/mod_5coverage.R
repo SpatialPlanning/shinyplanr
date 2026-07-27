@@ -123,6 +123,13 @@ mod_5coverage_server <- function(id, cfg) {
     # Update map when spatial data is uploaded.
     # Uses leafgl::addGlPolygons() for WebGL rendering — much faster than SVG
     # for large uploaded datasets (e.g. many planning units or fine-grained MPAs).
+    #
+    # leafgl 0.2.4 colour rules:
+    #   - fillColor must be a single "#rrggbb" hex string OR a 3-column [0,1]
+    #     RGB matrix. Named colours (e.g. "lightgrey") are not supported and
+    #     cause the polygon layer to silently fail to render.
+    #   - `weight` is not a valid parameter; use `stroke = FALSE` to suppress
+    #     borders or omit for the default thin border.
     shiny::observeEvent(uploaded_sf(), {
       sf_data <- uploaded_sf()
 
@@ -140,6 +147,9 @@ mod_5coverage_server <- function(id, cfg) {
       # Get bounding box for map view
       bbox <- sf::st_bbox(sf_wgs84)
 
+      # Single uniform fill colour — use a hex string (supported by leafgl 0.2.4)
+      fill_hex <- "#d3d3d3"  # lightgrey
+
       # Update map with WebGL polygons using leafletProxy
       leaflet::leafletProxy("leaflet_coverage", session = session) %>%
         leafgl::clearGlLayers() %>%
@@ -151,12 +161,11 @@ mod_5coverage_server <- function(id, cfg) {
           lat2 = as.numeric(bbox["ymax"])
         ) %>%
         leafgl::addGlPolygons(
-          data = sf_wgs84,
-          fillColor = "lightgrey",
+          data        = sf_wgs84,
+          fillColor   = fill_hex,
           fillOpacity = 0.7,
-          color = "#000000",
-          weight = 1,
-          group = "uploaded_polygons"
+          color       = fill_hex,
+          group       = "uploaded_polygons"
         )
     })
 
