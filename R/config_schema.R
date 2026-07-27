@@ -54,6 +54,65 @@ get_schema_version <- function() {
 }
 
 
+#' Print the shinyplanr config schema changelog
+#'
+#' Prints a human-readable summary of what changed in \code{setup/3_setup_app.R}
+#' between each schema version. Call this after upgrading shinyplanr to see
+#' whether your \code{3_setup_app.R} needs manual updates before you re-run it.
+#'
+#' The changelog covers all versions from version 2 onwards. If your config
+#' was generated with an older version, look at all entries with a version
+#' number higher than your config's \code{schema_version}.
+#'
+#' @param from Integer. Show changelog entries from this version onwards
+#'   (inclusive). Defaults to \code{2L} (the first version with a changelog).
+#'   Set to your current config's \code{schema_version + 1} to see only
+#'   what is new since your last update.
+#'
+#' @return Invisibly returns the changelog list. Called for its side effect
+#'   of printing to the console.
+#'
+#' @export
+#' @examples
+#' # See everything that has changed since the initial release
+#' shinyplanr::schema_changelog()
+#'
+#' # See only what changed since your config was at version 2
+#' shinyplanr::schema_changelog(from = 3L)
+schema_changelog <- function(from = 2L) {
+  from <- as.integer(from)
+  current <- .shinyplanr_schema_version
+
+  message(
+    "shinyplanr config schema changelog",
+    " (current version: ", current, ")"
+  )
+  message(strrep("-", 50))
+
+  versions_to_show <- seq(from = max(from, 2L), to = current)
+
+  if (length(versions_to_show) == 0 || from > current) {
+    message("No changelog entries for version >= ", from, ".")
+    return(invisible(.shinyplanr_schema_changelog))
+  }
+
+  for (v in versions_to_show) {
+    entry <- .shinyplanr_schema_changelog[[as.character(v)]]
+    message("\n[v", v, "]")
+    if (is.null(entry)) {
+      message("  (no changelog entry)")
+    } else {
+      for (line in entry) {
+        message("  \u2022 ", line)
+      }
+    }
+  }
+
+  message("")
+  invisible(.shinyplanr_schema_changelog)
+}
+
+
 # Required keys that must be present in every config file.
 # Update this vector whenever .shinyplanr_schema_version is incremented.
 .shinyplanr_required_keys <- c(

@@ -328,14 +328,16 @@ create_shinyplanr_template <- function(
       "#",
       "#   shinyplanr::update_shinyplanr_template()",
       "#",
-      "# Step 2 -- Update the package and lock versions:",
+      "# Step 2 -- Reinstall packages at new versions and lock renv.lock:",
       "#",
       "#   source('setup/1_setup_enviro.R')   # re-installs at HEAD + your extras",
-      "#   renv::snapshot()                   # locks new SHAs",
+      "#                                      # renv::snapshot() is called at the end",
       "#",
-      "# Step 3 -- If load_config() reports a schema version mismatch, read the",
-      "#           changelog it prints and update setup/3_setup_app.R manually.",
-      "#           DO NOT overwrite 3_setup_app.R -- it contains your customisations.",
+      "# Step 3 -- Check if 3_setup_app.R needs manual updates:",
+      "#",
+      "#   shinyplanr::schema_changelog()     # prints what changed between versions",
+      "#   # Update setup/3_setup_app.R manually if needed.",
+      "#   # DO NOT overwrite it -- it contains your customisations.",
       "#",
       "# Step 4 -- Regenerate the config and redeploy:",
       "#",
@@ -1766,13 +1768,20 @@ update_shinyplanr_template <- function(
   message("  config/shinyplanr_config.rds")
   message("")
   message("Next steps:")
-  message("  1. Check if load_config() reports a schema version mismatch.")
-  message("     If so, read the changelog it prints and update")
-  message("     setup/3_setup_app.R manually.")
-  message("  2. Re-run setup/1_setup_enviro.R to install updated packages.")
-  message("  3. Re-run setup/3_setup_app.R to regenerate the config.")
-  message("  4. Run renv::snapshot() to lock the new package versions.")
-  message("  5. Deploy: source('deploy.R')")
+  message("  1. Source setup/1_setup_enviro.R")
+  message("     Reinstalls shinyplanr and all dependencies at their new versions,")
+  message("     then snapshots renv.lock automatically.")
+  message("")
+  message("  2. Source setup/3_setup_app.R")
+  message("     Regenerates config/shinyplanr_config.rds.")
+  message("     If this script errors, the new shinyplanr version may require")
+  message("     changes to 3_setup_app.R (e.g. new config keys or options).")
+  message("     Run shinyplanr::schema_changelog() to see what changed and")
+  message("     what to add to your 3_setup_app.R.")
+  message("")
+  message("  3. Test locally: shiny::runApp()")
+  message("")
+  message("  4. Deploy: source('deploy.R')")
 
   invisible(project_dir)
 }
