@@ -1012,6 +1012,14 @@ mod_2scenario_server <- function(id, cfg) {
     # just on value changes of a compound expression.
     # leafletProxy() requires the output to be rendered, which is guaranteed
     # because renderLeaflet() runs unconditionally at module init.
+    #
+    # The 300 ms shinyjs::delay() is necessary because Bootstrap hides tab panels
+    # with display:none, which causes the leaflet/WebGL canvas to initialise with
+    # zero dimensions.  The delay gives the browser time to make the tab visible
+    # and complete CSS layout before leafletProxy sends the addGlPolygons command.
+    # Without this, the WebGL context renders into a zero-size canvas and nothing
+    # appears.  handlers.js also triggers a window resize on tab show to ensure
+    # leaflet recalculates its container size.
     shiny::observeEvent(input$tabs,
       {
         message("[Explore] Observer 2 fired: tabs=", input$tabs,
@@ -1027,8 +1035,13 @@ mod_2scenario_server <- function(id, cfg) {
           return()
         }
 
-        message("[Explore] Observer 2: drawing WebGL layer, nrow=", nrow(soln_wgs84))
-        bbox <- sf::st_bbox(soln_wgs84)
+        message("[Explore] Observer 2: scheduling WebGL draw after layout delay")
+
+        # Capture values before the delay — shinyjs::delay() executes its body
+        # asynchronously, so reactive reads inside it may see stale values.
+        bbox           <- sf::st_bbox(soln_wgs84)
+        hex_selected   <- "#2ca02c"
+        hex_unselected <- "#d3d3d3"  # lightgrey
 
         # Map solution values (0/1) to an RGB matrix for WebGL rendering.
         # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with
@@ -1037,43 +1050,47 @@ mod_2scenario_server <- function(id, cfg) {
         # which uses the `color=` argument instead of `fillColor=`, silently
         # rendering all polygons the same colour.  col2rgb() + normalisation
         # ensures the matrix branch is always taken.
-        hex_selected   <- "#2ca02c"
-        hex_unselected <- "#d3d3d3"  # lightgrey
-
         fill_rgb <- t(col2rgb(
           ifelse(soln_wgs84$solution_1 == 1, hex_selected, hex_unselected)
         )) / 255  # normalise to [0, 1]; result is nrow x 3 matrix
 
-        # Update map with WebGL polygons using leafletProxy.
-        # clearGlLayers() removes the previous GL layer before adding the new one.
-        # The highlight group (SVG) is cleared separately with clearGroup().
-        leaflet::leafletProxy("leaflet_map", session = session) %>%
-          leafgl::clearGlLayers() %>%
-          leaflet::clearControls() %>%
-          leaflet::clearGroup("highlight") %>%
-          leaflet::fitBounds(
-            lng1 = as.numeric(bbox["xmin"]),
-            lat1 = as.numeric(bbox["ymin"]),
-            lng2 = as.numeric(bbox["xmax"]),
-            lat2 = as.numeric(bbox["ymax"])
-          ) %>%
-          leafgl::addGlPolygons(
-            data        = soln_wgs84,
-            layerId     = ~pu_id,
-            fillColor   = fill_rgb,
-            fillOpacity = 0.7,
-            stroke      = FALSE,
-            group       = "solution_polygons"
-          ) %>%
-          leaflet::addLegend(
-            position = "bottomleft",
-            colors   = c("#2ca02c", "#d3d3d3"),
-            labels   = c("Selected", "Not Selected"),
-            title    = "Solution",
-            opacity  = 0.7
-          )
+        # Delay sending proxy commands until the browser has completed CSS layout
+        # (display:none -> block) so the WebGL canvas has non-zero dimensions.
+        shinyjs::delay(300, {
+          message("[Explore] Observer 2: drawing WebGL layer after delay, nrow=",
+                  nrow(soln_wgs84))
 
-        message("[Explore] Observer 2: leafletProxy commands sent successfully")
+          # Update map with WebGL polygons using leafletProxy.
+          # clearGlLayers() removes the previous GL layer before adding the new one.
+          # The highlight group (SVG) is cleared separately with clearGroup().
+          leaflet::leafletProxy("leaflet_map", session = session) %>%
+            leafgl::clearGlLayers() %>%
+            leaflet::clearControls() %>%
+            leaflet::clearGroup("highlight") %>%
+            leaflet::fitBounds(
+              lng1 = as.numeric(bbox["xmin"]),
+              lat1 = as.numeric(bbox["ymin"]),
+              lng2 = as.numeric(bbox["xmax"]),
+              lat2 = as.numeric(bbox["ymax"])
+            ) %>%
+            leafgl::addGlPolygons(
+              data        = soln_wgs84,
+              layerId     = ~pu_id,
+              fillColor   = fill_rgb,
+              fillOpacity = 0.7,
+              stroke      = FALSE,
+              group       = "solution_polygons"
+            ) %>%
+            leaflet::addLegend(
+              position = "bottomleft",
+              colors   = c("#2ca02c", "#d3d3d3"),
+              labels   = c("Selected", "Not Selected"),
+              title    = "Solution",
+              opacity  = 0.7
+            )
+
+          message("[Explore] Observer 2: leafletProxy commands sent successfully")
+        })
       }
     )
 
