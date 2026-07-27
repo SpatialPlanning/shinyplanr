@@ -1078,7 +1078,7 @@ mod_2scenario_server <- function(id, cfg) {
               layerId     = ~pu_id,
               fillColor   = fill_rgb,
               fillOpacity = 0.7,
-              stroke      = FALSE,
+              stroke      = TRUE,
               group       = "solution_polygons"
             ) %>%
             leaflet::addLegend(
