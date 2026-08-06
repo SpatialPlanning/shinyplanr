@@ -16,6 +16,16 @@ Functions for creating new regional deployment projects.
 - [`create_shinyplanr_template()`](https://spatialplanning.github.io/shinyplanr/reference/create_shinyplanr_template.md)
   : Create a new shinyplanr deployment project
 
+## Updating a deployment
+
+Functions for updating regional deployment projects.
+
+- [`schema_changelog()`](https://spatialplanning.github.io/shinyplanr/reference/schema_changelog.md)
+  : Print the shinyplanr config schema changelog
+- [`update_shinyplanr_template()`](https://spatialplanning.github.io/shinyplanr/reference/update_shinyplanr_template.md)
+  : Update safe-to-overwrite files in an existing shinyplanr deployment
+  project
+
 ## Data validation
 
 Functions for validating configuration and spatial data.

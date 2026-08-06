@@ -68,3 +68,23 @@ Please note that the shinyplanr project is released with a [Contributor
 Code of
 Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html).
 By contributing to this project, you agree to abide by its terms.
+
+## Citation
+
+If you use `shinyplanr` in your work, please cite it as:
+
+Everett JD, Richardson AJ, Neubert S, Dunn DC (2025). *shinyplanr:
+Spatial Planning in Shiny*. R package version 0.1.5.
+<https://github.com/SpatialPlanning/shinyplanr>
+
+Or in BibTeX format:
+
+``` bibtex
+@Manual{shinyplanr,
+  title  = {shinyplanr: Spatial Planning in Shiny},
+  author = {Jason D. Everett and Anthony J. Richardson and Sandra Neubert and Daniel C. Dunn},
+  year   = {2025},
+  note   = {R package version 0.1.5},
+  url    = {https://github.com/SpatialPlanning/shinyplanr},
+}
+```
