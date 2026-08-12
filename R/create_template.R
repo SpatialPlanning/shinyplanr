@@ -518,215 +518,164 @@ create_shinyplanr_template <- function(
 }
 
 
-# ---- 1_setup_enviro.R writer -------------------------------------------------
+# ---- Template processing helper ----------------------------------------------
 
-.write_setup_enviro <- function(setup_dir, oceandatr = TRUE) {
-  github_pkgs_lines <- c(
-    'renv::install("SpatialPlanning/shinyplanr@HEAD", prompt = FALSE)',
-    'renv::install("SpatialPlanning/spatialplanr@HEAD", prompt = FALSE)',
-    'renv::install("dreamRs/shinyWidgets@HEAD", prompt = FALSE)'
-  )
-  if (isTRUE(oceandatr)) {
-    github_pkgs_lines <- c(
-      github_pkgs_lines,
-      'renv::install("emlab-ucsb/oceandatr@HEAD", prompt = FALSE)',
-      'renv::install("emlab-ucsb/spatialgridr@HEAD", prompt = FALSE)'
+# Process a template .R file from inst/templates/setup/.
+#
+# Reads the file, applies conditional block filtering, then applies token
+# substitution. Returns a character vector of lines ready for writeLines().
+#
+# Conditional blocks use comment markers:
+#
+#   # [IF condition_name]
+#   ... lines included only when conditions[[condition_name]] is TRUE ...
+#   # [END condition_name]
+#
+# The marker lines themselves are always removed from the output.
+# Nesting is not supported and will raise an error.
+#
+# Token substitution replaces {placeholder} with the corresponding value from
+# the `substitutions` named list. Substitution is applied after block
+# filtering, so tokens inside a FALSE block are never substituted.
+#
+# @param template_path Character. Full path to the template file.
+# @param conditions Named logical list. Names must match all [IF ...] markers
+#   in the template. Unknown condition names in the template raise an error.
+# @param substitutions Named character list. {name} tokens in the filtered
+#   lines are replaced with the corresponding value.
+# @return Character vector of processed lines.
+.process_template <- function(template_path, conditions = list(),
+                              substitutions = list()) {
+  if (!file.exists(template_path)) {
+    stop(
+      "Template file not found: ", template_path,
+      call. = FALSE
     )
   }
 
-  content <- c(
-    "# setup/1_setup_enviro.R",
-    "# Step 1: Install all required packages and lock versions with renv.",
-    paste0("# Generated: ", Sys.Date()),
-    "#",
-    "# Run this script ONCE after opening the project for the first time.",
-    "# Re-run if you add packages or upgrade shinyplanr.",
-    "#",
-    "# HOW TO RUN: Click 'Source' or run line-by-line.",
-    "",
-    "# =============================================================================",
-    "# PRE-CHECK \u2014 Quarto CLI",
-    "# =============================================================================",
-    "#",
-    "# The app generates reports using Quarto. The 'quarto' R package (installed",
-    "# below) is a wrapper that calls the Quarto CLI binary. If the CLI is not",
-    "# installed, report generation will fail at runtime.",
-    "#",
-    "# Download Quarto CLI from: https://quarto.org/docs/get-started/",
-    "#",
-    "if (!nzchar(Sys.which('quarto'))) {",
-    "  warning(",
-    "    '\\n[ACTION REQUIRED] Quarto CLI not found on PATH.',",
-    "    '\\nThe app uses Quarto to generate reports.',",
-    "    '\\nDownload and install it from: https://quarto.org/docs/get-started/',",
-    "    '\\nThen restart R and re-run this script.',",
-    "    '\\n(You can continue without Quarto, but report generation will fail.)',",
-    "    call. = FALSE",
-    "  )",
-    "} else {",
-    "  message('Quarto CLI found: v', system('quarto --version', intern = TRUE))",
-    "}",
-    "",
-    "# =============================================================================",
-    "# STEP 0 \u2014 GitHub Credentials",
-    "# =============================================================================",
-    "#",
-    "# Several packages are installed from GitHub. renv contacts the GitHub API",
-    "# for each one. Without authentication, requests are rate-limited to",
-    "# 60/hour, causing intermittent 'error code 56' failures. Authentication",
-    "# raises this to 5,000/hour and eliminates these errors.",
-    "#",
-    "# We use the 'gitcreds' package, which reads your GitHub PAT from the",
-    "# system keychain (macOS Keychain / Windows Credential Manager).",
-    "# If you have authenticated with GitHub via the 'gh' CLI or RStudio,",
-    "# your credentials may already be stored and this will work automatically.",
-    "#",
-    "# Run the block below. It will:",
-    "#   a) Install gitcreds if needed",
-    "#   b) Check if a GitHub PAT is already stored in your keychain",
-    "#   c) If not, open a prompt for you to paste your PAT",
-    "#   d) Set GITHUB_PAT in this session so renv can use it",
-    "#",
-    "# To create a PAT (do this once, only if you don't have one):",
-    "#   1. Go to: https://github.com/settings/tokens/new",
-    "#      - Token name: 'R renv installs'",
-    "#      - Expiration: 90 days",
-    "#      - Scopes: leave ALL boxes UNCHECKED (public repos need no scope)",
-    "#      - Click 'Generate token' and copy it (starts with ghp_...)",
-    "#",
-    "if (!requireNamespace('gitcreds', quietly = TRUE)) install.packages('gitcreds', quiet = TRUE)",
-    "local({",
-    "  cred <- tryCatch(gitcreds::gitcreds_get(), error = function(e) NULL)",
-    "  if (is.null(cred) || !nzchar(cred$password)) {",
-    "    message('No GitHub credentials found in keychain.')",
-    "    message('Running gitcreds::gitcreds_set() \u2014 paste your PAT when prompted.')",
-    "    gitcreds::gitcreds_set()",
-    "    cred <- tryCatch(gitcreds::gitcreds_get(), error = function(e) NULL)",
-    "  }",
-    "  if (!is.null(cred) && nzchar(cred$password)) {",
-    "    Sys.setenv(GITHUB_PAT = cred$password)",
-    "    message('GITHUB_PAT set from keychain. Unauthenticated rate limit lifted.')",
-    "  } else {",
-    "    warning('Could not load GitHub credentials. GitHub API calls may fail.')",
-    "  }",
-    "})",
-    "",
-    "# =============================================================================",
-    "# STEP 1 \u2014 Install GitHub-only packages",
-    "# =============================================================================",
-    "#",
-    "# These packages are not on CRAN. Explicit org/repo ensures renv.lock",
-    "# records the correct source for Posit Connect / new-machine deployments.",
-    "# renv checks its global cache first \u2014 already-cached = near-instant.",
-    "#",
-    "# WARNING: @HEAD installs the LATEST commit each time this script is run.",
-    "# Step 5 (renv::snapshot) locks the exact SHA so deployments are",
-    "# reproducible. Do NOT re-run this script unless you intend to upgrade",
-    "# shinyplanr \u2014 doing so will update to the latest HEAD and require a new",
-    "# snapshot and redeployment.",
-    "",
-    github_pkgs_lines,
-    "",
-    "# =============================================================================",
-    "# STEP 2 \u2014 Install CRAN packages",
-    "# =============================================================================",
-    "#",
-    "# NOTE: terra is pinned to 1.9-27 (TEMPORARY).",
-    "# terra 1.9-34 introduced a breaking change that affects this app.",
-    "# Remove the pinned install line below once the issue is resolved upstream.",
-    "# See: https://github.com/rspatial/terra/issues",
-    "",
-    'renv::install("terra@1.9-27", prompt = FALSE)',
-    "",
-    "renv::install(c(",
-    '  "shiny", "tidyverse", "sf", "ggplot2", "readr", "dplyr",',
-    '  "tidyr", "purrr", "stringr", "tibble", "tidyselect", "bslib",',
-    '  "leafgl", "leaflet", "htmltools", "patchwork", "gridExtra", "reactable",',
-    '  "shinyalert", "shinycssloaders", "shinydisconnect", "shinyjs",',
-    '  "prioritizr", "highs", "rnaturalearth", "rnaturalearthdata", "units",',
-    '  "quarto", "withr", "rsconnect", "ggridges", "kableExtra"',
-    "), prompt = FALSE)",
-    "",
-    "# =============================================================================",
-    "# STEP 3 \u2014 Optional: faster solvers",
-    "# =============================================================================",
-    "#",
-    "# shinyplanr uses HiGHS by default (installed above) \u2014 no system dependencies.",
-    "# For better performance on large problems, you can optionally install:",
-    "#",
-    "# CBC solver (rcbc) \u2014 requires system CBC libraries first:",
-    "#   See: https://github.com/dirkschumacher/rcbc",
-    "#",
-    "# Gurobi \u2014 commercial solver, free academic licence available:",
-    "#   See: https://www.gurobi.com/academia/academic-program-and-licenses/",
-    "#",
-    "# If either is installed, prioritizr will use it automatically in preference",
-    "# to HiGHS (priority order: Gurobi > CBC > HiGHS).",
-    "#",
-    "# Uncomment to install rcbc (after installing system CBC libraries):",
-    '# renv::install("dirkschumacher/rcbc@HEAD", prompt = FALSE)',
-    "",
-    "# =============================================================================",
-    "# STEP 4 \u2014 Verify installs before locking",
-    "# =============================================================================",
-    "#",
-    "# Check that the packages most critical to the app are actually installed.",
-    "# renv::install() with prompt = FALSE does not stop on partial failure, so",
-    "# this catches silent errors before they produce a broken renv.lock.",
-    "",
-    "local({",
-    "  required <- c(",
-    '    "shinyplanr", "spatialplanr", "shinyWidgets",',
-    '    "shiny", "sf", "prioritizr", "highs",',
-    '    "leafgl", "leaflet", "reactable", "bslib", "ggridges"',
-    "  )",
-    "  missing_pkgs <- required[",
-    "    !vapply(required, requireNamespace, logical(1L), quietly = TRUE)",
-    "  ]",
-    "  if (length(missing_pkgs) > 0L) {",
-    "    stop(",
-    '      "The following packages failed to install:\\n  ",',
-    '      paste(missing_pkgs, collapse = "\\n  "),',
-    '      "\\nFix the errors above, then re-run renv::snapshot()."',
-    "    )",
-    "  }",
-    '  message("All critical packages verified.")',
-    "})",
-    "",
-    "# =============================================================================",
-    "# STEP 4b \u2014 Optional: your additional packages",
-    "# =============================================================================",
-    "#",
-    "# If you need packages beyond the shinyplanr defaults (e.g. for custom data",
-    "# processing in 2_setup_data.R), add them to setup/packages_extra.R.",
-    "# That file is sourced here automatically and is NEVER overwritten when you",
-    "# run shinyplanr::update_shinyplanr_template().",
-    "#",
-    "# Example setup/packages_extra.R:",
-    "#   renv::install('ggforce', prompt = FALSE)",
-    "#   renv::install('MyOrg/mypackage@HEAD', prompt = FALSE)",
-    "",
-    "if (file.exists('setup/packages_extra.R')) {",
-    "  message('\\nInstalling your additional packages (setup/packages_extra.R)...')",
-    "  source('setup/packages_extra.R', local = TRUE)",
-    "}",
-    "",
-    "# =============================================================================",
-    "# STEP 5 \u2014 Lock versions",
-    "# =============================================================================",
-    "#",
-    "# Writes renv.lock. Commit this file to version control.",
-    "",
-    "renv::snapshot(type = 'implicit')",
-    "",
-    'message("\\nAll packages installed. renv.lock written.")',
-    'message("Next: open setup/2_setup_data.R and prepare the spatial data.")',
-    "",
-    "# Open the next setup script -----------------------------------------------",
-    "if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {",
-    "  rstudioapi::navigateToFile('setup/2_setup_data.R')",
-    "}",
-    ""
+  lines <- readLines(template_path, warn = FALSE)
+
+  # ---- Validate [IF]/[END] structure -----------------------------------------
+  # Collect all marker lines and check for structural problems before filtering.
+
+  if_pattern  <- "^\\s*#\\s*\\[IF\\s+(\\w+)\\]\\s*$"
+  end_pattern <- "^\\s*#\\s*\\[END\\s+(\\w+)\\]\\s*$"
+
+  open_stack <- character(0)  # tracks currently-open condition names
+
+  for (i in seq_along(lines)) {
+    line <- lines[[i]]
+
+    if_match  <- regmatches(line, regexpr(if_pattern,  line, perl = TRUE))
+    end_match <- regmatches(line, regexpr(end_pattern, line, perl = TRUE))
+
+    if (length(if_match) > 0) {
+      cond_name <- sub(if_pattern, "\\1", if_match, perl = TRUE)
+
+      # Nesting check
+      if (length(open_stack) > 0) {
+        stop(
+          "Nested [IF] blocks are not supported in template: ",
+          basename(template_path),
+          "\n  Line ", i, ": ", trimws(line),
+          "\n  Already inside [IF ", open_stack[length(open_stack)], "]",
+          call. = FALSE
+        )
+      }
+
+      # Unknown condition check
+      if (!cond_name %in% names(conditions)) {
+        stop(
+          "Unknown condition '", cond_name, "' in template: ",
+          basename(template_path),
+          "\n  Line ", i, ": ", trimws(line),
+          "\n  Known conditions: ",
+          if (length(conditions) == 0) "(none)" else paste(names(conditions), collapse = ", "),
+          call. = FALSE
+        )
+      }
+
+      open_stack <- c(open_stack, cond_name)
+
+    } else if (length(end_match) > 0) {
+      cond_name <- sub(end_pattern, "\\1", end_match, perl = TRUE)
+
+      if (length(open_stack) == 0 || open_stack[length(open_stack)] != cond_name) {
+        stop(
+          "[END ", cond_name, "] without matching [IF ", cond_name, "] in template: ",
+          basename(template_path),
+          "\n  Line ", i, ": ", trimws(line),
+          call. = FALSE
+        )
+      }
+
+      open_stack <- open_stack[-length(open_stack)]
+    }
+  }
+
+  if (length(open_stack) > 0) {
+    stop(
+      "Unclosed [IF ", open_stack[length(open_stack)], "] in template: ",
+      basename(template_path),
+      call. = FALSE
+    )
+  }
+
+  # ---- Filter conditional blocks ---------------------------------------------
+
+  out_lines  <- character(0)
+  in_block   <- FALSE
+  keep_block <- TRUE
+
+  for (line in lines) {
+    if_match  <- regmatches(line, regexpr(if_pattern,  line, perl = TRUE))
+    end_match <- regmatches(line, regexpr(end_pattern, line, perl = TRUE))
+
+    if (length(if_match) > 0) {
+      cond_name  <- sub(if_pattern, "\\1", if_match, perl = TRUE)
+      in_block   <- TRUE
+      keep_block <- isTRUE(conditions[[cond_name]])
+      next
+    }
+
+    if (length(end_match) > 0) {
+      in_block   <- FALSE
+      keep_block <- TRUE
+      next
+    }
+
+    if (!in_block || keep_block) {
+      out_lines <- c(out_lines, line)
+    }
+  }
+
+  # ---- Apply token substitutions ---------------------------------------------
+
+  for (token_name in names(substitutions)) {
+    pattern     <- paste0("\\{", token_name, "\\}")
+    replacement <- as.character(substitutions[[token_name]])
+    out_lines   <- gsub(pattern, replacement, out_lines, perl = TRUE)
+  }
+
+  out_lines
+}
+
+
+# ---- 1_setup_enviro.R writer -------------------------------------------------
+
+.write_setup_enviro <- function(setup_dir, oceandatr = TRUE) {
+  template_path <- system.file(
+    "templates", "setup", "1_setup_enviro.R",
+    package = "shinyplanr"
+  )
+  if (template_path == "") {
+    template_path <- file.path("inst", "templates", "setup", "1_setup_enviro.R")
+  }
+
+  content <- .process_template(
+    template_path,
+    conditions    = list(oceandatr = isTRUE(oceandatr)),
+    substitutions = list(date = Sys.Date())
   )
 
   file_path <- file.path(setup_dir, "1_setup_enviro.R")
@@ -739,236 +688,29 @@ create_shinyplanr_template <- function(
 
 .write_setup_data <- function(setup_dir, country, crs, oceandatr, resolution,
                               include_climate, include_cost, include_mpas) {
-  # Header
-  content <- c(
-    "# setup/2_setup_data.R",
-    paste0("# Step 2: Prepare spatial data for shinyplanr: ", country),
-    paste0("# Generated: ", Sys.Date()),
-    "#",
-    "# Run this script once to prepare the raw spatial data.",
-    "# Output: setup/data/{country}_RawData.rda",
-    "#",
-    "# HOW TO RUN: Click 'Source' or run line-by-line.",
-    "",
-    "library(tidyverse)",
-    "library(spatialplanr)",
-    "library(sf)",
-    "library(terra)",
-    ""
+  template_path <- system.file(
+    "templates", "setup", "2_setup_data.R",
+    package = "shinyplanr"
   )
-
-  if (oceandatr) {
-    content <- c(content, "library(oceandatr)", "")
+  if (template_path == "") {
+    template_path <- file.path("inst", "templates", "setup", "2_setup_data.R")
   }
 
-  content <- c(
-    content,
-    "# =============================================================================",
-    "# BASIC PARAMETERS",
-    "# =============================================================================",
-    "",
-    paste0('country   <- "', country, '"'),
-    paste0('crs       <- "', crs, '"'),
-    paste0("resolution <- ", resolution, "L  # Planning unit size in meters"),
-    "",
-    'setup_dir <- "setup"                              # Location of this folder',
-    'data_path <- file.path(setup_dir, "data")         # Raw spatial data files',
-    ""
-  )
-
-  # Boundary and grid setup
-  if (oceandatr) {
-    content <- c(
-      content,
-      "# =============================================================================",
-      "# BOUNDARIES (using oceandatr)",
-      "# =============================================================================",
-      "",
-      "# Get EEZ boundary from Marine Regions database",
-      "# See: https://marineregions.org/gazetteer.php for valid names",
-      'eez <- oceandatr::get_boundary(name = country, type = "eez") %>%',
-      "  sf::st_transform(crs = crs) %>%",
-      "  sf::st_geometry() %>%",
-      "  sf::st_sf()",
-      "",
-      "# Alternative: Load custom boundary",
-      '# bndry <- sf::st_read(file.path(data_path, "my_boundary.gpkg")) %>%',
-      "#   sf::st_transform(crs = crs)",
-      "",
-      "# Separate boundary (for plotting)",
-      "bndry <- eez %>%",
-      '  sf::st_cast(to = "POLYGON") %>%',
-      "  dplyr::mutate(Area_km2 = sf::st_area(.) %>%",
-      '                  units::set_units("km2") %>%',
-      "                  units::drop_units())",
-      "",
-      "# Get coastline for plotting overlays",
-      'coast <- rnaturalearth::ne_countries(country = country, scale = "medium", returnclass = "sf") %>%',
-      "  sf::st_transform(crs = crs)",
-      "",
-      "# Create planning unit grid",
-      "PUs <- spatialgridr::get_grid(boundary = eez,",
-      "                              crs = crs,",
-      '                              output = "sf_hex",',
-      "                              resolution = resolution)",
-      "",
-      "# Check the grid",
-      "ggplot() +",
-      '  geom_sf(data = PUs, fill = NA, colour = "grey80") +',
-      '  geom_sf(data = bndry, fill = NA, colour = "blue") +',
-      '  geom_sf(data = coast, fill = "darkgrey")',
-      ""
+  content <- .process_template(
+    template_path,
+    conditions = list(
+      oceandatr       = isTRUE(oceandatr),
+      manual          = !isTRUE(oceandatr),
+      include_cost    = isTRUE(include_cost),
+      include_mpas    = isTRUE(include_mpas),
+      include_climate = isTRUE(include_climate)
+    ),
+    substitutions = list(
+      country    = country,
+      crs        = crs,
+      resolution = resolution,
+      date       = Sys.Date()
     )
-  } else {
-    content <- c(
-      content,
-      "# =============================================================================",
-      "# BOUNDARIES (custom data)",
-      "# =============================================================================",
-      "",
-      "# TODO: Load your boundary file",
-      '# bndry <- sf::st_read(file.path(data_path, "my_boundary.gpkg")) %>%',
-      "#   sf::st_transform(crs = crs)",
-      "",
-      "# TODO: Load your coastline for plotting",
-      '# coast <- sf::st_read(file.path(data_path, "my_coastline.gpkg")) %>%',
-      "#   sf::st_transform(crs = crs)",
-      "",
-      "# TODO: Create or load planning units",
-      "# PUs <- spatialgridr::get_grid(boundary = bndry,",
-      "#                               crs = crs,",
-      '#                               output = "sf_hex",',
-      "#                               resolution = resolution)",
-      ""
-    )
-  }
-
-  # Feature data
-  content <- c(
-    content,
-    "# =============================================================================",
-    "# FEATURE DATA",
-    "# =============================================================================",
-    ""
-  )
-
-  if (oceandatr) {
-    content <- c(
-      content,
-      "bathymetry <- oceandatr::get_bathymetry(spatial_grid = PUs, classify_bathymetry = TRUE) # Keep geometry for bathymetry",
-      "geomorphology <- oceandatr::get_geomorphology(spatial_grid = PUs) %>% sf::st_drop_geometry()",
-      "knolls <- oceandatr::get_knolls(spatial_grid = PUs) %>% sf::st_drop_geometry()",
-      "seamounts <- oceandatr::get_seamounts(spatial_grid = PUs, buffer = 30000) %>% sf::st_drop_geometry()",
-      "enviro_zones <- oceandatr::get_enviro_zones(spatial_grid = PUs, max_num_clusters = 5, show_plots = FALSE) %>% sf::st_drop_geometry()",
-      "corals <- oceandatr::get_coral_habitat(spatial_grid = PUs) %>% sf::st_drop_geometry()",
-      "",
-      "dat_sf <- dplyr::bind_cols(bathymetry, geomorphology, knolls, seamounts, enviro_zones, corals) %>%",
-      "  dplyr::mutate(across(where(is.numeric), ~replace_na(.x, 0)))",
-      "",
-      "# Replace any spaces in column names with underscores",
-      "names(dat_sf) <- stringr::str_replace_all(names(dat_sf), ' ', '_')",
-      ""
-    )
-  } else {
-    content <- c(
-      content,
-      "# TODO: Load and process your feature data, then combine into dat_sf",
-      "# dat_sf <- dplyr::bind_cols(PUs, ...) %>%",
-      "#   dplyr::mutate(across(where(is.numeric), ~replace_na(.x, 0)))",
-      ""
-    )
-  }
-
-  # Cost data
-  if (include_cost) {
-    content <- c(
-      content,
-      "# =============================================================================",
-      "# COST DATA",
-      "# =============================================================================",
-      "",
-      "PU_Area <- as.numeric(units::set_units(sf::st_area(PUs)[1], km^2)) %>% round(2)",
-      "",
-      "cost <- dat_sf %>%",
-      "  dplyr::select(geometry) %>%",
-      "  spatialplanr::splnr_get_distCoast(custom_coast = coast) %>%",
-      "  dplyr::mutate(",
-      "    cost_area     = PU_Area,",
-      "    cost_distance = coastDistance_km",
-      "  ) %>%",
-      "  dplyr::select(-coastDistance_km) %>%",
-      "  sf::st_drop_geometry()",
-      "",
-      "dat_sf <- dplyr::bind_cols(dat_sf, cost)",
-      ""
-    )
-  }
-
-  # MPA data
-  if (include_mpas) {
-    content <- c(
-      content,
-      "# =============================================================================",
-      "# LOCKED-IN AREAS (MPAs)",
-      "# =============================================================================",
-      "",
-      "mpas <- spatialplanr::splnr_get_MPAs(PlanUnits = PUs, Countries = country) %>%",
-      "  sf::st_transform(crs = crs) %>%",
-      "  dplyr::select(geometry) %>%",
-      '  spatialgridr::get_data_in_grid(spatial_grid = PUs, dat = ., name = "mpas", cutoff = 0.5) %>%',
-      "  sf::st_drop_geometry()",
-      "",
-      "dat_sf <- dplyr::bind_cols(dat_sf, mpas)",
-      ""
-    )
-  }
-
-  # Climate data
-  if (include_climate) {
-    content <- c(
-      content,
-      "# =============================================================================",
-      "# CLIMATE DATA (optional)",
-      "# =============================================================================",
-      "",
-      "# TODO: Load climate data if available",
-      "# climate_sf <- readr::read_rds(file.path(data_path, 'sst_trends.rds')) %>%",
-      "#   sf::st_transform(crs) %>%",
-      "#   sf::st_interpolate_aw(dat_sf, extensive = FALSE, na.rm = TRUE, keep_NA = TRUE)",
-      "# dat_sf <- dplyr::bind_cols(dat_sf, climate_sf %>% sf::st_drop_geometry())",
-      ""
-    )
-  }
-
-  # Final save
-  content <- c(
-    content,
-    "# =============================================================================",
-    "# FINAL PROCESSING AND SAVE",
-    "# =============================================================================",
-    "",
-    "dat_sf <- dat_sf %>%",
-    "  dplyr::relocate(geometry, .after = tidyselect::everything())",
-    "",
-    "if (any(is.na(sf::st_drop_geometry(dat_sf)))) {",
-    '  warning("NA values found in data - replacing with 0")',
-    "  dat_sf <- dat_sf %>%",
-    "    dplyr::mutate(across(where(is.numeric), ~replace_na(., 0)))",
-    "}",
-    "",
-    'message("Data columns: ", paste(names(dat_sf), collapse = ", "))',
-    "",
-    "save(dat_sf, bndry, coast,",
-    '     file = file.path(data_path, paste0(country, "_RawData.rda")))',
-    "",
-    'message("Data saved to: ", file.path(data_path, paste0(country, "_RawData.rda")))',
-    'message("Next: open setup/3_setup_app.R and configure the app.")',
-    "",
-    "# Open the next setup script -----------------------------------------------",
-    "if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {",
-    "  rstudioapi::navigateToFile('setup/3_setup_app.R')",
-    "}",
-    ""
   )
 
   file_path <- file.path(setup_dir, "2_setup_data.R")
@@ -980,408 +722,22 @@ create_shinyplanr_template <- function(
 # ---- 3_setup_app.R writer ----------------------------------------------------
 
 .write_setup_app <- function(setup_dir, country, crs, include_climate) {
-  content <- c(
-    "# setup/3_setup_app.R",
-    paste0("# Step 3: Configure shinyplanr app for: ", country),
-    paste0("# Generated: ", Sys.Date()),
-    "#",
-    "# Run this script after 2_setup_data.R.",
-    "# Output: config/shinyplanr_config.rds  (in the project root)",
-    "#",
-    "# HOW TO RUN: Click 'Source' or run line-by-line.",
-    "",
-    "library(tidyverse)",
-    "library(sf)",
-    "",
-    paste0('country   <- "', country, '"'),
-    'setup_dir <- "setup"                              # Location of the setup folder',
-    'data_path <- file.path(setup_dir, "data")         # Raw spatial data files',
-    "",
-    "# =============================================================================",
-    "# APP OPTIONS",
-    "# =============================================================================",
-    "#",
-    "# NOTE: This variable is named 'shinyplanr_options' (not 'options') to avoid",
-    "# shadowing base::options(), which is a function. If 'options' were used here",
-    "# and you ran the app in the same R session without restarting, any code that",
-    "# calls options() internally (e.g. withr, purrr) would find the list instead",
-    "# of the function and crash R immediately.",
-    "",
-    "shinyplanr_options <- list(",
-    "",
-    "  ## General",
-    paste0('  app_title  = "', country, ': shinyplanr",'),
-    paste0('  nav_title  = "', country, ' Spatial Planning",'),
-    '  navbar = list(theme = "dark"),  # "light" or "dark"',
-    "",
-    "  ## Funder link",
-    '  funder_url = "https://spatialplanning.github.io",',
-    "",
-    "  ## Logo file locations (relative to setup/logos/)",
-    "  #",
-    "  # Replace the placeholder images in setup/logos/ with your own files,",
-    "  # then re-run this script to copy them to www/.",
-    "  #",
-    "  #   logo_navbar.png  -- top-left of the navbar on every page",
-    "  #   logo_welcome.png -- inline image in the welcome page (shinyplanr_1welcome1.md)",
-    "  #   logo_funder.png  -- 'Funded by' section in the welcome page footer",
-    "  #   favicon.png      -- browser tab icon (16x16 or 32x32 px PNG recommended)",
-    "  #",
-    "  # The option values are the SOURCE paths (in setup/logos/).",
-    "  # This script copies them to www/ with the same filenames.",
-    '  file_logo_navbar  = file.path(setup_dir, "logos", "logo_navbar.png"),',
-    '  file_logo_welcome = file.path(setup_dir, "logos", "logo_welcome.png"),',
-    '  file_logo_funder  = file.path(setup_dir, "logos", "logo_funder.png"),',
-    '  file_favicon      = file.path(setup_dir, "logos", "favicon.png"),',
-    '  file_data        = file.path(data_path, paste0(country, "_RawData.rda")),',
-    "",
-    "  ## Module switches (TRUE = enabled, FALSE = disabled)",
-    "  mod_1welcome = TRUE,",
-    "  mod_2scenario = TRUE,",
-    "  mod_3compare = TRUE,",
-    "  mod_4features = TRUE,",
-    "  mod_5coverage = TRUE,",
-    "  mod_6help = TRUE,",
-    "  mod_7credit = FALSE,",
-    "",
-    "  ## Report generation",
-    "  include_report = TRUE,",
-    "",
-    "  ## Optional tabs",
-    "  include_ess     = FALSE,  # Ecosystem Services tab - set TRUE if Dict contains EcosystemServices rows",
-    "  include_explore = TRUE,  # Explore tab",
-    "  include_log     = TRUE,  # Log tab",
-    "",
-    "  ## Bioregion stratification",
-    "  include_bioregion = FALSE,",
-    "",
-    "  ## Second funder logo in welcome footer (optional)",
-    "  # The default is the UQ logo (shinyplanr was developed at UQ).",
-    "  # Replace setup/logos/uq-logo-white.png with your own image and update",
-    "  # the path below, or comment out file_logo_funder2 to show only one",
-    "  # funder logo.",
-    '  file_logo_funder2 = file.path(setup_dir, "logos", "uq-logo-white.png"),',
-    '  funder2_url       = "https://spatialplanning.github.io",',
-    "",
-    "  ## Institution text in welcome footer",
-    '  # institution_text = "This application was developed by researchers at My Institution."',
-    "  # Leave commented out to use the default UQ text."
+  template_path <- system.file(
+    "templates", "setup", "3_setup_app.R",
+    package = "shinyplanr"
   )
-
-  # Climate options
-  if (include_climate) {
-    content <- c(
-      content,
-      "",
-      "  ## Climate-smart planning",
-      "  include_climateChange = FALSE,  # Set TRUE when climate data is available",
-      "  climate_change = 1,  # 0 = off; 1 = CPA; 2 = Feature; 3 = Percentile",
-      "  percentile     = 5,",
-      "  direction      = -1,  # 1 = high values are refugia; -1 = low values",
-      "  refugiaTarget  = 1,"
-    )
+  if (template_path == "") {
+    template_path <- file.path("inst", "templates", "setup", "3_setup_app.R")
   }
 
-  content <- c(
-    content,
-    "",
-    "  ## Locked areas",
-    "  include_lockedArea = TRUE,",
-    "",
-    "  ## Target grouping",
-    '  targetsBy = "individual",  # "individual", "category", or "master"',
-    "",
-    "  ## Objective function",
-    "  #",
-    "  # 'min_set'       (default) -- finds the smallest-cost set of planning units",
-    "  #                  that meets ALL targets. Use this for most analyses.",
-    "  #",
-    "  # 'min_shortfall' -- finds the set of planning units that minimises the",
-    "  #                  overall shortfall across features while staying within a",
-    "  #                  fixed budget (set as a % of the total cost layer).",
-    "  #                  Only use this when you have a hard budget constraint.",
-    '  obj_func = "min_set",  # "min_set" or "min_shortfall"',
-    "",
-    "  ## CRS",
-    paste0('  cCRS = "', crs, '"'),
-    ")",
-    "",
-    "# =============================================================================",
-    "# COPY LOGOS TO www/",
-    "# =============================================================================",
-    "",
-    'if (!dir.exists("www")) dir.create("www", recursive = TRUE)',
-    "",
-    "# Maps each option key to its fixed destination filename in www/.",
-    "# The filenames in www/ are what the running app loads - do not change them.",
-    "logo_map <- list(",
-    '  file_logo_navbar  = "logo_navbar.png",',
-    '  file_logo_welcome = "logo_welcome.png",',
-    '  file_logo_funder  = "logo_funder.png",',
-    '  file_logo_funder2 = "logo_funder2.png",',
-    '  file_favicon      = "favicon.png"',
-    ")",
-    "",
-    "for (opt_name in names(logo_map)) {",
-    "  src <- shinyplanr_options[[opt_name]]",
-    "  dst <- file.path(\"www\", logo_map[[opt_name]])",
-    "  if (!is.null(src) && file.exists(src)) {",
-    "    file.copy(src, dst, overwrite = TRUE)",
-    "    message(\"Copied logo: \", basename(src), \" -> \", dst)",
-    "  } else if (!is.null(src)) {",
-    "    message(\"Logo not found (skipping): \", src)",
-    "  }",
-    "}",
-    "",
-    "# Derive show_logo_funder2: TRUE only if the file was successfully copied.",
-    "# This is set automatically - do not set it manually in shinyplanr_options.",
-    "shinyplanr_options$show_logo_funder2 <- file.exists(file.path(\"www\", \"logo_funder2.png\"))",
-    "",
-    "# Copy custom CSS override if present (overrides package default styling)",
-    "# Edit setup/content/custom.css to change colours, fonts, etc.",
-    "custom_css_src <- file.path(setup_dir, \"content\", \"custom.css\")",
-    "if (!file.exists(custom_css_src)) custom_css_src <- file.path(setup_dir, \"custom.css\")",
-    "if (file.exists(custom_css_src)) {",
-    "  file.copy(custom_css_src, file.path(\"www\", \"custom.css\"), overwrite = TRUE)",
-    "  message(\"Copied: www/custom.css\")",
-    "}",
-    "",
-    "# =============================================================================",
-    "# FEATURE DICTIONARY",
-    "# =============================================================================",
-    "#",
-    "# Step 1: Read the full (unfiltered) CSV and validate its structure.",
-    "# validate_dict() checks that:",
-    "#   - All required columns are present",
-    "#   - includeApp and includeJust are logical (TRUE/FALSE), not 1/0 or text",
-    "#   - All type values are from the known set (Feature, Cost, LockIn, etc.)",
-    "#   - nameVariable is unique within each type",
-    "#   - At least one Feature row has includeApp == TRUE",
-    "#   - Active Feature rows have target values in the 0-100 range",
-    "#",
-    "# Fix any errors reported here before proceeding.",
-    "",
-    'Dict_raw <- readr::read_csv(file.path(setup_dir, "Dict_Feature.csv"))',
-    "shinyplanr::validate_dict(Dict_raw)",
-    "",
-    "# Step 2: Filter to active rows and sort for consistent UI ordering.",
-    "Dict <- Dict_raw %>%",
-    "  dplyr::filter(includeApp) %>%",
-    "  dplyr::arrange(.data$type, .data$categoryID)",
-    "",
-    "vars <- Dict %>%",
-    '  dplyr::filter(!type %in% c("Justification")) %>%',
-    "  dplyr::pull(nameVariable)",
-    "",
-    "# =============================================================================",
-    "# LOAD AND PROCESS SPATIAL DATA",
-    "# =============================================================================",
-    "",
-    "load(shinyplanr_options$file_data)",
-    "",
-    "raw_sf <- dat_sf %>%",
-    "  sf::st_drop_geometry() %>%",
-    "  dplyr::select(tidyselect::all_of(vars))",
-    "",
-    "zero_cols <- colnames(raw_sf)[which(colSums(raw_sf, na.rm = TRUE) == 0)]",
-    "if (length(zero_cols) > 0) {",
-    '  message("Removing all-zero columns: ", paste(zero_cols, collapse = ", "))',
-    "  raw_sf <- raw_sf %>% dplyr::select(-tidyselect::any_of(zero_cols))",
-    "  vars   <- vars[!vars %in% zero_cols]",
-    "  Dict   <- Dict %>% dplyr::filter(!nameVariable %in% zero_cols)",
-    "}",
-    "",
-    "raw_sf <- raw_sf %>%",
-    "  sf::st_set_geometry(sf::st_geometry(dat_sf))",
-    "",
-    "# Normalise the agr (attribute-geometry-relationship) attribute so that",
-    "# dplyr::select() keeps geometry stickily when the config is loaded.",
-    "# sf::st_set_geometry() sets agr to all-NA; saving that to RDS and loading",
-    "# it in a new session can produce a stale factor that causes geometry to be",
-    "# silently dropped during select(). Setting agr to 'constant' here ensures",
-    "# the saved config is clean from the start.",
-    "raw_sf <- sf::st_set_agr(raw_sf, \"constant\")",
-    "",
-    "if (length(unique(vars)) != ncol(raw_sf) - 1) {",
-    '  stop("Mismatch between Dict variables and data columns. Check Dict_Feature.csv")',
-    "}",
-    "",
-    "# =============================================================================",
-    "# PLOTTING OVERLAYS",
-    "# =============================================================================",
-    "",
-    "bndry   <- sf::st_set_agr(bndry, \"constant\")",
-    "overlay <- sf::st_set_agr(coast, \"constant\")",
-    "",
-    "# =============================================================================",
-    "# TEXT CONTENT",
-    "# =============================================================================",
-    "",
-    "content_dir <- file.path(setup_dir, \"content\")",
-    "",
-    "tx <- list(",
-    "  welcome = list(",
-    '    list(title = "Welcome",      text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome1.md"))),',
-    '    list(title = "Terminology",  text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome2.md"))),',
-    '    list(title = "Instructions", text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome3.md"))),',
-    '    list(title = "CARE",         text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome4.md"))),',
-    '    list(title = "References",   text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome5.md")))',
-    "  )",
-    ")",
-    "",
-    'tx_1footer_path <- file.path(content_dir, "shinyplanr_1footer.md")',
-    'tx_1footer <- if (file.exists(tx_1footer_path)) readr::read_file(tx_1footer_path) else ""',
-    'tx_2solution  <- readr::read_file(file.path(content_dir, "shinyplanr_2solution.md"))',
-    'tx_2targets   <- readr::read_file(file.path(content_dir, "shinyplanr_2targets.md"))',
-    'tx_2cost      <- readr::read_file(file.path(content_dir, "shinyplanr_2cost.md"))',
-    'tx_2climate   <- readr::read_file(file.path(content_dir, "shinyplanr_2climate.md"))',
-    'tx_2ess       <- readr::read_file(file.path(content_dir, "shinyplanr_2ecosystemServices.md"))',
-    'tx_6faq       <- readr::read_file(file.path(content_dir, "shinyplanr_6faq.md"))',
-    'tx_6technical <- readr::read_file(file.path(content_dir, "shinyplanr_6technical.md"))',
-    'tx_6changelog <- readr::read_file(file.path(content_dir, "shinyplanr_6changelog.md"))',
-    "",
-    "# =============================================================================",
-    "# PLOTTING THEMES",
-    "# =============================================================================",
-    "",
-    "map_theme <- ggplot2::theme_bw(base_size = 14) +",
-    "  ggplot2::theme(",
-    '    legend.position = "bottom",',
-    '    legend.direction = "horizontal",',
-    "    axis.title = ggplot2::element_blank()",
-    "  )",
-    "",
-    "bar_theme <- ggplot2::theme_bw(base_size = 14) +",
-    "  ggplot2::theme(",
-    '    legend.position = "top",',
-    '    legend.direction = "horizontal"',
-    "  )",
-    "",
-    "# =============================================================================",
-    "# SAVE CONFIGURATION",
-    "# =============================================================================",
-    "",
-    "# =============================================================================",
-    "# SIDEBAR (pre-computed slider/checkbox metadata)",
-    "# =============================================================================",
-    "#",
-    "# These are computed once here so that mod_2scenario and mod_3compare do not",
-    "# need to recompute them on every UI render and every server init.",
-    "# The module IDs must match those used in app_ui.R / app_server.R.",
-    "",
-    "sidebar <- list(",
-    "  scenario = list(",
-    '    slider_vars     = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
-    "                                                categoryOut = TRUE, byCategory = FALSE),",
-    '    slider_varsBioR = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
-    "                                                categoryOut = TRUE, byCategory = TRUE,",
-    '                                                dataType = "Bioregion"),',
-    '    slider_varsCat  = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",',
-    "                                                categoryOut = TRUE, byCategory = TRUE),",
-    '    check_lockIn    = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockIn",',
-    '                                                 "checkLI_", categoryOut = TRUE),',
-    '    check_lockOut   = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockOut",',
-    '                                                 "checkLO_", categoryOut = TRUE)',
-    "  ),",
-    "  compare = list(",
-    '    Vars1             = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli1_",',
-    "                                                 categoryOut = TRUE),",
-    '    Vars2             = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",',
-    "                                                 categoryOut = TRUE),",
-    '    slider_varsBioR1  = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli1_",',
-    "                                                 categoryOut = TRUE, byCategory = TRUE,",
-    '                                                 dataType = "Bioregion"),',
-    '    slider_varsBioR2  = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",',
-    "                                                 categoryOut = TRUE, byCategory = TRUE,",
-    '                                                 dataType = "Bioregion"),',
-    '    check_lockIn1     = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",',
-    '                                                   "check1LI_", categoryOut = TRUE),',
-    '    check_lockIn2     = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",',
-    '                                                   "check2LI_", categoryOut = TRUE),',
-    '    check_lockOut1    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",',
-    '                                                   "check1LO_", categoryOut = TRUE),',
-    '    check_lockOut2    = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",',
-    '                                                   "check2LO_", categoryOut = TRUE)',
-    "  )",
-    ")",
-    "",
-    "config_list <- list(",
-    "  schema_version = shinyplanr::get_schema_version(),",
-    "  options        = shinyplanr_options,",
-    "  map_theme      = map_theme,",
-    "  bar_theme      = bar_theme,",
-    "  Dict           = Dict,",
-    "  raw_sf         = raw_sf,",
-    "  bndry          = bndry,",
-    "  overlay        = overlay,",
-    "  sidebar        = sidebar,",
-    "  tx             = tx,",
-    "  tx_1footer     = tx_1footer,",
-    "  tx_2solution   = tx_2solution,",
-    "  tx_2targets    = tx_2targets,",
-    "  tx_2cost       = tx_2cost,",
-    "  tx_2climate    = tx_2climate,",
-    "  tx_2ess        = tx_2ess,",
-    "  tx_6faq        = tx_6faq,",
-    "  tx_6technical  = tx_6technical,",
-    "  tx_6changelog  = tx_6changelog",
-    ")",
-    "",
-    "# =============================================================================",
-    "# VALIDATE CONFIGURATION",
-    "# =============================================================================",
-    "#",
-    "# Runs checks on the config before saving:",
-    "#   - All Dict variables are present in raw_sf",
-    "#   - CRS is consistent across raw_sf, bndry, and options$cCRS",
-    "#   - No feature columns are all-zero or all-NA",
-    "#   - Text content fields are character strings",
-    "#   - Target values are in the 0-100 range",
-    "#",
-    "# strict = TRUE (default) stops with a clear error if any check fails.",
-    "# Use strict = FALSE to get a report without stopping.",
-    "shinyplanr::validate_shinyplanr_data(config_list)",
-    "",
-    "# =============================================================================",
-    "# SAVE CONFIGURATION",
-    "# =============================================================================",
-    "",
-    'if (!dir.exists("config")) dir.create("config", recursive = TRUE)',
-    'saveRDS(config_list, file.path("config", "shinyplanr_config.rds"))',
-    "",
-    'message("\\nConfig saved: config/shinyplanr_config.rds")',
-    'message("Run shiny::runApp() to test, or source(\'deploy.R\') to deploy.")',
-    "",
-    "# =============================================================================",
-    "# CLEAN UP",
-    "# =============================================================================",
-    "#",
-    "# The setup scripts leave large objects (dat_sf, raw_sf, shinyplanr_options,",
-    "# etc.) in the global environment. Running the app in the same R session",
-    "# without clearing these can cause hard-to-diagnose crashes because some",
-    "# names shadow base R functions (e.g. a variable named 'options' would shadow",
-    "# base::options()). Remove the known objects, then restart R before running",
-    "# the app.",
-    "",
-    "rm(list = intersect(",
-    "  ls(),",
-    "  c('shinyplanr_options', 'config_list', 'dat_sf', 'raw_sf', 'bndry',",
-    "    'coast', 'overlay', 'Dict', 'Dict_raw', 'vars', 'sidebar', 'tx', 'map_theme',",
-    "    'bar_theme', 'tx_1footer', 'tx_2solution', 'tx_2targets', 'tx_2cost',",
-    "    'tx_2climate', 'tx_2ess', 'tx_6faq', 'tx_6technical', 'tx_6changelog',",
-    "    'zero_cols', 'logo_map', 'opt_name', 'src', 'dst', 'custom_css_src',",
-    "    'content_dir', 'tx_1footer_path', 'country', 'setup_dir', 'data_path')",
-    "))",
-    "message('\\nSetup objects removed from global environment.')",
-    "message('IMPORTANT: Please restart R before running the app.')",
-    "message('  Session > Restart R  (or Ctrl/Cmd+Shift+F10 in RStudio)')",
-    "message('Then open app.R and run shiny::runApp() to test the app.')",
-    "",
-    "# Open app.R so it is ready to run after the user restarts R.",
-    "if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {",
-    "  rstudioapi::navigateToFile('app.R')",
-    "}",
-    ""
+  content <- .process_template(
+    template_path,
+    conditions    = list(include_climate = isTRUE(include_climate)),
+    substitutions = list(
+      country = country,
+      crs     = crs,
+      date    = Sys.Date()
+    )
   )
 
   file_path <- file.path(setup_dir, "3_setup_app.R")
