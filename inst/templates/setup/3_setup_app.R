@@ -111,7 +111,10 @@ shinyplanr_options <- list(
   obj_func = "min_set",  # "min_set" or "min_shortfall"
 
   ## CRS
-  cCRS = "{crs}"
+  cCRS = "{crs}",
+
+  ## Plotting defaults
+  base_size = 18
 )
 
 # =============================================================================
@@ -252,17 +255,16 @@ tx_6changelog <- readr::read_file(file.path(content_dir, "shinyplanr_6changelog.
 # PLOTTING THEMES
 # =============================================================================
 
-map_theme <- ggplot2::theme_bw(base_size = 14) +
+map_theme <- 
   ggplot2::theme(
-    legend.position = "bottom",
-    legend.direction = "horizontal",
+    legend.position = "right",
+    legend.direction = "vertical",
     axis.title = ggplot2::element_blank()
   )
 
-bar_theme <- ggplot2::theme_bw(base_size = 14) +
+bar_theme <- 
   ggplot2::theme(
-    legend.position = "top",
-    legend.direction = "horizontal"
+    plot.background = ggplot2::element_rect(fill = "transparent", colour = NA)
   )
 
 # =============================================================================

@@ -53,8 +53,8 @@ bndry <- bndry %>%
 coast <- rnaturalearth::ne_countries(country = country, scale = "medium", returnclass = "sf") %>%
   sf::st_transform(crs = crs)
 
-# If using a state rathern than a coountry, you can try ne_states
-# coast <- rnaturalearth::ne_states(country = country, returnclass = "sf") %>% #CHANGE
+# If using a state rather than a coountry, you can try ne_states
+# coast <- rnaturalearth::ne_states(country = country, returnclass = "sf") %>%
 #   filter(name == state_name) %>%
 #   sf::st_transform(crs = crs)
 

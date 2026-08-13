@@ -61,11 +61,12 @@ fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
 #'
 #' @noRd
 #'
-fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay, map_theme, num = "", Dict = NULL) {
+fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay, map_theme, num = "", Dict = NULL, base_size = 14) {
   # Base solution plot
   plot_out <- spatialplanr::splnr_plot_solution(
     soln = soln,
-    plotTitle = ""
+    plotTitle = "",
+    base_size = base_size
   ) +
     spatialplanr::splnr_gg_add(
       Bndry = bndry,

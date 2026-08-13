@@ -505,7 +505,7 @@ mod_2scenario_server <- function(id, cfg) {
       fplot_solution_with_constraints(
         soln = solution(), input = input, raw_sf = raw_sf,
         bndry = bndry, overlay = overlay, map_theme = map_theme, num = "",
-        Dict = Dict
+        Dict = Dict, base_size = shinyplanr_options$base_size
       )
     }) %>% shiny::bindEvent(input$analyse)
 
@@ -592,13 +592,10 @@ mod_2scenario_server <- function(id, cfg) {
         namesToReplace = Dict,
         nr = 2,
         showTarget = TRUE,
-        sort_by = input$checkSort
+        sort_by = input$checkSort, 
+        base_size = shinyplanr_options$base_size
       ) +
-        bar_theme +
-        ggplot2::theme(
-          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
-        )
+        bar_theme
     }) %>%
       shiny::bindCache(input$analyse, input$checkSort)
 
@@ -646,7 +643,8 @@ mod_2scenario_server <- function(id, cfg) {
         cost = NA,
         costName = input$costid,
         legendTitle = cost_label,
-        plotTitle = "Solution overlaid with cost"
+        plotTitle = "Solution overlaid with cost",
+        base_size = shinyplanr_options$base_size
       ) +
         spatialplanr::splnr_gg_add(
           Bndry = bndry,

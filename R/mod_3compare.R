@@ -574,13 +574,13 @@ mod_3compare_server <- function(id, cfg) {
       plot_soln1 <- fplot_solution_with_constraints(
         soln = solution1(), input = input, raw_sf = raw_sf,
         bndry = bndry, overlay = overlay, map_theme = map_theme, num = "1",
-        Dict = Dict
+        Dict = Dict, base_size = shinyplanr_options$base_size
       )
 
       plot_soln2 <- fplot_solution_with_constraints(
         soln = solution2(), input = input, raw_sf = raw_sf,
         bndry = bndry, overlay = overlay, map_theme = map_theme, num = "2",
-        Dict = Dict
+        Dict = Dict, base_size = shinyplanr_options$base_size
       )
 
       patchwork::wrap_plots(plot_soln1, plot_soln2, nrow = 1, guides = "collect") &
@@ -698,26 +698,20 @@ mod_3compare_server <- function(id, cfg) {
           nr = 2, showTarget = TRUE,
           category = fget_category(Dict = Dict),
           renameFeatures = TRUE, namesToReplace = Dict,
-          sort_by = input$checkSort
+          sort_by = input$checkSort,
+          base_size = shinyplanr_options$base_size
         ) +
           bar_theme +
-          ggplot2::ggtitle("Scenario 1") +
-          ggplot2::theme(
-            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
-          ),
+          ggplot2::ggtitle("Scenario 1"),
         spatialplanr::splnr_plot_featureRep(tpd2,
           nr = 2, showTarget = TRUE,
           category = fget_category(Dict = Dict),
           renameFeatures = TRUE, namesToReplace = Dict,
-          sort_by = input$checkSort
+          sort_by = input$checkSort,
+          base_size = shinyplanr_options$base_size
         ) +
           bar_theme +
-          ggplot2::ggtitle("Scenario 2") +
-          ggplot2::theme(
-            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
-          ),
+          ggplot2::ggtitle("Scenario 2"),
         nrow = 1, guides = "collect"
       ) &
         ggplot2::theme(
@@ -768,13 +762,17 @@ mod_3compare_server <- function(id, cfg) {
 
       gg_cost1 <- spatialplanr::splnr_plot_costOverlay(
         soln = solution1(),
-        cost = NA, costName = input$costid1,
+        cost = NA, 
+        costName = input$costid1,
         legendTitle = cost_label1,
-        plotTitle = "Solution overlaid with cost"
+        plotTitle = "Solution overlaid with cost",
+        base_size = shinyplanr_options$base_size
       ) +
         spatialplanr::splnr_gg_add(
-          Bndry = bndry, overlay = overlay,
-          cropOverlay = solution1(), ggtheme = map_theme
+          Bndry = bndry, 
+          overlay = overlay,
+          cropOverlay = solution1(), 
+          ggtheme = map_theme
         ) +
         ggplot2::theme(
           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
@@ -783,13 +781,17 @@ mod_3compare_server <- function(id, cfg) {
 
       gg_cost2 <- spatialplanr::splnr_plot_costOverlay(
         soln = solution2(),
-        cost = NA, costName = input$costid2,
+        cost = NA, 
+        costName = input$costid2,
         legendTitle = cost_label2,
-        plotTitle = "Solution overlaid with cost"
+        plotTitle = "Solution overlaid with cost",
+        base_size = shinyplanr_options$base_size
       ) +
         spatialplanr::splnr_gg_add(
-          Bndry = bndry, overlay = overlay,
-          cropOverlay = solution2(), ggtheme = map_theme
+          Bndry = bndry, 
+          overlay = overlay,
+          cropOverlay = solution2(), 
+          ggtheme = map_theme
         ) +
         ggplot2::theme(
           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
