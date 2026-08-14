@@ -171,7 +171,7 @@ fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay,
 #' @noRd
 #'
 fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
-                                  Dict = NULL) {
+                                  Dict = NULL, base_size = 14) {
   # Filter out scenarios without climate data
   has_climate <- climate_ids != "NA"
 
@@ -224,14 +224,14 @@ fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
       climate_name  = climate_filtered[[i]],
       type          = "Normal",
       legendTitle   = NULL,
-      xAxisLab      = clim_labels[[i]]
+      xAxisLab      = clim_labels[[i]],
+      base_size     = base_size
     ) +
       ggplot2::theme(
         plot.background    = ggplot2::element_rect(fill = "transparent", colour = NA),
         legend.background  = ggplot2::element_rect(fill = "transparent", colour = NA),
-        # Change 2: viridis colour bar on the right with vertical title
         legend.position    = "right",
-        legend.title       = ggplot2::element_text(angle = -90, hjust = 0.5, size = 13)
+        legend.title       = ggplot2::element_text(angle = -90, hjust = 0.5)
       )
   })
 

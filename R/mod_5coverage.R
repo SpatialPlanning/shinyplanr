@@ -53,6 +53,7 @@ mod_5coverage_ui <- function(id, cfg) {
 #' @noRd
 mod_5coverage_server <- function(id, cfg) {
   # Extract config locals
+  options <- cfg$options
   raw_sf <- cfg$raw_sf
   Dict <- cfg$Dict
   bar_theme <- cfg$bar_theme
@@ -192,7 +193,8 @@ mod_5coverage_server <- function(id, cfg) {
         renameFeatures = TRUE,
         namesToReplace = Dict,
         nr = 2,
-        showTarget = FALSE
+        showTarget = FALSE,
+        base_size = options$base_size
       ) +
         bar_theme +
         ggplot2::theme(

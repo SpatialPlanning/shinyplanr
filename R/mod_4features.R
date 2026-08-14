@@ -90,6 +90,7 @@ mod_4features_ui <- function(id, cfg) {
 mod_4features_server <- function(id, cfg) {
   # Extract config locals
   Dict <- cfg$Dict
+  options <- cfg$options
   raw_sf <- cfg$raw_sf
   bndry <- cfg$bndry
   overlay <- cfg$overlay
@@ -124,8 +125,8 @@ mod_4features_server <- function(id, cfg) {
         df = dens,
         colNames = "FeatureSum",
         paletteName = "YlGnBu",
-        legendTitle = "Density of Features per Planning Unit", 
-        base_size = shinyplanr_options$base_size
+        legendTitle = "Density of Features per Planning Unit",
+        base_size = options$base_size
       ) +
         spatialplanr::splnr_gg_add(
           Bndry = bndry,
@@ -168,7 +169,7 @@ mod_4features_server <- function(id, cfg) {
           colNames = input$checkFeat,
           paletteName = "YlGnBu",
           legendTitle = paste0("Cost Layer: ", pl_title),
-          base_size = shinyplanr_options$base_size
+          base_size = options$base_size
         ) +
           spatialplanr::splnr_gg_add(
             Bndry = bndry,
@@ -188,7 +189,7 @@ mod_4features_server <- function(id, cfg) {
         gg <- spatialplanr::splnr_plot(raw_sf,
           colNames = input$checkFeat,
           legendTitle = pl_title,
-          base_size = shinyplanr_options$base_size
+          base_size = options$base_size
         ) +
           spatialplanr::splnr_gg_add(
             Bndry = bndry,
