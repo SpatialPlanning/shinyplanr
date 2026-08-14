@@ -90,6 +90,7 @@ mod_4features_ui <- function(id, cfg) {
 mod_4features_server <- function(id, cfg) {
   # Extract config locals
   Dict <- cfg$Dict
+  options <- cfg$options
   raw_sf <- cfg$raw_sf
   bndry <- cfg$bndry
   overlay <- cfg$overlay
@@ -124,7 +125,8 @@ mod_4features_server <- function(id, cfg) {
         df = dens,
         colNames = "FeatureSum",
         paletteName = "YlGnBu",
-        legendTitle = "Density of Features per Planning Unit"
+        legendTitle = "Density of Features per Planning Unit",
+        base_size = options$base_size
       ) +
         spatialplanr::splnr_gg_add(
           Bndry = bndry,
@@ -134,9 +136,7 @@ mod_4features_server <- function(id, cfg) {
         ) +
         ggplot2::theme(
           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-          # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-          # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the legend background transparent
         )
       return(gg)
     })
@@ -168,7 +168,8 @@ mod_4features_server <- function(id, cfg) {
           df = raw_sf,
           colNames = input$checkFeat,
           paletteName = "YlGnBu",
-          legendTitle = paste0("Cost Layer: ", pl_title)
+          legendTitle = paste0("Cost Layer: ", pl_title),
+          base_size = options$base_size
         ) +
           spatialplanr::splnr_gg_add(
             Bndry = bndry,
@@ -187,7 +188,8 @@ mod_4features_server <- function(id, cfg) {
       } else {
         gg <- spatialplanr::splnr_plot(raw_sf,
           colNames = input$checkFeat,
-          legendTitle = pl_title
+          legendTitle = pl_title,
+          base_size = options$base_size
         ) +
           spatialplanr::splnr_gg_add(
             Bndry = bndry,
