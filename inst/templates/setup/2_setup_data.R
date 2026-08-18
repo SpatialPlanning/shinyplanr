@@ -105,10 +105,8 @@ enviro_zones  <- oceandatr::get_enviro_zones(spatial_grid = PUs, max_num_cluster
 corals        <- oceandatr::get_coral_habitat(spatial_grid = PUs) %>% sf::st_drop_geometry()
 
 dat_sf <- dplyr::bind_cols(bathymetry, geomorphology, knolls, seamounts, enviro_zones, corals) %>%
-  dplyr::mutate(across(where(is.numeric), ~replace_na(.x, 0)))
-
-# Replace any spaces in column names with underscores
-names(dat_sf) <- stringr::str_replace_all(names(dat_sf), ' ', '_')
+  dplyr::mutate(across(where(is.numeric), ~replace_na(.x, 0))) %>% 
+  rename_with(stringr::str_to_snake) # Replace any spaces in column names with underscores
 
 # [END oceandatr]
 # [IF manual]
