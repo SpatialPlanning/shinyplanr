@@ -1005,6 +1005,36 @@ mod_2scenario_server <- function(id, cfg) {
           dplyr::mutate(pu_id = dplyr::row_number()) %>%
           sf::st_transform("EPSG:4326")
 
+        # Compute per-cell lock state from raw_sf constraint columns.
+        # raw_sf rows are guaranteed to align with solution() rows because
+        # prioritizr::solve() preserves the planning unit order from the
+        # problem() call (which uses raw_sf directly).
+        # We add is_locked_in / is_locked_out as logical columns so that
+        # Observer 2 (colour) and the click handler (popup) can both read
+        # them without re-computing.
+        LI <- get_lockIn(input)
+        LO <- get_lockOut(input)
+
+        raw_no_geom <- sf::st_drop_geometry(raw_sf)
+
+        # Defensive check: row counts must match before we can align columns
+        if (nrow(raw_no_geom) == nrow(soln_wgs84)) {
+          soln_wgs84 <- soln_wgs84 %>%
+            dplyr::mutate(
+              # rowSums returns a length-n vector; scalar FALSE is recycled by
+              # dplyr::mutate() when no lock-in/lock-out columns are selected.
+              is_locked_in  = if (length(LI) > 0) rowSums(raw_no_geom[LI], na.rm = TRUE) > 0 else FALSE,
+              is_locked_out = if (length(LO) > 0) rowSums(raw_no_geom[LO], na.rm = TRUE) > 0 else FALSE
+            )
+        } else {
+          # Fallback: no constraint colouring if row counts diverge
+          soln_wgs84 <- soln_wgs84 %>%
+            dplyr::mutate(
+              is_locked_in  = FALSE,
+              is_locked_out = FALSE
+            )
+        }
+
         map_solution_sf(soln_wgs84)
 
         # Reset interaction state for the new solution
@@ -1041,20 +1071,38 @@ mod_2scenario_server <- function(id, cfg) {
         # Capture all values before the delay — shinyjs::delay() executes its
         # body asynchronously after a browser round-trip, so reactive reads
         # inside it may see stale or invalidated values.
-        bbox           <- sf::st_bbox(soln_wgs84)
-        hex_selected   <- "#2ca02c"
-        hex_unselected <- "#a8a8a8"  # medium grey — contrasts with CartoDB Positron basemap (#f5f5f3)
+        bbox <- sf::st_bbox(soln_wgs84)
 
-        # Map solution values (0/1) to an RGB matrix for WebGL rendering.
+        # 4-state colour scheme (priority: locked-out > locked-in > selected > unselected).
+        # A cell cannot logically be both locked-in and locked-out, but the
+        # priority order is a safe guard against malformed data.
+        #
         # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with
         # values in [0, 1] (r, g, b per row) for per-polygon colours.
         # Passing a character hex vector triggers the hex branch in addGlPolygons
         # which uses the `color=` argument instead of `fillColor=`, silently
         # rendering all polygons the same colour.  col2rgb() + normalisation
         # ensures the matrix branch is always taken.
-        fill_rgb <- t(col2rgb(
-          ifelse(soln_wgs84$solution_1 == 1, hex_selected, hex_unselected)
-        )) / 255  # normalise to [0, 1]; result is nrow x 3 matrix
+        pu_colour <- dplyr::case_when(
+          soln_wgs84$is_locked_out              ~ "#d62728", # red   — locked out
+          soln_wgs84$is_locked_in               ~ "#1f77b4", # blue  — locked in
+          soln_wgs84$solution_1 == 1            ~ "#2ca02c", # green — selected (free)
+          TRUE                                  ~ "#a8a8a8"  # grey  — not selected
+        )
+        fill_rgb <- t(col2rgb(pu_colour)) / 255  # normalise to [0, 1]; result is nrow x 3 matrix
+
+        # Build legend entries — only include locked-in/locked-out when at
+        # least one such cell exists in the current solution.
+        legend_colours <- c("#2ca02c", "#a8a8a8")
+        legend_labels  <- c("Selected", "Not Selected")
+        if (any(soln_wgs84$is_locked_in)) {
+          legend_colours <- c(legend_colours, "#1f77b4")
+          legend_labels  <- c(legend_labels,  "Locked In")
+        }
+        if (any(soln_wgs84$is_locked_out)) {
+          legend_colours <- c(legend_colours, "#d62728")
+          legend_labels  <- c(legend_labels,  "Locked Out")
+        }
 
         # Defer proxy commands to the next browser event loop tick so the
         # browser has initialised the leaflet map from renderLeaflet first.
@@ -1082,8 +1130,8 @@ mod_2scenario_server <- function(id, cfg) {
             ) %>%
             leaflet::addLegend(
               position = "bottomleft",
-              colors   = c("#2ca02c", "#a8a8a8"),
-              labels   = c("Selected", "Not Selected"),
+              colors   = legend_colours,
+              labels   = legend_labels,
               title    = "Solution",
               opacity  = 0.7
             )
@@ -1189,11 +1237,85 @@ mod_2scenario_server <- function(id, cfg) {
               "Cost"
             }
 
+            # Determine constraint membership for this planning unit.
+            # soln_sf already has is_locked_in / is_locked_out columns (added in
+            # Observer 1), so we read them directly rather than re-querying raw_sf.
+            pu_is_locked_in  <- isTRUE(pu_row[["is_locked_in"]])
+            pu_is_locked_out <- isTRUE(pu_row[["is_locked_out"]])
+
+            # Identify which specific lock-in/lock-out areas this cell belongs to,
+            # using nameCommon from Dict for human-readable labels.
+            li_names <- if (pu_is_locked_in) {
+              li_vars <- shiny::isolate(get_lockIn(input))
+              raw_row <- sf::st_drop_geometry(raw_sf)[pu_idx[1], li_vars, drop = FALSE]
+              active_li <- li_vars[vapply(li_vars, function(v) {
+                val <- raw_row[[v]]
+                !is.na(val) && as.numeric(val) == 1
+              }, logical(1))]
+              # Look up nameCommon; fall back to nameVariable if not in Dict
+              li_lookup <- Dict[Dict$nameVariable %in% active_li, c("nameVariable", "nameCommon"), drop = FALSE]
+              dplyr::coalesce(
+                li_lookup$nameCommon[match(active_li, li_lookup$nameVariable)],
+                active_li
+              )
+            } else {
+              character(0)
+            }
+
+            lo_names <- if (pu_is_locked_out) {
+              lo_vars <- shiny::isolate(get_lockOut(input))
+              raw_row <- sf::st_drop_geometry(raw_sf)[pu_idx[1], lo_vars, drop = FALSE]
+              active_lo <- lo_vars[vapply(lo_vars, function(v) {
+                val <- raw_row[[v]]
+                !is.na(val) && as.numeric(val) == 1
+              }, logical(1))]
+              lo_lookup <- Dict[Dict$nameVariable %in% active_lo, c("nameVariable", "nameCommon"), drop = FALSE]
+              dplyr::coalesce(
+                lo_lookup$nameCommon[match(active_lo, lo_lookup$nameVariable)],
+                active_lo
+              )
+            } else {
+              character(0)
+            }
+
+            # Build the constraints section — only rendered when the cell has
+            # at least one lock-in or lock-out membership.
+            has_constraints <- length(li_names) > 0 || length(lo_names) > 0
+            constraints_section <- if (has_constraints) {
+              shiny::tagList(
+                shiny::hr(style = "margin: 5px 0;"),
+                shiny::h5("Constraints"),
+                if (length(li_names) > 0) {
+                  shiny::tagList(
+                    shiny::p(shiny::strong("Locked In:"),
+                      style = "margin-bottom: 2px; color: #1f77b4;"
+                    ),
+                    shiny::p(paste(li_names, collapse = ", "),
+                      style = "margin-left: 10px; margin-top: 0; margin-bottom: 8px;"
+                    )
+                  )
+                },
+                if (length(lo_names) > 0) {
+                  shiny::tagList(
+                    shiny::p(shiny::strong("Locked Out:"),
+                      style = "margin-bottom: 2px; color: #d62728;"
+                    ),
+                    shiny::p(paste(lo_names, collapse = ", "),
+                      style = "margin-left: 10px; margin-top: 0; margin-bottom: 8px;"
+                    )
+                  )
+                }
+              )
+            } else {
+              NULL
+            }
+
             # Generate panel content grouped by category
             new_content <- if (nrow(feature_info) == 0) {
               shiny::tagList(
                 shiny::h4(shiny::strong(paste0("Planning Unit #", pu_id))),
                 shiny::hr(style = "margin: 5px 0;"),
+                constraints_section,
                 shiny::p("No features with targets found in this planning unit.",
                   style = "color: #666; font-style: italic;"
                 )
@@ -1219,6 +1341,7 @@ mod_2scenario_server <- function(id, cfg) {
                   if (is.na(is_selected)) "N/A" else if (is_selected) "TRUE" else "FALSE",
                   style = "margin-bottom: 2px;"
                 ),
+                constraints_section,
                 shiny::hr(style = "margin: 5px 0;"),
                 shiny::h5("Cost Value"),
                 shiny::p(
