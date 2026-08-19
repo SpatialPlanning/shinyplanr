@@ -119,8 +119,15 @@ mod_4afeatures_ui <- function(id, cfg) {
 
 #' 4afeatures Server Functions — Interactive Layer Information
 #'
+#' @param tab_visible A reactive that returns \code{TRUE} when the Layer
+#'   Information tab is the active top-level navbar tab, and \code{FALSE}
+#'   otherwise.  Passed from \code{app_server.R} as
+#'   \code{reactive(input$navbar == "Layer Information")}.  Used to re-add
+#'   the WebGL layer whenever the user returns to this tab, because the
+#'   WebGL canvas context is destroyed when the tab panel is hidden.
+#'
 #' @noRd
-mod_4afeatures_server <- function(id, cfg) {
+mod_4afeatures_server <- function(id, cfg, tab_visible) {
   Dict    <- cfg$Dict
   options <- cfg$options
   raw_sf  <- cfg$raw_sf
@@ -429,29 +436,11 @@ mod_4afeatures_server <- function(id, cfg) {
     } # end render_layer()
 
 
-    # --- Initial render observer --------------------------------------------
-    # The module server starts on first tab visit (app_server.R once = TRUE).
-    # renderLeaflet is a reactive output — it is sent to the browser
-    # asynchronously after the current reactive flush completes. A delay(0)
-    # (one browser tick) is not enough: renderLeaflet may still be in flight.
-    #
-    # Solution: mirror the Explore tab pattern from mod_2scenario.R exactly.
-    # renderLeaflet is gated on a reactiveVal flag that is set to TRUE only
-    # after the module server has initialised. The initial WebGL layer is
-    # added in a separate observeEvent that watches the flag, fires after
-    # renderLeaflet has run, and uses delay(0) to let the browser process
-    # the map before the WebGL commands arrive.
-    #
-    # NOTE: input$navbar is NOT accessible inside moduleServer — it belongs
-    # to the parent session's namespaced input, not the module's input.
-
-    map_ready <- shiny::reactiveVal(FALSE)
-
-    # Step 1: renderLeaflet — sets map_ready(TRUE) after the output is defined.
-    # The output is sent to the browser on the next reactive flush; map_ready
-    # is set in the same flush so the observeEvent below fires immediately after.
+    # --- Base map (rendered once) -------------------------------------------
+    # renderLeaflet runs once at module initialisation.  The WebGL layer is
+    # added separately via leafletProxy so it can be restored on every tab
+    # visit without re-creating the base map (which would wipe the GL layer).
     output$leaflet_map <- leaflet::renderLeaflet({
-      on.exit(map_ready(TRUE))  # Signal that renderLeaflet has been called
       leaflet::leaflet() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
         leaflet::fitBounds(
@@ -462,31 +451,44 @@ mod_4afeatures_server <- function(id, cfg) {
         )
     })
 
-    # Step 2: once map_ready flips to TRUE, add the initial WebGL layer.
-    # delay(0) defers to the next browser tick so the base map tiles have
-    # been initialised before the WebGL polygon commands arrive.
+
+    # --- Tab-visibility observer --------------------------------------------
+    # tab_visible() is TRUE whenever the Layer Information navbar tab is active.
+    # We observe it here (rather than relying on input$navbar, which is not
+    # accessible inside moduleServer) to re-add the WebGL layer on every tab
+    # visit.  The WebGL canvas context is destroyed when the tab panel is
+    # hidden (display:none), so the layer must be restored each time the tab
+    # becomes visible.
+    #
+    # shinyjs::delay(0) defers the leafletProxy commands to the next browser
+    # event loop tick, giving the browser time to make the canvas visible and
+    # assign it correct dimensions before the WebGL polygon commands arrive.
+    #
+    # ignoreInit = FALSE so the layer is added on the very first visit (when
+    # tab_visible() transitions from FALSE to TRUE for the first time).
     shiny::observeEvent(
-      map_ready(),
+      tab_visible(),
       {
-        if (!isTRUE(map_ready())) return()
+        if (!isTRUE(tab_visible())) return()
         shinyjs::delay(0, render_layer(shiny::isolate(input$selectedLayer)))
       },
-      once = TRUE,
-      ignoreInit = TRUE,
+      ignoreInit = FALSE,
       ignoreNULL = TRUE
     )
 
 
     # --- Dropdown change observer -------------------------------------------
-    # Fires whenever the user changes the layer selection after initial render.
+    # Fires whenever the user changes the layer selection.
     # delay(0) ensures the browser has processed any pending DOM updates
     # before the WebGL layer is replaced.
+    # ignoreInit = TRUE because the tab-visibility observer above handles the
+    # initial render on first tab visit.
     shiny::observeEvent(
       input$selectedLayer,
       {
         shinyjs::delay(0, render_layer(input$selectedLayer))
       },
-      ignoreInit = TRUE,  # Initial render is handled by the map_ready observer
+      ignoreInit = TRUE,
       ignoreNULL = TRUE
     )
 

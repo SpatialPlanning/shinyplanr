@@ -41,7 +41,13 @@ app_server <- function(input, output, session) {
     shiny::observeEvent(
       input$navbar == "Layer Information",
       if (isTRUE(options$mod_4features_interactive)) {
-        mod_4afeatures_server("4afeatures_ui_1", cfg)
+        # tab_visible is a reactive that is TRUE whenever the Layer Information
+        # tab is the active navbar tab.  It is passed into the module so the
+        # module can re-add the WebGL layer on every tab visit without needing
+        # access to input$navbar (which belongs to the parent session and is
+        # not accessible inside moduleServer).
+        tab_visible_4a <- shiny::reactive(input$navbar == "Layer Information")
+        mod_4afeatures_server("4afeatures_ui_1", cfg, tab_visible = tab_visible_4a)
       } else {
         mod_4features_server("4features_ui_1", cfg)
       },
