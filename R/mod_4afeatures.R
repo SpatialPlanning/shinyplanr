@@ -328,9 +328,29 @@ mod_4afeatures_server <- function(id, cfg) {
     } # end render_layer()
 
 
-    # --- Base map -----------------------------------------------------------
-    # Rendered once when the module server initialises.
+    # --- Initial render observer --------------------------------------------
+    # The module server starts on first tab visit (app_server.R once = TRUE).
+    # renderLeaflet is a reactive output — it is sent to the browser
+    # asynchronously after the current reactive flush completes. A delay(0)
+    # (one browser tick) is not enough: renderLeaflet may still be in flight.
+    #
+    # Solution: mirror the Explore tab pattern from mod_2scenario.R exactly.
+    # renderLeaflet is gated on a reactiveVal flag that is set to TRUE only
+    # after the module server has initialised. The initial WebGL layer is
+    # added in a separate observeEvent that watches the flag, fires after
+    # renderLeaflet has run, and uses delay(0) to let the browser process
+    # the map before the WebGL commands arrive.
+    #
+    # NOTE: input$navbar is NOT accessible inside moduleServer — it belongs
+    # to the parent session's namespaced input, not the module's input.
+
+    map_ready <- shiny::reactiveVal(FALSE)
+
+    # Step 1: renderLeaflet — sets map_ready(TRUE) after the output is defined.
+    # The output is sent to the browser on the next reactive flush; map_ready
+    # is set in the same flush so the observeEvent below fires immediately after.
     output$leaflet_map <- leaflet::renderLeaflet({
+      on.exit(map_ready(TRUE))  # Signal that renderLeaflet has been called
       leaflet::leaflet() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
         leaflet::fitBounds(
@@ -341,35 +361,31 @@ mod_4afeatures_server <- function(id, cfg) {
         )
     })
 
-
-    # --- Initial render observer --------------------------------------------
-    # Fires once after the module server starts (which happens on first tab
-    # visit, via the once = TRUE observeEvent in app_server.R).
-    # shinyjs::delay(0) defers the leafletProxy commands to the next browser
-    # event loop tick, guaranteeing the base map from renderLeaflet has been
-    # initialised in the browser before WebGL polygon commands arrive.
-    # This is the same pattern used in mod_2scenario.R (Explore tab).
-    #
-    # NOTE: input$navbar is NOT accessible inside moduleServer — it belongs to
-    # the parent session's input namespace, not the module's namespaced input.
-    # Using shiny::observe() with once = TRUE is the correct pattern here
-    # because the module server only starts when the tab is first visited
-    # (guaranteed by app_server.R's once = TRUE observeEvent on input$navbar).
-    shiny::observe({
-      shinyjs::delay(0, render_layer(shiny::isolate(input$selectedLayer)))
-    }) %>% shiny::bindEvent(TRUE, once = TRUE)
+    # Step 2: once map_ready flips to TRUE, add the initial WebGL layer.
+    # delay(0) defers to the next browser tick so the base map tiles have
+    # been initialised before the WebGL polygon commands arrive.
+    shiny::observeEvent(
+      map_ready(),
+      {
+        if (!isTRUE(map_ready())) return()
+        shinyjs::delay(0, render_layer(shiny::isolate(input$selectedLayer)))
+      },
+      once = TRUE,
+      ignoreInit = TRUE,
+      ignoreNULL = TRUE
+    )
 
 
     # --- Dropdown change observer -------------------------------------------
     # Fires whenever the user changes the layer selection after initial render.
-    # shinyjs::delay(0) ensures the browser has processed any pending DOM
-    # updates before the WebGL layer is replaced.
+    # delay(0) ensures the browser has processed any pending DOM updates
+    # before the WebGL layer is replaced.
     shiny::observeEvent(
       input$selectedLayer,
       {
         shinyjs::delay(0, render_layer(input$selectedLayer))
       },
-      ignoreInit = TRUE,  # Initial render is handled by the observe() above
+      ignoreInit = TRUE,  # Initial render is handled by the map_ready observer
       ignoreNULL = TRUE
     )
 
