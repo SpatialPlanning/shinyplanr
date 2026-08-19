@@ -340,10 +340,6 @@ mod_2scenario_server <- function(id, cfg) {
       tab_log     = "8"
     )
 
-    observeEvent(input$disconnect, {
-      session$close()
-    })
-
     # Go back to the first tab and top of page when analyse is clicked.
     shiny::observeEvent(input$analyse, {
       shiny::updateTabsetPanel(session, "tabs", selected = "1")
