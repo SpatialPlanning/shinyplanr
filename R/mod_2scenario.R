@@ -972,19 +972,21 @@ mod_2scenario_server <- function(id, cfg) {
     }) %>%
       shiny::bindEvent(input$analyse)
 
-    # Lazy renderLeaflet: only renders when the Explore tab (value "4") is active.
+    # renderLeaflet runs once at module initialisation to create the base map.
     #
-    # This eliminates the WebGL zero-canvas race condition.  When a Bootstrap tab
-    # panel is hidden (display:none), any leaflet/WebGL canvas initialised inside
-    # it has zero dimensions, causing glify to render nothing.  By gating
-    # renderLeaflet on req(input$tabs == "4"), the map is only created when the
-    # container is visible and has correct dimensions — no timing hacks needed.
+    # Previously this was gated on req(input$tabs == "4"), which caused
+    # renderLeaflet to re-run on every tab visit and send a fresh empty base map
+    # to the browser — wiping all WebGL layers added via leafletProxy.
     #
-    # On every visit to the Explore tab, renderLeaflet re-runs and creates a
-    # fresh base map.  The observeEvent(input$tabs) below then immediately adds
-    # the WebGL polygon layer via leafletProxy.
+    # The WebGL zero-canvas problem (glify needs a visible canvas with non-zero
+    # dimensions) is handled by the observeEvent(input$tabs) below, which only
+    # adds the WebGL polygon layer when the Explore tab is active, using
+    # shinyjs::delay(0) to defer until the browser has made the canvas visible.
+    #
+    # Rendering the base map unconditionally is safe: leaflet.js defers canvas
+    # sizing until the element is visible, so initialising while hidden causes
+    # no layout issues.
     output$leaflet_map <- leaflet::renderLeaflet({
-      shiny::req(input$tabs == "4")
       leaflet::leaflet() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron)
     })
@@ -1040,15 +1042,18 @@ mod_2scenario_server <- function(id, cfg) {
       ignoreNULL = TRUE
     )
 
-    # Observer 2: add the WebGL polygon layer whenever the Explore tab becomes
-    # active.  Because renderLeaflet is lazy (gated on input$tabs == "4"), the
-    # base map is created in the same reactive flush as this observer.
+    # Observer 2: add (or restore) the WebGL polygon layer whenever the Explore
+    # tab becomes active.
+    #
+    # The base map is created once by renderLeaflet (above).  However, the
+    # WebGL canvas context is destroyed by the browser when the tab panel is
+    # hidden (display:none), so the GL layer must be re-added via leafletProxy
+    # on every tab visit.
     #
     # shinyjs::delay(0) defers the leafletProxy commands to the next browser
     # event loop tick (via a zero-millisecond setTimeout round-trip).  This
-    # guarantees the browser has processed and initialised the leaflet map from
-    # renderLeaflet before the WebGL polygon commands arrive, without introducing
-    # any perceptible delay for the user.
+    # gives the browser time to make the canvas visible and assign it correct
+    # dimensions before the WebGL polygon commands arrive.
     #
     # Uses the same single-observer-on-tabs pattern as fmake_tab_cache() so the
     # trigger fires on every tab visit, not just on value changes of a compound
