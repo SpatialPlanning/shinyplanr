@@ -41,23 +41,14 @@ app_ui <- function(request) {
   if (isTRUE(options$mod_4features) || isTRUE(options$mod_4features_interactive)) {
     tabs[["Layer Information"]] <- shiny::tabPanel(
       "Layer Information",
-      value = "features",
-      # For the interactive map tab we bypass fluidPage intentionally.
-      # fluidPage wraps content in .container-fluid which adds 15px horizontal
-      # padding and a top margin — both of which prevent the leaflet map from
-      # filling edge-to-edge. tagList emits no wrapper element, so the module's
-      # own div(style = "position: relative;") becomes the direct child of
-      # .tab-pane, and the CSS rule for #shiny-tab-features can zero its padding.
-      # The static feature table tab still uses fluidPage because it relies on
-      # Bootstrap's grid (fluidRow / column).
-      if (isTRUE(options$mod_4features_interactive)) {
-        shiny::tagList(mod_4afeatures_ui("4afeatures_ui_1", cfg))
-      } else {
-        shiny::fluidPage(
-          value = "features",
+      shiny::fluidPage(
+        value = "features",
+        if (isTRUE(options$mod_4features_interactive)) {
+          mod_4afeatures_ui("4afeatures_ui_1", cfg)
+        } else {
           mod_4features_ui("4features_ui_1", cfg)
-        )
-      }
+        }
+      )
     )
   }
 
