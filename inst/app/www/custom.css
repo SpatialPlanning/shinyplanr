@@ -755,27 +755,6 @@ div.shiny-table-output {
 }
 
 /* ==========================================================================
-   Interactive Layer Information tab — full-viewport leaflet map
-   --------------------------------------------------------------------------
-   The interactive map tab bypasses fluidPage (see app_ui.R) so that the
-   leaflet map can fill the full viewport width. Bootstrap's .tab-pane still
-   adds 15px top padding via .tab-content > .tab-pane; we zero that here,
-   scoped tightly to this tab so no other tab is affected.
-
-   The tab pane id is derived from the tabPanel value = "features" argument:
-   Shiny renders it as id="shiny-tab-features".
-   ========================================================================== */
-
-#shiny-tab-features {
-  padding: 0 !important;
-  /* Clip to the viewport so body { padding-bottom } on other tabs does not
-     cause a scrollbar here. The map fills calc(100vh - 56px) via the
-     leafletOutput height attribute; setting overflow: hidden on the pane
-     prevents that height from adding to the document scroll height. */
-  overflow: hidden !important;
-}
-
-/* ==========================================================================
    selectize.js dropdown — text wrapping and overflow fixes
    (Shiny's selectInput uses selectize.js under Bootstrap 5)
    ========================================================================== */
