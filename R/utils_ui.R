@@ -263,6 +263,13 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
 
 #' Fancy dropdown menu with categories
 #'
+#' Builds a grouped \code{selectInput} from the feature dictionary.  For
+#' \code{Bioregion} rows the individual zone columns are collapsed to a single
+#' entry per \code{categoryID}: the display label is the shared \code{category}
+#' string and the value is the \code{categoryID} (which matches the combined
+#' display column added by \code{fbuild_bioregion_display()}).  All other types
+#' are listed individually as before.
+#'
 #' @param width Passed to \code{shiny::selectInput()}. Defaults to \code{"100\%"}
 #'   so the widget fills its container correctly even when initialised inside a
 #'   hidden element (e.g. \code{shinyjs::hidden}).
@@ -272,9 +279,27 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
 create_fancy_dropdown <- function(id, id_in, Dict, width = "100%") {
   . <- NULL
 
-  featureList <- Dict %>%
+  # For Bioregion rows: collapse to one entry per categoryID.
+  # The value is the categoryID (= the combined display column name).
+  # The display label is the shared category string.
+  bioregion_entries <- Dict %>%
+    dplyr::filter(.data$type == "Bioregion") %>%
+    dplyr::distinct(.data$category, .data$categoryID) %>%
+    dplyr::rename(nameCommon = "category", nameVariable = "categoryID")
+
+  # For all other displayable types: keep individual rows.
+  other_entries <- Dict %>%
+    dplyr::filter(.data$type != "Bioregion") %>%
+    dplyr::select("nameCommon", "nameVariable", "category")
+
+  # Combine and build grouped list.
+  combined <- dplyr::bind_rows(
+    other_entries,
+    bioregion_entries %>% dplyr::mutate(category = .data$nameCommon)
+  )
+
+  featureList <- combined %>%
     dplyr::group_by(.data$category) %>%
-    dplyr::select("nameCommon", "nameVariable", "category") %>%
     dplyr::group_split() %>%
     purrr::set_names(purrr::map_chr(., ~ .x$category[1])) %>%
     purrr::map(~ (.x %>% dplyr::select("nameCommon", "nameVariable"))) %>%

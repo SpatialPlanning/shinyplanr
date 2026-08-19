@@ -151,12 +151,69 @@ mod_4features_server <- function(id, cfg) {
 
 
     plotFeature <- shiny::reactive({
+      sel <- input$checkFeat
+
+      # Determine if the selected value is a combined bioregion display column
+      # (i.e. a categoryID added by fbuild_bioregion_display(), not a Dict nameVariable).
+      # These columns are present in raw_sf but have no Dict row of their own.
+      is_bioregion_display <- sel %in% (
+        Dict %>%
+          dplyr::filter(.data$type == "Bioregion") %>%
+          dplyr::pull("categoryID") %>%
+          unique()
+      ) && sel %in% names(raw_sf)
+
+      if (is_bioregion_display) {
+        # Combined bioregion column: integer zone index 1..N.
+        # Convert to factor so ggplot2 treats it as discrete.
+        # Use a qualitative HCL palette (base R, no extra dependency).
+        pl_title <- Dict %>%
+          dplyr::filter(.data$type == "Bioregion", .data$categoryID == sel) %>%
+          dplyr::pull("category") %>%
+          dplyr::first()
+
+        zone_vals <- raw_sf %>%
+          sf::st_drop_geometry() %>%
+          dplyr::pull(dplyr::all_of(sel))
+        zone_levels <- sort(unique(zone_vals))
+        n_zones     <- length(zone_levels)
+        palette_cols <- grDevices::hcl.colors(n_zones, palette = "Set2")
+
+        plot_sf <- raw_sf %>%
+          dplyr::mutate(dplyr::across(dplyr::all_of(sel), \(x) factor(x, levels = zone_levels)))
+
+        gg <- spatialplanr::splnr_plot(
+          df = plot_sf,
+          colNames = sel,
+          legendTitle = pl_title,
+          base_size = options$base_size
+        ) +
+          spatialplanr::splnr_gg_add(
+            Bndry = bndry,
+            overlay = overlay,
+            cropOverlay = raw_sf,
+            ggtheme = map_theme
+          ) +
+          ggplot2::scale_fill_manual(
+            values   = stats::setNames(palette_cols, as.character(zone_levels)),
+            na.value = "grey80",
+            name     = pl_title,
+            labels   = function(x) paste0("Zone ", x)
+          ) +
+          ggplot2::theme(
+            plot.background   = ggplot2::element_rect(fill = "transparent", colour = NA),
+            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+          )
+
+        return(gg)
+      }
+
       pl_title <- Dict %>%
-        dplyr::filter(.data$nameVariable %in% input$checkFeat) %>%
+        dplyr::filter(.data$nameVariable %in% sel) %>%
         dplyr::pull("nameCommon")
 
       type <- Dict %>%
-        dplyr::filter(.data$nameVariable == input$checkFeat) %>%
+        dplyr::filter(.data$nameVariable == sel) %>%
         dplyr::pull(type)
 
       # A feature can appear in Dict with multiple types (e.g. MPAs as both LockIn and LockOut).
@@ -166,7 +223,7 @@ mod_4features_server <- function(id, cfg) {
       if (type == "Cost") {
         gg <- spatialplanr::splnr_plot(
           df = raw_sf,
-          colNames = input$checkFeat,
+          colNames = sel,
           paletteName = "YlGnBu",
           legendTitle = paste0("Cost Layer: ", pl_title),
           base_size = options$base_size
@@ -178,16 +235,14 @@ mod_4features_server <- function(id, cfg) {
             ggtheme = map_theme
           ) +
           ggplot2::theme(
-            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-            # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-            # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            plot.background  = ggplot2::element_rect(fill = "transparent", colour = NA),
+            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
           )
 
         return(gg)
       } else {
         gg <- spatialplanr::splnr_plot(raw_sf,
-          colNames = input$checkFeat,
+          colNames = sel,
           legendTitle = pl_title,
           base_size = options$base_size
         ) +
@@ -198,10 +253,8 @@ mod_4features_server <- function(id, cfg) {
             ggtheme = map_theme
           ) +
           ggplot2::theme(
-            plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-            # panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the panel background (where the data is plotted) transparent
-            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA), # Makes the legend background transparent
-            # legend.box.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the background of the legend box transparent
+            plot.background  = ggplot2::element_rect(fill = "transparent", colour = NA),
+            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
           )
 
         return(gg)
