@@ -28,6 +28,61 @@ RStudio provides an integrated development environment for R:
 
 [IMAGE: RStudio download page showing operating system options]
 
+## GitHub Credentials {#sec-github-credentials}
+
+Several *shinyplanr* packages are installed from GitHub. Without authentication, the GitHub API is rate-limited to 60 requests/hour per IP address, which causes intermittent `error code 56` (network failure) errors. Authenticating with a Personal Access Token (PAT) raises this limit to 5,000/hour.
+
+### Creating a GitHub PAT
+
+1. Go to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new)
+2. Fill in:
+   - **Note**: `R renv installs` (or any memorable name)
+   - **Expiration**: 90 days (or *No expiration*)
+   - **Scopes**: leave **all boxes unchecked** — public repos require no scope
+3. Click **Generate token** and copy the token (it starts with `ghp_...`)
+
+::: {.callout-warning}
+## Copy your token now
+GitHub only shows the token once. Copy it before closing the page.
+:::
+
+### Storing credentials with gitcreds
+
+The `gitcreds` package reads from and writes to your operating system's secure credential store (macOS Keychain, Windows Credential Manager, or Linux Secret Service). This is the recommended approach because credentials are stored securely and are available across all R projects without editing any files.
+
+```r
+# Install gitcreds if needed
+if (!requireNamespace("gitcreds", quietly = TRUE)) install.packages("gitcreds")
+
+# Store your PAT in the system keychain (run once per machine)
+# You will be prompted to paste your token
+gitcreds::gitcreds_set()
+
+# Verify it was stored correctly
+gitcreds::gitcreds_get()
+```
+
+After running `gitcreds::gitcreds_set()` and pasting your token, renv and other GitHub-aware packages will use it automatically in all future R sessions.
+
+::: {.callout-note}
+## If you use the gh CLI
+If you have authenticated with the [GitHub CLI](https://cli.github.com/) (`gh auth login`), your credentials are already stored in the keychain and `gitcreds::gitcreds_get()` will find them without any additional setup.
+:::
+
+### Verifying credentials
+
+To confirm your PAT is available in the current R session:
+
+```r
+# Should print your token (ghp_...), not an empty string
+Sys.getenv("GITHUB_PAT")
+
+# Or check via gitcreds directly
+gitcreds::gitcreds_get()
+```
+
+If `Sys.getenv("GITHUB_PAT")` returns an empty string but `gitcreds::gitcreds_get()` succeeds, the `1_setup_enviro.R` setup script handles this automatically by calling `Sys.setenv(GITHUB_PAT = ...)` at the start.
+
 ## Required R Packages
 
 ### Core Packages
@@ -154,79 +209,42 @@ message("All packages installed successfully!")
 
 ## Optimisation Solvers
 
-*prioritizr* requires a mathematical programming solver. Several options are available.
+*prioritizr* requires a mathematical programming solver. *shinyplanr* uses
+`prioritizr::add_default_solver()`, which automatically selects the best
+available solver — no manual configuration is needed.
 
-### HiGHS (Recommended for Most Users)
+### Default Solver: HiGHS
 
-*HiGHS* is a high-performance open-source solver that works well for most problems:
+*shinyplanr* installs the `highs` package (from CRAN) as a required dependency.
+HiGHS is a high-performance open-source solver with **no system dependencies** —
+it installs cleanly on macOS, Windows, and Linux without any additional software.
+For most users and problem sizes, HiGHS provides excellent performance.
 
-```r
-# Install the highs R package
-install.packages("highs")
+### Optional: Faster Solvers
 
-# Verify installation
-library(highs)
-```
+For large or complex problems, faster solvers are available. *shinyplanr* will
+use them automatically if installed — no code changes required.
 
-*HiGHS* is automatically detected by *prioritizr* when installed.
+**CBC via `rcbc`** — open-source, higher performance than HiGHS for many
+integer programming problems. Requires system CBC libraries to be installed
+before the R package. See the `rcbc` documentation for platform-specific
+instructions: <https://github.com/dirkschumacher/rcbc>
 
-### CBC (Alternative Open-Source)
+**Gurobi** — commercial solver with the best performance for large problems.
+Free academic licences are available. See: <https://www.gurobi.com/academia/academic-program-and-licenses/>
 
-CBC (COIN-OR Branch and Cut) is another open-source option:
+### Solver Priority Order
 
-```r
-# Install Rcbc
-install.packages("Rcbc", repos = "https://cloud.r-project.org")
-```
+*shinyplanr* uses `prioritizr::add_default_solver()`, which selects the best
+available solver automatically. The priority order (highest to lowest) is:
 
-### Gurobi (Best Performance)
-
-*Gurobi* provides the best performance for large problems but requires a licence. Free academic licences are available.
-
-#### Obtaining Gurobi
-
-1. Visit [https://www.gurobi.com/](https://www.gurobi.com/)
-2. Create an account
-3. Apply for an academic licence (free for qualifying institutions)
-4. Download and install *Gurobi* for your operating system
-
-#### Installing the R Interface
-
-After installing *Gurobi*:
-
-```r
-# Find the R package in your Gurobi installation
-# (adjust path based on your Gurobi version and OS)
-
-# On macOS:
-install.packages("/Library/gurobi1100/macos_universal2/R/gurobi_11.0-0.tar.gz", 
-                 type = "source", repos = NULL)
-
-# On Windows:
-install.packages("C:/gurobi1100/win64/R/gurobi_11.0-0.tar.gz", 
-                 type = "source", repos = NULL)
-
-# On Linux:
-install.packages("/opt/gurobi1100/linux64/R/gurobi_11.0-0.tar.gz", 
-                 type = "source", repos = NULL)
-```
-
-#### Verifying Gurobi
-
-```r
-library(gurobi)
-
-# Check licence
-gurobi_version()
-```
-
-### Solver Comparison
-
-| Solver | Performance | Licence | Best For |
-|--------|------------|---------|----------|
-| *HiGHS* | Good | Open source | Most users |
-| CBC | Moderate | Open source | Basic problems |
-| *Gurobi* | Excellent | Commercial (free academic) | Large, complex problems |
+| Priority | Solver | R package | Licence | Notes |
+|----------|--------|-----------|---------|-------|
+| 1st | Gurobi | `gurobi` | Commercial (free academic) | Best performance |
+| 2nd | CBC | `rcbc` | Open source | Optional; requires system CBC libs |
+| 3rd | **HiGHS** | `highs` | Open source | **Default for shinyplanr** |
+| 4th | lpsymphony | `lpsymphony` | Open source | Fallback |
+| 5th | Rsymphony | `Rsymphony` | Open source | Fallback |
 
 ### Checking Available Solvers
 
@@ -235,12 +253,14 @@ library(prioritizr)
 
 # List installed solvers
 available_solvers <- list(
-  HiGHS = requireNamespace("highs", quietly = TRUE),
-  CBC = requireNamespace("Rcbc", quietly = TRUE),
-  Gurobi = requireNamespace("gurobi", quietly = TRUE)
+  Gurobi = requireNamespace("gurobi", quietly = TRUE),
+  CBC    = requireNamespace("rcbc",   quietly = TRUE),
+  HiGHS  = requireNamespace("highs",  quietly = TRUE)
 )
-
 print(available_solvers)
+
+# Check which solver will be used by add_default_solver()
+prioritizr:::default_solver_name()
 ```
 
 ## Spatial Libraries

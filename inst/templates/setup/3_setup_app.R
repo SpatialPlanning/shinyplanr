@@ -57,6 +57,7 @@ shinyplanr_options <- list(
   mod_2scenario = TRUE,
   mod_3compare = TRUE,
   mod_4features = TRUE,
+  mod_4features_interactive = FALSE,  # Set TRUE to use the interactive leaflet version instead of the static ggplot version
   mod_5coverage = TRUE,
   mod_6help = TRUE,
   mod_7credit = FALSE,
