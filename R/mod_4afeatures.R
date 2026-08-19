@@ -48,9 +48,12 @@ mod_4afeatures_ui <- function(id, cfg) {
     shiny::div(
       style = "position: relative;",
 
-      # Full-width leaflet map
+      # Full-width leaflet map — height fills the viewport minus navbar (~56px)
+      # and fixed footer (~120px), with a small buffer (4px) for borders.
+      # calc(100vh - Npx) is self-contained and does not require ancestor
+      # elements to have explicit heights (unlike height: 100%).
       shinycssloaders::withSpinner(
-        leaflet::leafletOutput(ns("leaflet_map"), height = "650px")
+        leaflet::leafletOutput(ns("leaflet_map"), height = "calc(100vh - 180px)")
       ),
 
       # Top-left absolutePanel: layer selector
