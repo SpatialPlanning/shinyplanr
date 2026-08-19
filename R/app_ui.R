@@ -42,7 +42,12 @@ app_ui <- function(request) {
     tabs[["Layer Information"]] <- shiny::tabPanel(
       "Layer Information",
       shiny::fluidPage(
-        value = "features", mod_4features_ui("4features_ui_1", cfg)
+        value = "features",
+        if (isTRUE(options$mod_4features_interactive)) {
+          mod_4afeatures_ui("4afeatures_ui_1", cfg)
+        } else {
+          mod_4features_ui("4features_ui_1", cfg)
+        }
       )
     )
   }

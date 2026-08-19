@@ -40,7 +40,11 @@ app_server <- function(input, output, session) {
   if (isTRUE(options$mod_4features)) {
     shiny::observeEvent(
       input$navbar == "Layer Information",
-      mod_4features_server("4features_ui_1", cfg),
+      if (isTRUE(options$mod_4features_interactive)) {
+        mod_4afeatures_server("4afeatures_ui_1", cfg)
+      } else {
+        mod_4features_server("4features_ui_1", cfg)
+      },
       once = TRUE, ignoreInit = FALSE, ignoreNULL = TRUE
     )
   }
