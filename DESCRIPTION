@@ -41,6 +41,7 @@ Imports:
     golem (>= 0.4.1),
     highs,
     htmltools,
+    httpuv,
     leafgl,
     leaflet,
     magrittr,

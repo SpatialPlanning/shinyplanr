@@ -26,8 +26,22 @@ mod_4afeatures_ui <- function(id, cfg) {
   # Justification-only rows are excluded because they have no spatial column.
   displayable_types <- c("Feature", "Cost", "EcosystemServices", "LockIn", "LockOut", "Climate", "Bioregion")
 
-  grouped_choices <- Dict %>%
-    dplyr::filter(.data$type %in% displayable_types) %>%
+  # For Bioregion rows: collapse to one entry per categoryID.
+  # The value is the categoryID (= the combined display column built by
+  # fbuild_bioregion_display()). The display label is the shared category string.
+  bioregion_entries <- Dict %>%
+    dplyr::filter(.data$type == "Bioregion") %>%
+    dplyr::distinct(.data$category, .data$categoryID) %>%
+    dplyr::rename(nameCommon = "category", nameVariable = "categoryID") %>%
+    dplyr::mutate(category = .data$nameCommon)
+
+  other_entries <- Dict %>%
+    dplyr::filter(.data$type %in% displayable_types, .data$type != "Bioregion") %>%
+    dplyr::select("nameCommon", "nameVariable", "category")
+
+  combined_dict <- dplyr::bind_rows(other_entries, bioregion_entries)
+
+  grouped_choices <- combined_dict %>%
     dplyr::group_by(.data$category) %>%
     dplyr::group_split() %>%
     purrr::set_names(purrr::map_chr(., ~ .x$category[1])) %>%
@@ -202,7 +216,91 @@ mod_4afeatures_server <- function(id, cfg) {
 
       } else {
         # ----------------------------------------------------------------
-        # Single feature layer
+        # Single feature layer OR combined bioregion display column
+        # ----------------------------------------------------------------
+
+        # Check if the selected value is a combined bioregion display column
+        # (a categoryID added by fbuild_bioregion_display(), not a Dict nameVariable).
+        bioregion_cat_ids <- Dict %>%
+          dplyr::filter(.data$type == "Bioregion") %>%
+          dplyr::pull("categoryID") %>%
+          unique()
+
+        is_bioregion_display <- sel %in% bioregion_cat_ids && sel %in% names(raw_wgs84)
+
+        if (is_bioregion_display) {
+          # ----------------------------------------------------------------
+          # Combined bioregion display: integer zone index 1..N
+          # ----------------------------------------------------------------
+          bioregion_meta <- Dict %>%
+            dplyr::filter(.data$type == "Bioregion", .data$categoryID == sel) %>%
+            dplyr::slice(1)
+
+          col_data <- sf::st_drop_geometry(raw_wgs84)[[sel]]
+          zone_levels <- sort(unique(col_data))
+          n_zones <- length(zone_levels)
+
+          # Use a qualitative HCL palette (base R, no extra dependency).
+          # hcl.colors() with palette "Set2" gives perceptually distinct colours
+          # for up to ~12 zones; beyond that colours will start to repeat visually
+          # but the legend will still be correct.
+          palette_cols <- grDevices::hcl.colors(n_zones, palette = "Set2")
+
+          pal <- leaflet::colorFactor(
+            palette  = palette_cols,
+            domain   = zone_levels,
+            na.color = "#808080"
+          )
+
+          hex_colours <- pal(col_data)
+          fill_rgb    <- hex_to_rgb_matrix(hex_colours)
+
+          leaflet::leafletProxy("leaflet_map", session = session) %>%
+            leafgl::clearGlLayers() %>%
+            leaflet::clearControls() %>%
+            leafgl::addGlPolygons(
+              data        = raw_wgs84,
+              fillColor   = fill_rgb,
+              fillOpacity = 0.7,
+              stroke      = TRUE,
+              group       = "layer"
+            ) %>%
+            leaflet::addLegend(
+              position = "bottomleft",
+              pal      = pal,
+              values   = zone_levels,
+              title    = bioregion_meta$category,
+              labFormat = leaflet::labelFormat(prefix = "Zone "),
+              opacity  = 0.7
+            )
+
+          output$infoPanelContent <- shiny::renderUI({
+            just  <- bioregion_meta$justification
+            shiny::tagList(
+              shiny::h4(bioregion_meta$category, style = "margin-top: 0;"),
+              shiny::p(
+                shiny::strong("Type: "), "Bioregion",
+                style = "margin-bottom: 4px;"
+              ),
+              shiny::p(
+                shiny::strong("Zones: "), n_zones,
+                style = "margin-bottom: 4px;"
+              ),
+              if (!is.na(just) && nchar(trimws(just)) > 0) {
+                shiny::tagList(
+                  shiny::hr(style = "margin: 8px 0;"),
+                  shiny::h5("Justification", style = "margin-bottom: 4px;"),
+                  shiny::p(just, style = "color: #333; font-size: 0.9em;")
+                )
+              }
+            )
+          })
+
+          return()
+        }
+
+        # ----------------------------------------------------------------
+        # Standard single feature layer
         # ----------------------------------------------------------------
 
         # Look up Dict metadata for the selected layer.
@@ -222,7 +320,7 @@ mod_4afeatures_server <- function(id, cfg) {
 
         # Palette selection:
         #   Continuous (YlGnBu): Cost, EcosystemServices, Climate
-        #   Binary (grey/teal):  Feature, LockIn, LockOut, Bioregion — 0/1
+        #   Binary (grey/teal):  Feature, LockIn, LockOut — 0/1
         is_continuous <- layer_type %in% c("Cost", "EcosystemServices", "Climate")
 
         if (is_continuous) {

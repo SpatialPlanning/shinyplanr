@@ -221,6 +221,61 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
 }
 
 
+# Bioregion display column -----------------------------------------------
+
+#' Build combined bioregion display columns from binary zone columns
+#'
+#' For each unique \code{categoryID} in the \code{Dict} with
+#' \code{type == "Bioregion"}, derives a single integer column (zone index
+#' 1..N) by taking \code{which.max()} across the corresponding binary columns.
+#' The derived column is named after the \code{categoryID} (e.g.
+#' \code{"EnviroZone"}) and is appended to \code{raw_sf}.
+#'
+#' These columns are \strong{display-only}: they are not added to \code{Dict}
+#' and are never passed to \code{prioritizr}. They allow the Layer Information
+#' tab to show a single categorical choropleth for each bioregionalisation
+#' instead of N separate binary maps.
+#'
+#' The function is a no-op (returns \code{raw_sf} unchanged) when \code{Dict}
+#' contains no \code{Bioregion} rows.
+#'
+#' @param raw_sf An \code{sf} object containing the binary bioregion columns.
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{type}, \code{nameVariable}, \code{categoryID}).
+#'
+#' @return \code{raw_sf} with one additional integer column per unique
+#'   \code{categoryID} in the Bioregion rows of \code{Dict}.
+#'
+#' @noRd
+#'
+fbuild_bioregion_display <- function(raw_sf, Dict) {
+  bioregion_rows <- Dict %>%
+    dplyr::filter(.data$type == "Bioregion") %>%
+    dplyr::select("nameVariable", "categoryID")
+
+  if (nrow(bioregion_rows) == 0) {
+    return(raw_sf)
+  }
+
+  cat_ids <- unique(bioregion_rows$categoryID)
+
+  for (cat in cat_ids) {
+    cols <- bioregion_rows %>%
+      dplyr::filter(.data$categoryID == cat) %>%
+      dplyr::pull("nameVariable")
+
+    # which.max() returns the index of the first maximum — since each row has
+    # exactly one 1 across the binary columns, this gives the zone number (1..N).
+    raw_sf[[cat]] <- raw_sf %>%
+      sf::st_drop_geometry() %>%
+      dplyr::select(dplyr::all_of(cols)) %>%
+      apply(1, which.max)
+  }
+
+  return(raw_sf)
+}
+
+
 # Check the number of features --------------------------------------------
 
 #' Check the number of features

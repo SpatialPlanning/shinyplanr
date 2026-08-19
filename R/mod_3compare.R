@@ -383,10 +383,6 @@ mod_3compare_server <- function(id, cfg) {
       tab_log     = "9"
     )
 
-    shiny::observeEvent(input$disconnect, {
-      session$close()
-    })
-
     shiny::observeEvent(input$resetSlider,
       {
         fresetSlider(session, Vars1)

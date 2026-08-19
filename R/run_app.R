@@ -28,6 +28,14 @@ run_app <- function(
   uiPattern = "/",
   ...
 ) {
+  # Register a top-level onStop callback so that when the app is interrupted
+  # (e.g. via Positron's Stop button or Ctrl+C), httpuv's libuv event loop is
+  # explicitly closed. Without this, uv_run() can hold the R process open after
+  # SIGINT because it is waiting for pending WebSocket writes to flush.
+  # stopAllServers() is the documented way to force-close all httpuv sockets;
+  # it is what shiny::stopApp() calls internally.
+  shiny::onStop(httpuv::stopAllServers)
+
   with_golem_options(
     app = shinyApp(
       ui = app_ui,

@@ -223,6 +223,12 @@ if (length(unique(vars)) != ncol(raw_sf) - 1) {
   stop("Mismatch between Dict variables and data columns. Check Dict_Feature.csv")
 }
 
+# Add display-only combined bioregion columns (one integer column per categoryID).
+# These are used by the Layer Information tab to show a single categorical
+# choropleth per bioregionalisation instead of N separate binary maps.
+# They are NOT added to Dict and are never passed to prioritizr.
+raw_sf <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
+
 # =============================================================================
 # PLOTTING OVERLAYS
 # =============================================================================
