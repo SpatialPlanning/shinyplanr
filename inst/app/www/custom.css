@@ -768,6 +768,11 @@ div.shiny-table-output {
 
 #shiny-tab-features {
   padding: 0 !important;
+  /* Clip to the viewport so body { padding-bottom } on other tabs does not
+     cause a scrollbar here. The map fills calc(100vh - 56px) via the
+     leafletOutput height attribute; setting overflow: hidden on the pane
+     prevents that height from adding to the document scroll height. */
+  overflow: hidden !important;
 }
 
 /* ==========================================================================
