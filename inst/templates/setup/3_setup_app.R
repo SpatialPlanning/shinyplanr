@@ -56,8 +56,13 @@ shinyplanr_options <- list(
   mod_1welcome = TRUE,
   mod_2scenario = TRUE,
   mod_3compare = TRUE,
+  #
+  # Layer Information tab: choose static (ggplot) or interactive (leaflet) version.
+  # Set mod_4features = TRUE for the static version (Feature Density, Feature Maps, Layer Table).
+  # Set mod_4features_interactive = TRUE for the interactive leaflet version.
+  # Only one should be TRUE at a time. The tab label is "Layer Information" in both cases.
   mod_4features = TRUE,
-  mod_4features_interactive = FALSE,  # Set TRUE to use the interactive leaflet version instead of the static ggplot version
+  mod_4features_interactive = FALSE,
   mod_5coverage = TRUE,
   mod_6help = TRUE,
   mod_7credit = FALSE,
