@@ -37,7 +37,7 @@ app_server <- function(input, output, session) {
     )
   }
 
-  if (isTRUE(options$mod_4features)) {
+  if (isTRUE(options$mod_4features) || isTRUE(options$mod_4features_interactive)) {
     shiny::observeEvent(
       input$navbar == "Layer Information",
       if (isTRUE(options$mod_4features_interactive)) {
