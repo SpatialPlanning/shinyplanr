@@ -105,13 +105,14 @@ fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature")
     dplyr::filter(.data$type %in% dataType) %>%
     dplyr::pull("nameVariable")
 
-  targets <- ft %>%
-    purrr::map(\(x) input[[paste0(name_check, x)]]) %>%
-    tibble::enframe() %>%
-    tidyr::unnest(cols = "value") %>%
-    dplyr::rename(feature = "name", target = "value") %>%
-    dplyr::mutate(feature = ft) %>%
-    dplyr::mutate(target = .data$target / 100) # requires number between 0-1
+  # purrr::map_dbl() with %||% 0 is type-safe: it returns a numeric vector of
+  # the same length as ft even when a slider input is NULL (e.g. not yet
+  # initialised). The previous enframe()+unnest() approach silently dropped
+  # NULL rows, which could produce a shorter-than-expected targets data frame.
+  targets <- tibble::tibble(
+    feature = ft,
+    target  = purrr::map_dbl(ft, \(x) input[[paste0(name_check, x)]] %||% 0) / 100
+  )
 
   return(targets)
 }
@@ -150,14 +151,15 @@ fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
     dplyr::pull("categoryID") %>%
     unique()
 
-  # Get bioregion targets from inputs
-  targets_bioregion_raw <- cats %>%
-    purrr::map(\(x) input[[paste0(bioregion_name_check, x)]]) %>%
-    tibble::enframe() %>%
-    tidyr::unnest(cols = "value") %>%
-    dplyr::rename(categoryID = "name", target = "value") %>%
-    dplyr::mutate(categoryID = cats) %>%
-    dplyr::mutate(target = .data$target / 100) # requires number between 0-1
+  # Get bioregion targets from inputs.
+  # purrr::map_dbl() with %||% 0 is type-safe: returns a numeric vector of the
+  # same length as cats even when a master slider input is NULL (e.g. not yet
+  # initialised). The previous enframe()+unnest() approach silently dropped
+  # NULL rows, which could produce a shorter-than-expected targets data frame.
+  targets_bioregion_raw <- tibble::tibble(
+    categoryID = cats,
+    target     = purrr::map_dbl(cats, \(x) input[[paste0(bioregion_name_check, x)]] %||% 0) / 100
+  )
 
   targets_bioregion <- dplyr::left_join(ft_bioregion, targets_bioregion_raw, by = "categoryID") %>%
     dplyr::select(-"categoryID")
