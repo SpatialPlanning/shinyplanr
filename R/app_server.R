@@ -25,7 +25,15 @@ app_server <- function(input, output, session) {
 
   shiny::observeEvent(
     input$navbar == "Scenario",
-    mod_2scenario_server("2scenario_ui_1", cfg),
+    {
+      # tab_visible is a reactive that is TRUE whenever the Scenario navbar tab
+      # is active.  Passed into the module so it can re-add the WebGL layer on
+      # the Explore sub-tab whenever the user returns to the Scenario tab after
+      # visiting another top-level tab (input$navbar is not accessible inside
+      # moduleServer — it belongs to the parent session).
+      tab_visible_2 <- shiny::reactive(input$navbar == "Scenario")
+      mod_2scenario_server("2scenario_ui_1", cfg, tab_visible = tab_visible_2)
+    },
     once = TRUE, ignoreInit = FALSE, ignoreNULL = TRUE
   )
 

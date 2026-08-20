@@ -309,8 +309,16 @@ mod_2scenario_ui <- function(id, cfg) {
 
 #' 2scenario Server Functions
 #'
+#' @param tab_visible A reactive that returns \code{TRUE} when the Scenario
+#'   tab is the active top-level navbar tab, and \code{FALSE} otherwise.
+#'   Passed from \code{app_server.R} as
+#'   \code{reactive(input$navbar == "Scenario")}.  Used alongside
+#'   \code{input$tabs} to re-add the WebGL layer on the Explore sub-tab
+#'   whenever the user returns to the Scenario navbar tab after visiting
+#'   another top-level tab.
+#'
 #' @noRd
-mod_2scenario_server <- function(id, cfg) {
+mod_2scenario_server <- function(id, cfg, tab_visible) {
   # Extract config locals
   Dict <- cfg$Dict
   options <- cfg$options
@@ -1043,24 +1051,26 @@ mod_2scenario_server <- function(id, cfg) {
     )
 
     # Observer 2: add (or restore) the WebGL polygon layer whenever the Explore
-    # tab becomes active.
+    # sub-tab is active AND the Scenario navbar tab is visible.
     #
     # The base map is created once by renderLeaflet (above).  However, the
-    # WebGL canvas context is destroyed by the browser when the tab panel is
-    # hidden (display:none), so the GL layer must be re-added via leafletProxy
-    # on every tab visit.
+    # WebGL canvas context is destroyed by the browser when any ancestor tab
+    # panel is hidden (display:none), so the GL layer must be re-added via
+    # leafletProxy on every tab visit — both when the user switches to the
+    # Explore inner sub-tab AND when they return to the Scenario navbar tab
+    # while already on the Explore sub-tab.
+    #
+    # We observe list(input$tabs, tab_visible()) so the observer fires on
+    # either change.  This is the same compound-reactive pattern used by
+    # fmake_tab_cache() elsewhere in this module.
     #
     # shinyjs::delay(0) defers the leafletProxy commands to the next browser
     # event loop tick (via a zero-millisecond setTimeout round-trip).  This
     # gives the browser time to make the canvas visible and assign it correct
     # dimensions before the WebGL polygon commands arrive.
-    #
-    # Uses the same single-observer-on-tabs pattern as fmake_tab_cache() so the
-    # trigger fires on every tab visit, not just on value changes of a compound
-    # expression.
-    shiny::observeEvent(input$tabs,
+    shiny::observeEvent(list(input$tabs, tab_visible()),
       {
-        if (input$tabs != "4") {
+        if (!isTRUE(tab_visible()) || input$tabs != "4") {
           return()
         }
 
