@@ -538,6 +538,19 @@ ul.nav.navbar-nav li.active a {
   border-color: color-mix(in srgb, var(--bs-primary) 30%, white);
 }
 
+/* ==========================================================================
+   shinyWidgets prettyCheckbox — allow long labels to wrap
+   shinyWidgets sets white-space: nowrap on .pretty .state label by default,
+   which causes long names to overflow their container. Overriding here allows
+   text to wrap while preserving the checkbox icon's absolute positioning.
+   ========================================================================== */
+
+.pretty .state label {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
 /* Checkboxes and radio buttons */
 .form-check-input:checked {
   background-color: var(--bs-primary);

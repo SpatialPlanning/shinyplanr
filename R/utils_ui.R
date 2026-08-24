@@ -227,10 +227,7 @@ fcustom_checkCategory <- function(varsIn, value = FALSE, labelNum = NULL) {
   fcustom_checkbox <- function(id, id_in, nameCommon, value = FALSE) {
     shinyWidgets::prettyCheckbox(
       inputId = shiny::NS(namespace = id, id = id_in),
-      label = shiny::span(
-        nameCommon,
-        style = "word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"
-      ),
+      label = nameCommon,
       value = value,
       thick = TRUE,
       animation = "pulse",
