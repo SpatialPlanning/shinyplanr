@@ -795,14 +795,24 @@ mod_3compare_server <- function(id, cfg) {
           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
         )
 
-      patchwork::wrap_plots(gg_cost1 + ggplot2::ggtitle("Scenario 1"),
+      patchwork::wrap_plots(
+        gg_cost1 + ggplot2::ggtitle("Scenario 1"),
         gg_cost2 + ggplot2::ggtitle("Scenario 2"),
         nrow = 1, guides = "collect"
       ) &
         ggplot2::theme(
-          legend.position = "bottom", legend.direction = "horizontal",
+          legend.position = "bottom",
+          legend.direction = "horizontal",
           plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+        ) &
+        ggplot2::guides(
+          fill = ggplot2::guide_colourbar(
+            barwidth       = ggplot2::unit(10, "lines"),
+            barheight      = ggplot2::unit(1.5, "lines"),
+            title.position = "top",
+            title.hjust    = 0.5
+          )
         )
     }) %>% shiny::bindEvent(input$analyse)
 
