@@ -808,7 +808,7 @@ mod_3compare_server <- function(id, cfg) {
         ) &
         ggplot2::guides(
           fill = ggplot2::guide_colourbar(
-            barwidth       = ggplot2::unit(10, "lines"),
+            barwidth       = ggplot2::unit(20, "lines"),
             barheight      = ggplot2::unit(1.5, "lines"),
             title.position = "top",
             title.hjust    = 0.5
