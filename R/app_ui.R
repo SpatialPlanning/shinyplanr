@@ -112,14 +112,19 @@ app_ui <- function(request) {
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
 golem_add_external_resources <- function(options) {
-  # Register package's built-in www/ (CSS, JS, default logos, favicon)
+  # Register package's built-in www/ under two URL prefixes:
+  #   "www"              — used by bundle_resources() and logo src= paths
+  #   "shinyplanr-pkg"   — a stable prefix that is NEVER overridden, used to
+  #                        load the package CSS after the deployment www/ override
   add_resource_path("www", app_sys("app/www"))
+  add_resource_path("shinyplanr-pkg", app_sys("app/www"))
 
   # If running from a deployment project, register the deployment www/ at the
-  # SAME prefix. Shiny's addResourcePath() replaces the previous registration,
-  # so deployment logos (logo_navbar.png, logo_welcome.png, etc.) will override
-  # the package defaults. All required files are copied to the deployment www/
-  # by setup/3_setup_app.R.
+  # "www" prefix. This replaces the package registration at "www", so deployment
+  # logos (logo_navbar.png, logo_welcome.png, etc.) override the package defaults.
+  # The "shinyplanr-pkg" prefix is NOT overridden, so the package CSS is always
+  # served from the package regardless of what the deployment www/ contains.
+  # All required files are copied to the deployment www/ by setup/3_setup_app.R.
   if (dir.exists("www")) {
     shiny::addResourcePath("www", normalizePath("www", mustWork = FALSE))
   }
@@ -130,12 +135,18 @@ golem_add_external_resources <- function(options) {
       path = app_sys("app/www"),
       app_title = options$app_title
     ),
-    # Deployment CSS override: the package stylesheet (inst/app/www/custom.css)
-    # is always loaded first via bundle_resources() above. If the deployment
-    # project has copied setup/content/custom.css to www/custom.css (done by
-    # setup/3_setup_app.R), it is loaded here as a second <link> tag AFTER the
-    # package CSS. Because CSS cascades, the :root variable overrides in the
-    # deployment file win without needing to reproduce the full stylesheet.
+    # Load the package CSS via the stable "shinyplanr-pkg" prefix. This is
+    # immune to the deployment www/ override above, so the full package
+    # stylesheet (navbar colours, footer, fonts, component rules) is always
+    # loaded from the installed package — not from the deployment www/.
+    tags$link(
+      rel  = "stylesheet",
+      type = "text/css",
+      href = "shinyplanr-pkg/custom.css"
+    ),
+    # Deployment CSS override: if the deployment project contains www/custom.css
+    # (copied there by setup/3_setup_app.R), load it last. It contains only
+    # :root variable overrides (colours, font) and wins by cascade position.
     if (file.exists("www/custom.css")) {
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
     }
