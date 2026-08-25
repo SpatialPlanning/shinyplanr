@@ -130,9 +130,12 @@ golem_add_external_resources <- function(options) {
       path = app_sys("app/www"),
       app_title = options$app_title
     ),
-    # Deployer CSS override: if the deployment project contains www/custom.css,
-    # it is loaded AFTER the package CSS so that :root variable overrides win.
-    # Create setup/content/custom.css and re-run setup-app.R to use this.
+    # Deployment CSS override: the package stylesheet (inst/app/www/custom.css)
+    # is always loaded first via bundle_resources() above. If the deployment
+    # project has copied setup/content/custom.css to www/custom.css (done by
+    # setup/3_setup_app.R), it is loaded here as a second <link> tag AFTER the
+    # package CSS. Because CSS cascades, the :root variable overrides in the
+    # deployment file win without needing to reproduce the full stylesheet.
     if (file.exists("www/custom.css")) {
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
     }
