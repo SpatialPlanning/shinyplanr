@@ -564,10 +564,14 @@ input[type="range"]:focus::-webkit-slider-thumb {
       first line of text regardless of how many lines the label occupies.
    ========================================================================== */
 
-/* 1. Allow the .pretty wrapper to wrap (the blocking rule is here, not on
-      the label). Also allow the label text itself to wrap. */
+/* 1. Allow the .pretty wrapper to wrap. Two changes are needed:
+      a) white-space: nowrap is set on .pretty itself (not the label) — override it.
+      b) .pretty is display: inline-block which shrink-wraps to content width,
+         so even with white-space: normal the text has no boundary to wrap at.
+         Changing to display: block makes it fill the parent container width. */
 .pretty {
   white-space: normal !important;
+  display: block !important;
 }
 
 .pretty .state label {
