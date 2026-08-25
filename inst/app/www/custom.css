@@ -1,8 +1,6 @@
 /* Import Montserrat font from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
-/* Bootstrap theme customizations moved from R/app_ui.R */
-
 /* CSS Custom Properties (Variables) for theme consistency */
 :root {
   /* Primary Colors */
@@ -10,33 +8,33 @@
   --primary-2: #191919;
   --primary-3: #B3E1E9;
   --primary-4: #D9F0F4;
-  
+
   /* Secondary Colors */
   --secondary-1: #3899EC;
-  
+
   /* State Colors */
   --state-complete: #88C057;
   --state-warning: #E9C46A;
   --state-error: #E76F51;
   --state-info: #3A86FF;
-  
+
   /* Text Colors */
   --text-1: #2A2929;
   --text-2: #090C02;
   --text-3: #FFFFFF;
-  
+
   /* Background Colors */
   --background: #F7F7F7;
-  
+
   /* Grey Scale */
   --grey-100: #FAFAFA;
   --grey-300: #F0F0F0;
   --grey-500: #BFBFBF;
   --grey-700: #595959;
-  
+
   /* Bootstrap compatibility - map to new primary */
   --bs-primary: var(--primary-1);
-  
+
   /* Typography Scale */
   --bs-h1-font-size: 2rem;
   --bs-h2-font-size: 1.8rem;
@@ -44,14 +42,14 @@
   --bs-h4-font-size: 1.4rem;
   --bs-h5-font-size: 1.2rem;
   --bs-h6-font-size: 1rem;
-  
+
   /* Font Weights */
   --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   /* Spacing Variables */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -59,14 +57,14 @@
   --spacing-lg: 1.25rem;
   --spacing-xl: 1.5rem;
   --spacing-xxl: 2rem;
-  
+
   /* Pixel spacing for specific cases */
   --spacing-2px: 2px;
   --spacing-5px: 5px;
   --spacing-8px: 8px;
   --spacing-50px: 50px;
   --spacing-120px: 120px;
-  
+
   /* Heading Font Weights */
   --bs-h1-font-weight: var(--font-weight-bold);
   --bs-h2-font-weight: var(--font-weight-semibold);
@@ -74,17 +72,17 @@
   --bs-h4-font-weight: var(--font-weight-medium);
   --bs-h5-font-weight: var(--font-weight-medium);
   --bs-h6-font-weight: var(--font-weight-normal);
-  
+
   /* Line Heights */
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
-  
+
   /* Layout */
   --bs-navbar-padding-y: 0.5rem;
   --bs-border-radius: 0.75rem; /* More rounded corners */
   --bs-font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  
+
   /* Navbar styling variables */
   --bs-navbar-font-size: var(--bs-h6-font-size);
   --bs-navbar-title-font-size: var(--bs-h4-font-size);
@@ -95,7 +93,7 @@
   --bs-navbar-toggler-border: rgba(255, 255, 255, 0.3);
 }
 
-/* Apply Montserrat font globally with proper typography */
+/* Apply font globally with proper typography */
 body {
   font-family: var(--bs-font-family) !important;
   font-weight: var(--font-weight-normal) !important;
@@ -103,6 +101,7 @@ body {
   color: var(--text-1) !important;
   background-color: var(--background) !important;
   padding-bottom: 120px !important; /* Space for fixed footer */
+  border-top: none !important;
 }
 
 /* Paragraph text styling */
@@ -110,12 +109,12 @@ p {
   color: var(--text-1) !important;
 }
 
-/* Apply Montserrat to all headings */
+/* Apply font to all headings */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--bs-font-family) !important;
 }
 
-/* Apply Montserrat to navbar with size and weight variables */
+/* Apply font to navbar */
 .navbar {
   font-family: var(--bs-font-family) !important;
 }
@@ -151,6 +150,10 @@ h1, h2, h3, h4, h5, h6 {
   display: flex !important;
   align-items: center !important;
   font-size: var(--bs-navbar-title-font-size) !important;
+  padding-top: var(--spacing-xs);
+  padding-bottom: var(--spacing-xs);
+  margin-right: var(--spacing-md);
+  line-height: inherit;
 }
 
 /* Fix specific Bootstrap navbar alignment */
@@ -160,8 +163,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Navbar title specific styling */
 .navbar-header .navbar-brand,
-.navbar .navbar-brand,
-.navbar-brand {
+.navbar .navbar-brand {
   font-size: var(--bs-navbar-title-font-size) !important;
   font-weight: var(--bs-navbar-font-weight) !important;
 }
@@ -173,8 +175,7 @@ h1, h2, h3, h4, h5, h6 {
   font-size: var(--bs-navbar-title-font-size) !important;
 }
 
-
-/* Apply Montserrat to buttons */
+/* Apply font to buttons */
 .btn {
   font-family: var(--bs-font-family) !important;
 }
@@ -216,12 +217,7 @@ h6 {
   line-height: var(--line-height-normal) !important;
 }
 
-/* Remove test border */
-body {
-  border-top: none !important;
-}
-
-/* Target only navbar containers - be more specific */
+/* Navbar background colour */
 .navbar,
 .navbar-default,
 .navbar-inverse,
@@ -236,7 +232,7 @@ body {
   border-color: transparent !important;
 }
 
-/* Target only navbar text elements - exclude general nav classes, active elements, and hover states */
+/* Navbar text colour — white for non-active/non-hover elements */
 .navbar *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
 .navbar-default *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
 .navbar-inverse *:not(.nav-link.active):not(.active a):not(.nav-link:hover):not(a:hover),
@@ -263,7 +259,7 @@ body {
   color: var(--text-3) !important;
 }
 
-/* Base styling for all navbar elements - consistent layout */
+/* Base styling for all navbar links */
 .navbar .nav-tabs .nav-link,
 .navbar-nav .nav-link,
 ul.nav.navbar-nav li a,
@@ -278,7 +274,14 @@ ul.nav.navbar-nav li a,
   transition: background-color 0.2s ease !important;
 }
 
-/* Hover states - with rounded corners for the background shading */
+/* Navbar link colour (explicit) */
+.navbar .nav-tabs .nav-link,
+.navbar-nav .nav-link,
+ul.nav.navbar-nav li a {
+  color: var(--bs-navbar-color) !important;
+}
+
+/* Navbar hover state */
 .navbar .nav-tabs .nav-link:hover,
 .navbar-nav .nav-link:hover,
 ul.nav.navbar-nav li a:hover,
@@ -289,7 +292,7 @@ ul.nav.navbar-nav li a:hover,
   border-radius: var(--bs-border-radius) !important;
 }
 
-/* Active/selected navbar elements - with rounded corners for the background shading and outline border with gap */
+/* Navbar active/selected state */
 .navbar .nav-tabs .nav-link.active,
 .navbar-nav .nav-link.active,
 ul.nav.navbar-nav li.active a,
@@ -303,7 +306,7 @@ ul.nav.navbar-nav li.active a,
   border: none !important;
 }
 
-/* Ensure active navbar elements override the general navbar text color */
+/* Ensure active navbar elements override general text colour */
 .navbar .nav-tabs .nav-link.active,
 .navbar-nav .nav-link.active,
 ul.nav.navbar-nav li.active a,
@@ -312,17 +315,20 @@ ul.nav.navbar-nav li.active a,
   color: var(--primary-1) !important;
 }
 
+/* Active state using navbarPage active-bg variable */
+.navbar .nav-tabs .nav-link.active,
+.navbar-nav .nav-link.active,
+ul.nav.navbar-nav li.active a {
+  color: var(--bs-navbar-color) !important;
+  background-color: var(--bs-navbar-active-bg) !important;
+}
+
 /* Hide empty nav-link elements that Shiny generates */
 .navbar-nav .nav-link:empty {
   display: none !important;
 }
 
-/* Hide nav-links with only whitespace or that have empty href */
-.navbar-nav .nav-link[href="#tab-7485-1"] {
-  display: none !important;
-}
-
-/* More generic approach - hide nav-links that start with #tab- and have no visible content */
+/* Hide nav-links that start with #tab- and have no visible content */
 .navbar-nav .nav-link[href^="#tab-"]:empty {
   display: none !important;
 }
@@ -332,14 +338,7 @@ ul.nav.navbar-nav li.active a,
   background-color: transparent !important;
 }
 
-.navbar-brand {
-  padding-top: var(--spacing-xs);
-  padding-bottom: var(--spacing-xs);
-  margin-right: var(--spacing-md);
-  line-height: inherit;
-}
-
-/* Navbar toggle button for mobile using CSS variables */
+/* Navbar toggle button for mobile */
 .navbar-toggler {
   border-color: var(--bs-navbar-toggler-border);
 }
@@ -348,7 +347,14 @@ ul.nav.navbar-nav li.active a,
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
-/* Bootstrap primary color override */
+/* Logo styling in navbar */
+.navbar-logo {
+  padding-right: 10px;
+  margin-top: -10px;
+  margin-bottom: -10px;
+}
+
+/* Bootstrap primary colour override */
 .btn-primary {
   background-color: var(--bs-primary);
   border-color: var(--bs-primary);
@@ -394,7 +400,24 @@ ul.nav.navbar-nav li.active a,
   color: var(--text-3);
 }
 
-/* Link colors */
+/* Rounded corners */
+.rounded {
+  border-radius: var(--bs-border-radius) !important;
+}
+
+.btn {
+  border-radius: var(--bs-border-radius);
+}
+
+.form-control {
+  border-radius: var(--bs-border-radius);
+}
+
+.card {
+  border-radius: var(--bs-border-radius);
+}
+
+/* Link colours */
 a {
   color: var(--bs-primary);
 }
@@ -456,17 +479,17 @@ input[type="range"]:focus::-webkit-slider-thumb {
   color: var(--grey-700);
 }
 
-/* Tab panel nav-links (not in navbar) - unselected only */
+/* Tab panel nav-links (not in navbar) - unselected */
 .nav-link:not(.navbar .nav-link):not(.navbar-nav .nav-link):not(.active) {
   color: var(--primary-1) !important;
 }
 
-/* Tab panel nav-links (not in navbar) - hover on any tab (selected or unselected) */
+/* Tab panel nav-links (not in navbar) - hover */
 .nav-link:not(.navbar .nav-link):not(.navbar-nav .nav-link):hover {
   color: var(--primary-1) !important;
 }
 
-/* Tab panels */
+/* Tab panels (pills) */
 .nav-pills .nav-link.active {
   background-color: var(--bs-primary);
 }
@@ -484,20 +507,6 @@ input[type="range"]:focus::-webkit-slider-thumb {
 
 .tabbable .nav-tabs a:hover {
   color: var(--bs-primary) !important;
-}
-
-/* Shiny navbarPage tabs - target the specific structure */
-.navbar .nav-tabs .nav-link,
-.navbar-nav .nav-link,
-ul.nav.navbar-nav li a {
-  color: var(--bs-navbar-color) !important;
-}
-
-.navbar .nav-tabs .nav-link.active,
-.navbar-nav .nav-link.active,
-ul.nav.navbar-nav li.active a {
-  color: var(--bs-navbar-color) !important;
-  background-color: var(--bs-navbar-active-bg) !important;
 }
 
 /* Additional tabPanel selectors for Shiny */
@@ -540,15 +549,40 @@ ul.nav.navbar-nav li.active a {
 
 /* ==========================================================================
    shinyWidgets prettyCheckbox — allow long labels to wrap
-   shinyWidgets sets white-space: nowrap on .pretty .state label by default,
-   which causes long names to overflow their container. Overriding here allows
-   text to wrap while preserving the checkbox icon's absolute positioning.
+   ============================================================================
+   Problem: pretty-checkbox sets `white-space: nowrap` on the `.pretty`
+   wrapper itself, which prevents any label text from wrapping regardless of
+   what is set on the label element. Additionally, the checkbox icon
+   (`.state label:before` / `:after`) is positioned absolutely with
+   `top: calc((0% - (100% - 1em)) - 8%)` — a formula that assumes a
+   single-line label. When the label wraps to two lines the container grows
+   taller but the icon stays near the top, appearing "above" the text.
+
+   Fix:
+   1. Override `white-space` on `.pretty` to allow wrapping.
+   2. Reset `top` on the pseudo-elements to `0` so the icon aligns with the
+      first line of text regardless of how many lines the label occupies.
    ========================================================================== */
+
+/* 1. Allow the .pretty wrapper to wrap (the blocking rule is here, not on
+      the label). Also allow the label text itself to wrap. */
+.pretty {
+  white-space: normal !important;
+}
 
 .pretty .state label {
   white-space: normal;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+/* 2. Re-anchor the absolutely-positioned checkbox icon to the top of the
+      label so it aligns with the first line of text when the label wraps.
+      The library default `top: calc((0% - (100% - 1em)) - 8%)` centres the
+      icon against a single-line label; it breaks for multi-line labels. */
+.pretty .state label:before,
+.pretty .state label:after {
+  top: 0 !important;
 }
 
 /* Checkboxes and radio buttons */
@@ -593,31 +627,10 @@ ul.nav.navbar-nav li.active a {
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--bs-primary) 25%, transparent);
 }
 
-/* Rounded corners (enable-rounded was TRUE) */
-.rounded {
-  border-radius: var(--bs-border-radius) !important;
-}
+/* ==========================================================================
+   Footer Styles
+   ========================================================================== */
 
-.btn {
-  border-radius: var(--bs-border-radius);
-}
-
-.form-control {
-  border-radius: var(--bs-border-radius);
-}
-
-.card {
-  border-radius: var(--bs-border-radius);
-}
-
-/* Logo styling in navbar */
-.navbar-logo {
-  padding-right: 10px;
-  margin-top: -10px;
-  margin-bottom: -10px;
-}
-
-/* Footer Styles */
 .home-footer {
   position: fixed;
   bottom: 0;
@@ -673,7 +686,7 @@ ul.nav.navbar-nav li.active a {
 
 .funding-title {
   color: var(--primary-4);
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--bs-font-family);
   font-weight: var(--font-weight-medium);
   font-size: var(--bs-h5-font-size);
   margin-bottom: var(--spacing-xs);
@@ -704,8 +717,10 @@ ul.nav.navbar-nav li.active a {
   display: block;
 }
 
-/* Shiny plot output styling - make transparent to inherit page background */
-/* More comprehensive selectors with higher specificity */
+/* ==========================================================================
+   Shiny output styling — transparent backgrounds
+   ========================================================================== */
+
 .shiny-plot-output,
 .shiny-bound-output.shiny-plot-output,
 .shiny-plot-output.html-fill-item,
@@ -717,14 +732,12 @@ div.shiny-plot-output,
   background: transparent !important;
 }
 
-/* Target any div containing plots */
 div[id*="plot"],
 div[class*="plot"] {
   background-color: transparent !important;
   background: transparent !important;
 }
 
-/* Target ggplot specifically if it has identifiable classes */
 .ggplot,
 .plotly,
 .htmlwidget {
@@ -732,15 +745,6 @@ div[class*="plot"] {
   background: transparent !important;
 }
 
-/* Target the specific plot outputs in your module */
-#mod_2scenario_ui_1-gg_soln,
-#mod_2scenario_ui_1-gg_targetPlot,
-#mod_2scenario_ui_1-gg_cost {
-  background-color: transparent !important;
-  background: transparent !important;
-}
-
-/* More specific targeting for plot containers */
 .shiny-plot-output img,
 .shiny-plot-output canvas,
 .shiny-plot-output svg {
@@ -748,7 +752,6 @@ div[class*="plot"] {
   background: transparent !important;
 }
 
-/* Shiny table output styling - make transparent to inherit page background */
 .shiny-table-output,
 .shiny-bound-output.shiny-table-output,
 div.shiny-table-output {
@@ -756,7 +759,6 @@ div.shiny-table-output {
   background: transparent !important;
 }
 
-/* Table elements */
 .shiny-table-output table,
 .shiny-table-output tbody,
 .shiny-table-output thead,

@@ -233,6 +233,37 @@ test_that("create_shinyplanr_template() creates the three setup scripts", {
   expect_true(file.exists(file.path(setup_dir, "3_setup_app.R")))
 })
 
+test_that("create_shinyplanr_template() creates setup/content/custom.css", {
+  out_dir <- file.path(tempdir(), paste0("shinyplanr_CssTest_", Sys.getpid()))
+  on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+  suppressMessages(
+    create_shinyplanr_template(
+      country      = "CssTest",
+      output_dir   = out_dir,
+      use_renv     = FALSE,
+      create_rproj = FALSE
+    )
+  )
+
+  css_path <- file.path(out_dir, "setup", "content", "custom.css")
+  expect_true(
+    file.exists(css_path),
+    label = "setup/content/custom.css must exist so deployers can customise colours"
+  )
+
+  # The file must contain a :root block with at least the primary colour variables
+  css_text <- paste(readLines(css_path, warn = FALSE), collapse = "\n")
+  expect_true(
+    grepl(":root", css_text, fixed = TRUE),
+    label = "custom.css must contain a :root block"
+  )
+  expect_true(
+    grepl("--primary-1", css_text, fixed = TRUE),
+    label = "custom.css must define --primary-1"
+  )
+})
+
 test_that("create_shinyplanr_template() creates Dict_Feature.csv in setup/", {
   out_dir <- file.path(tempdir(), paste0("shinyplanr_DictTest_", Sys.getpid()))
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
