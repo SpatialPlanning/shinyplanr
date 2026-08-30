@@ -167,6 +167,20 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
       t(col2rgb(hex_vec)) / 255
     }
 
+    # Constant fill colours for the binary base/overlay layer split (Feature,
+    # LockIn, LockOut). Precomputed once — reused on every dropdown change.
+    binary_base_rgb    <- as.numeric(hex_to_rgb_matrix("#d3d3d3")) # grey  = absent / base
+    binary_overlay_rgb <- as.numeric(hex_to_rgb_matrix("#2a9d8f")) # teal  = present / overlay
+
+    # Tracks whether the static "base" WebGL group (all planning units, grey)
+    # has already been added to the map for the current WebGL canvas context.
+    # Reset to FALSE whenever the canvas context is recreated (tab hidden then
+    # shown again — see the tab-visibility observer) or whenever a full
+    # clearGlLayers() wipes every group (non-binary layer types below), since
+    # both destroy the "base" group and it must be redrawn before the next
+    # binary-layer render.
+    base_layer_added <- FALSE
+
 
     # --- Helper: build and render a layer via leafletProxy ------------------
     # Encapsulates the leafgl rendering + legend + sidebar update so the same
@@ -205,6 +219,11 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
             title    = "Feature Density",
             opacity  = 0.7
           )
+
+        # clearGlLayers() wipes every group, including "base" — force it to
+        # be redrawn the next time a binary (Feature/LockIn/LockOut) layer
+        # is selected.
+        base_layer_added <<- FALSE
 
         output$infoPanelContent <- shiny::renderUI({
           shiny::tagList(
@@ -281,6 +300,11 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
               opacity  = 0.7
             )
 
+          # clearGlLayers() wipes every group, including "base" — force it to
+          # be redrawn the next time a binary (Feature/LockIn/LockOut) layer
+          # is selected.
+          base_layer_added <<- FALSE
+
           output$infoPanelContent <- shiny::renderUI({
             just  <- bioregion_meta$justification
             shiny::tagList(
@@ -330,41 +354,108 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         #   Binary (grey/teal):  Feature, LockIn, LockOut — 0/1
         is_continuous <- layer_type %in% c("Cost", "EcosystemServices", "Climate")
 
-        if (is_continuous) {
-          pal <- leaflet::colorNumeric(
-            palette  = "YlGnBu",
-            domain   = col_data,
-            na.color = "#808080"
-          )
-        } else {
-          # Binary presence/absence: grey = absent, teal = present
+        # Binary layers (Feature, LockIn, LockOut) are rendered via a static
+        # grey "base" WebGL group (all planning units, added once per tab
+        # visit) plus a small teal "overlay" group containing only the
+        # value == 1 rows. This avoids re-serialising and rebuilding the full
+        # 30k+ row WebGL buffer on every dropdown change — only the (often
+        # much smaller) overlay subset is rebuilt, and only that group is
+        # cleared via leafgl::clearGlGroup() rather than wiping every group
+        # with leafgl::clearGlLayers().
+        # Continuous layers (Cost, EcosystemServices, Climate) and the
+        # Bioregion/Density branches above are left on the original
+        # full-render path since every row has a distinct, non-zero value and
+        # subsetting would not reduce the render cost.
+        if (!is_continuous) {
           pal <- leaflet::colorFactor(
             palette  = c("#d3d3d3", "#2a9d8f"),
             domain   = c(0, 1),
             na.color = "#808080"
           )
-        }
 
-        hex_colours <- pal(col_data)
-        fill_rgb    <- hex_to_rgb_matrix(hex_colours)
+          proxy <- leaflet::leafletProxy("leaflet_map", session = session) %>%
+            leaflet::clearControls()
 
-        leaflet::leafletProxy("leaflet_map", session = session) %>%
-          leafgl::clearGlLayers() %>%
-          leaflet::clearControls() %>%
-          leafgl::addGlPolygons(
-            data        = raw_wgs84,
-            fillColor   = fill_rgb,
-            fillOpacity = 0.7,
-            stroke      = TRUE,
-            group       = "layer"
-          ) %>%
-          leaflet::addLegend(
-            position = "bottomleft",
-            pal      = pal,
-            values   = col_data,
-            title    = layer_info$nameCommon[1],
-            opacity  = 0.7
+          # Add the static base layer (all planning units, grey) once per
+          # WebGL canvas lifetime — skipped on subsequent binary-layer
+          # dropdown changes.
+          if (!base_layer_added) {
+            n_all <- nrow(raw_wgs84)
+            base_fill <- matrix(binary_base_rgb, nrow = n_all, ncol = 3, byrow = TRUE)
+
+            proxy <- proxy %>%
+              leafgl::addGlPolygons(
+                data        = raw_wgs84,
+                fillColor   = base_fill,
+                fillOpacity = 0.7,
+                stroke      = TRUE,
+                group       = "base"
+              )
+
+            base_layer_added <<- TRUE
+          }
+
+          # Replace only the "overlay" group — leaves "base" untouched.
+          overlay_rows <- raw_wgs84[which(col_data == 1), , drop = FALSE]
+          n_overlay <- nrow(overlay_rows)
+
+          proxy <- proxy %>% leafgl::clearGlGroup(group = "overlay")
+
+          if (n_overlay > 0) {
+            overlay_fill <- matrix(binary_overlay_rgb, nrow = n_overlay, ncol = 3, byrow = TRUE)
+
+            proxy <- proxy %>%
+              leafgl::addGlPolygons(
+                data        = overlay_rows,
+                fillColor   = overlay_fill,
+                fillOpacity = 0.7,
+                stroke      = TRUE,
+                group       = "overlay"
+              )
+          }
+
+          proxy %>%
+            leaflet::addLegend(
+              position = "bottomleft",
+              pal      = pal,
+              values   = c(0, 1),
+              title    = layer_info$nameCommon[1],
+              opacity  = 0.7
+            )
+
+        } else {
+          pal <- leaflet::colorNumeric(
+            palette  = "YlGnBu",
+            domain   = col_data,
+            na.color = "#808080"
           )
+
+          hex_colours <- pal(col_data)
+          fill_rgb    <- hex_to_rgb_matrix(hex_colours)
+
+          leaflet::leafletProxy("leaflet_map", session = session) %>%
+            leafgl::clearGlLayers() %>%
+            leaflet::clearControls() %>%
+            leafgl::addGlPolygons(
+              data        = raw_wgs84,
+              fillColor   = fill_rgb,
+              fillOpacity = 0.7,
+              stroke      = TRUE,
+              group       = "layer"
+            ) %>%
+            leaflet::addLegend(
+              position = "bottomleft",
+              pal      = pal,
+              values   = col_data,
+              title    = layer_info$nameCommon[1],
+              opacity  = 0.7
+            )
+
+          # clearGlLayers() wipes every group, including "base" — force it to
+          # be redrawn the next time a binary (Feature/LockIn/LockOut) layer
+          # is selected.
+          base_layer_added <<- FALSE
+        }
 
         # Sidebar: Dict metadata for the selected layer
         output$infoPanelContent <- shiny::renderUI({
@@ -470,6 +561,10 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
       tab_visible(),
       {
         if (!isTRUE(tab_visible())) return()
+        # The WebGL canvas context (including the "base" group) is destroyed
+        # whenever the tab panel is hidden, so the base layer must always be
+        # redrawn on tab visit regardless of the cached flag's prior state.
+        base_layer_added <<- FALSE
         shinyjs::delay(0, render_layer(shiny::isolate(input$selectedLayer)))
       },
       ignoreInit = FALSE,

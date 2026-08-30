@@ -391,6 +391,55 @@ test_that("2_setup_data.R substitutes country and crs tokens correctly", {
 })
 
 # ---------------------------------------------------------------------------
+# Integration: 2_setup_data.R includes boundary/coastline simplification
+# ---------------------------------------------------------------------------
+
+test_that("2_setup_data.R includes st_simplify() calls for bndry and coast", {
+  out_dir <- file.path(tempdir(), paste0("shinyplanr_SimplifyTpl_", Sys.getpid()))
+  on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+  suppressMessages(
+    create_shinyplanr_template(
+      country      = "SimplifyTpl",
+      resolution   = 100,
+      output_dir   = out_dir,
+      use_renv     = FALSE,
+      create_rproj = FALSE
+    )
+  )
+
+  data_text <- paste(
+    readLines(file.path(out_dir, "setup", "2_setup_data.R"), warn = FALSE),
+    collapse = "\n"
+  )
+
+  expect_true(
+    grepl("simplify_tol <- resolution / 4", data_text, fixed = TRUE),
+    label = "2_setup_data.R should define simplify_tol relative to resolution"
+  )
+  expect_true(
+    grepl('bndry <- sf::st_simplify(bndry, preserveTopology = TRUE, dTolerance = simplify_tol)',
+      data_text, fixed = TRUE),
+    label = "2_setup_data.R should simplify bndry before saving"
+  )
+  expect_true(
+    grepl('coast <- sf::st_simplify(coast, preserveTopology = TRUE, dTolerance = simplify_tol)',
+      data_text, fixed = TRUE),
+    label = "2_setup_data.R should simplify coast before saving"
+  )
+
+  # The simplification block must appear AFTER the planning unit grid (PUs)
+  # is created, so it never affects the spatial analysis - only the saved
+  # plotting geometry.
+  pu_pos       <- regexpr("PUs <- spatialgridr::get_grid", data_text, fixed = TRUE)
+  simplify_pos <- regexpr("simplify_tol <- resolution", data_text, fixed = TRUE)
+  expect_true(
+    pu_pos > 0 && simplify_pos > pu_pos,
+    label = "Simplification must occur after the planning unit grid is created"
+  )
+})
+
+# ---------------------------------------------------------------------------
 # Integration: include_climate = FALSE omits climate block from 3_setup_app.R
 # ---------------------------------------------------------------------------
 
