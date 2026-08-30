@@ -120,7 +120,16 @@ shinyplanr_options <- list(
   cCRS = "{crs}",
 
   ## Plotting defaults
-  base_size = 18
+  base_size = 18,
+
+  ## Leaflet basemap tile provider
+  #
+  # Used by the interactive leaflet maps in mod_2scenario (Explore tab),
+  # mod_4afeatures (interactive Layer Information), and mod_5coverage
+  # (Check Coverage). Any provider name from leaflet::providers is valid,
+  # e.g. "OpenStreetMap.CAT", "CartoDB.Positron", "OpenTopoMap".
+  # See https://leaflet-extras.github.io/leaflet-providers/preview/ for options.
+  leaflet_provider = "OpenStreetMap.CAT"
 )
 
 # =============================================================================
