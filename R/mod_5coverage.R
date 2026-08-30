@@ -70,7 +70,7 @@ mod_5coverage_server <- function(id, cfg) {
     # Initialize the base leaflet map (runs once)
     output$leaflet_coverage <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
-        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron)
+        leaflet::addProviderTiles(options$leaflet_provider %||% "OpenStreetMap.CAT")
     })
 
     # Handle file upload

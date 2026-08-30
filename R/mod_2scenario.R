@@ -996,7 +996,7 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     # no layout issues.
     output$leaflet_map <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
-        leaflet::addProviderTiles(leaflet::providers$OpenTopoMap)
+        leaflet::addProviderTiles(options$leaflet_provider %||% "OpenStreetMap.CAT")
     })
 
     # Observer 1: prepare WGS84 solution data whenever a new analysis completes.
