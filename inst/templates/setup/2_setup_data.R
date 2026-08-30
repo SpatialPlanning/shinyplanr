@@ -166,6 +166,30 @@ dat_sf <- dplyr::bind_cols(dat_sf, mpas)
 # [END include_climate]
 
 # =============================================================================
+# SIMPLIFY BOUNDARY & COASTLINE (plotting only - reduces render time)
+# =============================================================================
+#
+# bndry and coast are redrawn via ggplot2::geom_sf() on EVERY plot in the app
+# (Scenario, Comparison, Layer Information tabs, reports) - full-resolution
+# coastlines can have thousands of vertices, which is far more detail than is
+# visible at the planning-unit scale and adds up over many renders per
+# session.
+#
+# IMPORTANT: This simplification is applied AFTER `bndry`/`coast` were used
+# to create the planning unit grid (PUs) above, so it has ZERO effect on the
+# spatial analysis (planning units, features, cost, etc.) - only the
+# saved boundary/coastline geometry used for plotting is affected.
+#
+# dTolerance is set relative to the planning unit resolution so the
+# simplification error stays well within the visual size of a single
+# planning unit. Increase/decrease the divisor below if the plotted
+# boundary looks over- or under-simplified for your region.
+simplify_tol <- resolution / 4  # same units as `crs` (usually meters)
+
+bndry <- sf::st_simplify(bndry, preserveTopology = TRUE, dTolerance = simplify_tol)
+coast <- sf::st_simplify(coast, preserveTopology = TRUE, dTolerance = simplify_tol)
+
+# =============================================================================
 # FINAL PROCESSING AND SAVE
 # =============================================================================
 

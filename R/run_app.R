@@ -28,6 +28,12 @@ run_app <- function(
   uiPattern = "/",
   ...
 ) {
+  # Use {ragg} for renderPlot() rasterization instead of the default
+  # grDevices::png()/cairo device. ragg is substantially faster for the
+  # dense geom_sf() plots used throughout the app (Scenario, Comparison,
+  # Feature tabs, reports), with no visual differences for end users.
+  options(shiny.useragg = TRUE)
+
   # Register a top-level onStop callback so that when the app is interrupted
   # (e.g. via Positron's Stop button or Ctrl+C), httpuv's libuv event loop is
   # explicitly closed. Without this, uv_run() can hold the R process open after

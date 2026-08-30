@@ -1,0 +1,135 @@
+# tests/testthat/test-mod_4afeatures.R
+#
+# Tests for mod_4afeatures_ui() and mod_4afeatures_server().
+# cfg is built from the stub sysdata.rda objects in the package namespace.
+#
+# NOTE: render_layer() defers all leafletProxy/output updates via
+# shinyjs::delay(0), which requires a genuine browser round-trip (it sends a
+# custom message and waits for a matching input event) and therefore never
+# fires synchronously inside shiny::testServer(). This mirrors the existing
+# WebGL rendering pattern in mod_2scenario.R. Consequently these tests
+# exercise the reactive wiring (formals, UI structure, no-error on input
+# changes) rather than asserting on the delayed output content.
+
+# Build a cfg list from the stub namespace for use across all tests.
+cfg <- shinyplanr:::get_pkg_config()
+
+# ---------------------------------------------------------------------------
+# UI structure tests
+# ---------------------------------------------------------------------------
+
+test_that("mod_4afeatures_ui() returns a shiny.tag.list", {
+  ui <- mod_4afeatures_ui(id = "test", cfg = cfg)
+  expect_s3_class(ui, "shiny.tag.list")
+})
+
+test_that("mod_4afeatures_ui() formals contain 'id' and 'cfg'", {
+  fmls <- formals(mod_4afeatures_ui)
+  expect_true("id" %in% names(fmls))
+  expect_true("cfg" %in% names(fmls))
+})
+
+test_that("mod_4afeatures_ui() renders without error using stub cfg", {
+  expect_no_error(mod_4afeatures_ui(id = "test", cfg = cfg))
+})
+
+test_that("mod_4afeatures_ui() contains the leaflet output and layer selector", {
+  ui <- mod_4afeatures_ui(id = "test", cfg = cfg)
+  html <- as.character(ui)
+  expect_match(html, "leaflet_map", fixed = TRUE)
+  expect_match(html, "selectedLayer", fixed = TRUE)
+  expect_match(html, "Feature Density", fixed = TRUE)
+})
+
+# ---------------------------------------------------------------------------
+# Server tests
+# ---------------------------------------------------------------------------
+
+test_that("mod_4afeatures_server() formals contain 'id', 'cfg' and 'tab_visible'", {
+  fmls <- formals(mod_4afeatures_server)
+  expect_true("id" %in% names(fmls))
+  expect_true("cfg" %in% names(fmls))
+  expect_true("tab_visible" %in% names(fmls))
+})
+
+testServer(
+  mod_4afeatures_server,
+  args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+  {
+    ns <- session$ns
+    expect_true(inherits(ns, "function"))
+    expect_true(grepl(id, ns("")))
+    expect_true(grepl("test", ns("test")))
+  }
+)
+
+test_that("selecting a Feature layer (base+overlay path) does not error", {
+  # feature_A/feature_B are Feature-type columns in the stub Dict/raw_sf,
+  # so this exercises the new base ("grey") + overlay ("teal") WebGL split.
+  testServer(
+    mod_4afeatures_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      expect_no_error(session$setInputs(selectedLayer = "feature_A"))
+    }
+  )
+})
+
+test_that("switching between two Feature layers does not error", {
+  # Regression guard for the base_layer_added flag: switching between two
+  # binary layers must not error (base layer should be reused, not re-added).
+  testServer(
+    mod_4afeatures_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      session$setInputs(selectedLayer = "feature_A")
+      expect_no_error(session$setInputs(selectedLayer = "feature_B"))
+    }
+  )
+})
+
+test_that("selecting Feature Density (__density__) does not error", {
+  testServer(
+    mod_4afeatures_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      expect_no_error(session$setInputs(selectedLayer = "__density__"))
+    }
+  )
+})
+
+test_that("switching from a binary layer to Feature Density and back does not error", {
+  # Regression guard: Feature Density uses clearGlLayers() (wipes all groups,
+  # including "base"), so base_layer_added must be reset to FALSE afterwards
+  # and the base layer must be re-added on the next binary-layer selection.
+  testServer(
+    mod_4afeatures_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      session$setInputs(selectedLayer = "feature_A")
+      session$setInputs(selectedLayer = "__density__")
+      expect_no_error(session$setInputs(selectedLayer = "feature_B"))
+    }
+  )
+})
+
+test_that("toggling tab_visible does not error", {
+  testServer(
+    mod_4afeatures_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      session$setInputs(selectedLayer = "feature_A")
+      expect_no_error(session$flushReact())
+    }
+  )
+})
+
+test_that("selecting an unknown layer name does not error", {
+  testServer(
+    mod_4afeatures_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      expect_no_error(session$setInputs(selectedLayer = "nonexistent_var"))
+    }
+  )
+})

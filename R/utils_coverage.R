@@ -118,9 +118,15 @@ fcalculate_coverage <- function(uploaded_sf, raw_sf, Dict) {
   # Step 2: Ensure uploaded polygons are in the same CRS as raw_sf
   uploaded_transformed <- sf::st_transform(uploaded_sf, sf::st_crs(raw_sf))
 
-  # Step 3: Determine which planning units intersect with uploaded polygons
-  intersects_matrix <- sf::st_intersects(raw_sf, uploaded_transformed, sparse = FALSE)
-  is_covered <- apply(intersects_matrix, 1, any)
+  # Step 3: Determine which planning units intersect with uploaded polygons.
+  # Use the default sparse-list return (a list of integer vectors of matching
+  # indices) rather than sparse = FALSE (a dense n_pu x n_upload logical
+  # matrix). For the reference deployment scale (raw_sf = 30,495 rows), a
+  # dense matrix wastes memory/time proportional to the number of uploaded
+  # polygons; lengths(...) > 0 gives the same "any intersection" result from
+  # the sparse list in O(n_pu) instead of O(n_pu * n_upload).
+  intersects_list <- sf::st_intersects(raw_sf, uploaded_transformed)
+  is_covered <- lengths(intersects_list) > 0
 
   # Step 4: Calculate coverage statistics for each feature
   # Drop geometry for faster calculations

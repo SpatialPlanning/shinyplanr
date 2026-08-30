@@ -106,15 +106,27 @@ mod_4features_server <- function(id, cfg) {
     #       {
     # Solution plotting reactive
 
-    plotDensity <- shiny::reactive({
-      # Derive checked feature IDs inside the reactive so it re-evaluates
-      # whenever any checkbox changes (fixes A3: ftd was computed outside reactive).
+    # Sorted vector of currently-checked feature IDs, used both to compute
+    # the density plot and as the bindCache() key below (mirrors the
+    # input$checkFeat pattern used for plotFeature()).
+    # Rapid successive checkbox toggles are debounced (300ms) so that ticking
+    # several boxes in quick succession only triggers a single recompute of
+    # the (expensive) rowSums + ggplot render, rather than one per click.
+    checked_ftd_raw <- shiny::reactive({
       ftd_all <- names(input) %>%
         stringr::str_subset("checkftd_")
 
       idx <- purrr::map_vec(ftd_all, \(x) input[[x]])
 
-      ftd <- ftd_all[idx] %>% stringr::str_remove_all("checkftd_")
+      ftd_all[idx] %>%
+        stringr::str_remove_all("checkftd_") %>%
+        sort()
+    })
+
+    checked_ftd <- checked_ftd_raw %>% shiny::debounce(300)
+
+    plotDensity <- shiny::reactive({
+      ftd <- checked_ftd()
 
       dens <- raw_sf %>%
         dplyr::mutate(DummyVar = 0) %>% # Create a dummy variable so it will still plot 0 when nothing selected
@@ -139,7 +151,7 @@ mod_4features_server <- function(id, cfg) {
           legend.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the legend background transparent
         )
       return(gg)
-    })
+    }) %>% shiny::bindCache(checked_ftd())
 
 
     output$gg_dens <- shiny::renderPlot(
@@ -147,7 +159,7 @@ mod_4features_server <- function(id, cfg) {
         plotDensity()
       },
       bg = "transparent"
-    )
+    ) %>% shiny::bindCache(checked_ftd())
 
 
     plotFeature <- shiny::reactive({
