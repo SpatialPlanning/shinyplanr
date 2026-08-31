@@ -63,9 +63,13 @@ testServer(
   }
 )
 
-test_that("selecting a Feature layer (base+overlay path) does not error", {
-  # feature_A/feature_B are Feature-type columns in the stub Dict/raw_sf,
-  # so this exercises the new base ("grey") + overlay ("teal") WebGL split.
+test_that("selecting a Feature (binary) layer does not error", {
+  # feature_A/feature_B are Feature-type columns in the stub Dict/raw_sf.
+  # A single uniform render path (clearGlLayers() + addGlPolygons()) is used
+  # for all layer types — see mod_4afeatures.R for rationale (a previous
+  # base/overlay WebGL caching split was reverted because it only paid off
+  # for binary-to-binary switches and added overhead for the more common
+  # case of browsing freely across layer types).
   testServer(
     mod_4afeatures_server,
     args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
@@ -76,8 +80,6 @@ test_that("selecting a Feature layer (base+overlay path) does not error", {
 })
 
 test_that("switching between two Feature layers does not error", {
-  # Regression guard for the base_layer_added flag: switching between two
-  # binary layers must not error (base layer should be reused, not re-added).
   testServer(
     mod_4afeatures_server,
     args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
@@ -99,9 +101,6 @@ test_that("selecting Feature Density (__density__) does not error", {
 })
 
 test_that("switching from a binary layer to Feature Density and back does not error", {
-  # Regression guard: Feature Density uses clearGlLayers() (wipes all groups,
-  # including "base"), so base_layer_added must be reset to FALSE afterwards
-  # and the base layer must be re-added on the next binary-layer selection.
   testServer(
     mod_4afeatures_server,
     args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),

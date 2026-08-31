@@ -166,7 +166,15 @@ mod_5coverage_server <- function(id, cfg) {
           fillColor   = fill_hex,
           fillOpacity = 0.7,
           color       = fill_hex,
-          group       = "uploaded_polygons"
+          group       = "uploaded_polygons",
+          # digits truncates coordinate precision in the serialised GeoJSON
+          # payload. leafgl has no incremental-update API — every call
+          # re-serialises the full geometry — so reducing precision is the
+          # main lever available to cut websocket payload size on hosted
+          # infrastructure (e.g. Posit Connect Cloud). 5 decimal degrees
+          # (~1.1 m at the equator) is well below planning-unit scale.
+          # See mod_4afeatures.R for full rationale.
+          digits      = 5
         )
     })
 
