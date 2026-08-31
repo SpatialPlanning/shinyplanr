@@ -1137,7 +1137,16 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
               fillColor   = fill_rgb,
               fillOpacity = 0.7,
               stroke      = TRUE,
-              group       = "solution_polygons"
+              group       = "solution_polygons",
+              # digits truncates coordinate precision in the serialised GeoJSON
+              # payload sent to the browser on every render. leafgl has no
+              # incremental-update API (addGlPolygons() always re-serialises the
+              # full geometry), so reducing per-coordinate precision is the main
+              # lever available to cut websocket payload size, which matters far
+              # more on hosted infrastructure (e.g. Posit Connect Cloud) than on
+              # localhost. 5 decimal degrees (~1.1 m at the equator) is well
+              # below planning-unit scale. See mod_4afeatures.R for full rationale.
+              digits      = 5
             ) %>%
             leaflet::addLegend(
               position = "bottomleft",

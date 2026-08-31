@@ -158,7 +158,6 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
       dplyr::select(dplyr::all_of(feature_vars)) %>%
       rowSums(na.rm = TRUE)
 
-
     # --- Helper: build WebGL fill colour matrix from a hex colour vector -----
     # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with values
     # in [0, 1] (r, g, b per row) for per-polygon colours.
@@ -167,25 +166,48 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
       t(col2rgb(hex_vec)) / 255
     }
 
-    # Constant fill colours for the binary base/overlay layer split (Feature,
-    # LockIn, LockOut). Precomputed once — reused on every dropdown change.
-    binary_base_rgb    <- as.numeric(hex_to_rgb_matrix("#d3d3d3")) # grey  = absent / base
-    binary_overlay_rgb <- as.numeric(hex_to_rgb_matrix("#2a9d8f")) # teal  = present / overlay
-
-    # Tracks whether the static "base" WebGL group (all planning units, grey)
-    # has already been added to the map for the current WebGL canvas context.
-    # Reset to FALSE whenever the canvas context is recreated (tab hidden then
-    # shown again — see the tab-visibility observer) or whenever a full
-    # clearGlLayers() wipes every group (non-binary layer types below), since
-    # both destroy the "base" group and it must be redrawn before the next
-    # binary-layer render.
-    base_layer_added <- FALSE
-
+    # Coordinate precision for WebGL polygon payloads.
+    #
+    # WHY THIS EXISTS: leafgl::addGlPolygons() has no incremental-update API —
+    # every single call re-serialises the ENTIRE geometry to GeoJSON (via
+    # yyjsonr) and pushes it fresh over the Shiny websocket, regardless of
+    # whether only the fill colour changed. yyjsonr's default is full double
+    # precision (opts_write_json(digits = -1), i.e. no rounding), so every
+    # coordinate is written with ~15 significant digits even though 5 decimal
+    # degrees (~1.1 m at the equator) is already far finer than a single
+    # planning unit. For a 30k-planning-unit hex grid this roughly halves the
+    # serialised payload size with zero visible effect on rendering, which
+    # directly reduces both server-side serialisation time and (more
+    # importantly on hosted infrastructure like Posit Connect Cloud)
+    # websocket transfer time.
+    #
+    # `digits` is forwarded by leafgl to yyjsonr::opts_write_json() via its
+    # `...` argument (confirmed by reading leafgl::addGlPolygons() source —
+    # it matches names(...) against names(formals(yyjsonr::opts_write_json))).
+    geojson_digits <- 5
 
     # --- Helper: build and render a layer via leafletProxy ------------------
     # Encapsulates the leafgl rendering + legend + sidebar update so the same
     # logic is not duplicated between the initial render observer and the
     # dropdown change observer.
+    #
+    # NOTE ON RENDERING STRATEGY: an earlier version of this function tried to
+    # cache a static grey "base" WebGL layer across dropdown changes and only
+    # rebuild a small "overlay" subset for binary (Feature/LockIn/LockOut)
+    # layers, to avoid resending the full planning-unit grid on every click.
+    # In practice this only paid off when the user picked binary layers
+    # back-to-back; switching to ANY other layer type (Cost, EcosystemServices,
+    # Climate, Bioregion, Density) called leafgl::clearGlLayers(), which wipes
+    # every WebGL group including "base" — forcing a full resend on the very
+    # next binary-layer click anyway. Since users browse freely across layer
+    # categories rather than staying within one type, that split added two
+    # WebGL groups, extra state (a mutable base_layer_added flag), and more
+    # leafletProxy round trips for a cache that was invalidated on most real
+    # click sequences — a net loss, and plausibly why performance got worse
+    # after that change rather than better. We deliberately use ONE uniform
+    # code path for all layer types instead: simpler, and the coordinate
+    # precision reduction above addresses the actual payload-size bottleneck
+    # regardless of caching strategy.
     render_layer <- function(sel) {
       if (is.null(sel) || sel == "") return()
 
@@ -210,7 +232,8 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
             fillColor   = fill_rgb,
             fillOpacity = 0.7,
             stroke      = TRUE,
-            group       = "layer"
+            group       = "layer",
+            digits      = geojson_digits
           ) %>%
           leaflet::addLegend(
             position = "bottomleft",
@@ -219,11 +242,6 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
             title    = "Feature Density",
             opacity  = 0.7
           )
-
-        # clearGlLayers() wipes every group, including "base" — force it to
-        # be redrawn the next time a binary (Feature/LockIn/LockOut) layer
-        # is selected.
-        base_layer_added <<- FALSE
 
         output$infoPanelContent <- shiny::renderUI({
           shiny::tagList(
@@ -289,7 +307,8 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
               fillColor   = fill_rgb,
               fillOpacity = 0.7,
               stroke      = TRUE,
-              group       = "layer"
+              group       = "layer",
+              digits      = geojson_digits
             ) %>%
             leaflet::addLegend(
               position = "bottomleft",
@@ -299,11 +318,6 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
               labFormat = leaflet::labelFormat(prefix = "Zone "),
               opacity  = 0.7
             )
-
-          # clearGlLayers() wipes every group, including "base" — force it to
-          # be redrawn the next time a binary (Feature/LockIn/LockOut) layer
-          # is selected.
-          base_layer_added <<- FALSE
 
           output$infoPanelContent <- shiny::renderUI({
             just  <- bioregion_meta$justification
@@ -354,108 +368,42 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         #   Binary (grey/teal):  Feature, LockIn, LockOut — 0/1
         is_continuous <- layer_type %in% c("Cost", "EcosystemServices", "Climate")
 
-        # Binary layers (Feature, LockIn, LockOut) are rendered via a static
-        # grey "base" WebGL group (all planning units, added once per tab
-        # visit) plus a small teal "overlay" group containing only the
-        # value == 1 rows. This avoids re-serialising and rebuilding the full
-        # 30k+ row WebGL buffer on every dropdown change — only the (often
-        # much smaller) overlay subset is rebuilt, and only that group is
-        # cleared via leafgl::clearGlGroup() rather than wiping every group
-        # with leafgl::clearGlLayers().
-        # Continuous layers (Cost, EcosystemServices, Climate) and the
-        # Bioregion/Density branches above are left on the original
-        # full-render path since every row has a distinct, non-zero value and
-        # subsetting would not reduce the render cost.
-        if (!is_continuous) {
-          pal <- leaflet::colorFactor(
-            palette  = c("#d3d3d3", "#2a9d8f"),
-            domain   = c(0, 1),
-            na.color = "#808080"
-          )
-
-          proxy <- leaflet::leafletProxy("leaflet_map", session = session) %>%
-            leaflet::clearControls()
-
-          # Add the static base layer (all planning units, grey) once per
-          # WebGL canvas lifetime — skipped on subsequent binary-layer
-          # dropdown changes.
-          if (!base_layer_added) {
-            n_all <- nrow(raw_wgs84)
-            base_fill <- matrix(binary_base_rgb, nrow = n_all, ncol = 3, byrow = TRUE)
-
-            proxy <- proxy %>%
-              leafgl::addGlPolygons(
-                data        = raw_wgs84,
-                fillColor   = base_fill,
-                fillOpacity = 0.7,
-                stroke      = TRUE,
-                group       = "base"
-              )
-
-            base_layer_added <<- TRUE
-          }
-
-          # Replace only the "overlay" group — leaves "base" untouched.
-          overlay_rows <- raw_wgs84[which(col_data == 1), , drop = FALSE]
-          n_overlay <- nrow(overlay_rows)
-
-          proxy <- proxy %>% leafgl::clearGlGroup(group = "overlay")
-
-          if (n_overlay > 0) {
-            overlay_fill <- matrix(binary_overlay_rgb, nrow = n_overlay, ncol = 3, byrow = TRUE)
-
-            proxy <- proxy %>%
-              leafgl::addGlPolygons(
-                data        = overlay_rows,
-                fillColor   = overlay_fill,
-                fillOpacity = 0.7,
-                stroke      = TRUE,
-                group       = "overlay"
-              )
-          }
-
-          proxy %>%
-            leaflet::addLegend(
-              position = "bottomleft",
-              pal      = pal,
-              values   = c(0, 1),
-              title    = layer_info$nameCommon[1],
-              opacity  = 0.7
-            )
-
-        } else {
+        if (is_continuous) {
           pal <- leaflet::colorNumeric(
             palette  = "YlGnBu",
             domain   = col_data,
             na.color = "#808080"
           )
-
-          hex_colours <- pal(col_data)
-          fill_rgb    <- hex_to_rgb_matrix(hex_colours)
-
-          leaflet::leafletProxy("leaflet_map", session = session) %>%
-            leafgl::clearGlLayers() %>%
-            leaflet::clearControls() %>%
-            leafgl::addGlPolygons(
-              data        = raw_wgs84,
-              fillColor   = fill_rgb,
-              fillOpacity = 0.7,
-              stroke      = TRUE,
-              group       = "layer"
-            ) %>%
-            leaflet::addLegend(
-              position = "bottomleft",
-              pal      = pal,
-              values   = col_data,
-              title    = layer_info$nameCommon[1],
-              opacity  = 0.7
-            )
-
-          # clearGlLayers() wipes every group, including "base" — force it to
-          # be redrawn the next time a binary (Feature/LockIn/LockOut) layer
-          # is selected.
-          base_layer_added <<- FALSE
+        } else {
+          # Binary presence/absence: grey = absent, teal = present
+          pal <- leaflet::colorFactor(
+            palette  = c("#d3d3d3", "#2a9d8f"),
+            domain   = c(0, 1),
+            na.color = "#808080"
+          )
         }
+
+        hex_colours <- pal(col_data)
+        fill_rgb    <- hex_to_rgb_matrix(hex_colours)
+
+        leaflet::leafletProxy("leaflet_map", session = session) %>%
+          leafgl::clearGlLayers() %>%
+          leaflet::clearControls() %>%
+          leafgl::addGlPolygons(
+            data        = raw_wgs84,
+            fillColor   = fill_rgb,
+            fillOpacity = 0.7,
+            stroke      = TRUE,
+            group       = "layer",
+            digits      = geojson_digits
+          ) %>%
+          leaflet::addLegend(
+            position = "bottomleft",
+            pal      = pal,
+            values   = col_data,
+            title    = layer_info$nameCommon[1],
+            opacity  = 0.7
+          )
 
         # Sidebar: Dict metadata for the selected layer
         output$infoPanelContent <- shiny::renderUI({
@@ -561,10 +509,6 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
       tab_visible(),
       {
         if (!isTRUE(tab_visible())) return()
-        # The WebGL canvas context (including the "base" group) is destroyed
-        # whenever the tab panel is hidden, so the base layer must always be
-        # redrawn on tab visit regardless of the cached flag's prior state.
-        base_layer_added <<- FALSE
         shinyjs::delay(0, render_layer(shiny::isolate(input$selectedLayer)))
       },
       ignoreInit = FALSE,
