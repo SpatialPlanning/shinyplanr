@@ -581,7 +581,109 @@ test_that("validate_dict() passes check 4 when same nameVariable appears in Lock
 })
 
 # ---------------------------------------------------------------------------
-# Check 5: At least one active Feature row
+# Check 5: categoryID consistent (and non-blank) within type+category
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() fails when categoryID differs within the same type+category", {
+  d <- make_valid_dict()
+  # Add a second Habitat/Feature row with a different categoryID than the
+  # existing Habitat rows ("Hab") -- same category, inconsistent categoryID.
+  bad_row <- data.frame(
+    nameCommon = "Feature C", nameVariable = "feature_C",
+    category = "Habitat", categoryID = "Hab2", type = "Feature",
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = TRUE, includeJust = TRUE,
+    units = "", justification = "Stub C.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, bad_row)
+  expect_error(
+    suppressMessages(validate_dict(d2, strict = TRUE)),
+    regexp = "categoryID_consistent_within_category"
+  )
+})
+
+test_that("validate_dict() fails when categoryID is blank on some rows of a category", {
+  d <- make_valid_dict()
+  bad_row <- data.frame(
+    nameCommon = "Feature C", nameVariable = "feature_C",
+    category = "Habitat", categoryID = "", type = "Feature", # blank categoryID
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = TRUE, includeJust = TRUE,
+    units = "", justification = "Stub C.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, bad_row)
+  expect_error(
+    suppressMessages(validate_dict(d2, strict = TRUE)),
+    regexp = "categoryID_consistent_within_category"
+  )
+})
+
+test_that("validate_dict() passes when the same category label is reused across different types with different categoryIDs", {
+  # "Protected Areas" legitimately appears as both LockIn and LockOut for
+  # MPAs; the check is scoped to (type, category), so this must NOT fail
+  # even though a naive category-only check would flag it as inconsistent
+  # if the LockIn/LockOut categoryIDs ever differed.
+  d <- make_valid_dict()
+  lockout_row <- data.frame(
+    nameCommon = "MPAs", nameVariable = "mpas",
+    category = "Protected Areas", categoryID = "MPAs", # same categoryID here, but different type
+    type = "LockOut",
+    targetInitial = NA_real_, targetMin = NA_real_, targetMax = NA_real_,
+    includeApp = TRUE, includeJust = TRUE,
+    units = "", justification = "Existing MPAs.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, lockout_row)
+  expect_message(
+    validate_dict(d2, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Check 6: categoryOrder (optional) numeric and consistent within type+category
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() passes when categoryOrder column is absent entirely", {
+  d <- make_valid_dict()
+  expect_false("categoryOrder" %in% names(d))
+  expect_message(
+    validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+test_that("validate_dict() passes when categoryOrder is numeric and consistent per category", {
+  d <- make_valid_dict()
+  d$categoryOrder <- c(1, 1, 2, 3) # one value per category, consistent
+  expect_message(
+    validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+test_that("validate_dict() fails when categoryOrder differs within the same type+category", {
+  d <- make_valid_dict()
+  d$categoryOrder <- c(1, 2, 3, 4) # Habitat rows (1,2) disagree
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "categoryOrder_valid"
+  )
+})
+
+test_that("validate_dict() fails when categoryOrder contains a non-numeric value", {
+  d <- make_valid_dict()
+  d$categoryOrder <- c("first", "first", "2", "3") # non-numeric
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "categoryOrder_valid"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Check 7: At least one active Feature row
 # ---------------------------------------------------------------------------
 
 test_that("validate_dict() fails check 5 when no Feature rows have includeApp == TRUE", {

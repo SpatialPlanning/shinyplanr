@@ -41,10 +41,18 @@ mod_4afeatures_ui <- function(id, cfg) {
 
   combined_dict <- dplyr::bind_rows(other_entries, bioregion_entries)
 
+  # Group order follows dplyr::group_by()'s handling of the grouping key:
+  # when Dict$category is an ordered factor (see forder_dict_categories()),
+  # groups are emitted in factor level order (the app's canonical category
+  # order), not alphabetically.
+  #
+  # .x$category[1] returns a length-1 factor (not character) when category
+  # is a factor; as.character() is required because purrr::map_chr() does
+  # not coerce factors and would otherwise error.
   grouped_choices <- combined_dict %>%
     dplyr::group_by(.data$category) %>%
     dplyr::group_split() %>%
-    purrr::set_names(purrr::map_chr(., ~ .x$category[1])) %>%
+    purrr::set_names(purrr::map_chr(., ~ as.character(.x$category[1]))) %>%
     purrr::map(~ (.x %>%
       dplyr::select("nameCommon", "nameVariable") %>%
       tibble::deframe()
@@ -321,8 +329,13 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
 
           output$infoPanelContent <- shiny::renderUI({
             just  <- bioregion_meta$justification
+            # as.character() guards against bioregion_meta$category being a
+            # length-1 factor (Dict$category is an ordered factor after
+            # forder_dict_categories()) -- htmltools tags generally coerce
+            # factors fine, but this keeps the value an explicit character
+            # for clarity and to avoid any edge-case surprises in rendering.
             shiny::tagList(
-              shiny::h4(bioregion_meta$category, style = "margin-top: 0;"),
+              shiny::h4(as.character(bioregion_meta$category), style = "margin-top: 0;"),
               shiny::p(
                 shiny::strong("Type: "), "Bioregion",
                 style = "margin-bottom: 4px;"
@@ -414,7 +427,7 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
           content <- shiny::tagList(
             shiny::h4(layer_info$nameCommon[1], style = "margin-top: 0;"),
             shiny::p(
-              shiny::strong("Category: "), layer_info$category[1],
+              shiny::strong("Category: "), as.character(layer_info$category[1]),
               style = "margin-bottom: 4px;"
             ),
             shiny::p(

@@ -515,7 +515,8 @@ The `setup/Dict_Feature.csv` file defines all data layers and their properties. 
 | `nameCommon` | Human-readable name shown in the app | `"Coral Reef"` |
 | `nameVariable` | Variable name in the spatial data (must match exactly) | `"coral_reef"` |
 | `category` | Grouping category for display | `"Habitat"` |
-| `categoryID` | Category identifier for sorting | `"Hab"` |
+| `categoryID` | Category identifier for sorting (fallback ordering; see below) | `"Hab"` |
+| `categoryOrder` | *(optional)* Numeric value controlling display order of categories within a `type` | `1` |
 | `type` | Feature type (see below) | `"Feature"` |
 | `targetInitial` | Default target value (%) | `30` |
 | `targetMin` | Minimum target (slider min) | `0` |
@@ -540,18 +541,42 @@ The `setup/Dict_Feature.csv` file defines all data layers and their properties. 
 ### Example Dictionary Entries
 
 ```csv
-nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
-Coral Reef,coral_reef,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
-Seagrass,seagrass,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
-Equal Area Cost,cost_area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost based on their area."
-Distance to Coast,cost_distance,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,km,"Cost based on distance from the coast."
-Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
-Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Coral Reef,coral_reef,Habitat,Habitat,1,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
+Seagrass,seagrass,Habitat,Habitat,1,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
+Equal Area Cost,cost_area,Cost,Cost,1,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost based on their area."
+Distance to Coast,cost_distance,Cost,Cost,1,Cost,NA,NA,NA,TRUE,TRUE,km,"Cost based on distance from the coast."
+Marine Protected Areas,mpas,Protected Areas,MPAs,1,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
+Shipping Lanes,shipping,Exclusions,Exclusions,1,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."
 ```
 
 ::: callout-important
 ## Variable names must match exactly
 The `nameVariable` column must **exactly match** column names in your spatial data (`dat_sf`). The generated template uses lowercase snake_case (e.g. `cost_area`, `cost_distance`). Check for spelling differences, case sensitivity, and spaces vs underscores.
+:::
+
+### Controlling category order {#sec-category-order}
+
+Categories are shown in the sidebar sliders, checkbox groups, and dropdown menus in a consistent order determined by two things:
+
+1. **Master category order** (fixed, not configurable): `Feature` → `Bioregion` → `Cost` → `Climate` → `LockIn` → `LockOut` → `EcosystemServices`. This mirrors the section order in the Scenario tab sidebar (Targets → Bioregions → Cost → Climate → Constraints).
+2. **Order within a `type`**: controlled by the optional `categoryOrder` column if present, otherwise falls back to alphabetical order of `categoryID`.
+
+To set a custom category order, add a `categoryOrder` column to `Dict_Feature.csv` with a numeric value for each row. **Every row belonging to the same `category` must repeat the same `categoryOrder` value** -- it is a category-level attribute, exactly like `categoryID`. For example, to show "Depth Zones" before "Geomorphology" regardless of their `categoryID` alphabetical order:
+
+```csv
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,...
+Continental Shelf,continental_shelf,Depth Zones,Depth,1,Feature,...
+Upper Bathyal,upper_bathyal,Depth Zones,Depth,1,Feature,...
+Abyssal Hills,abyssal_hills,Geomorphology,GeoMorph,2,Feature,...
+```
+
+If `categoryOrder` is omitted entirely, category order falls back to the pre-existing default (alphabetical by `categoryID` within each `type`) -- fully backward compatible with dictionaries created before this column was introduced.
+
+::: callout-note
+`validate_dict()` checks that `categoryID` (and `categoryOrder`, if present) is consistent -- i.e. identical on every row -- within each `type` + `category` combination, since an inconsistent value is silently ignored elsewhere in the app rather than raising an error.
+
+Feature order **within** a category is controlled simply by row order in `Dict_Feature.csv` -- reorder the rows to change it.
 :::
 
 ### Common Issues

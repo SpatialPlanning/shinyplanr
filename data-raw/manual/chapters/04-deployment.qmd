@@ -212,7 +212,8 @@ Edit `setup/Dict_Feature.csv` to define which features appear in the app, their 
 | `nameCommon` | Display name shown in the app |
 | `nameVariable` | Exact column name in `dat_sf` |
 | `category` | Feature group (used for grouping sliders) |
-| `categoryID` | Short category code |
+| `categoryID` | Short category code (fallback ordering) |
+| `categoryOrder` | *(optional)* Numeric display order within a `type` -- see @sec-category-order |
 | `type` | `"Feature"`, `"Cost"`, or `"LockIn"` |
 | `targetInitial` | Default conservation target (%) |
 | `targetMin` / `targetMax` | Slider range |

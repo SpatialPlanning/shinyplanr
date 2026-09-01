@@ -28,6 +28,19 @@
 #'     \code{nameVariable} may legitimately appear in both \code{"LockIn"} and
 #'     \code{"LockOut"} rows (e.g. MPAs) -- uniqueness is only enforced within
 #'     each type.
+#'   \item \code{categoryID} is constant within each \code{category}.
+#'     \code{categoryID} is a category-level attribute (like \code{category}
+#'     itself) and must not vary row-to-row within the same category. A typo
+#'     on a single row is otherwise silently ignored wherever
+#'     \code{dplyr::first(categoryID)} is used per category (e.g. master
+#'     category sliders, bioregion display columns), producing confusing
+#'     mismatches rather than an error.
+#'   \item If present, \code{categoryOrder} is numeric and constant within
+#'     each \code{category}, for the same reason as \code{categoryID} above.
+#'     \code{categoryOrder} is an optional column that controls the display
+#'     order of categories in the sidebar and dropdowns (see
+#'     \code{vignette("ac-setting-up")}); when absent, categories fall back to
+#'     alphabetical-by-\code{categoryID} ordering.
 #'   \item At least one row has \code{includeApp == TRUE} and
 #'     \code{type == "Feature"}.  An app with no active features cannot run a
 #'     prioritisation.
@@ -214,7 +227,100 @@ validate_dict <- function(Dict, strict = TRUE) {
   )
 
   # ---------------------------------------------------------------------------
-  # Check 5: At least one active Feature row exists
+  # Check 5: categoryID is constant (and non-blank) within each type+category
+  # ---------------------------------------------------------------------------
+  # categoryID is a category-level attribute -- like `category` itself -- and
+  # must be identical across every row that shares the same (type, category).
+  # Scoped to (type, category) rather than category alone because the same
+  # category label is occasionally reused across types (e.g. "Protected
+  # Areas" as both LockIn and LockOut for MPAs), and those are legitimately
+  # independent category identities.
+  #
+  # Blank values ("" after CSV parsing, or NA) count as a violation here: a
+  # category with an unset categoryID on some rows previously worked only
+  # by accident (dplyr::first() picking whichever row happened to have it
+  # set), silently breaking master-category sliders and bioregion display
+  # columns for any other row order.
+  categoryID_check <- Dict |>
+    dplyr::mutate(.categoryID_norm = dplyr::na_if(trimws(as.character(.data$categoryID)), "")) |>
+    dplyr::group_by(.data$type, .data$category) |>
+    dplyr::summarise(
+      n_distinct_ids = dplyr::n_distinct(.data$.categoryID_norm, na.rm = FALSE),
+      any_blank      = anyNA(.data$.categoryID_norm),
+      .groups = "drop"
+    ) |>
+    dplyr::filter(.data$n_distinct_ids > 1 | .data$any_blank)
+
+  .check(
+    "categoryID_consistent_within_category",
+    nrow(categoryID_check) == 0,
+    if (nrow(categoryID_check) > 0) {
+      paste0(
+        nrow(categoryID_check), " (type, category) group(s) in Dict_Feature.csv ",
+        "have an inconsistent or blank 'categoryID':\n",
+        paste(
+          sprintf("  type='%s', category='%s'", categoryID_check$type, categoryID_check$category),
+          collapse = "\n"
+        ), "\n",
+        "  categoryID is a category-level attribute: every row sharing the ",
+        "same type and category must have the SAME non-blank categoryID ",
+        "value.\n",
+        "  A missing or inconsistent categoryID is silently ignored by ",
+        "dplyr::first() wherever a per-category value is needed (e.g. master ",
+        "category sliders, bioregion display columns), producing confusing ",
+        "results that depend on row order rather than raising an error.\n",
+        "  Fix: set the same categoryID on every row for each affected ",
+        "category in Dict_Feature.csv."
+      )
+    }
+  )
+
+  # ---------------------------------------------------------------------------
+  # Check 6: categoryOrder (if present) is numeric and constant within
+  # each type+category
+  # ---------------------------------------------------------------------------
+  # categoryOrder is an optional column (see vignette("ac-setting-up")) that
+  # controls the display order of categories in the sidebar and dropdowns.
+  # When present it must follow the same category-level-attribute rule as
+  # categoryID: one consistent value per (type, category), and it must be
+  # coercible to numeric (arrange() on a non-numeric column would sort
+  # lexicographically, e.g. "10" before "2", which is almost never intended).
+  if ("categoryOrder" %in% names(Dict)) {
+    categoryOrder_check <- Dict |>
+      dplyr::mutate(
+        .categoryOrder_num = suppressWarnings(as.numeric(.data$categoryOrder))
+      ) |>
+      dplyr::group_by(.data$type, .data$category) |>
+      dplyr::summarise(
+        n_distinct_vals = dplyr::n_distinct(.data$.categoryOrder_num, na.rm = FALSE),
+        any_non_numeric = any(!is.na(.data$categoryOrder) & is.na(.data$.categoryOrder_num)),
+        .groups = "drop"
+      ) |>
+      dplyr::filter(.data$n_distinct_vals > 1 | .data$any_non_numeric)
+
+    .check(
+      "categoryOrder_valid",
+      nrow(categoryOrder_check) == 0,
+      if (nrow(categoryOrder_check) > 0) {
+        paste0(
+          nrow(categoryOrder_check), " (type, category) group(s) in ",
+          "Dict_Feature.csv have an invalid 'categoryOrder':\n",
+          paste(
+            sprintf("  type='%s', category='%s'", categoryOrder_check$type, categoryOrder_check$category),
+            collapse = "\n"
+          ), "\n",
+          "  categoryOrder must be numeric and identical across every row ",
+          "sharing the same type and category.\n",
+          "  Fix: ensure categoryOrder contains only numeric values, and set ",
+          "the same value on every row for each affected category in ",
+          "Dict_Feature.csv."
+        )
+      }
+    )
+  }
+
+  # ---------------------------------------------------------------------------
+  # Check 7: At least one active Feature row exists
   # ---------------------------------------------------------------------------
   # Only meaningful when includeApp is logical; skip if Check 2 failed.
   if (isTRUE(results[["includeApp_is_logical"]])) {

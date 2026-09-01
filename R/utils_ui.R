@@ -298,10 +298,19 @@ create_fancy_dropdown <- function(id, id_in, Dict, width = "100%") {
     bioregion_entries %>% dplyr::mutate(category = .data$nameCommon)
   )
 
+  # Group order follows dplyr::group_by()'s handling of the grouping key:
+  # when Dict$category is an ordered factor (see forder_dict_categories()),
+  # groups are emitted in factor level order (the app's canonical category
+  # order), not alphabetically. For plain character category columns this
+  # falls back to alphabetical grouping, matching the historical behaviour.
+  #
+  # .x$category[1] returns a length-1 factor (not character) when category
+  # is a factor; as.character() is required because purrr::map_chr() does
+  # not coerce factors and would otherwise error.
   featureList <- combined %>%
     dplyr::group_by(.data$category) %>%
     dplyr::group_split() %>%
-    purrr::set_names(purrr::map_chr(., ~ .x$category[1])) %>%
+    purrr::set_names(purrr::map_chr(., ~ as.character(.x$category[1]))) %>%
     purrr::map(~ (.x %>% dplyr::select("nameCommon", "nameVariable"))) %>%
     purrr::map(tibble::deframe)
 

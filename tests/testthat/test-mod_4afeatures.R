@@ -42,6 +42,75 @@ test_that("mod_4afeatures_ui() contains the leaflet output and layer selector", 
 })
 
 # ---------------------------------------------------------------------------
+# Regression: grouped layer dropdown respects forder_dict_categories() order
+# ---------------------------------------------------------------------------
+#
+# Categories are deliberately named so alphabetical-by-category-label order
+# ("Aardvark Zone" < "Zebra Zone") is the OPPOSITE of the intended order
+# (Zebra Zone first, via categoryOrder = 1). A passing test can only be
+# explained by the ordered factor produced by forder_dict_categories()
+# actually driving group_by()/group_split() order in mod_4afeatures_ui(),
+# not alphabetical fallback.
+test_that("mod_4afeatures_ui() layer dropdown optgroups respect forder_dict_categories() order", {
+  Dict <- data.frame(
+    nameCommon = c("Feature Z", "Feature A"),
+    nameVariable = c("feature_z", "feature_a"),
+    category = c("Zebra Zone", "Aardvark Zone"),
+    categoryID = c("Zebra", "Aardvark"),
+    categoryOrder = c(1, 2),
+    type = c("Feature", "Feature"),
+    targetInitial = c(30, 30),
+    targetMin = c(0, 0),
+    targetMax = c(85, 85),
+    includeApp = TRUE,
+    includeJust = TRUE,
+    justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+  Dict <- shinyplanr:::forder_dict_categories(Dict)
+
+  cfg2 <- cfg
+  cfg2$Dict <- Dict
+
+  ui <- mod_4afeatures_ui(id = "test", cfg = cfg2)
+  html <- as.character(ui)
+
+  optgroup_labels <- regmatches(
+    html,
+    gregexpr('(?<=<optgroup label=")[^"]+', html, perl = TRUE)
+  )[[1]]
+
+  expect_equal(optgroup_labels[1], "Zebra Zone")
+  expect_equal(optgroup_labels[2], "Aardvark Zone")
+})
+
+test_that("mod_4afeatures_ui() does not error when Dict$category is an ordered factor (map_chr/as.character fix)", {
+  # Regression test for the purrr::map_chr() + factor incompatibility fixed
+  # alongside forder_dict_categories(): map_chr() requires a character
+  # result and does not coerce factors.
+  Dict <- data.frame(
+    nameCommon = c("Feature Z", "Feature A"),
+    nameVariable = c("feature_z", "feature_a"),
+    category = c("Zebra Zone", "Aardvark Zone"),
+    categoryID = c("Zebra", "Aardvark"),
+    type = c("Feature", "Feature"),
+    targetInitial = c(30, 30),
+    targetMin = c(0, 0),
+    targetMax = c(85, 85),
+    includeApp = TRUE,
+    includeJust = TRUE,
+    justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+  Dict <- shinyplanr:::forder_dict_categories(Dict)
+
+  cfg2 <- cfg
+  cfg2$Dict <- Dict
+
+  expect_no_error(mod_4afeatures_ui(id = "test", cfg = cfg2))
+})
+
+# ---------------------------------------------------------------------------
 # Server tests
 # ---------------------------------------------------------------------------
 
