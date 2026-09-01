@@ -190,10 +190,31 @@ if (file.exists(custom_css_src)) {
 Dict_raw <- readr::read_csv(file.path(setup_dir, "Dict_Feature.csv"))
 shinyplanr::validate_dict(Dict_raw)
 
-# Step 2: Filter to active rows and sort for consistent UI ordering.
+# Step 2: Filter to active rows and order categories for consistent display.
+#
+# forder_dict_categories() establishes a single explicit ordering that is
+# then respected by every category-grouped widget in the app: the sidebar
+# sliders/checkboxes, the Cost/Climate/Layer-Information dropdowns, and the
+# feature-representation bar charts. It:
+#   1. Groups categories by their "master category" (Dict$type), in the
+#      fixed order Feature -> Bioregion -> Cost -> Climate -> LockIn ->
+#      LockOut -> EcosystemServices (any other type, e.g. Justification, is
+#      appended after these).
+#   2. Within each type, orders categories by the optional numeric
+#      `categoryOrder` column if present in Dict_Feature.csv; otherwise
+#      falls back to alphabetical `categoryID` (the pre-existing default).
+#   3. Converts Dict$category to an ORDERED FACTOR reflecting that sequence
+#      (not just a row re-arrangement), so that dplyr::arrange()/group_by()
+#      consumers downstream (dropdowns, bar charts) follow the same order as
+#      the sliders, which rely on row order instead.
+#
+# To change category order: add a `categoryOrder` column to Dict_Feature.csv
+# (numeric, same value on every row of a given category) -- see
+# vignette("ac-setting-up") for details. Feature order WITHIN a category is
+# still controlled by row order in Dict_Feature.csv.
 Dict <- Dict_raw %>%
   dplyr::filter(includeApp) %>%
-  dplyr::arrange(.data$type, .data$categoryID)
+  shinyplanr:::forder_dict_categories()
 
 vars <- Dict %>%
   dplyr::filter(!type %in% c("Justification")) %>%

@@ -403,7 +403,8 @@ The `setup/Dict_Feature.csv` file defines all data layers and their properties. 
 | `nameCommon` | Human-readable name shown in the app | `"Coral Reef"` |
 | `nameVariable` | Variable name in the spatial data (must match exactly) | `"coral_reef"` |
 | `category` | Grouping category for display | `"Habitat"` |
-| `categoryID` | Category identifier for sorting | `"Hab"` |
+| `categoryID` | Category identifier for sorting (fallback ordering; see below) | `"Hab"` |
+| `categoryOrder` | *(optional)* Numeric value controlling display order of categories within a `type` | `1` |
 | `type` | Feature type (see below) | `"Feature"` |
 | `targetInitial` | Default target value (%) | `30` |
 | `targetMin` | Minimum target (slider min) | `0` |
@@ -428,14 +429,25 @@ The `setup/Dict_Feature.csv` file defines all data layers and their properties. 
 ### Example Dictionary Entries
 
 ```csv
-nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
-Coral Reef,coral_reef,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
-Seagrass,seagrass,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
-Equal Area Cost,Cost_Area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost."
-Fishing Effort,fishing_cost,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,hours,"Higher values indicate more fishing activity."
-Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
-Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Coral Reef,coral_reef,Habitat,Habitat,1,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
+Seagrass,seagrass,Habitat,Habitat,1,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
+Equal Area Cost,Cost_Area,Cost,Cost,1,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost."
+Fishing Effort,fishing_cost,Cost,Cost,1,Cost,NA,NA,NA,TRUE,TRUE,hours,"Higher values indicate more fishing activity."
+Marine Protected Areas,mpas,Protected Areas,MPAs,1,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
+Shipping Lanes,shipping,Exclusions,Exclusions,1,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."
 ```
+
+### Controlling category order {#sec-category-order-manual}
+
+Categories are shown in the sidebar sliders, checkbox groups, and dropdown menus in a consistent order determined by two things:
+
+1. **Master category order** (fixed, not configurable): `Feature` → `Bioregion` → `Cost` → `Climate` → `LockIn` → `LockOut` → `EcosystemServices`.
+2. **Order within a `type`**: controlled by the optional `categoryOrder` column if present, otherwise falls back to alphabetical order of `categoryID`.
+
+Every row belonging to the same `category` must repeat the same `categoryOrder` value -- it is a category-level attribute, exactly like `categoryID`. If `categoryOrder` is omitted entirely, category order falls back to the pre-existing default (alphabetical by `categoryID` within each `type`).
+
+Feature order **within** a category is controlled simply by row order in `Dict_Feature.csv`.
 
 ### Common Issues
 

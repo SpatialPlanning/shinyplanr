@@ -1,13 +1,14 @@
 # tests/testthat/test-utils_data.R
 #
 # Tests for utils_data.R:
-#   fformat_feature_table()  — pure data wrangling, no Shiny/spatialplanr
-#   fget_category()          — pure Dict filter
-#   fCheckFeatureNo()        — pure column count
+#   fformat_feature_table()   — pure data wrangling, no Shiny/spatialplanr
+#   fget_category()           — pure Dict filter
+#   fCheckFeatureNo()         — pure column count
+#   forder_dict_categories()  — pure Dict re-ordering / factor-level assignment
 #
 # Design rationale
 # ----------------
-# All three functions are pure (data in → data out) with no Shiny reactivity
+# All these functions are pure (data in → data out) with no Shiny reactivity
 # or external solver dependency. They can be fully unit-tested with synthetic
 # data frames and sf objects.
 #
@@ -292,4 +293,213 @@ test_that("fCheckFeatureNo() works on a plain data frame (no geometry)", {
   result <- shinyplanr:::fCheckFeatureNo(df, Dict)
 
   expect_equal(result, 2L)
+})
+
+# ---------------------------------------------------------------------------
+# forder_dict_categories()
+# ---------------------------------------------------------------------------
+#
+# Builds a Dict spanning multiple `type`s and multiple categories per type,
+# deliberately in an order that does NOT match either the master type order
+# or alphabetical categoryID, so that a passing test can only be explained by
+# forder_dict_categories() actively re-ordering rather than a coincidental
+# pre-existing order.
+
+make_multi_type_dict <- function() {
+  data.frame(
+    nameCommon = c(
+      "Seamounts", "Corals",                # Feature: Seamt, Corals
+      "Zone 1",                              # Bioregion: EnviroZone
+      "Equal Area Cost",                     # Cost: Cost
+      "SST Trend",                           # Climate: Climate
+      "MPA (in)",                            # LockIn: MPAs
+      "Shipping (out)",                      # LockOut: Shipping
+      "Fish Biomass"                         # EcosystemServices: FishBio
+    ),
+    nameVariable = c(
+      "seamounts", "corals",
+      "zone_1",
+      "cost_area",
+      "sst_trend",
+      "mpas",
+      "shipping",
+      "fish_biomass"
+    ),
+    category = c(
+      "Seamounts", "Deep-sea Corals",
+      "Environmental Zones",
+      "Cost",
+      "Climate",
+      "Protected Areas",
+      "Shipping Exclusions",
+      "Ecosystem Services"
+    ),
+    categoryID = c(
+      "Seamt", "Corals",
+      "EnviroZone",
+      "Cost",
+      "Climate",
+      "MPAs",
+      "Shipping",
+      "FishBio"
+    ),
+    type = c(
+      "Feature", "Feature",
+      "Bioregion",
+      "Cost",
+      "Climate",
+      "LockIn",
+      "LockOut",
+      "EcosystemServices"
+    ),
+    targetInitial = c(30, 30, 30, NA, NA, NA, NA, NA),
+    targetMin = c(0, 0, 0, NA, NA, NA, NA, NA),
+    targetMax = c(85, 85, 85, NA, NA, NA, NA, NA),
+    includeApp = TRUE,
+    includeJust = TRUE,
+    justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("forder_dict_categories() converts category to an ordered factor", {
+  Dict <- make_multi_type_dict()
+  result <- shinyplanr:::forder_dict_categories(Dict)
+
+  expect_s3_class(result$category, "factor")
+  expect_true(is.ordered(result$category))
+})
+
+test_that("forder_dict_categories() orders categories by master type order (Feature < Bioregion < Cost < Climate < LockIn < LockOut < EcosystemServices)", {
+  Dict <- make_multi_type_dict()
+  result <- shinyplanr:::forder_dict_categories(Dict)
+
+  type_order_by_row <- result$type[order(as.integer(result$category))]
+  # Deduplicate consecutive types to get the sequence of first-appearance types
+  first_appearance_types <- unique(type_order_by_row)
+
+  expect_equal(
+    first_appearance_types,
+    c("Feature", "Bioregion", "Cost", "Climate", "LockIn", "LockOut", "EcosystemServices")
+  )
+})
+
+test_that("forder_dict_categories() re-arranges Dict rows to match the factor level order", {
+  Dict <- make_multi_type_dict()
+  result <- shinyplanr:::forder_dict_categories(Dict)
+
+  # Rows should now be grouped by type in master order: Feature rows first,
+  # then Bioregion, then Cost, etc.
+  expect_equal(
+    as.character(result$type),
+    c("Feature", "Feature", "Bioregion", "Cost", "Climate", "LockIn", "LockOut", "EcosystemServices")
+  )
+})
+
+test_that("forder_dict_categories() orders categories within a type alphabetically by categoryID when categoryOrder is absent", {
+  Dict <- make_multi_type_dict()
+  # Add a second Feature category whose categoryID alphabetically precedes
+  # "Corals" and "Seamt" -- "Abyssal" should come first among Feature rows.
+  extra <- data.frame(
+    nameCommon = "Abyssal Plains", nameVariable = "abyssal_plains",
+    category = "Geomorphology", categoryID = "Abyssal", type = "Feature",
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = TRUE, includeJust = TRUE, justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+  Dict2 <- rbind(Dict, extra)
+
+  result <- shinyplanr:::forder_dict_categories(Dict2)
+  feature_rows <- result[result$type == "Feature", ]
+
+  # Alphabetical categoryID order: Abyssal < Corals < Seamt
+  expect_equal(
+    as.character(unique(feature_rows$category)),
+    c("Geomorphology", "Deep-sea Corals", "Seamounts")
+  )
+})
+
+test_that("forder_dict_categories() uses categoryOrder (numeric) over categoryID when present", {
+  Dict <- make_multi_type_dict()
+  # Assign categoryOrder so that "Seamounts" (categoryID "Seamt", alphabetically
+  # last of the two Feature categories) is forced to come FIRST.
+  Dict$categoryOrder <- NA_real_
+  Dict$categoryOrder[Dict$category == "Seamounts"] <- 1
+  Dict$categoryOrder[Dict$category == "Deep-sea Corals"] <- 2
+
+  result <- shinyplanr:::forder_dict_categories(Dict)
+  feature_rows <- result[result$type == "Feature", ]
+
+  expect_equal(
+    as.character(unique(feature_rows$category)),
+    c("Seamounts", "Deep-sea Corals")
+  )
+})
+
+test_that("forder_dict_categories() sorts categoryOrder numerically, not lexicographically", {
+  Dict <- make_multi_type_dict()
+  extra <- data.frame(
+    nameCommon = c("A", "B", "C"),
+    nameVariable = c("feat_a", "feat_b", "feat_c"),
+    category = c("Cat A", "Cat B", "Cat C"),
+    categoryID = c("A", "B", "C"),
+    type = "Feature",
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = TRUE, includeJust = TRUE, justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+  Dict2 <- rbind(Dict, extra)
+  # Numeric order should be 2, 10 (not lexicographic "10" < "2")
+  Dict2$categoryOrder <- NA_real_
+  Dict2$categoryOrder[Dict2$category == "Seamounts"] <- 10
+  Dict2$categoryOrder[Dict2$category == "Deep-sea Corals"] <- 2
+  Dict2$categoryOrder[Dict2$category == "Cat A"] <- 1
+
+  result <- shinyplanr:::forder_dict_categories(Dict2)
+  feature_cats <- as.character(unique(result$category[result$type == "Feature"]))
+
+  # "Cat A" (1) < "Deep-sea Corals" (2) < "Seamounts" (10); "Cat B"/"Cat C"
+  # have no categoryOrder so fall back to categoryID and sort after.
+  expect_equal(feature_cats[1:3], c("Cat A", "Deep-sea Corals", "Seamounts"))
+})
+
+test_that("forder_dict_categories() appends types outside the master order (e.g. Justification) without dropping rows", {
+  Dict <- make_multi_type_dict()
+  extra <- data.frame(
+    nameCommon = "Note", nameVariable = "note_var",
+    category = "Notes", categoryID = "Notes", type = "Justification",
+    targetInitial = NA, targetMin = NA, targetMax = NA,
+    includeApp = TRUE, includeJust = TRUE, justification = "Just a note.",
+    stringsAsFactors = FALSE
+  )
+  Dict2 <- rbind(Dict, extra)
+
+  result <- shinyplanr:::forder_dict_categories(Dict2)
+
+  # No rows dropped
+  expect_equal(nrow(result), nrow(Dict2))
+  # "Justification" is not NA in the category factor levels
+  expect_false(anyNA(result$category))
+  # Justification appears after all known master-order types
+  last_type <- as.character(tail(result$type, 1))
+  expect_equal(last_type, "Justification")
+})
+
+test_that("forder_dict_categories() preserves original row order as a tiebreak within a category", {
+  Dict <- make_multi_type_dict()
+  # Add a second row to an existing category ("Seamounts") to confirm
+  # feature-level (within-category) order is untouched.
+  extra <- data.frame(
+    nameCommon = "Knolls", nameVariable = "knolls",
+    category = "Seamounts", categoryID = "Seamt", type = "Feature",
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = TRUE, includeJust = TRUE, justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+  Dict2 <- rbind(Dict, extra)
+
+  result <- shinyplanr:::forder_dict_categories(Dict2)
+  seamount_rows <- result[result$category == "Seamounts", ]
+
+  expect_equal(seamount_rows$nameVariable, c("seamounts", "knolls"))
 })

@@ -393,3 +393,112 @@ test_that("fcustom_sliderCategory() byCategory = TRUE slider ids use master_ pre
   }, character(1))
   expect_true(all(grepl("master_sli_", label_ids)))
 })
+
+# ---------------------------------------------------------------------------
+# Integration: forder_dict_categories() ordering propagates through
+# fcreate_vars() / fcustom_sliderCategory() (row-order consumers) AND
+# create_fancy_dropdown() (factor-level / group_by() consumer).
+#
+# This is a regression test for the category-ordering fix: it deliberately
+# builds a Dict where alphabetical-by-category-label order would DISAGREE
+# with the intended order, so a passing test can only be explained by
+# forder_dict_categories() actually being respected end-to-end.
+# ---------------------------------------------------------------------------
+
+make_ordering_dict <- function() {
+  # Categories deliberately named so alphabetical-by-category-label order
+  # ("Aardvark Zone" < "Zebra Zone") is the OPPOSITE of the intended order
+  # (Zebra Zone first, via categoryOrder = 1).
+  data.frame(
+    nameCommon = c("Feature Z", "Feature A", "Cost X"),
+    nameVariable = c("feature_z", "feature_a", "cost_x"),
+    category = c("Zebra Zone", "Aardvark Zone", "Cost"),
+    categoryID = c("Zebra", "Aardvark", "Cost"),
+    categoryOrder = c(1, 2, NA),
+    type = c("Feature", "Feature", "Cost"),
+    targetInitial = c(30, 30, NA),
+    targetMin = c(0, 0, NA),
+    targetMax = c(85, 85, NA),
+    includeApp = TRUE,
+    includeJust = TRUE,
+    justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("fcustom_sliderCategory() (byCategory = FALSE) respects forder_dict_categories() order, not alphabetical", {
+  Dict <- shinyplanr:::forder_dict_categories(make_ordering_dict())
+
+  vars <- shinyplanr:::fcreate_vars(
+    id          = "mod1",
+    Dict        = Dict,
+    name_check  = "sli_",
+    categoryOut = TRUE,
+    dataType    = "Feature"
+  )
+
+  result <- shinyplanr:::fcustom_sliderCategory(vars, labelNum = 1, byCategory = FALSE)
+
+  # 2 categories x 2 entries (header, sliders) = 4. Header at index 1 should
+  # be "Zebra Zone" (categoryOrder = 1), NOT "Aardvark Zone" (alphabetical).
+  header_1 <- result[[1]]
+  expect_true(grepl("Zebra Zone", as.character(header_1)))
+})
+
+test_that("fcreate_vars(byCategory = TRUE) master sliders respect forder_dict_categories() order", {
+  Dict <- shinyplanr:::forder_dict_categories(make_ordering_dict())
+
+  result <- shinyplanr:::fcreate_vars(
+    id          = "mod1",
+    Dict        = Dict,
+    name_check  = "sli_",
+    categoryOut = TRUE,
+    byCategory  = TRUE,
+    dataType    = "Feature"
+  )
+
+  # dplyr::summarise(.by = "category") on an ordered factor preserves the
+  # factor's level order in its output, so row 1 should be Zebra Zone.
+  expect_equal(as.character(result$nameCommon[1]), "Zebra Zone")
+  expect_equal(as.character(result$nameCommon[2]), "Aardvark Zone")
+})
+
+test_that("create_fancy_dropdown() respects forder_dict_categories() order via group_by() on the ordered factor", {
+  Dict <- shinyplanr:::forder_dict_categories(make_ordering_dict())
+
+  # create_fancy_dropdown() is defined in R/utils_ui.R and used by mod_2scenario /
+  # mod_3compare / mod_4features. It filters internally, so pass the full Dict.
+  widget <- shinyplanr:::create_fancy_dropdown(
+    id    = "mod1",
+    id_in = "testdrop",
+    Dict  = Dict
+  )
+
+  # shiny::selectInput() renders its <optgroup> choices as a single raw HTML
+  # string (an "html"-classed child), not as separate tag objects, so the
+  # group order must be recovered by parsing that HTML text rather than by
+  # walking the tag tree. The order of <optgroup label="..."> matches
+  # dplyr::group_split() emission order, which follows factor level order
+  # for an ordered-factor grouping key (not alphabetical).
+  html_str <- as.character(widget)
+  optgroup_labels <- regmatches(
+    html_str,
+    gregexpr('(?<=<optgroup label=")[^"]+', html_str, perl = TRUE)
+  )[[1]]
+
+  expect_equal(optgroup_labels[1], "Zebra Zone")
+  expect_equal(optgroup_labels[2], "Aardvark Zone")
+  expect_equal(optgroup_labels[3], "Cost")
+})
+
+test_that("create_fancy_dropdown() does not error when Dict$category is an ordered factor (map_chr/as.character fix)", {
+  # Regression test for the purrr::map_chr() + factor incompatibility:
+  # map_chr() requires a character result and does NOT coerce factors, so
+  # without the as.character() fix in create_fancy_dropdown() this would
+  # error with "Result must be a single string, not a factor object".
+  Dict <- shinyplanr:::forder_dict_categories(make_ordering_dict())
+
+  expect_no_error(
+    shinyplanr:::create_fancy_dropdown(id = "mod1", id_in = "testdrop", Dict = Dict)
+  )
+})

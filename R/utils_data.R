@@ -4,6 +4,135 @@
 # without a Shiny session.
 
 
+# Canonical "master category" (type) display order -------------------------
+#
+# This fixes the order in which the different Dict$type groups appear
+# wherever categories from multiple types are combined into a single grouped
+# widget (e.g. the Feature Maps / Layer Information dropdowns). It mirrors
+# the hardcoded section order already used in mod_2scenario_ui() /
+# mod_3compare_ui(): Targets (Feature, then Bioregion) -> Cost -> Climate ->
+# Constraints (LockIn, LockOut). EcosystemServices has its own tab and no
+# sidebar widget, so it is placed last. "Justification" rows have no
+# category-grouped widget at all and are intentionally excluded -- any such
+# rows are appended after all known types by fbuild_category_levels() so
+# they are never dropped.
+#
+# noRd because this is an internal implementation detail, not part of the
+# public API. Changing the order here changes ordering everywhere at once.
+.shinyplanr_type_order <- c(
+  "Feature", "Bioregion", "Cost", "Climate", "LockIn", "LockOut", "EcosystemServices"
+)
+
+
+#' Order Dict rows and factor-order Dict$category for consistent display
+#'
+#' Establishes a single, explicit ordering for feature/cost/lock-in/etc.
+#' categories that is then respected by every category-grouped UI element in
+#' the app: the Scenario/Compare sidebar sliders and checkboxes (which rely
+#' on row order via \code{unique()} / \code{dplyr::summarise(.by=)}), the
+#' Cost/Climate/Layer-Information dropdowns and \code{spatialplanr}'s bar
+#' charts (which rely on factor level order via \code{dplyr::arrange()} /
+#' \code{dplyr::group_by()}).
+#'
+#' The ordering is computed as:
+#' \enumerate{
+#'   \item Master category (\code{type}) order, as fixed by
+#'     \code{.shinyplanr_type_order} (Feature, Bioregion, Cost, Climate,
+#'     LockIn, LockOut, EcosystemServices). Any \code{type} not in this list
+#'     (e.g. \code{"Justification"}) is appended after all known types, in
+#'     first-appearance order, so such rows are never dropped or coerced to
+#'     \code{NA}.
+#'   \item Within each \code{type}, by the optional numeric
+#'     \code{categoryOrder} column if present; otherwise by \code{categoryID}
+#'     (alphabetically) -- this preserves the pre-existing default behaviour
+#'     for Dict_Feature.csv files that predate \code{categoryOrder}.
+#'   \item Ties broken by original row order in \code{Dict} (a stable sort),
+#'     which is what continues to control feature order \emph{within} a
+#'     category.
+#' }
+#'
+#' \code{Dict$category} is then converted to an \strong{ordered factor} with
+#' levels in that exact sequence, and \code{Dict} itself is re-arranged to
+#' match. Setting the factor levels (not just re-arranging rows) is what
+#' propagates the ordering to \code{dplyr::arrange()} / \code{group_by()}
+#' consumers downstream, which sort by factor level code rather than by
+#' Dict's row order.
+#'
+#' @param Dict Data frame. The feature dictionary, filtered to
+#'   \code{includeApp == TRUE} rows (must contain columns \code{type},
+#'   \code{category}, \code{categoryID}, and optionally \code{categoryOrder}).
+#'
+#' @return \code{Dict}, re-arranged, with \code{category} converted to an
+#'   ordered factor reflecting the same sequence.
+#'
+#' @noRd
+#'
+forder_dict_categories <- function(Dict) {
+  has_category_order <- "categoryOrder" %in% names(Dict)
+
+  # Build a one-row-per-category lookup carrying the sort keys, preserving
+  # first-appearance order as the ultimate tiebreak (via row_number()).
+  #
+  # .cat_order_key is numeric (NA sorts last within its type, via the
+  # explicit is.na() tiebreak below) so that e.g. categoryOrder values 2 and
+  # 10 sort numerically (2 < 10), not as strings ("10" < "2").
+  # .cat_id_key is the character categoryID, used as the fallback ordering
+  # when categoryOrder is absent/NA -- this preserves the pre-existing
+  # alphabetical-by-categoryID default behaviour.
+  cat_lookup <- Dict %>%
+    dplyr::mutate(.orig_row = dplyr::row_number()) %>%
+    dplyr::group_by(.data$type, .data$category) %>%
+    dplyr::summarise(
+      .type_first_row = min(.data$.orig_row),
+      .cat_order_key = if (has_category_order) {
+        suppressWarnings(as.numeric(dplyr::first(.data$categoryOrder)))
+      } else {
+        NA_real_
+      },
+      .cat_id_key = as.character(dplyr::first(.data$categoryID)),
+      .groups = "drop"
+    )
+
+  # Master type rank: known types get their position in .shinyplanr_type_order;
+  # anything else (e.g. "Justification") is ranked after all known types, in
+  # order of first appearance, so it is appended rather than dropped/NA'd.
+  known_types_present <- intersect(.shinyplanr_type_order, unique(cat_lookup$type))
+  other_types_present <- setdiff(unique(cat_lookup$type), .shinyplanr_type_order)
+  # Order "other" types by their first appearance in Dict for determinism.
+  other_types_present <- cat_lookup %>%
+    dplyr::filter(.data$type %in% other_types_present) %>%
+    dplyr::arrange(.data$.type_first_row) %>%
+    dplyr::pull("type") %>%
+    unique()
+
+  type_rank <- stats::setNames(
+    seq_along(c(known_types_present, other_types_present)),
+    c(known_types_present, other_types_present)
+  )
+
+  cat_lookup <- cat_lookup %>%
+    dplyr::mutate(.type_rank = type_rank[.data$type]) %>%
+    # Categories with a categoryOrder value sort numerically first (ascending);
+    # categories without one (is.na(.cat_order_key) == TRUE sorts after
+    # FALSE) fall back to alphabetical categoryID, then original row order.
+    dplyr::arrange(
+      .data$.type_rank,
+      is.na(.data$.cat_order_key),
+      .data$.cat_order_key,
+      .data$.cat_id_key,
+      .data$.type_first_row
+    )
+
+  category_levels <- unique(cat_lookup$category)
+
+  Dict %>%
+    dplyr::mutate(
+      category = factor(.data$category, levels = category_levels, ordered = TRUE)
+    ) %>%
+    dplyr::arrange(.data$category)
+}
+
+
 #' Format a feature representation data frame for display
 #'
 #' Takes the output of \code{spatialplanr::splnr_get_featureRep()} and returns
