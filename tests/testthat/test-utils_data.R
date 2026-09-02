@@ -71,7 +71,7 @@ test_that("fformat_feature_table() returns a data frame with expected columns (n
   expect_true("Category" %in% names(result))
   expect_true("Feature" %in% names(result))
   expect_true("Target (%)" %in% names(result))
-  expect_true("Protection (%)" %in% names(result))
+  expect_true("Selected (%)" %in% names(result))
   expect_true("Incidental" %in% names(result))
 })
 
@@ -79,7 +79,7 @@ test_that("fformat_feature_table() appends suffix to column names", {
   result <- shinyplanr:::fformat_feature_table(make_tpd(), make_dict(), suffix = " 1")
 
   expect_true("Target 1 (%)" %in% names(result))
-  expect_true("Protection 1 (%)" %in% names(result))
+  expect_true("Selected 1 (%)" %in% names(result))
   expect_true("Incidental 1" %in% names(result))
 })
 
@@ -96,7 +96,7 @@ test_that("fformat_feature_table() converts relative_held to integer percentage"
   result <- shinyplanr:::fformat_feature_table(make_tpd(), make_dict())
 
   # relative_held = 2/3 ≈ 0.667 → 67%
-  prot_col <- result[["Protection (%)"]]
+  prot_col <- result[["Selected (%)"]]
   expect_type(prot_col, "integer")
   expect_equal(prot_col[result$Feature == "Feature A"], 67L)
 })

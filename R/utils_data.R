@@ -149,7 +149,7 @@ forder_dict_categories <- function(Dict) {
 #'   in the comparison module (e.g. \code{" 1"}, \code{" 2"}).  Default
 #'   \code{""} (no suffix).
 #'
-#' @return A tibble with columns Category, Feature, Target (%), Protection (%),
+#' @return A tibble with columns Category, Feature, Target (%), Selected (%),
 #'   and Incidental (column names include the suffix when provided), with
 #'   feature variable names replaced by their common names from Dict.
 #'
@@ -186,7 +186,7 @@ fformat_feature_table <- function(tpd, Dict, suffix = "") {
       Category = "category",
       Feature = "feature",
       !!paste0("Target", suffix, " (%)") := "target",
-      !!paste0("Protection", suffix, " (%)") := "value",
+      !!paste0("Selected", suffix, " (%)") := "value",
       !!paste0("Incidental", suffix) := "incidental"
     ) %>%
     dplyr::arrange(.data$Category, .data$Feature) %>%
