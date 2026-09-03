@@ -494,7 +494,7 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
     # visit without re-creating the base map (which would wipe the GL layer).
     output$leaflet_map <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
-        leaflet::addProviderTiles(options$leaflet_provider %||% "OpenStreetMap.CAT") %>%
+        leaflet::addProviderTiles(options$leaflet_provider) %>%
         leaflet::fitBounds(
           lng1 = as.numeric(bbox["xmin"]),
           lat1 = as.numeric(bbox["ymin"]),

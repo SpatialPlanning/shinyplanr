@@ -129,7 +129,7 @@ shinyplanr_options <- list(
   # (Check Coverage). Any provider name from leaflet::providers is valid,
   # e.g. "OpenStreetMap.CAT", "CartoDB.Positron", "OpenTopoMap".
   # See https://leaflet-extras.github.io/leaflet-providers/preview/ for options.
-  leaflet_provider = "OpenStreetMap.CAT"
+  leaflet_provider = "Esri.WorldGrayCanvas"
 )
 
 # =============================================================================
