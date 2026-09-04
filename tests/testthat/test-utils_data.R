@@ -1,10 +1,11 @@
 # tests/testthat/test-utils_data.R
 #
 # Tests for utils_data.R:
-#   fformat_feature_table()   — pure data wrangling, no Shiny/spatialplanr
-#   fget_category()           — pure Dict filter
-#   fCheckFeatureNo()         — pure column count
-#   forder_dict_categories()  — pure Dict re-ordering / factor-level assignment
+#   fformat_feature_table()      — pure data wrangling, no Shiny/spatialplanr
+#   fget_category()              — pure Dict filter
+#   fCheckFeatureNo()            — pure column count
+#   forder_dict_categories()     — pure Dict re-ordering / factor-level assignment
+#   fcalculate_feature_density() — pure rowSums over Feature + Bioregion columns
 #
 # Design rationale
 # ----------------
@@ -502,4 +503,142 @@ test_that("forder_dict_categories() preserves original row order as a tiebreak w
   seamount_rows <- result[result$category == "Seamounts", ]
 
   expect_equal(seamount_rows$nameVariable, c("seamounts", "knolls"))
+})
+
+# ---------------------------------------------------------------------------
+# fcalculate_feature_density()
+# ---------------------------------------------------------------------------
+#
+# Regression tests for the Layer Information "Feature Density" calculation
+# (mod_4afeatures.R). Density is intended as a general "where do we have
+# data" signal, so it must include Bioregion columns (raw per-zone binary
+# columns), not just Feature columns -- see fcalculate_feature_density()'s
+# roxygen docs in utils_data.R for the full rationale.
+
+make_density_sf <- function() {
+  sf::st_sf(
+    feature_A     = c(0.8, 0.2, 0.5, 0.9, 0.1),
+    feature_B     = c(0.3, 0.7, 0.4, 0.1, 0.6),
+    enviro_zone_1 = c(1, 1, 0, 1, 0),
+    enviro_zone_2 = c(0, 0, 0, 0, 0),
+    enviro_zone_3 = c(0, 0, 0, 0, 0), # PUs 3 and 5: no EnviroZone coverage
+    depth_zone_1  = c(1, 0, 0, 0, 0),
+    depth_zone_2  = c(0, 0, 0, 0, 0), # PUs 2,3,4,5: no DepthZone coverage
+    geometry      = sf::st_sfc(
+      lapply(1:5, function(i) sf::st_point(c(i, i))),
+      crs = 4326
+    )
+  )
+}
+
+make_density_dict <- function() {
+  data.frame(
+    nameCommon = c(
+      "Feature A", "Feature B",
+      "EnviroZone 1", "EnviroZone 2", "EnviroZone 3",
+      "DepthZone 1", "DepthZone 2"
+    ),
+    nameVariable = c(
+      "feature_A", "feature_B",
+      "enviro_zone_1", "enviro_zone_2", "enviro_zone_3",
+      "depth_zone_1", "depth_zone_2"
+    ),
+    category = c(
+      "Habitat", "Habitat",
+      "Biogeog", "Biogeog", "Biogeog",
+      "Depth", "Depth"
+    ),
+    categoryID = c(
+      "Hab", "Hab",
+      "EnviroZone", "EnviroZone", "EnviroZone",
+      "DepthZone", "DepthZone"
+    ),
+    type = c(
+      "Feature", "Feature",
+      "Bioregion", "Bioregion", "Bioregion",
+      "Bioregion", "Bioregion"
+    ),
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = TRUE, includeJust = TRUE, units = "",
+    justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("fcalculate_feature_density() sums Feature columns only when Dict has no Bioregion rows", {
+  raw_sf <- make_density_sf() %>% dplyr::select("feature_A", "feature_B")
+  Dict <- make_density_dict() %>% dplyr::filter(.data$type == "Feature")
+
+  result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict)
+
+  expect_equal(result, c(1.1, 0.9, 0.9, 1.0, 0.7))
+})
+
+test_that("fcalculate_feature_density() includes Bioregion columns alongside Feature columns", {
+  raw_sf <- make_density_sf()
+  Dict <- make_density_dict()
+
+  result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict)
+
+  # PU1: 0.8+0.3 (features) + 1 (EnviroZone) + 1 (DepthZone) = 3.1
+  # PU2: 0.2+0.7 (features) + 1 (EnviroZone) + 0 (DepthZone) = 1.9
+  # PU3: 0.5+0.4 (features) + 0 (EnviroZone) + 0 (DepthZone) = 0.9  <- no bioregion coverage
+  # PU4: 0.9+0.1 (features) + 1 (EnviroZone) + 0 (DepthZone) = 2.0
+  # PU5: 0.1+0.6 (features) + 0 (EnviroZone) + 0 (DepthZone) = 0.7  <- no bioregion coverage
+  expect_equal(result, c(3.1, 1.9, 0.9, 2.0, 0.7))
+})
+
+test_that("fcalculate_feature_density() correctly accounts for multiple independent bioregion schemes", {
+  # PU1 is covered by BOTH EnviroZone and DepthZone -> contributes +1 for
+  # each scheme (+2 total), not a flat +1 regardless of scheme count.
+  raw_sf <- make_density_sf()
+  Dict <- make_density_dict()
+
+  result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict)
+  bioregion_only <- result - (sf::st_drop_geometry(raw_sf)$feature_A + sf::st_drop_geometry(raw_sf)$feature_B)
+
+  expect_equal(bioregion_only, c(2, 1, 0, 1, 0))
+})
+
+test_that("fcalculate_feature_density() excludes the derived bioregion display column", {
+  # fbuild_bioregion_display() adds a combined integer zone-index column
+  # (named after categoryID, e.g. "EnviroZone") that is NOT part of Dict.
+  # It must never be summed alongside the raw binary zone columns.
+  raw_sf <- make_density_sf()
+  Dict <- make_density_dict()
+  raw_sf <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
+
+  expect_true("EnviroZone" %in% names(raw_sf)) # display column was added
+  expect_false("EnviroZone" %in% Dict$nameVariable) # but never in Dict
+
+  result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict)
+
+  # Unchanged from the previous test — the display column must not be summed.
+  expect_equal(result, c(3.1, 1.9, 0.9, 2.0, 0.7))
+})
+
+test_that("fcalculate_feature_density() treats NA values as 0 (na.rm = TRUE)", {
+  raw_sf <- make_density_sf()
+  Dict <- make_density_dict()
+  raw_sf$feature_A[2] <- NA
+
+  result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict)
+
+  # PU2: NA + 0.7 (features) + 1 (EnviroZone) + 0 (DepthZone) = 1.7
+  expect_equal(result[2], 1.7)
+})
+
+test_that("fcalculate_feature_density() ignores Dict entries absent from raw_sf (zero-column filtering guard)", {
+  raw_sf <- make_density_sf() %>% dplyr::select(-"depth_zone_1", -"depth_zone_2")
+  Dict <- make_density_dict() # still references depth_zone_1 / depth_zone_2
+
+  expect_no_error(result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict))
+
+  # DepthZone columns absent from raw_sf entirely -> contribute nothing.
+  # PU1: 0.8+0.3 (features) + 1 (EnviroZone) = 2.1
+  # PU2: 0.2+0.7 (features) + 1 (EnviroZone) = 1.9
+  # PU3: 0.5+0.4 (features) + 0 (EnviroZone) = 0.9
+  # PU4: 0.9+0.1 (features) + 1 (EnviroZone) = 2.0
+  # PU5: 0.1+0.6 (features) + 0 (EnviroZone) = 0.7
+  expect_equal(result, c(2.1, 1.9, 0.9, 2.0, 0.7))
 })

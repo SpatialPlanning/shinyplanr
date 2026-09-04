@@ -151,20 +151,14 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
     # Pre-compute the bounding box for fitBounds — done once, not per-render.
     bbox <- sf::st_bbox(raw_wgs84)
 
-    # Identify Feature-type columns for the density calculation.
-    # Intersect with names(raw_wgs84) to guard against Dict entries that were
-    # removed during zero-column filtering in 3_setup_app.R.
-    feature_vars <- Dict %>%
-      dplyr::filter(.data$type == "Feature") %>%
-      dplyr::pull("nameVariable") %>%
-      intersect(names(raw_wgs84))
-
-    # Pre-compute density values (rowSums of all Feature columns).
+    # Pre-compute density values (rowSums of all Feature + Bioregion columns).
+    # See fcalculate_feature_density() in utils_data.R for full rationale on
+    # why Bioregion columns are included alongside Feature columns (this
+    # layer's purpose is to show "where do we have data", and a Bioregion
+    # scheme's raw binary zone columns are a presence/absence signal exactly
+    # like a Feature column).
     # Plain numeric vector — cheap to compute once and reuse.
-    density_vals <- raw_wgs84 %>%
-      sf::st_drop_geometry() %>%
-      dplyr::select(dplyr::all_of(feature_vars)) %>%
-      rowSums(na.rm = TRUE)
+    density_vals <- fcalculate_feature_density(raw_wgs84, Dict)
 
     # --- Helper: build WebGL fill colour matrix from a hex colour vector -----
     # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with values
