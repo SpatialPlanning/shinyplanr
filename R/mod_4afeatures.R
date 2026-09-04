@@ -151,20 +151,14 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
     # Pre-compute the bounding box for fitBounds — done once, not per-render.
     bbox <- sf::st_bbox(raw_wgs84)
 
-    # Identify Feature-type columns for the density calculation.
-    # Intersect with names(raw_wgs84) to guard against Dict entries that were
-    # removed during zero-column filtering in 3_setup_app.R.
-    feature_vars <- Dict %>%
-      dplyr::filter(.data$type == "Feature") %>%
-      dplyr::pull("nameVariable") %>%
-      intersect(names(raw_wgs84))
-
-    # Pre-compute density values (rowSums of all Feature columns).
+    # Pre-compute density values (rowSums of all Feature + Bioregion columns).
+    # See fcalculate_feature_density() in utils_data.R for full rationale on
+    # why Bioregion columns are included alongside Feature columns (this
+    # layer's purpose is to show "where do we have data", and a Bioregion
+    # scheme's raw binary zone columns are a presence/absence signal exactly
+    # like a Feature column).
     # Plain numeric vector — cheap to compute once and reuse.
-    density_vals <- raw_wgs84 %>%
-      sf::st_drop_geometry() %>%
-      dplyr::select(dplyr::all_of(feature_vars)) %>%
-      rowSums(na.rm = TRUE)
+    density_vals <- fcalculate_feature_density(raw_wgs84, Dict)
 
     # --- Helper: build WebGL fill colour matrix from a hex colour vector -----
     # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with values
@@ -381,6 +375,11 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         #   Binary (grey/teal):  Feature, LockIn, LockOut — 0/1
         is_continuous <- layer_type %in% c("Cost", "EcosystemServices", "Climate")
 
+        # Binary fill colours (grey = absent, teal = present), defined once so
+        # the addGlPolygons fill and the addLegend swatches can never drift
+        # out of sync with each other.
+        binary_colours <- c("#d3d3d3", "#2a9d8f")
+
         if (is_continuous) {
           pal <- leaflet::colorNumeric(
             palette  = "YlGnBu",
@@ -388,9 +387,8 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
             na.color = "#808080"
           )
         } else {
-          # Binary presence/absence: grey = absent, teal = present
           pal <- leaflet::colorFactor(
-            palette  = c("#d3d3d3", "#2a9d8f"),
+            palette  = binary_colours,
             domain   = c(0, 1),
             na.color = "#808080"
           )
@@ -399,7 +397,7 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         hex_colours <- pal(col_data)
         fill_rgb    <- hex_to_rgb_matrix(hex_colours)
 
-        leaflet::leafletProxy("leaflet_map", session = session) %>%
+        map_proxy <- leaflet::leafletProxy("leaflet_map", session = session) %>%
           leafgl::clearGlLayers() %>%
           leaflet::clearControls() %>%
           leafgl::addGlPolygons(
@@ -409,14 +407,35 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
             stroke      = TRUE,
             group       = "layer",
             digits      = geojson_digits
-          ) %>%
-          leaflet::addLegend(
-            position = "bottomleft",
-            pal      = pal,
-            values   = col_data,
-            title    = layer_info$nameCommon[1],
-            opacity  = 0.7
           )
+
+        if (is_continuous) {
+          # Continuous quantities (Cost, EcosystemServices, Climate): a
+          # colorNumeric legend showing the raw value range is correct here.
+          map_proxy %>%
+            leaflet::addLegend(
+              position = "bottomleft",
+              pal      = pal,
+              values   = col_data,
+              title    = layer_info$nameCommon[1],
+              opacity  = 0.7
+            )
+        } else {
+          # Binary presence/absence (Feature, LockIn, LockOut): pal/values
+          # would ask leaflet to auto-label the legend from the 0/1 domain,
+          # literally printing "0" and "1". Passing colors/labels directly
+          # avoids relying on that undocumented behaviour and mirrors the
+          # explicit colors=/labels= legend used in mod_2scenario.R's
+          # Explore tab for the same kind of categorical legend.
+          map_proxy %>%
+            leaflet::addLegend(
+              position = "bottomleft",
+              colors   = binary_colours,
+              labels   = c("Absent", "Present"),
+              title    = layer_info$nameCommon[1],
+              opacity  = 0.7
+            )
+        }
 
         # Sidebar: Dict metadata for the selected layer
         output$infoPanelContent <- shiny::renderUI({

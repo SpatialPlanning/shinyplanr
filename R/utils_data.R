@@ -405,6 +405,69 @@ fbuild_bioregion_display <- function(raw_sf, Dict) {
 }
 
 
+# Feature density (Layer Information tab) ----------------------------------
+
+#' Calculate per-planning-unit feature density
+#'
+#' Computes the "Feature Density" value shown in the Layer Information tab
+#' (\code{mod_4afeatures}): the row-wise sum, across all planning units, of
+#' every \strong{Feature} and \strong{Bioregion} column in \code{raw_sf}.
+#'
+#' \strong{Why Bioregion columns are included, not just Feature columns:}
+#' each Bioregion \code{categoryID} (e.g. \code{"EnviroZone"}) is represented
+#' in \code{Dict}/\code{raw_sf} as a set of mutually-exclusive binary zone
+#' columns (see \code{fbuild_bioregion_display()}): a planning unit covered
+#' by that bioregionalisation has exactly one zone column equal to 1, while a
+#' planning unit with NO coverage at all (e.g. outside the classified/sampled
+#' extent) has every zone column equal to 0. Summing these raw binary columns
+#' alongside Feature columns therefore extends Feature Density into a general
+#' "where do we have data" signal -- the stated purpose of this layer -- with
+#' each independent bioregion scheme contributing at most +1 per planning
+#' unit, exactly like a single Feature layer. A planning unit covered by
+#' multiple independent bioregion schemes correctly accumulates +1 per
+#' covered scheme (e.g. +2 if covered by both an environmental-zone and a
+#' depth-zone bioregionalisation).
+#'
+#' This deliberately sums the RAW per-zone binary Dict columns, NOT the
+#' derived combined display column added to \code{raw_sf} by
+#' \code{fbuild_bioregion_display()} (e.g. an integer 1..N zone index used
+#' only by the Layer Information choropleth dropdown). That combined column
+#' is display-only and is never added to \code{Dict}, so pulling
+#' \code{"nameVariable"} from \code{Dict} can never accidentally include it --
+#' summing zone \emph{indices} would be numerically meaningless (zone 3 is
+#' not "3x the density" of zone 1).
+#'
+#' @param raw_sf An \code{sf} object (or plain data frame) containing Feature
+#'   and Bioregion columns as named in \code{Dict$nameVariable}.
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{type} and \code{nameVariable}).
+#'
+#' @return A numeric vector, one value per row of \code{raw_sf}, giving the
+#'   summed Feature + Bioregion values for that planning unit. \code{NA}
+#'   values in any contributing column are treated as 0 (\code{rowSums(...,
+#'   na.rm = TRUE)}).
+#'
+#' @noRd
+#'
+fcalculate_feature_density <- function(raw_sf, Dict) {
+  # Intersect with names(raw_sf) to guard against Dict entries that were
+  # removed during zero-column filtering in 3_setup_app.R.
+  density_vars <- Dict %>%
+    dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
+    dplyr::pull("nameVariable") %>%
+    intersect(names(raw_sf))
+
+  # unname() strips the row-name-derived names that rowSums() inherits from
+  # its input data frame -- callers get a plain numeric vector, consistent
+  # with other f*() helpers in this file (e.g. fCheckFeatureNo()).
+  raw_sf %>%
+    sf::st_drop_geometry() %>%
+    dplyr::select(dplyr::all_of(density_vars)) %>%
+    rowSums(na.rm = TRUE) %>%
+    unname()
+}
+
+
 # Check the number of features --------------------------------------------
 
 #' Check the number of features
