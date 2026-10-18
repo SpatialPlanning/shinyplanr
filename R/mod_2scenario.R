@@ -27,7 +27,7 @@ mod_2scenario_ui <- function(id, cfg) {
   # rlang::env_bind() splices the named list so each key becomes a local variable
   # (e.g. sidebar$slider_vars -> slider_vars, sidebar$check_lockIn -> check_lockIn, etc.).
 
-  slider_vars <- slider_varsBioR <- slider_varsCat <- check_lockIn <- check_lockOut <- NULL
+  slider_vars <- slider_varsBioR <- slider_varsCat <- slider_varsSilent <- check_lockIn <- check_lockOut <- NULL
 
   rlang::env_bind(environment(), !!!sidebar)
 
@@ -74,11 +74,20 @@ mod_2scenario_ui <- function(id, cfg) {
         fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
       )),
       shinyjs::hidden(div(
+        id = ns("switchSilentFeatures"),
+        # Hidden by default; shown by the server only when SilentFeature rows
+        # exist in Dict (see utils_server.R fapply_ui_switches()). Each slider
+        # represents one category; the individual layers are never shown in the UI
+        # but all receive the same target value when the prioritisation runs.
+        shiny::h3(paste0("1.", length(unique(slider_vars$category)) + 1, " Silent Features")),
+        fcustom_sliderCategory(slider_varsSilent, labelNum = 1, byCategory = TRUE),
+      )),
+      shinyjs::hidden(div(
         id = ns("switchBioregions"),
         # Hidden by default; shown by the server only when options$include_bioregion
-        # is TRUE (see utils_server.R fsetup_ui_switches()). No UI-level conditional
+        # is TRUE (see utils_server.R fapply_ui_switches()). No UI-level conditional
         # is needed because shinyjs::hidden() already prevents rendering until shown.
-        shiny::h3(paste0("1.", length(unique(slider_vars$category)) + 1, " Bioregions")),
+        shiny::h3(paste0("1.", length(unique(slider_vars$category)) + length(unique(slider_varsSilent$category)) + 1, " Bioregions")),
         fcustom_sliderCategory(slider_varsBioR, labelNum = 1, byCategory = TRUE),
       )),
       shiny::hr(style = "border-top: 1px solid #000000;"),
@@ -358,9 +367,9 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     # Unpack all pre-computed sidebar vars from config into the local environment.
     # rlang::env_bind() splices the named list so each key becomes a local variable
     # (e.g. sidebar$slider_vars -> slider_vars, sidebar$check_lockIn -> check_lockIn, etc.).
-    slider_vars <- slider_varsBioR <- slider_varsCat <- check_lockIn <- check_lockOut <- NULL
-
-
+    slider_vars <- slider_varsBioR <- slider_varsCat <- slider_varsSilent <- check_lockIn <- check_lockOut <- NULL
+  
+  
     rlang::env_bind(environment(), !!!sidebar)
 
 
@@ -390,6 +399,7 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       {
         fresetSlider(session, slider_vars) # individual feature sliders
         fresetSlider(session, slider_varsCat) # per-category master sliders
+        fresetSlider(session, slider_varsSilent) # silent feature category sliders
         shiny::updateSliderInput( # single master slider
           session = session,
           inputId = "masterSli",
@@ -419,7 +429,7 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     # Observe events from individual targets
     # Return targets and names for all features from sliders ---------------------------------------------------
     targetData <- shiny::reactive({
-      targets <- fget_targets_with_bioregions(input, name_check = "sli_", Dict = Dict)
+      targets <- fget_targets_expanded(input, name_check = "sli_", Dict = Dict)
       return(targets)
     })
 

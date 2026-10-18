@@ -404,9 +404,10 @@ shinyplanr_options <- list(
 
   ## Features
   include_report        = TRUE,
-  include_bioregion     = FALSE,
   include_climateChange = FALSE,
   include_lockedArea    = TRUE,
+  # Note: include_bioregion and include_silentFeature are set automatically
+  #   from Dict — see "Silent Features" and "Bioregions" below.
 
   ## Target grouping
   targetsBy = "individual",  # "individual", "category", or "master"
@@ -441,6 +442,20 @@ How targets are presented to users:
 - `"individual"`: Separate slider for each feature
 - `"category"`: One slider per category (e.g., all habitats together)
 - `"master"`: Single slider for all features
+
+::: callout-note
+`targetsBy` controls how **regular `Feature`** targets are presented. Silent Features (type `SilentFeature`) always use one slider per category regardless of this setting — see [Silent Features](#sec-silent-features) below.
+:::
+
+#### Feature Options
+
+| Option | Description |
+|--------|-------------|
+| `include_bioregion` | **Auto-detected** — do not set manually. `setup/3_setup_app.R` sets this to `TRUE` automatically if `Dict` contains any active `Bioregion` rows. See [Bioregions](#sec-bioregions) below. |
+| `include_silentFeature` | **Auto-detected** — do not set manually. `setup/3_setup_app.R` sets this to `TRUE` automatically if `Dict` contains any active `SilentFeature` rows. See [Silent Features](#sec-silent-features) below. |
+| `include_lockedArea` | Set `TRUE` to show the Constraints (lock-in/lock-out) section in the sidebar. |
+| `include_climateChange` | Set `TRUE` to enable the Climate tab and climate-smart planning options. |
+| `include_ess` | Set `TRUE` to enable the Ecosystem Services tab. Requires `EcosystemServices` rows in `Dict_Feature.csv`. |
 
 #### Objective Function
 
@@ -483,10 +498,11 @@ The config file approach means you never need to rebuild or reinstall the *shiny
 
 - All required columns are present
 - `includeApp` and `includeJust` are logical (`TRUE`/`FALSE`), not `1`/`0` or text
-- All `type` values are from the known set (`Feature`, `Cost`, `LockIn`, etc.)
+- All `type` values are from the known set (`Feature`, `SilentFeature`, `Cost`, `LockIn`, etc.)
 - `nameVariable` is unique within each type
-- At least one `Feature` row has `includeApp == TRUE`
-- Active `Feature` rows have target values in the 0–100 range
+- At least one `Feature` or `SilentFeature` row has `includeApp == TRUE`
+- Active `Feature` and `SilentFeature` rows have target values in the 0–100 range
+- Within each active `SilentFeature` category, all rows share identical `targetMin`, `targetMax`, and `targetInitial` — the UI shows only one slider per category, so differing values would be silently ignored
 
 **`validate_shinyplanr_data()`** checks the assembled config:
 
@@ -530,13 +546,81 @@ The `setup/Dict_Feature.csv` file defines all data layers and their properties. 
 
 | Type | Description |
 |------|-------------|
-| `Feature` | Conservation feature with targets |
+| `Feature` | Conservation feature; one slider per feature (or per category/master, depending on `targetsBy`) |
+| `SilentFeature` | Conservation feature whose target is set at the **category** level; all layers in the same category share one slider and are never shown individually in the UI |
 | `Cost` | Cost layer for optimisation |
-| `LockIn` | Constraint: must be selected |
-| `LockOut` | Constraint: cannot be selected |
-| `Climate` | Climate layer for climate-smart planning |
-| `Bioregion` | Bioregion stratification layer |
+| `LockIn` | Constraint: planning units must be selected |
+| `LockOut` | Constraint: planning units cannot be selected |
+| `Climate` | Climate metric used for climate-smart planning |
+| `Bioregion` | Biogeographic zone layer; each zone column gets its own target slider, enabling stratified representation across regions |
 | `EcosystemServices` | Ecosystem service layer |
+
+### Silent Features {#sec-silent-features}
+
+A **Silent Feature** is a conservation feature whose target is set at the *category* level rather than the individual layer level. All layers in the same `SilentFeature` category share a single slider in the app sidebar — the individual layers are never shown to the user — but every layer in that category receives the same target value when the prioritisation runs.
+
+**When to use it**: Silent Features are useful when you have many fine-grained layers that users should treat as a single group. For example, you might have 15 individual seagrass species columns in your spatial data, but you want users to set one target for "Seagrass Meadows" as a whole rather than 15 separate sliders.
+
+#### How it works in the app
+
+- One slider appears per `SilentFeature` category (keyed on `categoryID`).
+- When the user moves the slider, every individual layer in that category receives the same target percentage.
+- The individual layer names are never shown in the sidebar or target plots — only the category label is visible.
+- `include_silentFeature` in `shinyplanr_options` is **set automatically** by `setup/3_setup_app.R` based on whether `Dict` contains any active `SilentFeature` rows. You do not need to set it manually.
+
+#### Dict rules for Silent Features
+
+1. **`type`** must be `"SilentFeature"` for every layer in the group.
+2. **`categoryID`** must be identical across all rows in the same category — it is the key used to name the slider input.
+3. **`targetMin`, `targetMax`, `targetInitial`** must be identical across all rows in the same category. Because the UI shows only one slider per category, differing values would be silently ignored. `validate_dict()` catches this and stops with a clear error.
+4. **`nameVariable`** must match a column in `dat_sf`, exactly as for regular `Feature` rows.
+5. **`includeApp`** controls whether the category appears in the app. Set `FALSE` to exclude a category entirely.
+
+#### Example
+
+Three seagrass species columns in `dat_sf` (`sg_halophila`, `sg_cymodocea`, `sg_thalassia`), presented to users as a single "Seagrass Meadows" slider:
+
+```csv
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Halophila seagrass,sg_halophila,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."
+Cymodocea seagrass,sg_cymodocea,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."
+Thalassia seagrass,sg_thalassia,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."
+```
+
+::: callout-important
+All three rows share the same `targetInitial`, `targetMin`, `targetMax`, and `categoryID`. If these differ, `validate_dict()` will stop with an error before the config is saved.
+:::
+
+The sidebar will show one slider labelled **"Seagrass Meadows"** with an initial value of 30%. When the user runs the analysis, all three species columns receive a 30% target in the prioritisation.
+
+### Bioregions {#sec-bioregions}
+
+**Bioregions** are mutually-exclusive biogeographic zone columns. Each planning unit belongs to exactly one zone within a bioregionalisation (e.g. "Indo-Pacific Coral Triangle", "Temperate Australasia"). When bioregions are enabled, the app adds a **Bioregions** section to the sidebar with one slider per `categoryID`, allowing users to set a representation target for each zone independently — a form of stratified spatial planning.
+
+#### How it works in the app
+
+- Each zone column is one row in `Dict_Feature.csv` with `type = "Bioregion"`.
+- All rows belonging to the same bioregionalisation share the same `categoryID`.
+- When `Bioregion` rows are present in `Dict`, a "Bioregions" section appears in the sidebar with one slider per `categoryID`. The target applies to each zone independently.
+- The **Layer Information** tab shows a combined choropleth (one colour per zone) rather than N separate binary maps. This combined display column is built automatically by `setup/3_setup_app.R` — you do not need to create it.
+
+#### Dict rules for Bioregions
+
+1. **`type`** must be `"Bioregion"` for every zone column.
+2. **`categoryID`** must be identical across all rows in the same bioregionalisation.
+3. Zone columns in `dat_sf` must be **binary (0/1)**: a planning unit has value 1 in exactly one zone column and 0 in all others.
+4. `include_bioregion` is **auto-detected** — `setup/3_setup_app.R` sets it to `TRUE` automatically when `Bioregion` rows are present in `Dict`. No manual flag is needed.
+
+#### Example
+
+Three biogeographic zones for an Indo-Pacific region:
+
+```csv
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Coral Triangle,zone_coral_triangle,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Coral Triangle biogeographic zone."
+Temperate Australasia,zone_temp_aus,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Temperate Australasian biogeographic zone."
+Central Indo-Pacific,zone_central_ip,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Central Indo-Pacific biogeographic zone."
+```
 
 ### Example Dictionary Entries
 
@@ -559,7 +643,7 @@ The `nameVariable` column must **exactly match** column names in your spatial da
 
 Categories are shown in the sidebar sliders, checkbox groups, and dropdown menus in a consistent order determined by two things:
 
-1. **Master category order** (fixed, not configurable): `Feature` → `Bioregion` → `Cost` → `Climate` → `LockIn` → `LockOut` → `EcosystemServices`. This mirrors the section order in the Scenario tab sidebar (Targets → Bioregions → Cost → Climate → Constraints).
+1. **Master category order** (fixed, not configurable): `Feature` → `SilentFeature` → `Bioregion` → `Cost` → `Climate` → `LockIn` → `LockOut` → `EcosystemServices`. This mirrors the section order in the Scenario tab sidebar (Targets → Silent Features → Bioregions → Cost → Climate → Constraints).
 2. **Order within a `type`**: controlled by the optional `categoryOrder` column if present, otherwise falls back to alphabetical order of `categoryID`.
 
 To set a custom category order, add a `categoryOrder` column to `Dict_Feature.csv` with a numeric value for each row. **Every row belonging to the same `category` must repeat the same `categoryOrder` value** -- it is a category-level attribute, exactly like `categoryID`. For example, to show "Depth Zones" before "Geomorphology" regardless of their `categoryID` alphabetical order:

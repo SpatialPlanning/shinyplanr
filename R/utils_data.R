@@ -20,7 +20,7 @@
 # noRd because this is an internal implementation detail, not part of the
 # public API. Changing the order here changes ordering everywhere at once.
 .shinyplanr_type_order <- c(
-  "Feature", "Bioregion", "Cost", "Climate", "LockIn", "LockOut", "EcosystemServices"
+  "Feature", "SilentFeature", "Bioregion", "Cost", "Climate", "LockIn", "LockOut", "EcosystemServices"
 )
 
 
@@ -200,7 +200,7 @@ fformat_feature_table <- function(tpd, Dict, suffix = "") {
 #'
 fget_category <- function(Dict) {
   category <- Dict %>%
-    dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
+    dplyr::filter(.data$type %in% c("Feature", "SilentFeature", "Bioregion")) %>%
     dplyr::select("nameVariable", "category") %>%
     dplyr::rename(feature = "nameVariable")
 
@@ -247,56 +247,96 @@ fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature")
 }
 
 
-#' Calculate targets including bioregions
+#' Calculate targets for all feature types, expanding category-level inputs
 #'
-#' Consolidates the logic for getting both feature and bioregion targets.
-#' This replaces ~30 lines of duplicated code in both Scenario and Compare modules.
+#' Consolidates the logic for assembling per-feature targets from three sources:
+#' \enumerate{
+#'   \item Regular \code{Feature} rows — one slider per feature, read directly
+#'     via \code{name_check} prefix.
+#'   \item \code{SilentFeature} rows — one slider per \emph{category} (keyed by
+#'     \code{categoryID} with prefix \code{"silent_<name_check>"}), expanded to
+#'     one target row per individual feature in that category.  The individual
+#'     layers are never shown in the UI; only the category slider is visible.
+#'   \item \code{Bioregion} rows — one slider per \emph{categoryID} (keyed by
+#'     \code{categoryID} with prefix \code{"master_<name_check>"}), expanded to
+#'     one target row per zone column.
+#' }
 #'
-#' @param input Shiny input object
-#' @param name_check Prefix for slider inputs (e.g., \code{"sli_"} for Scenario, \code{"sli1_"} / \code{"sli2_"} for Compare)
-#' @param Dict The data dictionary
+#' This replaces the former \code{fget_targets_with_bioregions()} function and
+#' extends it to handle \code{SilentFeature} rows.
+#'
+#' @param input Shiny input object.
+#' @param name_check Character. Prefix for individual-feature slider input IDs
+#'   (e.g. \code{"sli_"} for Scenario, \code{"sli1_"} / \code{"sli2_"} for
+#'   Compare).  The SilentFeature prefix is derived as
+#'   \code{paste0("silent_", name_check)} and the Bioregion prefix as
+#'   \code{paste0("master_", name_check)}.
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{type}, \code{nameVariable}, and \code{categoryID}).
+#'
+#' @return A tibble with columns \code{feature} (character, matching column
+#'   names in \code{raw_sf}) and \code{target} (numeric, 0–1 scale), with one
+#'   row per prioritizr feature across all three source types.
 #'
 #' @noRd
 #'
-fget_targets_with_bioregions <- function(input, name_check = "sli_", Dict) {
-  # Get feature targets
+fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
+  # --- 1. Regular Feature targets (one slider per feature) -------------------
   targets <- fget_targets(input, Dict = Dict, name_check = name_check, dataType = "Feature")
 
-  # Get bioregion targets if they exist
-  ft_bioregion <- Dict %>%
-    dplyr::filter(.data$type %in% "Bioregion") %>%
+  # --- 2. SilentFeature targets (one slider per category -> one row per feature) ---
+  ft_silent <- Dict %>%
+    dplyr::filter(.data$type == "SilentFeature") %>%
     dplyr::select("feature" = "nameVariable", "categoryID")
 
-  # If no bioregions, return just features
-  if (nrow(ft_bioregion) == 0) {
-    return(targets)
+  if (nrow(ft_silent) > 0) {
+    # Slider IDs use the "silent_<name_check><categoryID>" pattern, e.g.
+    # "silent_sli_SeagrassMeadows" for name_check = "sli_".
+    silent_name_check <- paste0("silent_", name_check)
+
+    cats_silent <- ft_silent %>%
+      dplyr::pull("categoryID") %>%
+      unique()
+
+    targets_silent_raw <- tibble::tibble(
+      categoryID = cats_silent,
+      target     = purrr::map_dbl(cats_silent, \(x) input[[paste0(silent_name_check, x)]] %||% 0) / 100
+    )
+
+    targets_silent <- dplyr::left_join(ft_silent, targets_silent_raw, by = "categoryID") %>%
+      dplyr::select(-"categoryID")
+
+    targets <- dplyr::bind_rows(targets, targets_silent)
   }
 
-  # Build bioregion name_check (e.g., "sli_" -> "master_sli_", "sli2_" -> "master_sli2_")
-  bioregion_name_check <- paste0("master_", name_check)
+  # --- 3. Bioregion targets (one slider per categoryID -> one row per zone) --
+  ft_bioregion <- Dict %>%
+    dplyr::filter(.data$type == "Bioregion") %>%
+    dplyr::select("feature" = "nameVariable", "categoryID")
 
-  # Get unique categories
-  cats <- ft_bioregion %>%
-    dplyr::pull("categoryID") %>%
-    unique()
+  if (nrow(ft_bioregion) > 0) {
+    # Build bioregion name_check (e.g., "sli_" -> "master_sli_", "sli2_" -> "master_sli2_")
+    bioregion_name_check <- paste0("master_", name_check)
 
-  # Get bioregion targets from inputs.
-  # purrr::map_dbl() with %||% 0 is type-safe: returns a numeric vector of the
-  # same length as cats even when a master slider input is NULL (e.g. not yet
-  # initialised). The previous enframe()+unnest() approach silently dropped
-  # NULL rows, which could produce a shorter-than-expected targets data frame.
-  targets_bioregion_raw <- tibble::tibble(
-    categoryID = cats,
-    target     = purrr::map_dbl(cats, \(x) input[[paste0(bioregion_name_check, x)]] %||% 0) / 100
-  )
+    cats <- ft_bioregion %>%
+      dplyr::pull("categoryID") %>%
+      unique()
 
-  targets_bioregion <- dplyr::left_join(ft_bioregion, targets_bioregion_raw, by = "categoryID") %>%
-    dplyr::select(-"categoryID")
+    # purrr::map_dbl() with %||% 0 is type-safe: returns a numeric vector of the
+    # same length as cats even when a master slider input is NULL (e.g. not yet
+    # initialised).
+    targets_bioregion_raw <- tibble::tibble(
+      categoryID = cats,
+      target     = purrr::map_dbl(cats, \(x) input[[paste0(bioregion_name_check, x)]] %||% 0) / 100
+    )
 
-  # Combine feature and bioregion targets
-  targets_combined <- dplyr::bind_rows(targets, targets_bioregion)
+    targets_bioregion <- dplyr::left_join(ft_bioregion, targets_bioregion_raw, by = "categoryID") %>%
+      dplyr::select(-"categoryID")
 
-  return(targets_combined)
+    targets <- dplyr::bind_rows(targets, targets_bioregion)
+  }
+
+  return(targets)
 }
 
 
@@ -452,8 +492,10 @@ fbuild_bioregion_display <- function(raw_sf, Dict) {
 fcalculate_feature_density <- function(raw_sf, Dict) {
   # Intersect with names(raw_sf) to guard against Dict entries that were
   # removed during zero-column filtering in 3_setup_app.R.
+  # SilentFeature layers are included so that feature density reflects the
+  # actual number of underlying layers (not just the number of visible sliders).
   density_vars <- Dict %>%
-    dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
+    dplyr::filter(.data$type %in% c("Feature", "SilentFeature", "Bioregion")) %>%
     dplyr::pull("nameVariable") %>%
     intersect(names(raw_sf))
 
@@ -489,7 +531,7 @@ fCheckFeatureNo <- function(dat, Dict = NULL) {
 
   if (!is.null(Dict)) {
     feature_vars <- Dict %>%
-      dplyr::filter(.data$type %in% c("Feature", "Bioregion")) %>%
+      dplyr::filter(.data$type %in% c("Feature", "SilentFeature", "Bioregion")) %>%
       dplyr::pull("nameVariable")
     f_no <- sum(names(dat_plain) %in% feature_vars)
   } else {

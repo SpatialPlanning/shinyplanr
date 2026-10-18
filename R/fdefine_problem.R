@@ -8,7 +8,7 @@
 #' @param targets Data frame. Feature-target pairs with columns \code{feature}
 #'   (character, matching column names in \code{raw_sf}) and \code{target}
 #'   (numeric, 0–1 scale). Typically the output of
-#'   \code{fget_targets_with_bioregions()}.
+#'   \code{fget_targets_expanded()}.
 #' @param raw_sf An \code{sf} object containing all feature and cost columns
 #'   as well as planning unit geometries.
 #' @param options List. App-level options (from the deployment config), including

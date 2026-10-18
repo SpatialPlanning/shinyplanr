@@ -16,7 +16,7 @@
 #   4. Update data-raw/build_stub_sysdata.R to match the new structure,
 #      then re-run it to regenerate R/sysdata.rda
 
-.shinyplanr_schema_version <- 2L
+.shinyplanr_schema_version <- 3L
 
 
 # Human-readable changelog for each schema version bump.
@@ -36,6 +36,22 @@
     "In 3_setup_app.R, add the `sidebar` block before `config_list <- list(...)` and",
     "  include `sidebar = sidebar` in config_list. See the current template for the",
     "  exact code: shinyplanr:::.write_setup_app"
+  ),
+  `3` = c(
+    "Added SilentFeature support: a new Dict type where individual layers are hidden",
+    "  from the UI but included in the prioritisation with targets set at category level.",
+    "In 3_setup_app.R, add slider_varsSilent and slider_varsSilent1/2 to the sidebar block:",
+    "  scenario$slider_varsSilent = shinyplanr:::fcreate_vars('2scenario_ui_1', Dict, 'silent_sli_',",
+    "    categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),",
+    "  compare$slider_varsSilent1 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli1_',",
+    "    categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),",
+    "  compare$slider_varsSilent2 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli2_',",
+    "    categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature').",
+    "include_silentFeature and include_bioregion are now auto-detected from Dict after it is",
+    "  built -- remove any manual include_silentFeature/include_bioregion flags from",
+    "  shinyplanr_options and add these two lines after the Dict block:",
+    "  shinyplanr_options$include_silentFeature <- any(Dict$type == 'SilentFeature')",
+    "  shinyplanr_options$include_bioregion     <- any(Dict$type == 'Bioregion')"
   )
 )
 

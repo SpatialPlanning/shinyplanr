@@ -25,7 +25,7 @@ mod_3compare_ui <- function(id, cfg) {
   # Unpack all pre-computed sidebar vars from config into the local environment.
   # rlang::env_bind() splices the named list so each key becomes a local variable
   # (e.g. sidebar$Vars1 -> Vars1).
-  Vars1 <- Vars2 <- slider_varsBioR1 <- slider_varsBioR2 <- check_lockIn1 <- check_lockIn2 <- check_lockOut1 <- check_lockOut2 <- NULL
+  Vars1 <- Vars2 <- slider_varsBioR1 <- slider_varsBioR2 <- slider_varsSilent1 <- slider_varsSilent2 <- check_lockIn1 <- check_lockIn2 <- check_lockOut1 <- check_lockOut2 <- NULL
 
   rlang::env_bind(environment(), !!!sidebar)
 
@@ -52,11 +52,26 @@ mod_3compare_ui <- function(id, cfg) {
         fcustom_sliderCategory(Vars2, labelNum = 1, labelCategory = FALSE)
       ),
       shinyjs::hidden(div(
+        id = ns("switchSilentFeatures"),
+        # Hidden by default; shown by the server only when SilentFeature rows
+        # exist in Dict (see utils_server.R fapply_ui_switches()). Each slider
+        # represents one category; individual layers are never shown in the UI
+        # but all receive the same target value when the prioritisation runs.
+        shiny::h3(paste0("1.", length(unique(Vars1$category)) + 1, " Silent Features")),
+        shiny::splitLayout(
+          fcustom_sliderCategory(slider_varsSilent1, labelNum = 1, byCategory = TRUE),
+          fcustom_sliderCategory(slider_varsSilent2,
+            labelNum = 1, byCategory = TRUE,
+            labelCategory = FALSE
+          )
+        ),
+      )),
+      shinyjs::hidden(div(
         id = ns("switchBioregions"),
         # Hidden by default; shown by the server only when options$include_bioregion
         # is TRUE (see utils_server.R fapply_ui_switches()). No UI-level conditional
         # is needed because shinyjs::hidden() already prevents rendering until shown.
-        shiny::h3(paste0("1.", length(unique(Vars1$category)) + 1, " Bioregions")),
+        shiny::h3(paste0("1.", length(unique(Vars1$category)) + length(unique(slider_varsSilent1$category)) + 1, " Bioregions")),
         shiny::splitLayout(
           fcustom_sliderCategory(slider_varsBioR1, labelNum = 1, byCategory = TRUE),
           fcustom_sliderCategory(slider_varsBioR2,
@@ -363,7 +378,7 @@ mod_3compare_server <- function(id, cfg) {
     # Unpack all pre-computed sidebar vars from config into the local environment.
     # rlang::env_bind() splices the named list so each key becomes a local variable
     # (e.g. sidebar$Vars1 -> Vars1, sidebar$check_lockIn1 -> check_lockIn1, etc.).
-    Vars1 <- Vars2 <- slider_varsBioR1 <- slider_varsBioR2 <- check_lockIn1 <- check_lockIn2 <- check_lockOut1 <- check_lockOut2 <- NULL
+    Vars1 <- Vars2 <- slider_varsBioR1 <- slider_varsBioR2 <- slider_varsSilent1 <- slider_varsSilent2 <- check_lockIn1 <- check_lockIn2 <- check_lockOut1 <- check_lockOut2 <- NULL
 
     rlang::env_bind(environment(), !!!sidebar)
 
@@ -387,6 +402,8 @@ mod_3compare_server <- function(id, cfg) {
       {
         fresetSlider(session, Vars1)
         fresetSlider(session, Vars2)
+        fresetSlider(session, slider_varsSilent1) # silent feature category sliders
+        fresetSlider(session, slider_varsSilent2)
       },
       ignoreInit = TRUE
     )
@@ -410,12 +427,12 @@ mod_3compare_server <- function(id, cfg) {
 
     # Get Target Data
     targetData1 <- shiny::reactive({
-      targets <- fget_targets_with_bioregions(input, name_check = "sli1_", Dict = Dict)
+      targets <- fget_targets_expanded(input, name_check = "sli1_", Dict = Dict)
       return(targets)
     })
 
     targetData2 <- shiny::reactive({
-      targets <- fget_targets_with_bioregions(input, name_check = "sli2_", Dict = Dict)
+      targets <- fget_targets_expanded(input, name_check = "sli2_", Dict = Dict)
       return(targets)
     })
 

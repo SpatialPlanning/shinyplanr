@@ -51,6 +51,10 @@ fapply_ui_switches <- function(options, session,
     shinyjs::show(id = "switchBoundaryPenalty")
   }
 
+  if (isTRUE(options$include_silentFeature)) {
+    shinyjs::show(id = "switchSilentFeatures")
+  }
+
   if (isTRUE(options$include_bioregion)) {
     shinyjs::show(id = "switchBioregions")
   }

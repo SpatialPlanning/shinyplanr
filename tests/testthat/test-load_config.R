@@ -4,7 +4,7 @@
 # Uses temporary RDS files — no real region data required.
 
 # ---------------------------------------------------------------------------
-# Helpers: build a minimal valid config matching schema v1
+# Helpers: build a minimal valid config matching the current schema version
 # ---------------------------------------------------------------------------
 
 make_valid_config <- function() {
@@ -25,23 +25,26 @@ make_valid_config <- function() {
   )
   sidebar <- list(
     scenario = list(
-      slider_vars     = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = FALSE),
-      slider_varsBioR = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "Bioregion"),
-      slider_varsCat  = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE),
-      check_lockIn    = fcreate_check("2scenario_ui_1", Dict, "LockIn", "checkLI_", categoryOut = TRUE),
-      check_lockOut   = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
+      slider_vars       = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = FALSE),
+      slider_varsSilent = fcreate_vars("2scenario_ui_1", Dict, "silent_sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "SilentFeature"),
+      slider_varsBioR   = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "Bioregion"),
+      slider_varsCat    = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE),
+      check_lockIn      = fcreate_check("2scenario_ui_1", Dict, "LockIn", "checkLI_", categoryOut = TRUE),
+      check_lockOut     = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
     ),
     compare = list(
-      Vars1          = fcreate_vars("3compare_ui_1", Dict, "sli_", categoryOut = TRUE),
-      Vars2          = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
-      check_lockIn1  = fcreate_check("3compare_ui_1", Dict, "LockIn", "check1LI_", categoryOut = TRUE),
-      check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn", "check2LI_", categoryOut = TRUE),
-      check_lockOut1 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
-      check_lockOut2 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
+      Vars1              = fcreate_vars("3compare_ui_1", Dict, "sli_", categoryOut = TRUE),
+      Vars2              = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
+      slider_varsSilent1 = fcreate_vars("3compare_ui_1", Dict, "silent_sli1_", categoryOut = TRUE, byCategory = TRUE, dataType = "SilentFeature"),
+      slider_varsSilent2 = fcreate_vars("3compare_ui_1", Dict, "silent_sli2_", categoryOut = TRUE, byCategory = TRUE, dataType = "SilentFeature"),
+      check_lockIn1      = fcreate_check("3compare_ui_1", Dict, "LockIn", "check1LI_", categoryOut = TRUE),
+      check_lockIn2      = fcreate_check("3compare_ui_1", Dict, "LockIn", "check2LI_", categoryOut = TRUE),
+      check_lockOut1     = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
+      check_lockOut2     = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
     )
   )
   list(
-    schema_version = 2L,
+    schema_version = shinyplanr::get_schema_version(),
     options = list(
       app_title             = "Test App",
       nav_title             = "Test Region",
@@ -183,7 +186,7 @@ test_that("load_config() invisibly returns the config list", {
 
   result <- suppressMessages(load_config(tmp))
   expect_type(result, "list")
-  expect_equal(result$schema_version, 2L)
+  expect_equal(result$schema_version, shinyplanr::get_schema_version())
   expect_equal(result$options$app_title, "Test App")
 })
 

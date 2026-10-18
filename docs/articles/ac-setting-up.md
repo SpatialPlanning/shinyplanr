@@ -20,13 +20,11 @@ vignette](https://spatialplanning.github.io/shinyplanr/articles/ad-deployment.md
 Understanding which package does what will help you navigate the setup
 scripts.
 
-``` mermaid
-flowchart LR
-    A[oceandatr] -->|spatial data| B[spatialgridr]
-    B -->|planning grid| C[spatialplanr]
-    C -->|climate-smart features| D[prioritizr]
-    D -->|optimal solutions| E[shinyplanr]
-```
+flowchart LR\
+    A\[oceandatr\] --\>\|spatial data\| B\[spatialgridr\]\
+    B --\>\|planning grid\| C\[spatialplanr\]\
+    C --\>\|climate-smart features\| D\[prioritizr\]\
+    D --\>\|optimal solutions\| E\[shinyplanr\]\
 
 | Package | Role in setup |
 |----|----|
@@ -79,11 +77,9 @@ Before starting, ensure you have:
 
 Install *shinyplanr* from GitHub before proceeding:
 
-``` r
-
-# install.packages("pak")
-pak::pak("SpatialPlanning/shinyplanr")
-```
+\
+`# install.packages("pak")`\
+`pak``::`[`pak`](https://pak.r-lib.org/reference/pak.html)`(``"SpatialPlanning/shinyplanr"``)`
 
 > **Note**
 >
@@ -101,16 +97,14 @@ region.
 
 ### Basic Usage
 
-``` r
-
-library(shinyplanr)
-
-create_shinyplanr_template(
-  country = "Fiji",
-  crs = "+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84 +units=m +no_defs",
-  oceandatr = TRUE
-)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`shinyplanr`](https://spatialplanning.github.io/shinyplanr)`)`\
+\
+[`create_shinyplanr_template`](https://spatialplanning.github.io/shinyplanr/reference/create_shinyplanr_template.md)`(`\
+`  country ``=`` ``"Fiji"``,`\
+`  crs ``=`` ``"+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84 +units=m +no_defs"``,`\
+`  oceandatr ``=`` ``TRUE`\
+`)`
 
 This creates the project in a **sibling directory** to your current
 working directory (e.g. `../Fiji/`). Open the resulting `.Rproj` file to
@@ -246,49 +240,41 @@ project). The script contains several sections:
 
 #### Basic Parameters
 
-``` r
-
-country    <- "Fiji"
-crs        <- "+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84 +units=m +no_defs"
-resolution <- 20000L  # Planning unit size in metres
-
-setup_dir <- "setup"                           # Location of the setup folder
-data_path <- file.path(setup_dir, "data")      # Raw spatial data files
-```
+\
+`country``    ``<-`` ``"Fiji"`\
+`crs``        ``<-`` ``"+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84 +units=m +no_defs"`\
+`resolution`` ``<-`` ``20000L``  ``# Planning unit size in metres`\
+\
+`setup_dir`` ``<-`` ``"setup"``                           ``# Location of the setup folder`\
+`data_path`` ``<-`` `[`file.path`](https://rdrr.io/r/base/file.path.html)`(``setup_dir``, ``"data"``)``      ``# Raw spatial data files`
 
 #### Boundaries
 
 If you set `oceandatr = TRUE`, the template includes code to download
 your EEZ boundary:
 
-``` r
-
-# Get EEZ boundary from Marine Regions database
-eez <- spatialgridr::get_boundary(name = country, type = "eez") %>%
-  sf::st_transform(crs = crs) %>%
-  sf::st_geometry() %>%
-  sf::st_sf()
-```
+\
+`# Get EEZ boundary from Marine Regions database`\
+`eez`` ``<-`` ``spatialgridr``::`[`get_boundary`](https://emlab-ucsb.github.io/spatialgridr/reference/get_boundary.html)`(``name ``=`` ``country``, type ``=`` ``"eez"``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_transform`](https://r-spatial.github.io/sf/reference/st_transform.html)`(``crs ``=`` ``crs``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_geometry`](https://r-spatial.github.io/sf/reference/st_geometry.html)`(``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_sf`](https://r-spatial.github.io/sf/reference/sf.html)`(``)`
 
 For custom boundaries, replace this with:
 
-``` r
-
-bndry <- sf::st_read(file.path(data_path, "my_boundary.gpkg")) %>%
-  sf::st_transform(crs = crs)
-```
+\
+`bndry`` ``<-`` ``sf``::`[`st_read`](https://r-spatial.github.io/sf/reference/st_read.html)`(`[`file.path`](https://rdrr.io/r/base/file.path.html)`(``data_path``, ``"my_boundary.gpkg"``)``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_transform`](https://r-spatial.github.io/sf/reference/st_transform.html)`(``crs ``=`` ``crs``)`
 
 #### Planning Unit Grid
 
-``` r
-
-PUs <- spatialgridr::get_grid(
-  boundary = eez,
-  crs = crs,
-  output = "sf_hex",
-  resolution = resolution
-)
-```
+\
+`PUs`` ``<-`` ``spatialgridr``::`[`get_grid`](https://emlab-ucsb.github.io/spatialgridr/reference/get_grid.html)`(`\
+`  boundary ``=`` ``eez``,`\
+`  crs ``=`` ``crs``,`\
+`  output ``=`` ``"sf_hex"``,`\
+`  resolution ``=`` ``resolution`\
+`)`
 
 This creates a hexagonal grid of planning units. Options for `output`
 include:
@@ -301,107 +287,97 @@ include:
 
 If using *oceandatr*, the template downloads several data layers:
 
-``` r
-
-# Bathymetry / Depth zones
-bathymetry <- oceandatr::get_bathymetry(
-  spatial_grid = PUs,
-  classify_bathymetry = TRUE
-) %>%
-  sf::st_drop_geometry()
-
-# Geomorphology
-geomorphology <- oceandatr::get_geomorphology(
-  spatial_grid = PUs
-) %>%
-  sf::st_drop_geometry()
-
-# Seamounts (with buffer)
-seamounts <- oceandatr::get_seamounts(
-  spatial_grid = PUs,
-  buffer = 30000
-) %>%
-  sf::st_drop_geometry()
-```
+\
+`# Bathymetry / Depth zones`\
+`bathymetry`` ``<-`` ``oceandatr``::`[`get_bathymetry`](https://emlab-ucsb.github.io/oceandatr/reference/get_bathymetry.html)`(`\
+`  spatial_grid ``=`` ``PUs``,`\
+`  classify_bathymetry ``=`` ``TRUE`\
+`)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_drop_geometry`](https://r-spatial.github.io/sf/reference/st_geometry.html)`(``)`\
+\
+`# Geomorphology`\
+`geomorphology`` ``<-`` ``oceandatr``::`[`get_geomorphology`](https://emlab-ucsb.github.io/oceandatr/reference/get_geomorphology.html)`(`\
+`  spatial_grid ``=`` ``PUs`\
+`)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_drop_geometry`](https://r-spatial.github.io/sf/reference/st_geometry.html)`(``)`\
+\
+`# Seamounts (with buffer)`\
+`seamounts`` ``<-`` ``oceandatr``::`[`get_seamounts`](https://emlab-ucsb.github.io/oceandatr/reference/get_seamounts.html)`(`\
+`  spatial_grid ``=`` ``PUs``,`\
+`  buffer ``=`` ``30000`\
+`)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_drop_geometry`](https://r-spatial.github.io/sf/reference/st_geometry.html)`(``)`
 
 #### Adding Custom Data
 
 To add your own spatial data layers:
 
-``` r
-
-# Example: Load habitat data from shapefile
-habitat <- sf::st_read(file.path(data_path, "habitat.gpkg")) %>%
-  spatialgridr::get_data_in_grid(
-    spatial_grid = PUs,
-    dat = .,
-    feature_names = "habitat_type",
-    meth = "average",
-    cutoff = 0.1
-  )
-
-# Example: Load raster data
-my_raster <- terra::rast(file.path(data_path, "my_data.tif")) %>%
-  spatialgridr::get_data_in_grid(
-    spatial_grid = PUs,
-    dat = .,
-    meth = "average"
-  )
-```
+\
+`# Example: Load habitat data from shapefile`\
+`habitat`` ``<-`` ``sf``::`[`st_read`](https://r-spatial.github.io/sf/reference/st_read.html)`(`[`file.path`](https://rdrr.io/r/base/file.path.html)`(``data_path``, ``"habitat.gpkg"``)``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``spatialgridr``::`[`get_data_in_grid`](https://emlab-ucsb.github.io/spatialgridr/reference/get_data_in_grid.html)`(`\
+`    spatial_grid ``=`` ``PUs``,`\
+`    dat ``=`` ``.``,`\
+`    feature_names ``=`` ``"habitat_type"``,`\
+`    meth ``=`` ``"average"``,`\
+`    cutoff ``=`` ``0.1`\
+`  ``)`\
+\
+`# Example: Load raster data`\
+`my_raster`` ``<-`` ``terra``::`[`rast`](https://rspatial.github.io/terra/reference/rast.html)`(`[`file.path`](https://rdrr.io/r/base/file.path.html)`(``data_path``, ``"my_data.tif"``)``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``spatialgridr``::`[`get_data_in_grid`](https://emlab-ucsb.github.io/spatialgridr/reference/get_data_in_grid.html)`(`\
+`    spatial_grid ``=`` ``PUs``,`\
+`    dat ``=`` ``.``,`\
+`    meth ``=`` ``"average"`\
+`  ``)`
 
 #### Cost Layers
 
-``` r
-
-# Calculate distance to coast
-cost <- dat_sf %>%
-  dplyr::select(geometry) %>%
-  spatialplanr::splnr_get_distCoast(custom_coast = coast) %>%
-  dplyr::mutate(
-    cost_area     = PU_Area,          # Equal area cost
-    cost_distance = coastDistance_km
-  ) %>%
-  dplyr::select(-coastDistance_km) %>%
-  sf::st_drop_geometry()
-```
+\
+`# Calculate distance to coast`\
+`cost`` ``<-`` ``dat_sf`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``dplyr``::`[`select`](https://dplyr.tidyverse.org/reference/select.html)`(``geometry``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``spatialplanr``::`[`splnr_get_distCoast`](https://rdrr.io/pkg/spatialplanr/man/splnr_get_distCoast.html)`(``custom_coast ``=`` ``coast``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``dplyr``::`[`mutate`](https://dplyr.tidyverse.org/reference/mutate.html)`(`\
+`    cost_area     ``=`` ``PU_Area``,          ``# Equal area cost`\
+`    cost_distance ``=`` ``coastDistance_km`\
+`  ``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``dplyr``::`[`select`](https://dplyr.tidyverse.org/reference/select.html)`(``-``coastDistance_km``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_drop_geometry`](https://r-spatial.github.io/sf/reference/st_geometry.html)`(``)`
 
 #### Locked-In Areas (MPAs)
 
-``` r
-
-mpas <- spatialplanr::splnr_get_MPAs(
-  PlanUnits = PUs, 
-  Countries = country
-) %>%
-  sf::st_transform(crs = crs) %>%
-  spatialgridr::get_data_in_grid(
-    spatial_grid = PUs, 
-    dat = ., 
-    name = "mpas", 
-    cutoff = 0.5
-  )
-```
+\
+`mpas`` ``<-`` ``spatialplanr``::`[`splnr_get_MPAs`](https://rdrr.io/pkg/spatialplanr/man/splnr_get_MPAs.html)`(`\
+`  PlanUnits ``=`` ``PUs``, `\
+`  Countries ``=`` ``country`\
+`)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``sf``::`[`st_transform`](https://r-spatial.github.io/sf/reference/st_transform.html)`(``crs ``=`` ``crs``)`` `[`%>%`](https://spatialplanning.github.io/shinyplanr/reference/pipe.md)\
+`  ``spatialgridr``::`[`get_data_in_grid`](https://emlab-ucsb.github.io/spatialgridr/reference/get_data_in_grid.html)`(`\
+`    spatial_grid ``=`` ``PUs``, `\
+`    dat ``=`` ``.``, `\
+`    name ``=`` ``"mpas"``, `\
+`    cutoff ``=`` ``0.5`\
+`  ``)`
 
 #### Saving the Data
 
 The final step combines all data and saves it:
 
-``` r
-
-# Combine all features
-dat_sf <- dplyr::bind_cols(
-  PUs,
-  bathymetry,
-  geomorphology,
-  seamounts,
-  cost,
-  mpas
-)
-
-# Save to setup/data/
-save(dat_sf, bndry, coast,
-     file = file.path(data_path, paste0(country, "_RawData.rda")))
-```
+\
+`# Combine all features`\
+`dat_sf`` ``<-`` ``dplyr``::`[`bind_cols`](https://dplyr.tidyverse.org/reference/bind_cols.html)`(`\
+`  ``PUs``,`\
+`  ``bathymetry``,`\
+`  ``geomorphology``,`\
+`  ``seamounts``,`\
+`  ``cost``,`\
+`  ``mpas`\
+`)`\
+\
+`# Save to setup/data/`\
+[`save`](https://rdrr.io/r/base/save.html)`(``dat_sf``, ``bndry``, ``coast``,`\
+`     file ``=`` `[`file.path`](https://rdrr.io/r/base/file.path.html)`(``data_path``, `[`paste0`](https://rdrr.io/r/base/paste.html)`(``country``, ``"_RawData.rda"``)``)``)`
 
 ### Running 2_setup_data.R
 
@@ -438,55 +414,54 @@ you to define text, switch modules on/off and decide on display options:
 > [`options()`](https://rdrr.io/r/base/options.html) would find the list
 > instead of the function and crash immediately.
 
-``` r
-
-shinyplanr_options <- list(
-
-  ## General
-  app_title  = "Fiji: shinyplanr",
-  nav_title  = "Fiji Spatial Planning",
-  navbar = list(theme = "dark"),  # "light" or "dark"
-
-  ## Funder link (opens when funder logo is clicked)
-  funder_url = "https://spatialplanning.github.io",
-
-  ## Logo file locations (relative to setup/logos/)
-  #   logo_navbar.png  -- top-left of the navbar on every page
-  #   logo_welcome.png -- inline image in the welcome page
-  #   logo_funder.png  -- primary "Funded by" logo in the welcome footer
-  #   favicon.png      -- browser tab icon
-  file_logo_navbar  = file.path(setup_dir, "logos", "logo_navbar.png"),
-  file_logo_welcome = file.path(setup_dir, "logos", "logo_welcome.png"),
-  file_logo_funder  = file.path(setup_dir, "logos", "logo_funder.png"),
-  file_logo_funder2 = file.path(setup_dir, "logos", "uq-logo-white.png"),
-  funder2_url       = "https://spatialplanning.github.io",
-  file_favicon      = file.path(setup_dir, "logos", "favicon.png"),
-  file_data         = file.path(data_path, paste0(country, "_RawData.rda")),
-
-  ## Module switches (TRUE = enabled, FALSE = disabled)
-  mod_1welcome  = TRUE,
-  mod_2scenario = TRUE,
-  mod_3compare  = TRUE,
-  mod_4features = TRUE,
-  mod_5coverage = TRUE,
-  mod_6help     = TRUE,
-
-  ## Features
-  include_report        = TRUE,
-  include_bioregion     = FALSE,
-  include_climateChange = FALSE,
-  include_lockedArea    = TRUE,
-
-  ## Target grouping
-  targetsBy = "individual",  # "individual", "category", or "master"
-
-  ## Objective function
-  obj_func = "min_set",  # "min_set" or "min_shortfall"
-
-  ## Geographic options
-  cCRS = "+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84"
-)
-```
+\
+`shinyplanr_options`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+\
+`  ``## General`\
+`  app_title  ``=`` ``"Fiji: shinyplanr"``,`\
+`  nav_title  ``=`` ``"Fiji Spatial Planning"``,`\
+`  navbar ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``theme ``=`` ``"dark"``)``,  ``# "light" or "dark"`\
+\
+`  ``## Funder link (opens when funder logo is clicked)`\
+`  funder_url ``=`` ``"https://spatialplanning.github.io"``,`\
+\
+`  ``## Logo file locations (relative to setup/logos/)`\
+`  ``#   logo_navbar.png  -- top-left of the navbar on every page`\
+`  ``#   logo_welcome.png -- inline image in the welcome page`\
+`  ``#   logo_funder.png  -- primary "Funded by" logo in the welcome footer`\
+`  ``#   favicon.png      -- browser tab icon`\
+`  file_logo_navbar  ``=`` `[`file.path`](https://rdrr.io/r/base/file.path.html)`(``setup_dir``, ``"logos"``, ``"logo_navbar.png"``)``,`\
+`  file_logo_welcome ``=`` `[`file.path`](https://rdrr.io/r/base/file.path.html)`(``setup_dir``, ``"logos"``, ``"logo_welcome.png"``)``,`\
+`  file_logo_funder  ``=`` `[`file.path`](https://rdrr.io/r/base/file.path.html)`(``setup_dir``, ``"logos"``, ``"logo_funder.png"``)``,`\
+`  file_logo_funder2 ``=`` `[`file.path`](https://rdrr.io/r/base/file.path.html)`(``setup_dir``, ``"logos"``, ``"uq-logo-white.png"``)``,`\
+`  funder2_url       ``=`` ``"https://spatialplanning.github.io"``,`\
+`  file_favicon      ``=`` `[`file.path`](https://rdrr.io/r/base/file.path.html)`(``setup_dir``, ``"logos"``, ``"favicon.png"``)``,`\
+`  file_data         ``=`` `[`file.path`](https://rdrr.io/r/base/file.path.html)`(``data_path``, `[`paste0`](https://rdrr.io/r/base/paste.html)`(``country``, ``"_RawData.rda"``)``)``,`\
+\
+`  ``## Module switches (TRUE = enabled, FALSE = disabled)`\
+`  mod_1welcome  ``=`` ``TRUE``,`\
+`  mod_2scenario ``=`` ``TRUE``,`\
+`  mod_3compare  ``=`` ``TRUE``,`\
+`  mod_4features ``=`` ``TRUE``,`\
+`  mod_5coverage ``=`` ``TRUE``,`\
+`  mod_6help     ``=`` ``TRUE``,`\
+\
+`  ``## Features`\
+`  include_report        ``=`` ``TRUE``,`\
+`  include_bioregion     ``=`` ``FALSE``,`\
+`  include_climateChange ``=`` ``FALSE``,`\
+`  include_lockedArea    ``=`` ``TRUE``,`\
+`  ``# Note: include_silentFeature is set automatically — see "Silent Features" below`\
+\
+`  ``## Target grouping`\
+`  targetsBy ``=`` ``"individual"``,  ``# "individual", "category", or "master"`\
+\
+`  ``## Objective function`\
+`  obj_func ``=`` ``"min_set"``,  ``# "min_set" or "min_shortfall"`\
+\
+`  ``## Geographic options`\
+`  cCRS ``=`` ``"+proj=cea +lon_0=178 +lat_ts=-17 +datum=WGS84"`\
+`)`
 
 ### Key Options Explained
 
@@ -510,6 +485,23 @@ How targets are presented to users:
 - `"individual"`: Separate slider for each feature
 - `"category"`: One slider per category (e.g., all habitats together)
 - `"master"`: Single slider for all features
+
+> **Note**
+>
+> `targetsBy` controls how **regular `Feature`** targets are presented.
+> Silent Features (type `SilentFeature`) always use one slider per
+> category regardless of this setting — see [Silent
+> Features](#sec-silent-features) below.
+
+#### Feature Options
+
+| Option | Description |
+|----|----|
+| `include_bioregion` | Set `TRUE` to enable the Bioregions sidebar section. Requires `Bioregion` rows in `Dict_Feature.csv`. See [Bioregions](#sec-bioregions) below. |
+| `include_silentFeature` | **Auto-detected** — do not set manually. `setup/3_setup_app.R` sets this to `TRUE` automatically if `Dict` contains any active `SilentFeature` rows. See [Silent Features](#sec-silent-features) below. |
+| `include_lockedArea` | Set `TRUE` to show the Constraints (lock-in/lock-out) section in the sidebar. |
+| `include_climateChange` | Set `TRUE` to enable the Climate tab and climate-smart planning options. |
+| `include_ess` | Set `TRUE` to enable the Ecosystem Services tab. Requires `EcosystemServices` rows in `Dict_Feature.csv`. |
 
 #### Objective Function
 
@@ -563,11 +555,15 @@ checks the feature dictionary (`Dict_Feature.csv`):
 - All required columns are present
 - `includeApp` and `includeJust` are logical (`TRUE`/`FALSE`), not
   `1`/`0` or text
-- All `type` values are from the known set (`Feature`, `Cost`, `LockIn`,
-  etc.)
+- All `type` values are from the known set (`Feature`, `SilentFeature`,
+  `Cost`, `LockIn`, etc.)
 - `nameVariable` is unique within each type
-- At least one `Feature` row has `includeApp == TRUE`
-- Active `Feature` rows have target values in the 0–100 range
+- At least one `Feature` or `SilentFeature` row has `includeApp == TRUE`
+- Active `Feature` and `SilentFeature` rows have target values in the
+  0–100 range
+- Within each active `SilentFeature` category, all rows share identical
+  `targetMin`, `targetMax`, and `targetInitial` — the UI shows only one
+  slider per category, so differing values would be silently ignored
 
 **[`validate_shinyplanr_data()`](https://spatialplanning.github.io/shinyplanr/reference/validate_shinyplanr_data.md)**
 checks the assembled config:
@@ -600,7 +596,8 @@ and constraints appear in the application.
 | `nameCommon` | Human-readable name shown in the app | `"Coral Reef"` |
 | `nameVariable` | Variable name in the spatial data (must match exactly) | `"coral_reef"` |
 | `category` | Grouping category for display | `"Habitat"` |
-| `categoryID` | Category identifier for sorting | `"Hab"` |
+| `categoryID` | Category identifier for sorting (fallback ordering; see below) | `"Hab"` |
+| `categoryOrder` | *(optional)* Numeric value controlling display order of categories within a `type` | `1` |
 | `type` | Feature type (see below) | `"Feature"` |
 | `targetInitial` | Default target value (%) | `30` |
 | `targetMin` | Minimum target (slider min) | `0` |
@@ -612,26 +609,146 @@ and constraints appear in the application.
 
 ### Feature Types
 
-| Type                | Description                              |
-|---------------------|------------------------------------------|
-| `Feature`           | Conservation feature with targets        |
-| `Cost`              | Cost layer for optimisation              |
-| `LockIn`            | Constraint: must be selected             |
-| `LockOut`           | Constraint: cannot be selected           |
-| `Climate`           | Climate layer for climate-smart planning |
-| `Bioregion`         | Bioregion stratification layer           |
-| `EcosystemServices` | Ecosystem service layer                  |
+| Type | Description |
+|----|----|
+| `Feature` | Conservation feature; one slider per feature (or per category/master, depending on `targetsBy`) |
+| `SilentFeature` | Conservation feature whose target is set at the **category** level; all layers in the same category share one slider and are never shown individually in the UI |
+| `Cost` | Cost layer for optimisation |
+| `LockIn` | Constraint: planning units must be selected |
+| `LockOut` | Constraint: planning units cannot be selected |
+| `Climate` | Climate metric used for climate-smart planning |
+| `Bioregion` | Biogeographic zone layer; each zone column gets its own target slider, enabling stratified representation across regions |
+| `EcosystemServices` | Ecosystem service layer |
+
+### Silent Features
+
+A **Silent Feature** is a conservation feature whose target is set at
+the *category* level rather than the individual layer level. All layers
+in the same `SilentFeature` category share a single slider in the app
+sidebar — the individual layers are never shown to the user — but every
+layer in that category receives the same target value when the
+prioritisation runs.
+
+**When to use it**: Silent Features are useful when you have many
+fine-grained layers that users should treat as a single group. For
+example, you might have 15 individual seagrass species columns in your
+spatial data, but you want users to set one target for “Seagrass
+Meadows” as a whole rather than 15 separate sliders.
+
+#### How it works in the app
+
+- One slider appears per `SilentFeature` category (keyed on
+  `categoryID`).
+- When the user moves the slider, every individual layer in that
+  category receives the same target percentage.
+- The individual layer names are never shown in the sidebar or target
+  plots — only the category label is visible.
+- `include_silentFeature` in `shinyplanr_options` is **set
+  automatically** by `setup/3_setup_app.R` based on whether `Dict`
+  contains any active `SilentFeature` rows. You do not need to set it
+  manually.
+
+#### Dict rules for Silent Features
+
+1.  **`type`** must be `"SilentFeature"` for every layer in the group.
+2.  **`categoryID`** must be identical across all rows in the same
+    category — it is the key used to name the slider input.
+3.  **`targetMin`, `targetMax`, `targetInitial`** must be identical
+    across all rows in the same category. Because the UI shows only one
+    slider per category, differing values would be silently ignored.
+    [`validate_dict()`](https://spatialplanning.github.io/shinyplanr/reference/validate_dict.md)
+    catches this and stops with a clear error.
+4.  **`nameVariable`** must match a column in `dat_sf`, exactly as for
+    regular `Feature` rows.
+5.  **`includeApp`** controls whether the category appears in the app.
+    Set `FALSE` to exclude a category entirely.
+
+#### Example
+
+Three seagrass species columns in `dat_sf` (`sg_halophila`,
+`sg_cymodocea`, `sg_thalassia`), presented to users as a single
+“Seagrass Meadows” slider:
+
+```
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Halophila seagrass,sg_halophila,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."
+Cymodocea seagrass,sg_cymodocea,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."
+Thalassia seagrass,sg_thalassia,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."
+```
+
+> **Important**
+>
+> All three rows share the same `targetInitial`, `targetMin`,
+> `targetMax`, and `categoryID`. If these differ,
+> [`validate_dict()`](https://spatialplanning.github.io/shinyplanr/reference/validate_dict.md)
+> will stop with an error before the config is saved.
+
+The sidebar will show one slider labelled **“Seagrass Meadows”** with an
+initial value of 30%. When the user runs the analysis, all three species
+columns receive a 30% target in the prioritisation.
+
+### Bioregions
+
+**Bioregions** are mutually-exclusive biogeographic zone columns. Each
+planning unit belongs to exactly one zone within a bioregionalisation
+(e.g. “Indo-Pacific Coral Triangle”, “Temperate Australasia”). When
+bioregions are enabled, the app adds a **Bioregions** section to the
+sidebar with one slider per `categoryID`, allowing users to set a
+representation target for each zone independently — a form of stratified
+spatial planning.
+
+#### How it works in the app
+
+- Each zone column is one row in `Dict_Feature.csv` with
+  `type = "Bioregion"`.
+- All rows belonging to the same bioregionalisation share the same
+  `categoryID`.
+- When `include_bioregion = TRUE`, a “Bioregions” section appears in the
+  sidebar with one slider per `categoryID`. The target applies to each
+  zone independently.
+- The **Layer Information** tab shows a combined choropleth (one colour
+  per zone) rather than N separate binary maps. This combined display
+  column is built automatically by `setup/3_setup_app.R` — you do not
+  need to create it.
+
+#### Dict rules for Bioregions
+
+1.  **`type`** must be `"Bioregion"` for every zone column.
+2.  **`categoryID`** must be identical across all rows in the same
+    bioregionalisation.
+3.  Zone columns in `dat_sf` must be **binary (0/1)**: a planning unit
+    has value 1 in exactly one zone column and 0 in all others.
+4.  Set `include_bioregion = TRUE` in `shinyplanr_options` to enable the
+    Bioregions sidebar section. Unlike `include_silentFeature`, this
+    flag is **not** auto-detected and must be set manually.
+
+#### Example
+
+Three biogeographic zones for an Indo-Pacific region:
+
+```
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Coral Triangle,zone_coral_triangle,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Coral Triangle biogeographic zone."
+Temperate Australasia,zone_temp_aus,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Temperate Australasian biogeographic zone."
+Central Indo-Pacific,zone_central_ip,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Central Indo-Pacific biogeographic zone."
+```
+
+And in `shinyplanr_options`:
+
+``` r
+include_bioregion = TRUE,
+```
 
 ### Example Dictionary Entries
 
-``` csv
-nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
-Coral Reef,coral_reef,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
-Seagrass,seagrass,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
-Equal Area Cost,cost_area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost based on their area."
-Distance to Coast,cost_distance,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,km,"Cost based on distance from the coast."
-Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
-Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."
+```
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Coral Reef,coral_reef,Habitat,Habitat,1,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
+Seagrass,seagrass,Habitat,Habitat,1,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
+Equal Area Cost,cost_area,Cost,Cost,1,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost based on their area."
+Distance to Coast,cost_distance,Cost,Cost,1,Cost,NA,NA,NA,TRUE,TRUE,km,"Cost based on distance from the coast."
+Marine Protected Areas,mpas,Protected Areas,MPAs,1,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
+Shipping Lanes,shipping,Exclusions,Exclusions,1,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."
 ```
 
 > **Variable names must match exactly**
@@ -640,6 +757,50 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 > spatial data (`dat_sf`). The generated template uses lowercase
 > snake_case (e.g. `cost_area`, `cost_distance`). Check for spelling
 > differences, case sensitivity, and spaces vs underscores.
+
+### Controlling category order
+
+Categories are shown in the sidebar sliders, checkbox groups, and
+dropdown menus in a consistent order determined by two things:
+
+1.  **Master category order** (fixed, not configurable): `Feature` →
+    `SilentFeature` → `Bioregion` → `Cost` → `Climate` → `LockIn` →
+    `LockOut` → `EcosystemServices`. This mirrors the section order in
+    the Scenario tab sidebar (Targets → Silent Features → Bioregions →
+    Cost → Climate → Constraints).
+2.  **Order within a `type`**: controlled by the optional
+    `categoryOrder` column if present, otherwise falls back to
+    alphabetical order of `categoryID`.
+
+To set a custom category order, add a `categoryOrder` column to
+`Dict_Feature.csv` with a numeric value for each row. **Every row
+belonging to the same `category` must repeat the same `categoryOrder`
+value** – it is a category-level attribute, exactly like `categoryID`.
+For example, to show “Depth Zones” before “Geomorphology” regardless of
+their `categoryID` alphabetical order:
+
+```
+nameCommon,nameVariable,category,categoryID,categoryOrder,type,...
+Continental Shelf,continental_shelf,Depth Zones,Depth,1,Feature,...
+Upper Bathyal,upper_bathyal,Depth Zones,Depth,1,Feature,...
+Abyssal Hills,abyssal_hills,Geomorphology,GeoMorph,2,Feature,...
+```
+
+If `categoryOrder` is omitted entirely, category order falls back to the
+pre-existing default (alphabetical by `categoryID` within each `type`) –
+fully backward compatible with dictionaries created before this column
+was introduced.
+
+> **Note**
+>
+> [`validate_dict()`](https://spatialplanning.github.io/shinyplanr/reference/validate_dict.md)
+> checks that `categoryID` (and `categoryOrder`, if present) is
+> consistent – i.e. identical on every row – within each `type` +
+> `category` combination, since an inconsistent value is silently
+> ignored elsewhere in the app rather than raising an error.
+>
+> Feature order **within** a category is controlled simply by row order
+> in `Dict_Feature.csv` – reorder the rows to change it.
 
 ### Common Issues
 
@@ -699,19 +860,15 @@ reference them from markdown.
 Before deploying, test the application locally from within the
 deployment project:
 
-``` r
-
-# app.R does this automatically when you call shiny::runApp()
-shiny::runApp()
-```
+\
+`# app.R does this automatically when you call shiny::runApp()`\
+`shiny``::`[`runApp`](https://rdrr.io/pkg/shiny/man/runApp.html)`(``)`
 
 This reads `app.R` in the project root, which calls:
 
-``` r
-
-shinyplanr::load_config("config/shinyplanr_config.rds")
-shinyplanr::run_app()
-```
+\
+`shinyplanr``::`[`load_config`](https://spatialplanning.github.io/shinyplanr/reference/load_config.md)`(``"config/shinyplanr_config.rds"``)`\
+`shinyplanr``::`[`run_app`](https://spatialplanning.github.io/shinyplanr/reference/run_app.md)`(``)`
 
 > **Important**
 >
@@ -788,25 +945,23 @@ contain:
 
 ### Common Commands
 
-``` r
-
-# Create deployment project (run from any R session with shinyplanr loaded)
-create_shinyplanr_template(country = "MyRegion", crs = "EPSG:32601")
-
-# Check boundary data availability (oceandatr)
-oceandatr::get_boundary(name = "MyCountry", type = "eez")
-
-# Run setup scripts (from inside the deployment project)
-source("setup/1_setup_enviro.R")  # Install packages (run once)
-source("setup/2_setup_data.R")    # Prepare spatial data
-source("setup/3_setup_app.R")     # Configure app and generate config
-
-# Test the app locally
-shiny::runApp()
-
-# Lock package versions before deploying
-renv::snapshot()
-
-# Deploy to Posit Connect
-source("deploy.R")
-```
+\
+`# Create deployment project (run from any R session with shinyplanr loaded)`\
+[`create_shinyplanr_template`](https://spatialplanning.github.io/shinyplanr/reference/create_shinyplanr_template.md)`(``country ``=`` ``"MyRegion"``, crs ``=`` ``"EPSG:32601"``)`\
+\
+`# Check boundary data availability (oceandatr)`\
+`oceandatr``::`[`get_boundary`](https://emlab-ucsb.github.io/oceandatr/reference/get_boundary.html)`(``name ``=`` ``"MyCountry"``, type ``=`` ``"eez"``)`\
+\
+`# Run setup scripts (from inside the deployment project)`\
+[`source`](https://rdrr.io/r/base/source.html)`(``"setup/1_setup_enviro.R"``)``  ``# Install packages (run once)`\
+[`source`](https://rdrr.io/r/base/source.html)`(``"setup/2_setup_data.R"``)``    ``# Prepare spatial data`\
+[`source`](https://rdrr.io/r/base/source.html)`(``"setup/3_setup_app.R"``)``     ``# Configure app and generate config`\
+\
+`# Test the app locally`\
+`shiny``::`[`runApp`](https://rdrr.io/pkg/shiny/man/runApp.html)`(``)`\
+\
+`# Lock package versions before deploying`\
+`renv``::`[`snapshot`](https://rstudio.github.io/renv/reference/snapshot.html)`(``)`\
+\
+`# Deploy to Posit Connect`\
+[`source`](https://rdrr.io/r/base/source.html)`(``"deploy.R"``)`

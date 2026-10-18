@@ -1,7 +1,7 @@
 # tests/testthat/test-utils_server.R
 #
 # Tests for utility server functions:
-#   fget_targets(), fget_targets_with_bioregions(), fget_feature_representation()
+#   fget_targets(), fget_targets_expanded(), fget_feature_representation()
 #
 # Uses lightweight synthetic data — no Shiny session or prioritizr solve required.
 
@@ -102,14 +102,14 @@ test_that("fget_targets() respects dataType filter", {
 })
 
 # ---------------------------------------------------------------------------
-# fget_targets_with_bioregions()
+# fget_targets_expanded()
 # ---------------------------------------------------------------------------
 
-test_that("fget_targets_with_bioregions() returns only features when no bioregions in Dict", {
+test_that("fget_targets_expanded() returns only features when no bioregions or silent features in Dict", {
   Dict <- make_test_dict()
   input <- list(sli_feature_A = 30, sli_feature_B = 50)
 
-  result <- shinyplanr:::fget_targets_with_bioregions(
+  result <- shinyplanr:::fget_targets_expanded(
     input = input, name_check = "sli_",
     Dict = Dict
   )
@@ -119,7 +119,7 @@ test_that("fget_targets_with_bioregions() returns only features when no bioregio
   expect_equal(nrow(result), 2L)
 })
 
-test_that("fget_targets_with_bioregions() appends bioregion rows when Dict has Bioregion type", {
+test_that("fget_targets_expanded() appends bioregion rows when Dict has Bioregion type", {
   Dict <- make_test_dict_with_bioregion()
   # Feature slider + bioregion slider (uses master_ prefix inside function)
   input <- list(
@@ -127,7 +127,7 @@ test_that("fget_targets_with_bioregions() appends bioregion rows when Dict has B
     master_sli_Bio    = 40 # bioregion slider uses categoryID
   )
 
-  result <- shinyplanr:::fget_targets_with_bioregions(
+  result <- shinyplanr:::fget_targets_expanded(
     input = input, name_check = "sli_",
     Dict = Dict
   )
@@ -138,6 +138,45 @@ test_that("fget_targets_with_bioregions() appends bioregion rows when Dict has B
   expect_equal(nrow(result), 2L)
   expect_true("bio_1" %in% result$feature)
   expect_equal(result$target[result$feature == "bio_1"], 0.40)
+})
+
+test_that("fget_targets_expanded() expands SilentFeature category slider to per-feature targets", {
+  # Dict with one regular Feature and two SilentFeature layers in the same category
+  Dict <- data.frame(
+    nameCommon   = c("Feature A", "Silent 1", "Silent 2"),
+    nameVariable = c("feature_A", "silent_1", "silent_2"),
+    category     = c("Habitat", "Seagrass", "Seagrass"),
+    categoryID   = c("Hab", "Sea", "Sea"),
+    type         = c("Feature", "SilentFeature", "SilentFeature"),
+    targetInitial = c(30, 20, 20),
+    targetMin     = c(0, 0, 0),
+    targetMax     = c(85, 85, 85),
+    includeApp    = c(TRUE, TRUE, TRUE),
+    includeJust   = c(TRUE, TRUE, TRUE),
+    units         = c("", "", ""),
+    justification = c("A.", "B.", "C."),
+    stringsAsFactors = FALSE
+  )
+  # One regular slider + one silent category slider (prefix: "silent_sli_" + categoryID)
+  input <- list(
+    sli_feature_A    = 30,
+    silent_sli_Sea   = 25  # category-level slider for "Seagrass" (categoryID = "Sea")
+  )
+
+  result <- shinyplanr:::fget_targets_expanded(
+    input = input, name_check = "sli_",
+    Dict = Dict
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_named(result, c("feature", "target"))
+  # 1 Feature + 2 SilentFeature rows
+  expect_equal(nrow(result), 3L)
+  expect_true("silent_1" %in% result$feature)
+  expect_true("silent_2" %in% result$feature)
+  # Both silent features get the same target from the category slider
+  expect_equal(result$target[result$feature == "silent_1"], 0.25)
+  expect_equal(result$target[result$feature == "silent_2"], 0.25)
 })
 
 # ---------------------------------------------------------------------------

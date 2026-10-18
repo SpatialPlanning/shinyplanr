@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">shinyplanr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,6 +50,7 @@
     <li><a class="dropdown-item" href="../articles/ad-deployment.html">Deploying shinyplanr</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -549,6 +550,7 @@
 <span>  include_bioregion     <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  include_climateChange <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  include_lockedArea    <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="co"># Note: include_silentFeature is set automatically — see "Silent Features" below</span></span>
 <span></span>
 <span>  <span class="co">## Target grouping</span></span>
 <span>  targetsBy <span class="op">=</span> <span class="st">"individual"</span>,  <span class="co"># "individual", "category", or "master"</span></span>
@@ -605,7 +607,44 @@
 <code>"category"</code>: One slider per category (e.g., all habitats together)</li>
 <li>
 <code>"master"</code>: Single slider for all features</li>
-</ul></section><section class="level4"><h4 id="objective-function">Objective Function<a class="anchor" aria-label="anchor" href="#objective-function"></a>
+</ul>
+<div>
+<blockquote>
+<p><strong>Note</strong></p>
+<p><code>targetsBy</code> controls how <strong>regular <code>Feature</code></strong> targets are presented. Silent Features (type <code>SilentFeature</code>) always use one slider per category regardless of this setting — see <a href="#sec-silent-features">Silent Features</a> below.</p>
+</blockquote>
+</div>
+</section><section class="level4"><h4 id="feature-options">Feature Options<a class="anchor" aria-label="anchor" href="#feature-options"></a>
+</h4>
+<table class="table caption-top">
+<thead><tr class="header">
+<th>Option</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>include_bioregion</code></td>
+<td>Set <code>TRUE</code> to enable the Bioregions sidebar section. Requires <code>Bioregion</code> rows in <code>Dict_Feature.csv</code>. See <a href="#sec-bioregions">Bioregions</a> below.</td>
+</tr>
+<tr class="even">
+<td><code>include_silentFeature</code></td>
+<td>
+<strong>Auto-detected</strong> — do not set manually. <code>setup/3_setup_app.R</code> sets this to <code>TRUE</code> automatically if <code>Dict</code> contains any active <code>SilentFeature</code> rows. See <a href="#sec-silent-features">Silent Features</a> below.</td>
+</tr>
+<tr class="odd">
+<td><code>include_lockedArea</code></td>
+<td>Set <code>TRUE</code> to show the Constraints (lock-in/lock-out) section in the sidebar.</td>
+</tr>
+<tr class="even">
+<td><code>include_climateChange</code></td>
+<td>Set <code>TRUE</code> to enable the Climate tab and climate-smart planning options.</td>
+</tr>
+<tr class="odd">
+<td><code>include_ess</code></td>
+<td>Set <code>TRUE</code> to enable the Ecosystem Services tab. Requires <code>EcosystemServices</code> rows in <code>Dict_Feature.csv</code>.</td>
+</tr>
+</tbody>
+</table></section><section class="level4"><h4 id="objective-function">Objective Function<a class="anchor" aria-label="anchor" href="#objective-function"></a>
 </h4>
 <ul>
 <li>
@@ -651,12 +690,13 @@
 <li>All required columns are present</li>
 <li>
 <code>includeApp</code> and <code>includeJust</code> are logical (<code>TRUE</code>/<code>FALSE</code>), not <code>1</code>/<code>0</code> or text</li>
-<li>All <code>type</code> values are from the known set (<code>Feature</code>, <code>Cost</code>, <code>LockIn</code>, etc.)</li>
+<li>All <code>type</code> values are from the known set (<code>Feature</code>, <code>SilentFeature</code>, <code>Cost</code>, <code>LockIn</code>, etc.)</li>
 <li>
 <code>nameVariable</code> is unique within each type</li>
-<li>At least one <code>Feature</code> row has <code>includeApp == TRUE</code>
+<li>At least one <code>Feature</code> or <code>SilentFeature</code> row has <code>includeApp == TRUE</code>
 </li>
-<li>Active <code>Feature</code> rows have target values in the 0–100 range</li>
+<li>Active <code>Feature</code> and <code>SilentFeature</code> rows have target values in the 0–100 range</li>
+<li>Within each active <code>SilentFeature</code> category, all rows share identical <code>targetMin</code>, <code>targetMax</code>, and <code>targetInitial</code> — the UI shows only one slider per category, so differing values would be silently ignored</li>
 </ul>
 <p><strong><code><a href="../reference/validate_shinyplanr_data.html">validate_shinyplanr_data()</a></code></strong> checks the assembled config:</p>
 <ul>
@@ -742,45 +782,52 @@
 </tr>
 <tr class="even">
 <td><code>categoryID</code></td>
-<td>Category identifier for sorting</td>
+<td>Category identifier for sorting (fallback ordering; see below)</td>
 <td><code>"Hab"</code></td>
 </tr>
 <tr class="odd">
+<td><code>categoryOrder</code></td>
+<td>
+<em>(optional)</em> Numeric value controlling display order of categories within a <code>type</code>
+</td>
+<td><code>1</code></td>
+</tr>
+<tr class="even">
 <td><code>type</code></td>
 <td>Feature type (see below)</td>
 <td><code>"Feature"</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>targetInitial</code></td>
 <td>Default target value (%)</td>
 <td><code>30</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>targetMin</code></td>
 <td>Minimum target (slider min)</td>
 <td><code>0</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>targetMax</code></td>
 <td>Maximum target (slider max)</td>
 <td><code>85</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>includeApp</code></td>
 <td>Include in the app (TRUE/FALSE)</td>
 <td><code>TRUE</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>includeJust</code></td>
 <td>Include justification text</td>
 <td><code>TRUE</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>units</code></td>
 <td>Units for display</td>
 <td><code>"km²"</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>justification</code></td>
 <td>Description text shown in app</td>
 <td><code>"Important habitat..."</code></td>
@@ -789,6 +836,10 @@
 </table></section><section class="level3"><h3 id="feature-types">Feature Types<a class="anchor" aria-label="anchor" href="#feature-types"></a>
 </h3>
 <table class="table caption-top">
+<colgroup>
+<col style="width: 31%">
+<col style="width: 68%">
+</colgroup>
 <thead><tr class="header">
 <th>Type</th>
 <th>Description</th>
@@ -796,46 +847,139 @@
 <tbody>
 <tr class="odd">
 <td><code>Feature</code></td>
-<td>Conservation feature with targets</td>
+<td>Conservation feature; one slider per feature (or per category/master, depending on <code>targetsBy</code>)</td>
 </tr>
 <tr class="even">
+<td><code>SilentFeature</code></td>
+<td>Conservation feature whose target is set at the <strong>category</strong> level; all layers in the same category share one slider and are never shown individually in the UI</td>
+</tr>
+<tr class="odd">
 <td><code>Cost</code></td>
 <td>Cost layer for optimisation</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>LockIn</code></td>
-<td>Constraint: must be selected</td>
+<td>Constraint: planning units must be selected</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>LockOut</code></td>
-<td>Constraint: cannot be selected</td>
-</tr>
-<tr class="odd">
-<td><code>Climate</code></td>
-<td>Climate layer for climate-smart planning</td>
+<td>Constraint: planning units cannot be selected</td>
 </tr>
 <tr class="even">
-<td><code>Bioregion</code></td>
-<td>Bioregion stratification layer</td>
+<td><code>Climate</code></td>
+<td>Climate metric used for climate-smart planning</td>
 </tr>
 <tr class="odd">
+<td><code>Bioregion</code></td>
+<td>Biogeographic zone layer; each zone column gets its own target slider, enabling stratified representation across regions</td>
+</tr>
+<tr class="even">
 <td><code>EcosystemServices</code></td>
 <td>Ecosystem service layer</td>
 </tr>
 </tbody>
-</table></section><section class="level3"><h3 id="example-dictionary-entries">Example Dictionary Entries<a class="anchor" aria-label="anchor" href="#example-dictionary-entries"></a>
+</table></section><section class="level3"><h3 id="sec-silent-features">Silent Features<a class="anchor" aria-label="anchor" href="#sec-silent-features"></a>
 </h3>
-<pre class="csv"><code>nameCommon,nameVariable,category,categoryID,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
-Coral Reef,coral_reef,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
-Seagrass,seagrass,Habitat,Habitat,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
-Equal Area Cost,cost_area,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost based on their area."
-Distance to Coast,cost_distance,Cost,Cost,Cost,NA,NA,NA,TRUE,TRUE,km,"Cost based on distance from the coast."
-Marine Protected Areas,mpas,Protected Areas,MPAs,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
-Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."</code></pre>
+<p>A <strong>Silent Feature</strong> is a conservation feature whose target is set at the <em>category</em> level rather than the individual layer level. All layers in the same <code>SilentFeature</code> category share a single slider in the app sidebar — the individual layers are never shown to the user — but every layer in that category receives the same target value when the prioritisation runs.</p>
+<p><strong>When to use it</strong>: Silent Features are useful when you have many fine-grained layers that users should treat as a single group. For example, you might have 15 individual seagrass species columns in your spatial data, but you want users to set one target for “Seagrass Meadows” as a whole rather than 15 separate sliders.</p>
+<section class="level4"><h4 id="how-it-works-in-the-app">How it works in the app<a class="anchor" aria-label="anchor" href="#how-it-works-in-the-app"></a>
+</h4>
+<ul>
+<li>One slider appears per <code>SilentFeature</code> category (keyed on <code>categoryID</code>).</li>
+<li>When the user moves the slider, every individual layer in that category receives the same target percentage.</li>
+<li>The individual layer names are never shown in the sidebar or target plots — only the category label is visible.</li>
+<li>
+<code>include_silentFeature</code> in <code>shinyplanr_options</code> is <strong>set automatically</strong> by <code>setup/3_setup_app.R</code> based on whether <code>Dict</code> contains any active <code>SilentFeature</code> rows. You do not need to set it manually.</li>
+</ul></section><section class="level4"><h4 id="dict-rules-for-silent-features">Dict rules for Silent Features<a class="anchor" aria-label="anchor" href="#dict-rules-for-silent-features"></a>
+</h4>
+<ol type="1">
+<li>
+<strong><code>type</code></strong> must be <code>"SilentFeature"</code> for every layer in the group.</li>
+<li>
+<strong><code>categoryID</code></strong> must be identical across all rows in the same category — it is the key used to name the slider input.</li>
+<li>
+<strong><code>targetMin</code>, <code>targetMax</code>, <code>targetInitial</code></strong> must be identical across all rows in the same category. Because the UI shows only one slider per category, differing values would be silently ignored. <code><a href="../reference/validate_dict.html">validate_dict()</a></code> catches this and stops with a clear error.</li>
+<li>
+<strong><code>nameVariable</code></strong> must match a column in <code>dat_sf</code>, exactly as for regular <code>Feature</code> rows.</li>
+<li>
+<strong><code>includeApp</code></strong> controls whether the category appears in the app. Set <code>FALSE</code> to exclude a category entirely.</li>
+</ol></section><section class="level4"><h4 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+</h4>
+<p>Three seagrass species columns in <code>dat_sf</code> (<code>sg_halophila</code>, <code>sg_cymodocea</code>, <code>sg_thalassia</code>), presented to users as a single “Seagrass Meadows” slider:</p>
+<pre class="csv"><code>nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Halophila seagrass,sg_halophila,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."
+Cymodocea seagrass,sg_cymodocea,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."
+Thalassia seagrass,sg_thalassia,Seagrass Meadows,SeagrassMeadows,3,SilentFeature,30,0,100,TRUE,FALSE,km²,"Seagrass meadows provide nursery habitat..."</code></pre>
+<div>
+<blockquote>
+<p><strong>Important</strong></p>
+<p>All three rows share the same <code>targetInitial</code>, <code>targetMin</code>, <code>targetMax</code>, and <code>categoryID</code>. If these differ, <code><a href="../reference/validate_dict.html">validate_dict()</a></code> will stop with an error before the config is saved.</p>
+</blockquote>
+</div>
+<p>The sidebar will show one slider labelled <strong>“Seagrass Meadows”</strong> with an initial value of 30%. When the user runs the analysis, all three species columns receive a 30% target in the prioritisation.</p>
+</section></section><section class="level3"><h3 id="sec-bioregions">Bioregions<a class="anchor" aria-label="anchor" href="#sec-bioregions"></a>
+</h3>
+<p><strong>Bioregions</strong> are mutually-exclusive biogeographic zone columns. Each planning unit belongs to exactly one zone within a bioregionalisation (e.g. “Indo-Pacific Coral Triangle”, “Temperate Australasia”). When bioregions are enabled, the app adds a <strong>Bioregions</strong> section to the sidebar with one slider per <code>categoryID</code>, allowing users to set a representation target for each zone independently — a form of stratified spatial planning.</p>
+<section class="level4"><h4 id="how-it-works-in-the-app-1">How it works in the app<a class="anchor" aria-label="anchor" href="#how-it-works-in-the-app-1"></a>
+</h4>
+<ul>
+<li>Each zone column is one row in <code>Dict_Feature.csv</code> with <code>type = "Bioregion"</code>.</li>
+<li>All rows belonging to the same bioregionalisation share the same <code>categoryID</code>.</li>
+<li>When <code>include_bioregion = TRUE</code>, a “Bioregions” section appears in the sidebar with one slider per <code>categoryID</code>. The target applies to each zone independently.</li>
+<li>The <strong>Layer Information</strong> tab shows a combined choropleth (one colour per zone) rather than N separate binary maps. This combined display column is built automatically by <code>setup/3_setup_app.R</code> — you do not need to create it.</li>
+</ul></section><section class="level4"><h4 id="dict-rules-for-bioregions">Dict rules for Bioregions<a class="anchor" aria-label="anchor" href="#dict-rules-for-bioregions"></a>
+</h4>
+<ol type="1">
+<li>
+<strong><code>type</code></strong> must be <code>"Bioregion"</code> for every zone column.</li>
+<li>
+<strong><code>categoryID</code></strong> must be identical across all rows in the same bioregionalisation.</li>
+<li>Zone columns in <code>dat_sf</code> must be <strong>binary (0/1)</strong>: a planning unit has value 1 in exactly one zone column and 0 in all others.</li>
+<li>Set <code>include_bioregion = TRUE</code> in <code>shinyplanr_options</code> to enable the Bioregions sidebar section. Unlike <code>include_silentFeature</code>, this flag is <strong>not</strong> auto-detected and must be set manually.</li>
+</ol></section><section class="level4"><h4 id="example-1">Example<a class="anchor" aria-label="anchor" href="#example-1"></a>
+</h4>
+<p>Three biogeographic zones for an Indo-Pacific region:</p>
+<pre class="csv"><code>nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Coral Triangle,zone_coral_triangle,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Coral Triangle biogeographic zone."
+Temperate Australasia,zone_temp_aus,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Temperate Australasian biogeographic zone."
+Central Indo-Pacific,zone_central_ip,Indo-Pacific Bioregions,IndoPacific,5,Bioregion,30,0,100,TRUE,FALSE,,"Central Indo-Pacific biogeographic zone."</code></pre>
+<p>And in <code>shinyplanr_options</code>:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>include_bioregion <span class="ot">=</span> <span class="cn">TRUE</span>,</span></code></pre></div>
+</section></section><section class="level3"><h3 id="example-dictionary-entries">Example Dictionary Entries<a class="anchor" aria-label="anchor" href="#example-dictionary-entries"></a>
+</h3>
+<pre class="csv"><code>nameCommon,nameVariable,category,categoryID,categoryOrder,type,targetInitial,targetMin,targetMax,includeApp,includeJust,units,justification
+Coral Reef,coral_reef,Habitat,Habitat,1,Feature,30,0,85,TRUE,TRUE,km²,"Coral reefs provide habitat for many species..."
+Seagrass,seagrass,Habitat,Habitat,1,Feature,30,0,85,TRUE,TRUE,km²,"Seagrass meadows are important nursery areas..."
+Equal Area Cost,cost_area,Cost,Cost,1,Cost,NA,NA,NA,TRUE,TRUE,,"All planning units have equal cost based on their area."
+Distance to Coast,cost_distance,Cost,Cost,1,Cost,NA,NA,NA,TRUE,TRUE,km,"Cost based on distance from the coast."
+Marine Protected Areas,mpas,Protected Areas,MPAs,1,LockIn,NA,NA,NA,TRUE,TRUE,,"Existing MPAs to be included in solutions."
+Shipping Lanes,shipping,Exclusions,Exclusions,1,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas excluded due to shipping."</code></pre>
 <div>
 <blockquote>
 <p><strong>Variable names must match exactly</strong></p>
 <p>The <code>nameVariable</code> column must <strong>exactly match</strong> column names in your spatial data (<code>dat_sf</code>). The generated template uses lowercase snake_case (e.g. <code>cost_area</code>, <code>cost_distance</code>). Check for spelling differences, case sensitivity, and spaces vs underscores.</p>
+</blockquote>
+</div>
+</section><section class="level3"><h3 id="sec-category-order">Controlling category order<a class="anchor" aria-label="anchor" href="#sec-category-order"></a>
+</h3>
+<p>Categories are shown in the sidebar sliders, checkbox groups, and dropdown menus in a consistent order determined by two things:</p>
+<ol type="1">
+<li>
+<strong>Master category order</strong> (fixed, not configurable): <code>Feature</code> → <code>SilentFeature</code> → <code>Bioregion</code> → <code>Cost</code> → <code>Climate</code> → <code>LockIn</code> → <code>LockOut</code> → <code>EcosystemServices</code>. This mirrors the section order in the Scenario tab sidebar (Targets → Silent Features → Bioregions → Cost → Climate → Constraints).</li>
+<li>
+<strong>Order within a <code>type</code></strong>: controlled by the optional <code>categoryOrder</code> column if present, otherwise falls back to alphabetical order of <code>categoryID</code>.</li>
+</ol>
+<p>To set a custom category order, add a <code>categoryOrder</code> column to <code>Dict_Feature.csv</code> with a numeric value for each row. <strong>Every row belonging to the same <code>category</code> must repeat the same <code>categoryOrder</code> value</strong> – it is a category-level attribute, exactly like <code>categoryID</code>. For example, to show “Depth Zones” before “Geomorphology” regardless of their <code>categoryID</code> alphabetical order:</p>
+<pre class="csv"><code>nameCommon,nameVariable,category,categoryID,categoryOrder,type,...
+Continental Shelf,continental_shelf,Depth Zones,Depth,1,Feature,...
+Upper Bathyal,upper_bathyal,Depth Zones,Depth,1,Feature,...
+Abyssal Hills,abyssal_hills,Geomorphology,GeoMorph,2,Feature,...</code></pre>
+<p>If <code>categoryOrder</code> is omitted entirely, category order falls back to the pre-existing default (alphabetical by <code>categoryID</code> within each <code>type</code>) – fully backward compatible with dictionaries created before this column was introduced.</p>
+<div>
+<blockquote>
+<p><strong>Note</strong></p>
+<p><code><a href="../reference/validate_dict.html">validate_dict()</a></code> checks that <code>categoryID</code> (and <code>categoryOrder</code>, if present) is consistent – i.e. identical on every row – within each <code>type</code> + <code>category</code> combination, since an inconsistent value is silently ignored elsewhere in the app rather than raising an error.</p>
+<p>Feature order <strong>within</strong> a category is controlled simply by row order in <code>Dict_Feature.csv</code> – reorder the rows to change it.</p>
 </blockquote>
 </div>
 </section><section class="level3"><h3 id="common-issues">Common Issues<a class="anchor" aria-label="anchor" href="#common-issues"></a>
@@ -943,11 +1087,11 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
 </section></section><section class="level2"><h2 id="step-7-test-locally">Step 7: Test Locally<a class="anchor" aria-label="anchor" href="#step-7-test-locally"></a>
 </h2>
 <p>Before deploying, test the application locally from within the deployment project:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># app.R does this automatically when you call shiny::runApp()</span></span>
 <span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>This reads <code>app.R</code> in the project root, which calls:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">shinyplanr</span><span class="fu">::</span><span class="fu"><a href="../reference/load_config.html">load_config</a></span><span class="op">(</span><span class="st">"config/shinyplanr_config.rds"</span><span class="op">)</span></span>
 <span><span class="fu">shinyplanr</span><span class="fu">::</span><span class="fu"><a href="../reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div>
@@ -1017,7 +1161,7 @@ Shipping Lanes,shipping,Exclusions,Exclusions,LockOut,NA,NA,NA,TRUE,TRUE,,"Areas
     └── content/</code></pre>
 </section><section class="level3"><h3 id="common-commands">Common Commands<a class="anchor" aria-label="anchor" href="#common-commands"></a>
 </h3>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create deployment project (run from any R session with shinyplanr loaded)</span></span>
 <span><span class="fu"><a href="../reference/create_shinyplanr_template.html">create_shinyplanr_template</a></span><span class="op">(</span>country <span class="op">=</span> <span class="st">"MyRegion"</span>, crs <span class="op">=</span> <span class="st">"EPSG:32601"</span><span class="op">)</span></span>
 <span></span>

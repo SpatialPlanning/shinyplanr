@@ -11,7 +11,7 @@ whether your 3_setup_app.R needs manual updates before you re-run it."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">shinyplanr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,6 +29,7 @@ whether your 3_setup_app.R needs manual updates before you re-run it."><meta pro
     <li><a class="dropdown-item" href="../articles/ac-setting-up.html">Setting Up shinyplanr for Your Region</a></li>
     <li><a class="dropdown-item" href="../articles/ad-deployment.html">Deploying shinyplanr</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/SpatialPlanning/shinyplanr" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
@@ -82,7 +83,7 @@ number higher than your config's <code>schema_version</code>.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># See everything that has changed since the initial release</span></span></span>
 <span class="r-in"><span><span class="fu">shinyplanr</span><span class="fu">::</span><span class="fu">schema_changelog</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> shinyplanr config schema changelog (current version: 2)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> shinyplanr config schema changelog (current version: 3)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> --------------------------------------------------</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> [v2]</span>
@@ -92,12 +93,40 @@ number higher than your config's <code>schema_version</code>.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   •   include `sidebar = sidebar` in config_list. See the current template for the</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   •   exact code: shinyplanr:::.write_setup_app</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [v3]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   • Added SilentFeature support: a new Dict type where individual layers are hidden</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   from the UI but included in the prioritisation with targets set at category level.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   • In 3_setup_app.R, add slider_varsSilent and slider_varsSilent1/2 to the sidebar block:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   scenario$slider_varsSilent = shinyplanr:::fcreate_vars('2scenario_ui_1', Dict, 'silent_sli_',</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   compare$slider_varsSilent1 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli1_',</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   compare$slider_varsSilent2 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli2_',</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature').</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   • include_silentFeature is now auto-detected from Dict after it is built -- remove any</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   manual include_silentFeature = TRUE/FALSE from shinyplanr_options and add the</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   auto-detection line: shinyplanr_options$include_silentFeature &lt;- any(Dict$type == 'SilentFeature')</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># See only what changed since your config was at version 2</span></span></span>
 <span class="r-in"><span><span class="fu">shinyplanr</span><span class="fu">::</span><span class="fu">schema_changelog</span><span class="op">(</span>from <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> shinyplanr config schema changelog (current version: 2)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> shinyplanr config schema changelog (current version: 3)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> --------------------------------------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> No changelog entries for version &gt;= 3.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [v3]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   • Added SilentFeature support: a new Dict type where individual layers are hidden</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   from the UI but included in the prioritisation with targets set at category level.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   • In 3_setup_app.R, add slider_varsSilent and slider_varsSilent1/2 to the sidebar block:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   scenario$slider_varsSilent = shinyplanr:::fcreate_vars('2scenario_ui_1', Dict, 'silent_sli_',</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   compare$slider_varsSilent1 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli1_',</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   compare$slider_varsSilent2 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli2_',</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature').</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   • include_silentFeature is now auto-detected from Dict after it is built -- remove any</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   manual include_silentFeature = TRUE/FALSE from shinyplanr_options and add the</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   •   auto-detection line: shinyplanr_options$include_silentFeature &lt;- any(Dict$type == 'SilentFeature')</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

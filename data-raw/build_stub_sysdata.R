@@ -82,7 +82,7 @@ Dict <- data.frame(
 )
 
 # Schema version (must match .shinyplanr_schema_version in config_schema.R)
-schema_version <- 2L
+schema_version <- 3L
 
 # ---------------------------------------------------------------------------
 # Options (stub)
@@ -160,6 +160,12 @@ sidebar <- list(
     slider_vars = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
       categoryOut = TRUE, byCategory = FALSE
     ),
+    # SilentFeature: stub Dict has no SilentFeature rows, so this returns an
+    # empty data frame. The UI switchSilentFeatures div will remain hidden.
+    slider_varsSilent = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "silent_sli_",
+      categoryOut = TRUE, byCategory = TRUE,
+      dataType = "SilentFeature"
+    ),
     slider_varsBioR = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
       categoryOut = TRUE, byCategory = TRUE,
       dataType = "Bioregion"
@@ -182,6 +188,14 @@ sidebar <- list(
     ),
     Vars2 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
       categoryOut = TRUE
+    ),
+    slider_varsSilent1 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "silent_sli1_",
+      categoryOut = TRUE, byCategory = TRUE,
+      dataType = "SilentFeature"
+    ),
+    slider_varsSilent2 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "silent_sli2_",
+      categoryOut = TRUE, byCategory = TRUE,
+      dataType = "SilentFeature"
     ),
     slider_varsBioR1 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
       categoryOut = TRUE, byCategory = TRUE,
