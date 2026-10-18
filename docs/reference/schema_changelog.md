@@ -35,7 +35,7 @@ number higher than your config's `schema_version`.
 ``` r
 # See everything that has changed since the initial release
 shinyplanr::schema_changelog()
-#> shinyplanr config schema changelog (current version: 2)
+#> shinyplanr config schema changelog (current version: 3)
 #> --------------------------------------------------
 #> 
 #> [v2]
@@ -45,10 +45,38 @@ shinyplanr::schema_changelog()
 #>   •   include `sidebar = sidebar` in config_list. See the current template for the
 #>   •   exact code: shinyplanr:::.write_setup_app
 #> 
+#> [v3]
+#>   • Added SilentFeature support: a new Dict type where individual layers are hidden
+#>   •   from the UI but included in the prioritisation with targets set at category level.
+#>   • In 3_setup_app.R, add slider_varsSilent and slider_varsSilent1/2 to the sidebar block:
+#>   •   scenario$slider_varsSilent = shinyplanr:::fcreate_vars('2scenario_ui_1', Dict, 'silent_sli_',
+#>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),
+#>   •   compare$slider_varsSilent1 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli1_',
+#>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),
+#>   •   compare$slider_varsSilent2 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli2_',
+#>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature').
+#>   • include_silentFeature is now auto-detected from Dict after it is built -- remove any
+#>   •   manual include_silentFeature = TRUE/FALSE from shinyplanr_options and add the
+#>   •   auto-detection line: shinyplanr_options$include_silentFeature <- any(Dict$type == 'SilentFeature')
+#> 
 
 # See only what changed since your config was at version 2
 shinyplanr::schema_changelog(from = 3L)
-#> shinyplanr config schema changelog (current version: 2)
+#> shinyplanr config schema changelog (current version: 3)
 #> --------------------------------------------------
-#> No changelog entries for version >= 3.
+#> 
+#> [v3]
+#>   • Added SilentFeature support: a new Dict type where individual layers are hidden
+#>   •   from the UI but included in the prioritisation with targets set at category level.
+#>   • In 3_setup_app.R, add slider_varsSilent and slider_varsSilent1/2 to the sidebar block:
+#>   •   scenario$slider_varsSilent = shinyplanr:::fcreate_vars('2scenario_ui_1', Dict, 'silent_sli_',
+#>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),
+#>   •   compare$slider_varsSilent1 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli1_',
+#>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature'),
+#>   •   compare$slider_varsSilent2 = shinyplanr:::fcreate_vars('3compare_ui_1', Dict, 'silent_sli2_',
+#>   •     categoryOut = TRUE, byCategory = TRUE, dataType = 'SilentFeature').
+#>   • include_silentFeature is now auto-detected from Dict after it is built -- remove any
+#>   •   manual include_silentFeature = TRUE/FALSE from shinyplanr_options and add the
+#>   •   auto-detection line: shinyplanr_options$include_silentFeature <- any(Dict$type == 'SilentFeature')
+#> 
 ```

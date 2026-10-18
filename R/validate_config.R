@@ -48,6 +48,11 @@
 #'     \code{type == "Feature"} have \code{targetMin}, \code{targetMax}, and
 #'     \code{targetInitial} values in the 0--100 range.  Out-of-range values
 #'     cause \code{prioritizr} to error at solve time.
+#'   \item Within each active \code{SilentFeature} category, all rows share
+#'     identical \code{targetMin}, \code{targetMax}, and \code{targetInitial}
+#'     values.  Because the UI shows only one slider per category, differing
+#'     per-row values would be silently ignored -- the slider can only hold
+#'     one value.
 #' }
 #'
 #' @param Dict A data frame.  The raw (unfiltered) feature dictionary, typically
@@ -103,8 +108,10 @@ validate_dict <- function(Dict, strict = TRUE) {
   # "Climate" rows hold metric columns (e.g. SST trend) used to populate the
   # climate-smart dropdown in mod_2scenario and mod_3compare. They are not
   # features and have no targets, but their nameVariable must exist in raw_sf.
+  # "SilentFeature" rows are individual layers whose targets are set at the
+  # category level via a single slider; individual layers are never shown in the UI.
   .known_types <- c(
-    "Feature", "Cost", "LockIn", "LockOut",
+    "Feature", "SilentFeature", "Cost", "LockIn", "LockOut",
     "Bioregion", "EcosystemServices", "Justification", "Climate"
   )
 
@@ -320,33 +327,36 @@ validate_dict <- function(Dict, strict = TRUE) {
   }
 
   # ---------------------------------------------------------------------------
-  # Check 7: At least one active Feature row exists
+  # Check 7: At least one active Feature or SilentFeature row exists
   # ---------------------------------------------------------------------------
   # Only meaningful when includeApp is logical; skip if Check 2 failed.
   if (isTRUE(results[["includeApp_is_logical"]])) {
-    n_active_features <- sum(Dict$includeApp & Dict$type == "Feature", na.rm = TRUE)
+    n_active_features <- sum(
+      Dict$includeApp & Dict$type %in% c("Feature", "SilentFeature"),
+      na.rm = TRUE
+    )
     .check(
       "at_least_one_active_feature",
       n_active_features >= 1,
       paste0(
-        "Dict_Feature.csv has no rows with type == \"Feature\" AND ",
-        "includeApp == TRUE.\n",
+        "Dict_Feature.csv has no rows with type == \"Feature\" or ",
+        "\"SilentFeature\" AND includeApp == TRUE.\n",
         "  The app cannot run a prioritisation without at least one active ",
         "feature.\n",
-        "  Fix: set includeApp = TRUE for at least one Feature row in ",
-        "Dict_Feature.csv."
+        "  Fix: set includeApp = TRUE for at least one Feature or SilentFeature ",
+        "row in Dict_Feature.csv."
       )
     )
   }
 
   # ---------------------------------------------------------------------------
-  # Check 6: Active Feature rows have target values in 0-100 range
+  # Check 8: Active Feature and SilentFeature rows have target values in 0-100 range
   # ---------------------------------------------------------------------------
   # Only meaningful when includeApp is logical; skip if Check 2 failed.
   if (isTRUE(results[["includeApp_is_logical"]])) {
     active_features <- Dict |>
-      dplyr::filter(.data$includeApp, .data$type == "Feature") |>
-      dplyr::select("nameVariable", "targetMin", "targetMax", "targetInitial")
+      dplyr::filter(.data$includeApp, .data$type %in% c("Feature", "SilentFeature")) |>
+      dplyr::select("nameVariable", "type", "targetMin", "targetMax", "targetInitial")
 
     if (nrow(active_features) > 0) {
       out_of_range <- active_features |>
@@ -362,13 +372,62 @@ validate_dict <- function(Dict, strict = TRUE) {
         length(out_of_range) == 0,
         if (length(out_of_range) > 0) {
           paste0(
-            length(out_of_range), " active Feature row(s) in Dict_Feature.csv ",
+            length(out_of_range), " active Feature/SilentFeature row(s) in Dict_Feature.csv ",
             "have target values outside the 0-100 range:\n",
             "  ", paste(out_of_range, collapse = ", "), "\n",
             "  targetMin, targetMax, and targetInitial must all be between 0 ",
             "and 100 (inclusive).\n",
             "  These values are used as percentage targets in the ",
             "prioritisation slider UI."
+          )
+        }
+      )
+    }
+  }
+
+  # ---------------------------------------------------------------------------
+  # Check 9: Within each active SilentFeature category, targets are identical
+  # ---------------------------------------------------------------------------
+  # The UI renders ONE slider per SilentFeature category (keyed on categoryID).
+  # That slider has a single min, max, and initial value.  If rows within the
+  # same category carry different target values in the CSV, the slider can only
+  # honour one of them -- the others are silently ignored.  Catching this here
+  # prevents a confusing mismatch between what the CSV says and what the app
+  # actually applies.
+  #
+  # Only active rows (includeApp == TRUE) are checked: inactive rows may carry
+  # placeholder values and are never used by the slider system.
+  if (isTRUE(results[["includeApp_is_logical"]])) {
+    silent_active <- Dict |>
+      dplyr::filter(.data$includeApp, .data$type == "SilentFeature")
+
+    if (nrow(silent_active) > 0) {
+      silent_target_check <- silent_active |>
+        dplyr::group_by(.data$categoryID) |>
+        dplyr::summarise(
+          n_min     = dplyr::n_distinct(.data$targetMin,     na.rm = FALSE),
+          n_max     = dplyr::n_distinct(.data$targetMax,     na.rm = FALSE),
+          n_initial = dplyr::n_distinct(.data$targetInitial, na.rm = FALSE),
+          .groups = "drop"
+        ) |>
+        dplyr::filter(.data$n_min > 1 | .data$n_max > 1 | .data$n_initial > 1)
+
+      .check(
+        "silentfeature_targets_identical_within_category",
+        nrow(silent_target_check) == 0,
+        if (nrow(silent_target_check) > 0) {
+          paste0(
+            nrow(silent_target_check), " SilentFeature category/ies have ",
+            "inconsistent target values across their rows:\n",
+            paste(
+              sprintf("  categoryID='%s'", silent_target_check$categoryID),
+              collapse = "\n"
+            ), "\n",
+            "  The UI shows ONE slider per SilentFeature category, so all rows ",
+            "in a category must share the same targetMin, targetMax, and ",
+            "targetInitial.\n",
+            "  Fix: set identical target values on every active row for each ",
+            "affected category in Dict_Feature.csv."
           )
         }
       )
@@ -514,8 +573,10 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   if (inherits(raw_sf, "sf") && is.data.frame(Dict)) {
     # "Climate" columns are selected at runtime by fdefine_problem() when the
     # user picks a climate metric, so they must be present in raw_sf.
+    # "SilentFeature" columns are individual layers passed to prioritizr even
+    # though only category-level sliders are shown in the UI.
     types_with_cols <- c(
-      "Feature", "Cost", "LockIn", "LockOut", "Bioregion",
+      "Feature", "SilentFeature", "Cost", "LockIn", "LockOut", "Bioregion",
       "EcosystemServices", "Climate"
     )
     dict_vars <- Dict %>%
@@ -618,7 +679,7 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # -------------------------------------------------------------------------
   if (inherits(raw_sf, "sf") && is.data.frame(Dict)) {
     feature_vars <- Dict %>%
-      dplyr::filter(.data$type == "Feature") %>%
+      dplyr::filter(.data$type %in% c("Feature", "SilentFeature")) %>%
       dplyr::pull("nameVariable")
 
     raw_data <- sf::st_drop_geometry(raw_sf)
@@ -755,7 +816,7 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # -------------------------------------------------------------------------
   if (is.data.frame(Dict)) {
     feature_dict <- Dict %>%
-      dplyr::filter(.data$type == "Feature") %>%
+      dplyr::filter(.data$type %in% c("Feature", "SilentFeature")) %>%
       dplyr::select("nameVariable", "targetMin", "targetMax", "targetInitial")
 
     if (nrow(feature_dict) > 0) {

@@ -86,10 +86,8 @@ Before deploying, lock the exact versions of all packages used
 (including shinyplanr) to ensure the deployed app is identical to your
 local test:
 
-``` r
-
-renv::snapshot()
-```
+\
+`renv``::`[`snapshot`](https://rstudio.github.io/renv/reference/snapshot.html)`(``)`
 
 This writes `renv.lock`. **Commit this file** to version control if you
 are using git.
@@ -116,14 +114,12 @@ are using git.
 
 When a new version of shinyplanr is released and you want to upgrade:
 
-``` r
-
-renv::update("shinyplanr")      # Install new version
-source("setup/3_setup_app.R")  # Regenerate config
-shiny::runApp()                 # Test locally
-renv::snapshot()                # Update lock file
-source("deploy.R")              # Deploy
-```
+\
+`renv``::`[`update`](https://rstudio.github.io/renv/reference/update.html)`(``"shinyplanr"``)``      ``# Install new version`\
+[`source`](https://rdrr.io/r/base/source.html)`(``"setup/3_setup_app.R"``)``  ``# Regenerate config`\
+`shiny``::`[`runApp`](https://rdrr.io/pkg/shiny/man/runApp.html)`(``)``                 ``# Test locally`\
+`renv``::`[`snapshot`](https://rstudio.github.io/renv/reference/snapshot.html)`(``)``                ``# Update lock file`\
+[`source`](https://rdrr.io/r/base/source.html)`(``"deploy.R"``)``              ``# Deploy`
 
 If the new version has an incompatible config schema,
 [`load_config()`](https://spatialplanning.github.io/shinyplanr/reference/load_config.md)
@@ -138,23 +134,19 @@ You only need to do this once per Posit Connect account:
 2.  Create an API key: **Account → API Keys → New API Key**
 3.  In R, run:
 
-``` r
-
-rsconnect::setAccountInfo(
-  name   = "your-account-name",
-  token  = "your-token",
-  secret = "your-secret"
-)
-```
+\
+`rsconnect``::`[`setAccountInfo`](https://rstudio.github.io/rsconnect/reference/setAccountInfo.html)`(`\
+`  name   ``=`` ``"your-account-name"``,`\
+`  token  ``=`` ``"your-token"``,`\
+`  secret ``=`` ``"your-secret"`\
+`)`
 
 ## Step 10: Deploy to Posit Connect
 
 Run the deployment script:
 
-``` r
-
-source("deploy.R")
-```
+\
+[`source`](https://rdrr.io/r/base/source.html)`(``"deploy.R"``)`
 
 This calls
 [`rsconnect::deployApp()`](https://rstudio.github.io/rsconnect/reference/deployApp.html)
@@ -232,3 +224,66 @@ was not called, or failed silently. Check that `app.R` in the project
 root calls `shinyplanr::load_config("config/shinyplanr_config.rds")`
 before
 [`shinyplanr::run_app()`](https://spatialplanning.github.io/shinyplanr/reference/run_app.md).
+
+### Interactive maps (Layer Information / Explore / Coverage) are much slower on Posit Connect Cloud than on localhost
+
+This is a **known characteristic of the `leafgl` WebGL rendering
+package**, not a bug specific to your deployment, and it gets worse as
+planning-unit count grows.
+
+**Root cause:**
+[`leafgl::addGlPolygons()`](https://r-spatial.github.io/leafgl/reference/addGlPoints.html)
+has no incremental-update API. Every call — whether you’re changing the
+fill colour, switching layers, or clicking a planning unit —
+re-serialises the **entire** polygon geometry to GeoJSON and pushes it
+fresh over the Shiny websocket. There is no way to “just recolour” a
+layer already on the map. For a grid of ~30,000 hexagonal planning units
+this payload is several megabytes of JSON *per render*.
+
+On your local machine, the Shiny websocket runs over loopback
+(effectively instant, unlimited bandwidth), so this cost is invisible.
+On Posit Connect Cloud, that same payload travels over the real internet
+to the browser, so the cost is paid in full on every layer change — this
+is a network latency/bandwidth problem, not primarily a CPU or RAM
+sizing problem. Increasing your Connect Cloud instance size (RAM/CPU)
+will **not** fix this, because the bottleneck is data transfer, not
+computation.
+
+**What shinyplanr does to mitigate this:**
+
+- Coordinate precision sent to the browser is truncated to 5 decimal
+  degrees (~1.1 m at the equator) via
+  `leafgl::addGlPolygons(..., digits = 5)`, roughly halving the JSON
+  payload size with no visible effect on the map (planning units are
+  always much larger than 1 m). See the code comments in
+  `mod_4afeatures.R`, `mod_2scenario.R`, and `mod_5coverage.R` for
+  details.
+- Planning-unit polygons should already be as simple as possible:
+  `spatialgridr::get_grid(output = "sf_hex")` produces hexagons with the
+  minimum 7 coordinate rows (6 vertices + closing point). There is no
+  further simplification available without changing the grid shape
+  itself.
+- A previous attempt to cache a static “base” WebGL layer across
+  dropdown changes (to avoid resending the full grid) was tried and then
+  **reverted**, because it only reduced payload on binary-to-binary
+  layer switches (Feature → LockIn → LockOut) and added overhead for the
+  more common case of users browsing freely across layer types (Feature,
+  Cost, Climate, Bioregion, etc.) — a net loss for typical usage
+  patterns.
+
+**What you can additionally check:**
+
+- Confirm your Posit Connect Cloud instance’s paid tier actually
+  increases usable network/CPU throughput and not just RAM headroom —
+  check Posit’s current documentation, as this is not something
+  shinyplanr can control or verify from the app code.
+- Verify (via your browser’s DevTools → Network tab) that HTTP/websocket
+  responses are compressed (`content-encoding: gzip` or `br`) — highly
+  repetitive JSON payloads like GeoJSON compress very well, and if
+  compression is disabled at the proxy layer this cost is paid in full.
+- If interactive map performance remains a persistent problem for a
+  large deployment, consider raising this with the shinyplanr
+  maintainers: a longer-term architectural fix under consideration is
+  migrating these maps from `leaflet`/`leafgl` to the `mapgl` package
+  (MapLibre GL JS bindings), which supports true client-side re-styling
+  (`setPaintProperty()`) without re-uploading geometry on every change.

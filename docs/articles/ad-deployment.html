@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">shinyplanr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,6 +49,7 @@
     <li><a class="dropdown-item" href="../articles/ad-deployment.html">Deploying shinyplanr</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -269,7 +270,23 @@ Re-run setup/3_setup_app.R to regenerate the config with the current schema.</co
 </section><section class="level3"><h3 id="value-for-dict-not-found-or-similar">“value for ‘Dict’ not found” or similar<a class="anchor" aria-label="anchor" href="#value-for-dict-not-found-or-similar"></a>
 </h3>
 <p><code><a href="../reference/load_config.html">load_config()</a></code> was not called, or failed silently. Check that <code>app.R</code> in the project root calls <code>shinyplanr::load_config("config/shinyplanr_config.rds")</code> before <code><a href="../reference/run_app.html">shinyplanr::run_app()</a></code>.</p>
-</section></section><script id="quarto-html-after-body" type="application/javascript">
+</section><section class="level3"><h3 id="interactive-maps-layer-information-explore-coverage-are-much-slower-on-posit-connect-cloud-than-on-localhost">Interactive maps (Layer Information / Explore / Coverage) are much slower on Posit Connect Cloud than on localhost<a class="anchor" aria-label="anchor" href="#interactive-maps-layer-information-explore-coverage-are-much-slower-on-posit-connect-cloud-than-on-localhost"></a>
+</h3>
+<p>This is a <strong>known characteristic of the <code>leafgl</code> WebGL rendering package</strong>, not a bug specific to your deployment, and it gets worse as planning-unit count grows.</p>
+<p><strong>Root cause:</strong> <code><a href="https://r-spatial.github.io/leafgl/reference/addGlPoints.html" class="external-link">leafgl::addGlPolygons()</a></code> has no incremental-update API. Every call — whether you’re changing the fill colour, switching layers, or clicking a planning unit — re-serialises the <strong>entire</strong> polygon geometry to GeoJSON and pushes it fresh over the Shiny websocket. There is no way to “just recolour” a layer already on the map. For a grid of ~30,000 hexagonal planning units this payload is several megabytes of JSON <em>per render</em>.</p>
+<p>On your local machine, the Shiny websocket runs over loopback (effectively instant, unlimited bandwidth), so this cost is invisible. On Posit Connect Cloud, that same payload travels over the real internet to the browser, so the cost is paid in full on every layer change — this is a network latency/bandwidth problem, not primarily a CPU or RAM sizing problem. Increasing your Connect Cloud instance size (RAM/CPU) will <strong>not</strong> fix this, because the bottleneck is data transfer, not computation.</p>
+<p><strong>What shinyplanr does to mitigate this:</strong></p>
+<ul>
+<li>Coordinate precision sent to the browser is truncated to 5 decimal degrees (~1.1 m at the equator) via <code>leafgl::addGlPolygons(..., digits = 5)</code>, roughly halving the JSON payload size with no visible effect on the map (planning units are always much larger than 1 m). See the code comments in <code>mod_4afeatures.R</code>, <code>mod_2scenario.R</code>, and <code>mod_5coverage.R</code> for details.</li>
+<li>Planning-unit polygons should already be as simple as possible: <code>spatialgridr::get_grid(output = "sf_hex")</code> produces hexagons with the minimum 7 coordinate rows (6 vertices + closing point). There is no further simplification available without changing the grid shape itself.</li>
+<li>A previous attempt to cache a static “base” WebGL layer across dropdown changes (to avoid resending the full grid) was tried and then <strong>reverted</strong>, because it only reduced payload on binary-to-binary layer switches (Feature → LockIn → LockOut) and added overhead for the more common case of users browsing freely across layer types (Feature, Cost, Climate, Bioregion, etc.) — a net loss for typical usage patterns.</li>
+</ul>
+<p><strong>What you can additionally check:</strong></p>
+<ul>
+<li>Confirm your Posit Connect Cloud instance’s paid tier actually increases usable network/CPU throughput and not just RAM headroom — check Posit’s current documentation, as this is not something shinyplanr can control or verify from the app code.</li>
+<li>Verify (via your browser’s DevTools → Network tab) that HTTP/websocket responses are compressed (<code>content-encoding: gzip</code> or <code>br</code>) — highly repetitive JSON payloads like GeoJSON compress very well, and if compression is disabled at the proxy layer this cost is paid in full.</li>
+<li>If interactive map performance remains a persistent problem for a large deployment, consider raising this with the shinyplanr maintainers: a longer-term architectural fix under consideration is migrating these maps from <code>leaflet</code>/<code>leafgl</code> to the <code>mapgl</code> package (MapLibre GL JS bindings), which supports true client-side re-styling (<code>setPaintProperty()</code>) without re-uploading geometry on every change.</li>
+</ul></section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

@@ -729,6 +729,115 @@ test_that("validate_dict() passes check 6 when an inactive Feature has out-of-ra
 })
 
 # ---------------------------------------------------------------------------
+# Check 9: SilentFeature targets identical within each active category
+# ---------------------------------------------------------------------------
+
+make_dict_with_silent <- function() {
+  # Two active SilentFeature rows in the same category ("Sea"), plus one
+  # regular Feature row so Check 7 (at_least_one_active_feature) passes.
+  data.frame(
+    nameCommon    = c("Feature A", "Silent 1", "Silent 2"),
+    nameVariable  = c("feature_A", "silent_1", "silent_2"),
+    category      = c("Habitat",   "Sea",      "Sea"),
+    categoryID    = c("Hab",       "Sea",      "Sea"),
+    type          = c("Feature",   "SilentFeature", "SilentFeature"),
+    targetInitial = c(30,          25,         25),
+    targetMin     = c(0,           0,          0),
+    targetMax     = c(85,          50,         50),
+    includeApp    = c(TRUE,        TRUE,       TRUE),
+    includeJust   = c(TRUE,        TRUE,       TRUE),
+    units         = c("",          "",         ""),
+    justification = c("Stub A.",   "Stub S1.", "Stub S2."),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("validate_dict() passes check 9 when SilentFeature targets are identical within a category", {
+  d <- make_dict_with_silent()
+  expect_message(
+    validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+test_that("validate_dict() fails check 9 when SilentFeature targetMin differs within a category", {
+  d <- make_dict_with_silent()
+  d$targetMin[d$nameVariable == "silent_2"] <- 10  # differs from silent_1 (0)
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "silentfeature_targets_identical_within_category"
+  )
+})
+
+test_that("validate_dict() fails check 9 when SilentFeature targetMax differs within a category", {
+  d <- make_dict_with_silent()
+  d$targetMax[d$nameVariable == "silent_2"] <- 60  # differs from silent_1 (50)
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "silentfeature_targets_identical_within_category"
+  )
+})
+
+test_that("validate_dict() fails check 9 when SilentFeature targetInitial differs within a category", {
+  d <- make_dict_with_silent()
+  d$targetInitial[d$nameVariable == "silent_2"] <- 40  # differs from silent_1 (25)
+  expect_error(
+    suppressMessages(validate_dict(d, strict = TRUE)),
+    regexp = "silentfeature_targets_identical_within_category"
+  )
+})
+
+test_that("validate_dict() passes check 9 when inconsistent SilentFeature rows are inactive", {
+  # Inactive rows (includeApp == FALSE) are not checked — they may carry
+  # placeholder values and are never used by the slider system.
+  d <- make_dict_with_silent()
+  d$targetMin[d$nameVariable == "silent_2"] <- 99   # would fail if active
+  d$includeApp[d$nameVariable == "silent_2"] <- FALSE
+  expect_message(
+    validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+test_that("validate_dict() passes check 9 when there are no SilentFeature rows at all", {
+  d <- make_valid_dict()  # no SilentFeature rows
+  expect_false(any(d$type == "SilentFeature"))
+  expect_message(
+    validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+test_that("validate_dict() passes check 9 when two SilentFeature categories each have consistent (but different) targets", {
+  # "Sea" and "Land" are separate categories — they are allowed to have
+  # different target values from each other; only within-category consistency
+  # is required.
+  d <- make_dict_with_silent()
+  # Add a second SilentFeature category "Land" with different (but internally
+  # consistent) targets.
+  land_rows <- data.frame(
+    nameCommon    = c("Land 1", "Land 2"),
+    nameVariable  = c("land_1", "land_2"),
+    category      = c("Land",   "Land"),
+    categoryID    = c("Land",   "Land"),
+    type          = c("SilentFeature", "SilentFeature"),
+    targetInitial = c(10,       10),
+    targetMin     = c(5,        5),
+    targetMax     = c(40,       40),
+    includeApp    = c(TRUE,     TRUE),
+    includeJust   = c(TRUE,     TRUE),
+    units         = c("",       ""),
+    justification = c("L1.",    "L2."),
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, land_rows)
+  expect_message(
+    validate_dict(d2, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+# ---------------------------------------------------------------------------
 # strict = FALSE: collects all failures, returns named list, warns not errors
 # ---------------------------------------------------------------------------
 

@@ -17,7 +17,7 @@
 #
 # Coverage gap: the coverage report shows get_lockIn() and get_lockOut() at
 # 0% because the existing tests only exercise fget_targets() and
-# fget_targets_with_bioregions(). These tests close that gap.
+# fget_targets_expanded(). These tests close that gap.
 
 # ---------------------------------------------------------------------------
 # get_lockIn() — no locked-in inputs

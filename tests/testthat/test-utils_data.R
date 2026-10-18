@@ -13,7 +13,7 @@
 # or external solver dependency. They can be fully unit-tested with synthetic
 # data frames and sf objects.
 #
-# fget_targets() and fget_targets_with_bioregions() are already tested in
+# fget_targets() and fget_targets_expanded() are already tested in
 # test-utils_server.R (the file predates the rename of the test file).
 # fget_feature_representation() requires a solved prioritizr problem and is
 # excluded from unit tests here.

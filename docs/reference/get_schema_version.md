@@ -19,5 +19,5 @@ An integer scalar.
 
 ``` r
 shinyplanr::get_schema_version()
-#> [1] 2
+#> [1] 3
 ```

@@ -46,11 +46,9 @@ and community groups — through a standard web browser.
 
 You can install the development version from GitHub:
 
-``` r
-
-# install.packages("pak")
-pak::pak("SpatialPlanning/shinyplanr")
-```
+\
+`# install.packages("pak")`\
+`pak``::`[`pak`](https://pak.r-lib.org/reference/pak.html)`(``"SpatialPlanning/shinyplanr"``)`
 
 ## Getting started
 
