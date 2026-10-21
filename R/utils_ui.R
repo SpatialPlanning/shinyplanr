@@ -53,7 +53,11 @@ fcreate_vars <- function(id, Dict, name_check = "check",
         dplyr::summarise(
           id = dplyr::first(.data$id),
           id_in = paste0("master_", name_check, dplyr::first(.data$categoryID)),
-          nameCommon = dplyr::first(.data$category),
+          nameCommon = if (dataType == "SilentFeature") {
+            paste0(dplyr::first(.data$category), " (n = ", dplyr::n(), ")")
+          } else {
+            dplyr::first(.data$category)
+          },
           targetMin = min(.data$targetMin, na.rm = TRUE),
           targetMax = max(.data$targetMax, na.rm = TRUE),
           targetInitial = round(mean(.data$targetInitial, na.rm = TRUE)),

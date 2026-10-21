@@ -205,6 +205,56 @@ test_that("fcreate_vars() byCategory targetInitial is rounded mean across catego
 })
 
 # ---------------------------------------------------------------------------
+# fcreate_vars() — SilentFeature label includes (n = XX) count
+# ---------------------------------------------------------------------------
+
+test_that("fcreate_vars() SilentFeature byCategory labels include (n = XX) count", {
+  dict_silent <- data.frame(
+    nameCommon    = c("Wahoo", "Mahi Mahi", "Swordfish", "Black Noddy", "Brown Noddy"),
+    nameVariable  = c("wahoo", "mahi", "sword", "b_noddy", "br_noddy"),
+    category      = c("Fish", "Fish", "Fish", "Birds", "Birds"),
+    categoryID    = c("Fish", "Fish", "Fish", "Birds", "Birds"),
+    type          = rep("SilentFeature", 5),
+    targetInitial = rep(30L, 5),
+    targetMin     = rep(0L, 5),
+    targetMax     = rep(85L, 5),
+    includeApp    = rep(TRUE, 5),
+    includeJust   = rep(TRUE, 5),
+    justification = rep("", 5),
+    stringsAsFactors = FALSE
+  )
+
+  result <- shinyplanr:::fcreate_vars(
+    id          = "mod1",
+    Dict        = dict_silent,
+    name_check  = "silent_sli_",
+    categoryOut = TRUE,
+    byCategory  = TRUE,
+    dataType    = "SilentFeature"
+  )
+
+  # Fish has 3 features, Birds has 2 features
+  expect_equal(nrow(result), 2L)
+  expect_true("Fish (n = 3)" %in% result$nameCommon)
+  expect_true("Birds (n = 2)" %in% result$nameCommon)
+})
+
+test_that("fcreate_vars() Feature byCategory labels do NOT include (n = XX) count", {
+  result <- shinyplanr:::fcreate_vars(
+    id          = "mod1",
+    Dict        = make_dict_ui(),
+    name_check  = "sli_",
+    categoryOut = TRUE,
+    byCategory  = TRUE,
+    dataType    = "Feature"
+  )
+
+  # Regular Feature labels should be plain category names, no count suffix
+  expect_false(any(grepl("\\(n = ", result$nameCommon)))
+  expect_setequal(result$nameCommon, c("Habitat", "Coral"))
+})
+
+# ---------------------------------------------------------------------------
 # fcreate_check() — basic structure
 # ---------------------------------------------------------------------------
 
