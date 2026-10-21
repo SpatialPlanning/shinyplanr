@@ -57,7 +57,7 @@ mod_3compare_ui <- function(id, cfg) {
         # exist in Dict (see utils_server.R fapply_ui_switches()). Each slider
         # represents one category; individual layers are never shown in the UI
         # but all receive the same target value when the prioritisation runs.
-        shiny::h3(paste0("1.", length(unique(Vars1$category)) + 1, " Silent Features")),
+        shiny::h3(paste0("1.", length(unique(Vars1$category)) + 1, " Grouped Features")),
         shiny::splitLayout(
           fcustom_sliderCategory(slider_varsSilent1, labelNum = 1, byCategory = TRUE),
           fcustom_sliderCategory(slider_varsSilent2,
