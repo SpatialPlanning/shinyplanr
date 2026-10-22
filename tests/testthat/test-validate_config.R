@@ -2,7 +2,7 @@
 #
 # Tests for validate_shinyplanr_data() — exported public function.
 # Uses a minimal valid config (schema v2, no `vars` key) and mutates it
-# to trigger each of the 10 internal checks individually.
+# to trigger each of the 11 internal checks individually.
 
 # ---------------------------------------------------------------------------
 # Helper: build a minimal valid config matching schema v2
@@ -343,6 +343,120 @@ test_that("validate_shinyplanr_data() fails check 10 when targetMax exceeds 100"
 })
 
 # ---------------------------------------------------------------------------
+# Check 11: No active Cost columns contain zero values
+# ---------------------------------------------------------------------------
+
+# Helper: extend the valid config with a Cost row in Dict and a cost column
+# in raw_sf so that check 11 has something to exercise.
+make_config_with_cost <- function(cost_values = c(10, 20)) {
+  cfg <- make_valid_config_v2()
+
+  cost_row <- data.frame(
+    nameCommon    = "Fishing effort",
+    nameVariable  = "cost_fishing",
+    category      = "Cost",
+    categoryID    = "Cost",
+    type          = "Cost",
+    targetInitial = NA_real_,
+    targetMin     = NA_real_,
+    targetMax     = NA_real_,
+    includeApp    = TRUE,
+    includeJust   = TRUE,
+    units         = "hours",
+    justification = "Fishing effort.",
+    stringsAsFactors = FALSE
+  )
+  cfg$Dict <- rbind(cfg$Dict, cost_row)
+
+  # Add the cost column to raw_sf (geometry is sticky — just mutate)
+  cfg$raw_sf$cost_fishing <- cost_values
+
+  cfg
+}
+
+test_that("validate_shinyplanr_data() passes check 11 when Cost column has no zeros", {
+  cfg <- make_config_with_cost(cost_values = c(10, 20))
+  expect_message(
+    result <- validate_shinyplanr_data(cfg, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+  expect_true(result)
+})
+
+test_that("validate_shinyplanr_data() fails check 11 when a Cost column contains a zero", {
+  cfg <- make_config_with_cost(cost_values = c(0, 20))
+  expect_error(
+    suppressMessages(validate_shinyplanr_data(cfg, strict = TRUE)),
+    regexp = "no_cost_columns_contain_zeros"
+  )
+})
+
+test_that("validate_shinyplanr_data() fails check 11 when all Cost values are zero", {
+  cfg <- make_config_with_cost(cost_values = c(0, 0))
+  expect_error(
+    suppressMessages(validate_shinyplanr_data(cfg, strict = TRUE)),
+    regexp = "no_cost_columns_contain_zeros"
+  )
+})
+
+test_that("validate_shinyplanr_data() passes check 11 when no Cost rows exist in Dict", {
+  # make_valid_config_v2() has no Cost rows — check 11 should be skipped entirely
+  cfg <- make_valid_config_v2()
+  expect_false(any(cfg$Dict$type == "Cost"))
+  expect_message(
+    result <- validate_shinyplanr_data(cfg, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+  expect_true(result)
+})
+
+test_that("validate_shinyplanr_data() passes check 11 for Cost_None regardless of values", {
+  # Cost_None is a synthetic equal-area layer — it is excluded from check 11
+  # because it is not a real data column and may legitimately contain zeros.
+  # We add it to raw_sf with a zero value to confirm check 11 ignores it.
+  cfg <- make_valid_config_v2()
+  cost_none_row <- data.frame(
+    nameCommon    = "Equal area",
+    nameVariable  = "Cost_None",
+    category      = "Cost",
+    categoryID    = "Cost",
+    type          = "Cost",
+    targetInitial = NA_real_,
+    targetMin     = NA_real_,
+    targetMax     = NA_real_,
+    includeApp    = TRUE,
+    includeJust   = TRUE,
+    units         = "",
+    justification = "Equal area.",
+    stringsAsFactors = FALSE
+  )
+  cfg$Dict <- rbind(cfg$Dict, cost_none_row)
+  # Add Cost_None as a column with zeros — check 11 must not flag it
+  cfg$raw_sf$Cost_None <- c(0, 0)
+  expect_message(
+    result <- validate_shinyplanr_data(cfg, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+  expect_true(result)
+})
+
+test_that("validate_shinyplanr_data() check 11 error message names the offending column", {
+  cfg <- make_config_with_cost(cost_values = c(0, 5))
+  expect_error(
+    suppressMessages(validate_shinyplanr_data(cfg, strict = TRUE)),
+    regexp = "cost_fishing"
+  )
+})
+
+test_that("validate_shinyplanr_data() with strict=FALSE records check 11 failure without stopping", {
+  cfg <- make_config_with_cost(cost_values = c(0, 20))
+  result <- suppressWarnings(suppressMessages(
+    validate_shinyplanr_data(cfg, strict = FALSE)
+  ))
+  expect_false(isTRUE(result[["no_cost_columns_contain_zeros"]]))
+})
+
+# ---------------------------------------------------------------------------
 # strict = FALSE: collects all failures, returns named list, warns not errors
 # ---------------------------------------------------------------------------
 
@@ -541,17 +655,31 @@ test_that("validate_dict() passes check 3 for all known type values", {
 })
 
 # ---------------------------------------------------------------------------
-# Check 4: nameVariable unique within type
+# Check 4: nameVariable unique within type (active rows only)
 # ---------------------------------------------------------------------------
 
-test_that("validate_dict() fails check 4 when nameVariable is duplicated within a type", {
+test_that("validate_dict() fails check 4 when nameVariable is duplicated within a type (both active)", {
   d <- make_valid_dict()
-  # Add a second Feature row with the same nameVariable as the first
-  dup_row <- d[1, ]
+  # Add a second active Feature row with the same nameVariable as the first
+  dup_row <- d[1, ] # row 1 has includeApp = TRUE
   d2 <- rbind(d, dup_row)
   expect_error(
     suppressMessages(validate_dict(d2, strict = TRUE)),
     regexp = "nameVariable_unique_within_type"
+  )
+})
+
+test_that("validate_dict() passes check 4 when duplicate nameVariable has includeApp = FALSE", {
+  # The Kiribati scenario: same nameVariable appears twice in the same type,
+  # but one row is excluded (includeApp = FALSE). The excluded row cannot
+  # cause duplicate slider IDs or prioritizr errors, so this must pass.
+  d <- make_valid_dict()
+  inactive_dup <- d[1, ]
+  inactive_dup$includeApp <- FALSE  # excluded — should not trigger check 4
+  d2 <- rbind(d, inactive_dup)
+  expect_message(
+    validate_dict(d2, strict = TRUE),
+    regexp = "all.*checks passed"
   )
 })
 
@@ -584,9 +712,9 @@ test_that("validate_dict() passes check 4 when same nameVariable appears in Lock
 # Check 5: categoryID consistent (and non-blank) within type+category
 # ---------------------------------------------------------------------------
 
-test_that("validate_dict() fails when categoryID differs within the same type+category", {
+test_that("validate_dict() fails when categoryID differs within the same type+category (active rows)", {
   d <- make_valid_dict()
-  # Add a second Habitat/Feature row with a different categoryID than the
+  # Add a second active Habitat/Feature row with a different categoryID than the
   # existing Habitat rows ("Hab") -- same category, inconsistent categoryID.
   bad_row <- data.frame(
     nameCommon = "Feature C", nameVariable = "feature_C",
@@ -603,7 +731,7 @@ test_that("validate_dict() fails when categoryID differs within the same type+ca
   )
 })
 
-test_that("validate_dict() fails when categoryID is blank on some rows of a category", {
+test_that("validate_dict() fails when categoryID is blank on some active rows of a category", {
   d <- make_valid_dict()
   bad_row <- data.frame(
     nameCommon = "Feature C", nameVariable = "feature_C",
@@ -617,6 +745,25 @@ test_that("validate_dict() fails when categoryID is blank on some rows of a cate
   expect_error(
     suppressMessages(validate_dict(d2, strict = TRUE)),
     regexp = "categoryID_consistent_within_category"
+  )
+})
+
+test_that("validate_dict() passes check 5 when inconsistent categoryID is on an inactive row", {
+  # An inactive row with a wrong categoryID cannot affect sliders or bioregion
+  # display at runtime, so check 5 must not fire for it.
+  d <- make_valid_dict()
+  inactive_bad <- data.frame(
+    nameCommon = "Feature C", nameVariable = "feature_C",
+    category = "Habitat", categoryID = "WrongID", type = "Feature",
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = FALSE, includeJust = FALSE,  # inactive
+    units = "", justification = "Stub C.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, inactive_bad)
+  expect_message(
+    validate_dict(d2, strict = TRUE),
+    regexp = "all.*checks passed"
   )
 })
 
@@ -664,18 +811,45 @@ test_that("validate_dict() passes when categoryOrder is numeric and consistent p
   )
 })
 
-test_that("validate_dict() fails when categoryOrder differs within the same type+category", {
+test_that("validate_dict() fails when categoryOrder differs within the same type+category (active rows)", {
   d <- make_valid_dict()
-  d$categoryOrder <- c(1, 2, 3, 4) # Habitat rows (1,2) disagree
+  # Add a second active Habitat/Feature row so both rows in the category are
+  # active, then give them different categoryOrder values.
+  extra <- data.frame(
+    nameCommon = "Feature C", nameVariable = "feature_C",
+    category = "Habitat", categoryID = "Hab", type = "Feature",
+    targetInitial = 30, targetMin = 0, targetMax = 85,
+    includeApp = TRUE, includeJust = TRUE,
+    units = "", justification = "Stub C.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, extra)
+  # Rows 1 and 5 are both active Habitat/Feature — give them different orders
+  d2$categoryOrder <- c(1, NA, 2, 3, 2)
   expect_error(
-    suppressMessages(validate_dict(d, strict = TRUE)),
+    suppressMessages(validate_dict(d2, strict = TRUE)),
     regexp = "categoryOrder_valid"
   )
 })
 
-test_that("validate_dict() fails when categoryOrder contains a non-numeric value", {
+test_that("validate_dict() passes check 6 when inconsistent categoryOrder is on an inactive row", {
+  # An inactive row with a wrong categoryOrder cannot affect display order at
+  # runtime, so check 6 must not fire for it.
   d <- make_valid_dict()
-  d$categoryOrder <- c("first", "first", "2", "3") # non-numeric
+  # Row 2 (feature_B) is already inactive (includeApp = FALSE) in make_valid_dict().
+  # Give the two Habitat rows different categoryOrder values: the inactive one
+  # disagrees with the active one.
+  d$categoryOrder <- c(1, 99, 2, 3) # row 2 (inactive) has 99, row 1 (active) has 1
+  expect_message(
+    validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+test_that("validate_dict() fails when categoryOrder contains a non-numeric value on an active row", {
+  d <- make_valid_dict()
+  # Row 1 is active — give it a non-numeric categoryOrder
+  d$categoryOrder <- c("first", NA, "2", "3")
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "categoryOrder_valid"
