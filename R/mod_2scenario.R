@@ -279,7 +279,8 @@ mod_2scenario_ui <- function(id, cfg) {
             right = "1%", bottom = "1%", left = "34%"
           ),
           shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
-          shiny::tableOutput(ns("DataTable"))
+          shiny::tableOutput(ns("DataTable")),
+          shiny::uiOutput(ns("silentSection"))
         ),
         tabPanel("Report",
           value = 10,
@@ -602,7 +603,7 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         return(NULL)
       }
 
-      spatialplanr::splnr_plot_featureRep(tpd,
+      spatialplanr::splnr_plot_featureRep(tpd$main,
         category = fget_category(Dict = Dict),
         renameFeatures = TRUE,
         namesToReplace = Dict,
@@ -763,7 +764,7 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     DataTabler <- shiny::reactive({
       # Consume the shared targetPlotData reactive — fget_feature_representation
       # has already been called (and cached) by gg_Target; no duplicate work here.
-      fformat_feature_table(targetPlotData(), Dict)
+      fformat_feature_table(targetPlotData()$main, Dict)
     }) %>%
       shiny::bindEvent(input$analyse)
 
@@ -786,6 +787,33 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       time_date_reactive = analysisTime,
       type = "table"
     )
+
+    # Silent Feature section — only rendered when SilentFeature rows exist.
+    # Uses the $silent element of targetPlotData() (already computed, no extra cost).
+    # renderUI is used so the heading and table are both absent when there are
+    # no SilentFeature rows (avoids an empty h2 appearing in the Details tab).
+    output$silentSection <- shiny::renderUI({
+      tpd <- targetPlotData()
+      if (is.null(tpd) || is.null(tpd$silent)) {
+        return(NULL)
+      }
+      tbl <- fformat_feature_table(tpd$silent, Dict)
+      if (is.null(tbl)) {
+        return(NULL)
+      }
+      shiny::tagList(
+        shiny::span(shiny::h2("Grouped Feature Details")),
+        shiny::tableOutput(session$ns("SilentTable_inner"))
+      )
+    }) %>%
+      shiny::bindEvent(input$analyse)
+
+    output$SilentTable_inner <- shiny::renderTable({
+      tpd <- targetPlotData()
+      if (is.null(tpd) || is.null(tpd$silent)) return(NULL)
+      fformat_feature_table(tpd$silent, Dict)
+    }) %>%
+      shiny::bindEvent(input$analyse)
 
 
     # Ecosystem Services Tab -------------------------------------------------

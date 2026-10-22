@@ -360,9 +360,22 @@ fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
 #' @param targets Targets data frame
 #' @param climate_id Climate input ID (or "NA" if not using climate)
 #' @param options App options list
-#' @param Dict Data dictionary (unused here; retained for API consistency)
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{type} and \code{nameVariable}). Used to split the returned data
+#'   into \code{$main} (non-SilentFeature rows, for the Targets plot) and
+#'   \code{$silent} (SilentFeature rows only, for the Details tab silent
+#'   section). Individual silent layers are never shown in the Targets plot.
 #'
-#' @return Data frame with feature representation
+#' @return A named list with two elements:
+#'   \describe{
+#'     \item{\code{main}}{Data frame of feature representation with
+#'       \code{SilentFeature} rows removed. Passed to
+#'       \code{splnr_plot_featureRep()} and \code{fformat_feature_table()}.}
+#'     \item{\code{silent}}{Data frame of \code{SilentFeature} rows only,
+#'       or \code{NULL} if no \code{SilentFeature} rows exist in \code{Dict}.
+#'       Passed to \code{fformat_feature_table()} for the Details tab silent
+#'       section.}
+#'   }
 #'
 #' @noRd
 #'
@@ -378,13 +391,13 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
   # other non-feature columns from soln. All features in the problem (including
   # those with target = 0) are returned and flagged correctly as incidental.
   if (climate_id == "NA") {
-    targetPlotData <- spatialplanr::splnr_get_featureRep(
+    all_rep <- spatialplanr::splnr_get_featureRep(
       soln = soln,
       pDat = problem_data,
       climsmart = FALSE
     )
   } else {
-    targetPlotData <- spatialplanr::splnr_get_featureRep(
+    all_rep <- spatialplanr::splnr_get_featureRep(
       soln = soln,
       pDat = problem_data,
       climsmart = TRUE,
@@ -393,7 +406,24 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
     )
   }
 
-  return(targetPlotData)
+  # Split into main (non-silent) and silent sections.
+  # Individual SilentFeature layers are never shown in the Targets plot —
+  # showing them individually would be confusing and causes duplicate-factor-
+  # level errors in splnr_plot_featureRep() when multiple layers share the
+  # same nameCommon. They are shown separately in the Details tab.
+  silent_vars <- Dict %>%
+    dplyr::filter(.data$type == "SilentFeature") %>%
+    dplyr::pull("nameVariable")
+
+  if (length(silent_vars) > 0) {
+    main_rep   <- all_rep %>% dplyr::filter(!.data$feature %in% silent_vars)
+    silent_rep <- all_rep %>% dplyr::filter(.data$feature %in% silent_vars)
+  } else {
+    main_rep   <- all_rep
+    silent_rep <- NULL
+  }
+
+  return(list(main = main_rep, silent = silent_rep))
 }
 
 

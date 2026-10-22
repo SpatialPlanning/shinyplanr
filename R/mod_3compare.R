@@ -309,6 +309,7 @@ mod_3compare_ui <- function(id, cfg) {
           shiny::tableOutput(ns("SummaryTable")),
           shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
           shiny::tableOutput(ns("DataTable")),
+          shiny::uiOutput(ns("silentSection")),
         ),
         tabPanel("Report",
           value = 10,
@@ -703,6 +704,7 @@ mod_3compare_server <- function(id, cfg) {
 
     # On-screen reactive — updates when analyse is clicked or sort changes.
     # Consumes targetPlotData1/2() so the expensive data step is not repeated.
+    # Uses $main to exclude SilentFeature rows (shown separately in Details tab).
     ggr_target <- shiny::reactive({
       tpd1 <- targetPlotData1()
       tpd2 <- targetPlotData2()
@@ -712,7 +714,7 @@ mod_3compare_server <- function(id, cfg) {
       }
 
       patchwork::wrap_plots(
-        spatialplanr::splnr_plot_featureRep(tpd1,
+        spatialplanr::splnr_plot_featureRep(tpd1$main,
           nr = 2, showTarget = TRUE,
           category = fget_category(Dict = Dict),
           renameFeatures = TRUE, namesToReplace = Dict,
@@ -721,7 +723,7 @@ mod_3compare_server <- function(id, cfg) {
         ) +
           bar_theme +
           ggplot2::ggtitle("Scenario 1"),
-        spatialplanr::splnr_plot_featureRep(tpd2,
+        spatialplanr::splnr_plot_featureRep(tpd2$main,
           nr = 2, showTarget = TRUE,
           category = fget_category(Dict = Dict),
           renameFeatures = TRUE, namesToReplace = Dict,
@@ -928,8 +930,9 @@ mod_3compare_server <- function(id, cfg) {
     DataTabler <- shiny::reactive({
       # Consume the shared targetPlotData reactives — fget_feature_representation
       # has already been called (and cached) by ggr_target; no duplicate work here.
-      tbl1 <- fformat_feature_table(targetPlotData1(), Dict, suffix = " 1")
-      tbl2 <- fformat_feature_table(targetPlotData2(), Dict, suffix = " 2")
+      # Uses $main to exclude SilentFeature rows (shown separately in Details tab).
+      tbl1 <- fformat_feature_table(targetPlotData1()$main, Dict, suffix = " 1")
+      tbl2 <- fformat_feature_table(targetPlotData2()$main, Dict, suffix = " 2")
 
       if (is.null(tbl1) || is.null(tbl2)) {
         return(NULL)
@@ -954,6 +957,37 @@ mod_3compare_server <- function(id, cfg) {
       gg_reactive = DataTabler, gg_prefix = "DataSummary",
       time_date_reactive = analysisTime, type = "table"
     )
+
+    # Silent Feature section — only rendered when SilentFeature rows exist in either scenario.
+    # Uses the $silent element of targetPlotData1/2() (already computed, no extra cost).
+    # renderUI is used so the heading and table are both absent when there are
+    # no SilentFeature rows (avoids an empty h2 appearing in the Details tab).
+    output$silentSection <- shiny::renderUI({
+      tpd1 <- targetPlotData1()
+      tpd2 <- targetPlotData2()
+      if (is.null(tpd1) || is.null(tpd2)) return(NULL)
+      if (is.null(tpd1$silent) && is.null(tpd2$silent)) return(NULL)
+      tbl1 <- fformat_feature_table(tpd1$silent, Dict, suffix = " 1")
+      tbl2 <- fformat_feature_table(tpd2$silent, Dict, suffix = " 2")
+      if (is.null(tbl1) && is.null(tbl2)) return(NULL)
+      shiny::tagList(
+        shiny::span(shiny::h2("Grouped Feature Details")),
+        shiny::tableOutput(session$ns("SilentTable_inner"))
+      )
+    }) %>%
+      shiny::bindEvent(input$analyse)
+
+    output$SilentTable_inner <- shiny::renderTable({
+      tpd1 <- targetPlotData1()
+      tpd2 <- targetPlotData2()
+      if (is.null(tpd1) || is.null(tpd2)) return(NULL)
+      if (is.null(tpd1$silent) && is.null(tpd2$silent)) return(NULL)
+      tbl1 <- fformat_feature_table(tpd1$silent, Dict, suffix = " 1")
+      tbl2 <- fformat_feature_table(tpd2$silent, Dict, suffix = " 2")
+      if (is.null(tbl1) || is.null(tbl2)) return(NULL)
+      dplyr::full_join(tbl1, tbl2, by = c("Category", "Feature"))
+    }) %>%
+      shiny::bindEvent(input$analyse)
 
     ## Log Tab -----------------------------------------------------------------
     # Render log text for Scenario 1
