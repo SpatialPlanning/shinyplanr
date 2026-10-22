@@ -360,9 +360,13 @@ fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
 #' @param targets Targets data frame
 #' @param climate_id Climate input ID (or "NA" if not using climate)
 #' @param options App options list
-#' @param Dict Data dictionary (unused here; retained for API consistency)
+#' @param Dict Data frame. The feature dictionary (must contain columns
+#'   \code{type} and \code{nameVariable}). Used to filter out
+#'   \code{SilentFeature} rows from the returned data — individual silent
+#'   layers are never shown in the UI and must not appear in the Targets plot.
 #'
-#' @return Data frame with feature representation
+#' @return Data frame with feature representation, with \code{SilentFeature}
+#'   rows removed.
 #'
 #' @noRd
 #'
@@ -391,6 +395,20 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
       climsmartApproach = options$climate_change,
       targets = targets
     )
+  }
+
+  # Remove SilentFeature individual layers from the plot data.
+  # Individual SilentFeature layers are never shown in the UI (only a single
+  # category-level slider is visible). Showing them individually in the Targets
+  # plot would be confusing and causes duplicate-factor-level errors in
+  # splnr_plot_featureRep() when multiple layers share the same nameCommon.
+  silent_vars <- Dict %>%
+    dplyr::filter(.data$type == "SilentFeature") %>%
+    dplyr::pull("nameVariable")
+
+  if (length(silent_vars) > 0) {
+    targetPlotData <- targetPlotData %>%
+      dplyr::filter(!.data$feature %in% silent_vars)
   }
 
   return(targetPlotData)
