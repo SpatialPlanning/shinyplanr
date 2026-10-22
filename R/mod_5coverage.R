@@ -70,7 +70,7 @@ mod_5coverage_server <- function(id, cfg) {
     # Initialize the base leaflet map (runs once)
     output$leaflet_coverage <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
-        leaflet::addProviderTiles(options$leaflet_provider)
+        leaflet::addProviderTiles(options$leaflet_provider %||% "Esri.WorldGrayCanvas")
     })
 
     # Handle file upload
