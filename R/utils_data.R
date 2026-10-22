@@ -292,6 +292,9 @@ fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
   if (nrow(ft_silent) > 0) {
     # Slider IDs use the "silent_<name_check><categoryID>" pattern, e.g.
     # "silent_sli_SeagrassMeadows" for name_check = "sli_".
+    # fcreate_vars() is called with name_check = "silent_sli_" for SilentFeature
+    # sliders, which (after removing the old "master_" prepend) produces
+    # id_in = "silent_sli_<categoryID>" — matching this read pattern.
     silent_name_check <- paste0("silent_", name_check)
 
     cats_silent <- ft_silent %>%
@@ -315,15 +318,19 @@ fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
     dplyr::select("feature" = "nameVariable", "categoryID")
 
   if (nrow(ft_bioregion) > 0) {
-    # Build bioregion name_check (e.g., "sli_" -> "master_sli_", "sli2_" -> "master_sli2_")
-    bioregion_name_check <- paste0("master_", name_check)
+    # Slider IDs use the "bioregion_<name_check><categoryID>" pattern, e.g.
+    # "bioregion_sli_EnviroZone" when name_check = "sli_".
+    # The caller passes the base prefix (e.g. "sli_"); we prepend "bioregion_"
+    # here to match the explicit prefix passed to fcreate_vars() for Bioregion
+    # sliders (e.g. "bioregion_sli_").
+    bioregion_name_check <- paste0("bioregion_", name_check)
 
     cats <- ft_bioregion %>%
       dplyr::pull("categoryID") %>%
       unique()
 
     # purrr::map_dbl() with %||% 0 is type-safe: returns a numeric vector of the
-    # same length as cats even when a master slider input is NULL (e.g. not yet
+    # same length as cats even when a bioregion slider input is NULL (e.g. not yet
     # initialised).
     targets_bioregion_raw <- tibble::tibble(
       categoryID = cats,

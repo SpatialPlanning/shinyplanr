@@ -838,6 +838,117 @@ test_that("validate_dict() passes check 9 when two SilentFeature categories each
 })
 
 # ---------------------------------------------------------------------------
+# Check 4b: nameVariable unique across active Feature + SilentFeature + Bioregion
+# ---------------------------------------------------------------------------
+
+test_that("validate_dict() passes check 4b when no nameVariable is shared across feature types", {
+  # make_valid_dict() has only Feature rows — no cross-type duplicates possible
+  d <- make_valid_dict()
+  expect_message(
+    validate_dict(d, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+test_that("validate_dict() fails check 4b when same nameVariable is active in Feature and SilentFeature", {
+  d <- make_valid_dict()
+  # Add an active SilentFeature row with the same nameVariable as an existing Feature row
+  dup_row <- data.frame(
+    nameCommon    = "Feature A (silent)",
+    nameVariable  = "feature_A",   # same as the Feature row
+    category      = "Sea",
+    categoryID    = "Sea",
+    type          = "SilentFeature",
+    targetInitial = 30,
+    targetMin     = 0,
+    targetMax     = 85,
+    includeApp    = TRUE,
+    includeJust   = TRUE,
+    units         = "",
+    justification = "Dup.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, dup_row)
+  expect_error(
+    validate_dict(d2, strict = TRUE),
+    regexp = "nameVariable_unique_across_feature_types"
+  )
+})
+
+test_that("validate_dict() fails check 4b when same nameVariable is active in Feature and Bioregion", {
+  d <- make_valid_dict()
+  bio_row <- data.frame(
+    nameCommon    = "Feature A (bioregion)",
+    nameVariable  = "feature_A",   # same as the Feature row
+    category      = "Bioregion A",
+    categoryID    = "BioA",
+    type          = "Bioregion",
+    targetInitial = 30,
+    targetMin     = 0,
+    targetMax     = 85,
+    includeApp    = TRUE,
+    includeJust   = TRUE,
+    units         = "",
+    justification = "Bio.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, bio_row)
+  expect_error(
+    validate_dict(d2, strict = TRUE),
+    regexp = "nameVariable_unique_across_feature_types"
+  )
+})
+
+test_that("validate_dict() passes check 4b when duplicate nameVariable is inactive in one type", {
+  d <- make_valid_dict()
+  # Same nameVariable as Feature row, but includeApp = FALSE → not active → no conflict
+  inactive_dup <- data.frame(
+    nameCommon    = "Feature A (silent, inactive)",
+    nameVariable  = "feature_A",
+    category      = "Sea",
+    categoryID    = "Sea",
+    type          = "SilentFeature",
+    targetInitial = 30,
+    targetMin     = 0,
+    targetMax     = 85,
+    includeApp    = FALSE,   # inactive — should not trigger check 4b
+    includeJust   = FALSE,
+    units         = "",
+    justification = "",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, inactive_dup)
+  expect_message(
+    validate_dict(d2, strict = TRUE),
+    regexp = "all.*checks passed"
+  )
+})
+
+test_that("validate_dict() error message for check 4b names the offending nameVariable and types", {
+  d <- make_valid_dict()
+  dup_row <- data.frame(
+    nameCommon    = "Feature A (silent)",
+    nameVariable  = "feature_A",
+    category      = "Sea",
+    categoryID    = "Sea",
+    type          = "SilentFeature",
+    targetInitial = 30,
+    targetMin     = 0,
+    targetMax     = 85,
+    includeApp    = TRUE,
+    includeJust   = TRUE,
+    units         = "",
+    justification = "Dup.",
+    stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, dup_row)
+  expect_error(
+    validate_dict(d2, strict = TRUE),
+    regexp = "feature_A"
+  )
+})
+
+# ---------------------------------------------------------------------------
 # strict = FALSE: collects all failures, returns named list, warns not errors
 # ---------------------------------------------------------------------------
 

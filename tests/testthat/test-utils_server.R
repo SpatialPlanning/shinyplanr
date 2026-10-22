@@ -121,10 +121,10 @@ test_that("fget_targets_expanded() returns only features when no bioregions or s
 
 test_that("fget_targets_expanded() appends bioregion rows when Dict has Bioregion type", {
   Dict <- make_test_dict_with_bioregion()
-  # Feature slider + bioregion slider (uses master_ prefix inside function)
+  # Feature slider + bioregion slider (uses bioregion_ prefix inside function)
   input <- list(
     sli_feature_A     = 30,
-    master_sli_Bio    = 40 # bioregion slider uses categoryID
+    bioregion_sli_Bio = 40 # bioregion slider uses "bioregion_<name_check><categoryID>"
   )
 
   result <- shinyplanr:::fget_targets_expanded(

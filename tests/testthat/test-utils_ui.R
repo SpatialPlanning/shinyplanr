@@ -149,7 +149,7 @@ test_that("fcreate_vars() with byCategory = TRUE returns one row per category", 
   expect_setequal(result$nameCommon, c("Habitat", "Coral"))
 })
 
-test_that("fcreate_vars() byCategory id_in uses master_ prefix", {
+test_that("fcreate_vars() byCategory id_in uses name_check prefix directly (no master_ prepend)", {
   result <- shinyplanr:::fcreate_vars(
     id          = "mod1",
     Dict        = make_dict_ui(),
@@ -158,8 +158,9 @@ test_that("fcreate_vars() byCategory id_in uses master_ prefix", {
     byCategory  = TRUE
   )
 
-  # id_in should be "master_sli_<categoryID>"
-  expect_true(all(grepl("^master_sli_", result$id_in)))
+  # id_in should be "sli_<categoryID>" — fcreate_vars() uses name_check directly
+  expect_true(all(grepl("^sli_", result$id_in)))
+  expect_false(any(grepl("^master_", result$id_in)))
 })
 
 test_that("fcreate_vars() byCategory targetMin is min across category features", {
@@ -421,13 +422,33 @@ test_that("fcustom_sliderCategory() byCategory = TRUE entries are lists of slide
   expect_type(result[[2]], "list")
 })
 
-test_that("fcustom_sliderCategory() byCategory = TRUE slider ids use master_ prefix", {
+test_that("fcustom_sliderCategory() byCategory = TRUE slider ids use name_check prefix directly", {
+  # Pass an explicit prefix so the test is self-documenting about the convention:
+  # fcreate_vars() now uses name_check directly (no "master_" prepend), so
+  # Bioregion callers pass "bioregion_sli_" and SilentFeature callers pass
+  # "silent_sli_". Here we use "bioregion_sli_" to mirror the Bioregion case.
+  dict_bio <- data.frame(
+    nameCommon    = c("Zone 1", "Zone 2"),
+    nameVariable  = c("zone_1", "zone_2"),
+    category      = c("EnviroZone", "EnviroZone"),
+    categoryID    = c("EnviroZone", "EnviroZone"),
+    type          = rep("Bioregion", 2),
+    targetInitial = rep(30L, 2),
+    targetMin     = rep(0L, 2),
+    targetMax     = rep(85L, 2),
+    includeApp    = rep(TRUE, 2),
+    includeJust   = rep(TRUE, 2),
+    justification = rep("", 2),
+    stringsAsFactors = FALSE
+  )
+
   vars <- shinyplanr:::fcreate_vars(
     id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    Dict        = dict_bio,
+    name_check  = "bioregion_sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory  = TRUE,
+    dataType    = "Bioregion"
   )
 
   result <- shinyplanr:::fcustom_sliderCategory(vars, labelNum = 1, byCategory = TRUE)
@@ -435,13 +456,13 @@ test_that("fcustom_sliderCategory() byCategory = TRUE slider ids use master_ pre
   # Each element of result is a list (from purrr::pmap) of sliderInput div tags.
   # sliderInput wraps everything in a div; the label child has
   # attribs$id = "<namespace>-<id_in>-label".  We extract those label ids to
-  # confirm the master_ prefix is present.
+  # confirm the bioregion_sli_ prefix is present.
   all_slider_divs <- unlist(result, recursive = FALSE)
   label_ids <- vapply(all_slider_divs, function(tag) {
-    # The label is the first child of the outer div
     tag$children[[1]]$attribs$id
   }, character(1))
-  expect_true(all(grepl("master_sli_", label_ids)))
+  expect_true(all(grepl("bioregion_sli_", label_ids)))
+  expect_false(any(grepl("^master_", label_ids)))
 })
 
 # ---------------------------------------------------------------------------

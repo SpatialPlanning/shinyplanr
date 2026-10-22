@@ -28,6 +28,13 @@
 #'     \code{nameVariable} may legitimately appear in both \code{"LockIn"} and
 #'     \code{"LockOut"} rows (e.g. MPAs) -- uniqueness is only enforced within
 #'     each type.
+#'   \item \code{nameVariable} is unique across all \strong{active}
+#'     (\code{includeApp == TRUE}) rows of the prioritizr feature types
+#'     (\code{"Feature"}, \code{"SilentFeature"}, \code{"Bioregion"}).
+#'     \code{prioritizr} requires every feature column name to be globally
+#'     unique; a \code{nameVariable} that appears in both \code{"Feature"} and
+#'     \code{"SilentFeature"} rows will crash the solver with
+#'     \code{"feature_names must not contain duplicate values"}.
 #'   \item \code{categoryID} is constant within each \code{category}.
 #'     \code{categoryID} is a category-level attribute (like \code{category}
 #'     itself) and must not vary row-to-row within the same category. A typo
@@ -232,6 +239,63 @@ validate_dict <- function(Dict, strict = TRUE) {
       )
     }
   )
+
+  # ---------------------------------------------------------------------------
+  # Check 4b: nameVariable is unique across all active prioritizr feature types
+  # ---------------------------------------------------------------------------
+  # prioritizr requires that every feature column name is unique across the
+  # entire problem. Feature, SilentFeature, and Bioregion rows all become
+  # individual feature columns in the prioritizr problem object. If the same
+  # nameVariable appears in two of these types (e.g. a species listed as both
+  # a Feature and a SilentFeature), prioritizr will error with:
+  #   "feature_names must not contain duplicate values"
+  # Only active rows (includeApp == TRUE) are checked because inactive rows
+  # are filtered out before the solver runs.
+  if (isTRUE(results[["includeApp_is_logical"]])) {
+    .prioritizr_feature_types <- c("Feature", "SilentFeature", "Bioregion")
+
+    active_feature_rows <- Dict |>
+      dplyr::filter(
+        .data$includeApp,
+        .data$type %in% .prioritizr_feature_types
+      )
+
+    if (nrow(active_feature_rows) > 0) {
+      cross_type_dups <- active_feature_rows |>
+        dplyr::group_by(.data$nameVariable) |>
+        dplyr::summarise(
+          n_types = dplyr::n_distinct(.data$type),
+          types   = paste(sort(unique(.data$type)), collapse = " + "),
+          .groups = "drop"
+        ) |>
+        dplyr::filter(.data$n_types > 1)
+
+      .check(
+        "nameVariable_unique_across_feature_types",
+        nrow(cross_type_dups) == 0,
+        if (nrow(cross_type_dups) > 0) {
+          paste0(
+            nrow(cross_type_dups), " nameVariable value(s) appear as active rows ",
+            "in more than one prioritizr feature type (Feature, SilentFeature, ",
+            "Bioregion) in Dict_Feature.csv:\n",
+            paste(
+              sprintf(
+                "  nameVariable='%s'  (types: %s)",
+                cross_type_dups$nameVariable, cross_type_dups$types
+              ),
+              collapse = "\n"
+            ), "\n",
+            "  prioritizr requires all feature column names to be unique across ",
+            "the entire problem. A nameVariable that appears in both Feature and ",
+            "SilentFeature (or Bioregion) rows will cause the solver to crash ",
+            "with 'feature_names must not contain duplicate values'.\n",
+            "  Fix: set includeApp = FALSE for the duplicate row(s) in one of ",
+            "the types, or rename the nameVariable so each column is unique."
+          )
+        }
+      )
+    }
+  }
 
   # ---------------------------------------------------------------------------
   # Check 5: categoryID is constant (and non-blank) within each type+category

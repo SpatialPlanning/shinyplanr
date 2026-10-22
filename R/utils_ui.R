@@ -52,7 +52,7 @@ fcreate_vars <- function(id, Dict, name_check = "check",
       vars <- vars %>%
         dplyr::summarise(
           id = dplyr::first(.data$id),
-          id_in = paste0("master_", name_check, dplyr::first(.data$categoryID)),
+          id_in = paste0(name_check, dplyr::first(.data$categoryID)),
           nameCommon = if (dataType == "SilentFeature") {
             paste0(dplyr::first(.data$category), " (n = ", dplyr::n(), ")")
           } else {
