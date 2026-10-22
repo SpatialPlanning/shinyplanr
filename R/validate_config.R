@@ -210,35 +210,44 @@ validate_dict <- function(Dict, strict = TRUE) {
   )
 
   # ---------------------------------------------------------------------------
-  # Check 4: nameVariable is unique within each type
+  # Check 4: nameVariable is unique within each type (active rows only)
   # ---------------------------------------------------------------------------
-  dup_check <- Dict |>
-    dplyr::group_by(.data$type, .data$nameVariable) |>
-    dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
-    dplyr::filter(.data$n > 1)
+  # Only active rows (includeApp == TRUE) can cause duplicate slider input IDs
+  # in the Shiny UI or silent errors in prioritizr. Inactive rows are filtered
+  # out before the app runs, so duplicates among them are harmless.
+  # Skip this check if includeApp is not logical (Check 2 would have caught it).
+  if (isTRUE(results[["includeApp_is_logical"]])) {
+    dup_check <- Dict |>
+      dplyr::filter(.data$includeApp) |>
+      dplyr::group_by(.data$type, .data$nameVariable) |>
+      dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
+      dplyr::filter(.data$n > 1)
 
-  .check(
-    "nameVariable_unique_within_type",
-    nrow(dup_check) == 0,
-    if (nrow(dup_check) > 0) {
-      paste0(
-        nrow(dup_check), " nameVariable value(s) appear more than once within ",
-        "the same type in Dict_Feature.csv:\n",
-        paste(
-          sprintf(
-            "  type='%s', nameVariable='%s' (%d times)",
-            dup_check$type, dup_check$nameVariable, dup_check$n
-          ),
-          collapse = "\n"
-        ), "\n",
-        "  Duplicate nameVariable values within a type cause duplicate slider ",
-        "input IDs in the Shiny UI and silent errors in prioritizr.\n",
-        "  Note: the same nameVariable CAN appear in both 'LockIn' and ",
-        "'LockOut' rows (e.g. MPAs) -- duplicates are only checked within ",
-        "each type."
-      )
-    }
-  )
+    .check(
+      "nameVariable_unique_within_type",
+      nrow(dup_check) == 0,
+      if (nrow(dup_check) > 0) {
+        paste0(
+          nrow(dup_check), " nameVariable value(s) appear more than once within ",
+          "the same type among active (includeApp == TRUE) rows in Dict_Feature.csv:\n",
+          paste(
+            sprintf(
+              "  type='%s', nameVariable='%s' (%d times)",
+              dup_check$type, dup_check$nameVariable, dup_check$n
+            ),
+            collapse = "\n"
+          ), "\n",
+          "  Duplicate nameVariable values within a type cause duplicate slider ",
+          "input IDs in the Shiny UI and silent errors in prioritizr.\n",
+          "  Note: the same nameVariable CAN appear in both 'LockIn' and ",
+          "'LockOut' rows (e.g. MPAs) -- duplicates are only checked within ",
+          "each type.\n",
+          "  If one of the duplicate rows is intentionally excluded, set ",
+          "includeApp = FALSE on it to suppress this check."
+        )
+      }
+    )
+  }
 
   # ---------------------------------------------------------------------------
   # Check 4b: nameVariable is unique across all active prioritizr feature types
@@ -301,54 +310,61 @@ validate_dict <- function(Dict, strict = TRUE) {
   # Check 5: categoryID is constant (and non-blank) within each type+category
   # ---------------------------------------------------------------------------
   # categoryID is a category-level attribute -- like `category` itself -- and
-  # must be identical across every row that shares the same (type, category).
-  # Scoped to (type, category) rather than category alone because the same
-  # category label is occasionally reused across types (e.g. "Protected
-  # Areas" as both LockIn and LockOut for MPAs), and those are legitimately
-  # independent category identities.
+  # must be identical across every active row that shares the same
+  # (type, category). Scoped to (type, category) rather than category alone
+  # because the same category label is occasionally reused across types (e.g.
+  # "Protected Areas" as both LockIn and LockOut for MPAs), and those are
+  # legitimately independent category identities.
+  #
+  # Only active rows (includeApp == TRUE) are checked: inactive rows are
+  # filtered out before the app runs, so a bad categoryID on an inactive row
+  # cannot affect sliders or bioregion display columns at runtime.
   #
   # Blank values ("" after CSV parsing, or NA) count as a violation here: a
   # category with an unset categoryID on some rows previously worked only
   # by accident (dplyr::first() picking whichever row happened to have it
   # set), silently breaking master-category sliders and bioregion display
   # columns for any other row order.
-  categoryID_check <- Dict |>
-    dplyr::mutate(.categoryID_norm = dplyr::na_if(trimws(as.character(.data$categoryID)), "")) |>
-    dplyr::group_by(.data$type, .data$category) |>
-    dplyr::summarise(
-      n_distinct_ids = dplyr::n_distinct(.data$.categoryID_norm, na.rm = FALSE),
-      any_blank      = anyNA(.data$.categoryID_norm),
-      .groups = "drop"
-    ) |>
-    dplyr::filter(.data$n_distinct_ids > 1 | .data$any_blank)
+  if (isTRUE(results[["includeApp_is_logical"]])) {
+    categoryID_check <- Dict |>
+      dplyr::filter(.data$includeApp) |>
+      dplyr::mutate(.categoryID_norm = dplyr::na_if(trimws(as.character(.data$categoryID)), "")) |>
+      dplyr::group_by(.data$type, .data$category) |>
+      dplyr::summarise(
+        n_distinct_ids = dplyr::n_distinct(.data$.categoryID_norm, na.rm = FALSE),
+        any_blank      = anyNA(.data$.categoryID_norm),
+        .groups = "drop"
+      ) |>
+      dplyr::filter(.data$n_distinct_ids > 1 | .data$any_blank)
 
-  .check(
-    "categoryID_consistent_within_category",
-    nrow(categoryID_check) == 0,
-    if (nrow(categoryID_check) > 0) {
-      paste0(
-        nrow(categoryID_check), " (type, category) group(s) in Dict_Feature.csv ",
-        "have an inconsistent or blank 'categoryID':\n",
-        paste(
-          sprintf("  type='%s', category='%s'", categoryID_check$type, categoryID_check$category),
-          collapse = "\n"
-        ), "\n",
-        "  categoryID is a category-level attribute: every row sharing the ",
-        "same type and category must have the SAME non-blank categoryID ",
-        "value.\n",
-        "  A missing or inconsistent categoryID is silently ignored by ",
-        "dplyr::first() wherever a per-category value is needed (e.g. master ",
-        "category sliders, bioregion display columns), producing confusing ",
-        "results that depend on row order rather than raising an error.\n",
-        "  Fix: set the same categoryID on every row for each affected ",
-        "category in Dict_Feature.csv."
-      )
-    }
-  )
+    .check(
+      "categoryID_consistent_within_category",
+      nrow(categoryID_check) == 0,
+      if (nrow(categoryID_check) > 0) {
+        paste0(
+          nrow(categoryID_check), " (type, category) group(s) in Dict_Feature.csv ",
+          "have an inconsistent or blank 'categoryID' among active rows:\n",
+          paste(
+            sprintf("  type='%s', category='%s'", categoryID_check$type, categoryID_check$category),
+            collapse = "\n"
+          ), "\n",
+          "  categoryID is a category-level attribute: every active row sharing ",
+          "the same type and category must have the SAME non-blank categoryID ",
+          "value.\n",
+          "  A missing or inconsistent categoryID is silently ignored by ",
+          "dplyr::first() wherever a per-category value is needed (e.g. master ",
+          "category sliders, bioregion display columns), producing confusing ",
+          "results that depend on row order rather than raising an error.\n",
+          "  Fix: set the same categoryID on every active row for each affected ",
+          "category in Dict_Feature.csv."
+        )
+      }
+    )
+  }
 
   # ---------------------------------------------------------------------------
   # Check 6: categoryOrder (if present) is numeric and constant within
-  # each type+category
+  # each type+category (active rows only)
   # ---------------------------------------------------------------------------
   # categoryOrder is an optional column (see vignette("ac-setting-up")) that
   # controls the display order of categories in the sidebar and dropdowns.
@@ -356,8 +372,10 @@ validate_dict <- function(Dict, strict = TRUE) {
   # categoryID: one consistent value per (type, category), and it must be
   # coercible to numeric (arrange() on a non-numeric column would sort
   # lexicographically, e.g. "10" before "2", which is almost never intended).
-  if ("categoryOrder" %in% names(Dict)) {
+  # Only active rows are checked for the same reason as check 5.
+  if ("categoryOrder" %in% names(Dict) && isTRUE(results[["includeApp_is_logical"]])) {
     categoryOrder_check <- Dict |>
+      dplyr::filter(.data$includeApp) |>
       dplyr::mutate(
         .categoryOrder_num = suppressWarnings(as.numeric(.data$categoryOrder))
       ) |>
@@ -375,15 +393,15 @@ validate_dict <- function(Dict, strict = TRUE) {
       if (nrow(categoryOrder_check) > 0) {
         paste0(
           nrow(categoryOrder_check), " (type, category) group(s) in ",
-          "Dict_Feature.csv have an invalid 'categoryOrder':\n",
+          "Dict_Feature.csv have an invalid 'categoryOrder' among active rows:\n",
           paste(
             sprintf("  type='%s', category='%s'", categoryOrder_check$type, categoryOrder_check$category),
             collapse = "\n"
           ), "\n",
-          "  categoryOrder must be numeric and identical across every row ",
+          "  categoryOrder must be numeric and identical across every active row ",
           "sharing the same type and category.\n",
           "  Fix: ensure categoryOrder contains only numeric values, and set ",
-          "the same value on every row for each affected category in ",
+          "the same value on every active row for each affected category in ",
           "Dict_Feature.csv."
         )
       }
@@ -899,6 +917,50 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
           paste0(
             length(out_of_range), " Feature(s) have target values outside 0-100: ",
             paste(out_of_range, collapse = ", ")
+          )
+        }
+      )
+    }
+  }
+
+  # -------------------------------------------------------------------------
+  # 11. No active Cost columns in raw_sf contain zero values
+  # -------------------------------------------------------------------------
+  # A cost layer with zeros allows the solver to select those planning units
+  # for free (at zero cost), even when all feature targets are zero. This
+  # produces spurious selections that are mathematically optimal but
+  # ecologically meaningless (e.g. 9 PUs selected near islands where fishing
+  # effort is zero, even though no features were targeted).
+  # Cost_None is excluded: it is a synthetic equal-area layer generated
+  # internally by the app, not a real data column in raw_sf.
+  if (inherits(raw_sf, "sf") && is.data.frame(Dict)) {
+    cost_vars <- Dict %>%
+      dplyr::filter(.data$type == "Cost", .data$nameVariable != "Cost_None") %>%
+      dplyr::pull("nameVariable")
+
+    raw_data_cost <- sf::st_drop_geometry(raw_sf)
+    present_cost_vars <- intersect(cost_vars, names(raw_data_cost))
+
+    if (length(present_cost_vars) > 0) {
+      has_zeros <- purrr::map_lgl(present_cost_vars, function(v) {
+        col <- raw_data_cost[[v]]
+        is.numeric(col) && any(col == 0, na.rm = TRUE)
+      })
+
+      zero_cost_vars <- present_cost_vars[has_zeros]
+      .check(
+        "no_cost_columns_contain_zeros",
+        length(zero_cost_vars) == 0,
+        if (length(zero_cost_vars) > 0) {
+          paste0(
+            length(zero_cost_vars), " Cost column(s) contain zero values in raw_sf: ",
+            paste(zero_cost_vars, collapse = ", "), "\n",
+            "  Cost layers must not contain zeros. A planning unit with cost = 0\n",
+            "  can be selected by the solver for free, producing spurious results\n",
+            "  (e.g. PUs selected even when all feature targets are zero).\n",
+            "  Fix: replace zeros with a small positive value (e.g. the minimum\n",
+            "  non-zero cost in the layer) in your data pipeline before re-running\n",
+            "  setup/2_setup_data.R and setup/3_setup_app.R."
           )
         }
       )
