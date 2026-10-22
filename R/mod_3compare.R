@@ -135,7 +135,9 @@ mod_3compare_ui <- function(id, cfg) {
                 dplyr::add_row(
                   nameCommon = "Don't consider",
                   nameVariable = "NA",
-                  category = "Climate", .before = 1
+                  category = "Climate",
+                  type = "Climate",
+                  .before = 1
                 ))
             ),
             shiny::column(
@@ -145,7 +147,9 @@ mod_3compare_ui <- function(id, cfg) {
                 dplyr::add_row(
                   nameCommon = "Don't consider",
                   nameVariable = "NA",
-                  category = "Climate", .before = 1
+                  category = "Climate",
+                  type = "Climate",
+                  .before = 1
                 ))
             )
           )
