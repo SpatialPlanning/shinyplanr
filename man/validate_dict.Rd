@@ -53,6 +53,26 @@ just edited rather than buried inside a spatial data pipeline.
     \code{nameVariable} may legitimately appear in both \code{"LockIn"} and
     \code{"LockOut"} rows (e.g. MPAs) -- uniqueness is only enforced within
     each type.
+  \item \code{nameVariable} is unique across all \strong{active}
+    (\code{includeApp == TRUE}) rows of the prioritizr feature types
+    (\code{"Feature"}, \code{"SilentFeature"}, \code{"Bioregion"}).
+    \code{prioritizr} requires every feature column name to be globally
+    unique; a \code{nameVariable} that appears in both \code{"Feature"} and
+    \code{"SilentFeature"} rows will crash the solver with
+    \code{"feature_names must not contain duplicate values"}.
+  \item \code{categoryID} is constant within each \code{category}.
+    \code{categoryID} is a category-level attribute (like \code{category}
+    itself) and must not vary row-to-row within the same category. A typo
+    on a single row is otherwise silently ignored wherever
+    \code{dplyr::first(categoryID)} is used per category (e.g. master
+    category sliders, bioregion display columns), producing confusing
+    mismatches rather than an error.
+  \item If present, \code{categoryOrder} is numeric and constant within
+    each \code{category}, for the same reason as \code{categoryID} above.
+    \code{categoryOrder} is an optional column that controls the display
+    order of categories in the sidebar and dropdowns (see
+    \code{vignette("ac-setting-up")}); when absent, categories fall back to
+    alphabetical-by-\code{categoryID} ordering.
   \item At least one row has \code{includeApp == TRUE} and
     \code{type == "Feature"}.  An app with no active features cannot run a
     prioritisation.
@@ -60,6 +80,11 @@ just edited rather than buried inside a spatial data pipeline.
     \code{type == "Feature"} have \code{targetMin}, \code{targetMax}, and
     \code{targetInitial} values in the 0--100 range.  Out-of-range values
     cause \code{prioritizr} to error at solve time.
+  \item Within each active \code{SilentFeature} category, all rows share
+    identical \code{targetMin}, \code{targetMax}, and \code{targetInitial}
+    values.  Because the UI shows only one slider per category, differing
+    per-row values would be silently ignored -- the slider can only hold
+    one value.
 }
 }
 

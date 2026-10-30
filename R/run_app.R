@@ -21,6 +21,7 @@
 #' @export
 #' @importFrom shiny shinyApp
 #' @importFrom golem with_golem_options
+#' @importFrom ragg agg_png
 run_app <- function(
   onStart = NULL,
   options = list(),

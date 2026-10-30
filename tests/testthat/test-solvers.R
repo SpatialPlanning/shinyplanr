@@ -122,14 +122,13 @@ test_that("fsolve_problem() solution selects at least one planning unit", {
 })
 
 # ---------------------------------------------------------------------------
-# fsolve_problem() — presolve failure path
+# fsolve_problem() — zero-feature path
 # ---------------------------------------------------------------------------
 
-test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fails", {
-  # All-zero feature columns — prioritizr presolve_check will flag this.
-  # Both features must be zeroed: a single-feature problem also fails presolve,
-  # so we keep two features but zero both to ensure the failure is about data
-  # quality, not feature count.
+test_that("fsolve_problem() returns a solution with 0 PUs selected for all-zero features", {
+  # All-zero feature columns — prioritizr presolve_check passes (the problem is
+  # technically feasible: select nothing and meet 0% of a 0-amount target).
+  # The solver returns a valid sf with all solution_1 == 0.
   raw_sf <- make_test_sf()
   raw_sf$feature_A <- 0
   raw_sf$feature_B <- 0
@@ -147,23 +146,20 @@ test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fail
       prioritizr::add_default_solver(verbose = FALSE)
   )
 
-  alert_called <- FALSE
   local_mocked_bindings(
     runjs = function(...) invisible(NULL),
     .package = "shinyjs"
   )
   local_mocked_bindings(
-    shinyalert = function(...) {
-      alert_called <<- TRUE
-      invisible(NULL)
-    },
+    shinyalert = function(...) invisible(NULL),
     .package = "shinyalert"
   )
 
-  result <- shinyplanr:::fsolve_problem(prob)
+  result <- suppressWarnings(shinyplanr:::fsolve_problem(prob))
 
-  expect_null(result)
-  expect_true(alert_called)
+  expect_s3_class(result, "sf")
+  expect_true("solution_1" %in% names(result))
+  expect_equal(sum(result$solution_1), 0)
 })
 
 # ---------------------------------------------------------------------------
@@ -254,8 +250,10 @@ test_that("fsolve_with_log() log omits cost summary when cost_id is NULL", {
   expect_false(grepl("Cost selected", result$log))
 })
 
-test_that("fsolve_with_log() returns NULL solution and logs failure for infeasible problem", {
-  # Zero out both features so presolve_check() reliably fails.
+test_that("fsolve_with_log() returns sf solution with 0 PUs selected for all-zero features", {
+  # Zero out both features — prioritizr presolve_check() passes (the problem is
+  # feasible: select nothing and meet 0% of a 0-amount target).
+  # The solver returns a valid sf with all solution_1 == 0.
   raw_sf <- make_test_sf()
   raw_sf$feature_A <- 0
   raw_sf$feature_B <- 0
@@ -281,10 +279,14 @@ test_that("fsolve_with_log() returns NULL solution and logs failure for infeasib
     .package = "shinyalert"
   )
 
-  result <- shinyplanr:::fsolve_with_log(prob, cost_id = "Cost_Area")
+  result <- suppressWarnings(shinyplanr:::fsolve_with_log(
+    prob,
+    cost_id = "Cost_Area"
+  ))
 
-  expect_null(result$solution)
-  expect_match(result$log, "No solution found|Infeasible")
+  expect_s3_class(result$solution, "sf")
+  expect_equal(sum(result$solution$solution_1), 0)
+  expect_match(result$log, "Solution found")
 })
 
 # ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@
 #' @importFrom rlang .data
 #' @importFrom grDevices col2rgb
 mod_4afeatures_ui <- function(id, cfg) {
+  . <- NULL # suppress R CMD CHECK NOTE for magrittr pipe placeholder
   Dict <- cfg$Dict
   options <- cfg$options
 

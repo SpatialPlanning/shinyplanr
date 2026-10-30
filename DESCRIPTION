@@ -42,7 +42,6 @@ Imports:
     highs,
     htmltools,
     httpuv,
-    kableExtra,
     leafgl,
     leaflet,
     magrittr,
@@ -68,6 +67,7 @@ Imports:
     tidyselect,
     withr
 Suggests:
+    kableExtra,
     knitr,
     rcbc,
     renv,
@@ -85,4 +85,4 @@ Language: en-US
 LazyData: true
 Depends: 
     R (>= 4.1)
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/version: 8.1.1

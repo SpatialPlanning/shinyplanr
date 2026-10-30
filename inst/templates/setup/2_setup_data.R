@@ -19,12 +19,9 @@ library(oceandatr)
 # BASIC PARAMETERS
 # =============================================================================
 
-country <- "{country}"
-crs <- "{crs}"
-resolution <- {
-  resolution
-}
-L # Planning unit size in meters
+country    <- "{country}"
+crs        <- "{crs}"
+resolution <- {resolution} # Planning unit size in meters
 
 setup_dir <- "setup" # Location of this folder
 data_path <- file.path(setup_dir, "data") # Raw spatial data files
@@ -223,16 +220,8 @@ dat_sf <- dplyr::bind_cols(dat_sf, mpas)
 # boundary looks over- or under-simplified for your region.
 simplify_tol <- resolution / 4 # same units as `crs` (usually meters)
 
-bndry <- sf::st_simplify(
-  bndry,
-  preserveTopology = TRUE,
-  dTolerance = simplify_tol
-)
-coast <- sf::st_simplify(
-  coast,
-  preserveTopology = TRUE,
-  dTolerance = simplify_tol
-)
+bndry <- sf::st_simplify(bndry, preserveTopology = TRUE, dTolerance = simplify_tol)
+coast <- sf::st_simplify(coast, preserveTopology = TRUE, dTolerance = simplify_tol)
 
 # =============================================================================
 # FINAL PROCESSING AND SAVE

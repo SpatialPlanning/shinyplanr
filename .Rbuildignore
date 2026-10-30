@@ -30,3 +30,4 @@ $run_dev.*
 ^AGENTS\.md$
 ^[.]?air[.]toml$
 ^\.vscode$
+^\.roo$
