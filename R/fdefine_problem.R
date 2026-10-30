@@ -31,8 +31,15 @@
 #' @noRd
 #'
 
-fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_",
-                            clim_input, compare_id = "") {
+fdefine_problem <- function(
+  targets,
+  raw_sf,
+  options,
+  input,
+  name_check = "sli_",
+  clim_input,
+  compare_id = ""
+) {
   # Note on clim_input: this argument is checked with
   # is.null(clim_input) || is.na(clim_input) || clim_input == "NA" below.
   # input$climateid is read separately as clim_col. The two are consistent —
@@ -53,9 +60,11 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
     )
 
   # Create options for climate-smart ----
-  if (is.null(clim_input) || is.na(clim_input) || clim_input == "NA") { # Not Climate-smart
+  if (is.null(clim_input) || is.na(clim_input) || clim_input == "NA") {
+    # Not Climate-smart
     p_dat <- out_sf # Create the problem data. Nothing more needed if not climate-smart
-  } else { # Climate-smart
+  } else {
+    # Climate-smart
 
     # Add climate data and run climate approach --------------------------------------------------------
 
@@ -63,13 +72,18 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
     clim_col <- input[[paste0("climateid", compare_id)]]
 
     if (!clim_col %in% names(raw_sf)) {
-      warning(paste0("Climate column '", clim_col, "' not found in spatial data. Proceeding without climate-smart planning."))
+      warning(paste0(
+        "Climate column '",
+        clim_col,
+        "' not found in spatial data. Proceeding without climate-smart planning."
+      ))
       p_dat <- out_sf
     } else {
       # Pass raw_sf directly with metric_col so spatialplanr can select the
       # correct column internally. This avoids creating a throwaway climate_sf
       # object with a hard-coded "metric" column name.
-      if (options$climate_change == 1) { # CPA approach
+      if (options$climate_change == 1) {
+        # CPA approach
         CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
@@ -80,7 +94,8 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
           direction = options$direction,
           refugiaTarget = options$refugiaTarget
         )
-      } else if (options$climate_change == 2) { # feature approach
+      } else if (options$climate_change == 2) {
+        # feature approach
         CS_Approach <- spatialplanr::splnr_climate_featureApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
@@ -91,7 +106,8 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
           direction = options$direction,
           refugiaTarget = options$refugiaTarget
         )
-      } else if (options$climate_change == 3) { # percentile approach
+      } else if (options$climate_change == 3) {
+        # percentile approach
         CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
@@ -126,7 +142,11 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       if (nrow(p_dat) != n_features) {
         stop(paste0(
           "Row-count mismatch after joining cost/climate columns. ",
-          "CS_Approach$Features has ", n_features, " rows but p_dat has ", nrow(p_dat), " rows. ",
+          "CS_Approach$Features has ",
+          n_features,
+          " rows but p_dat has ",
+          nrow(p_dat),
+          " rows. ",
           "This indicates a bug in the join logic."
         ))
       }
@@ -135,12 +155,14 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
 
   f_no <- fCheckFeatureNo(p_dat) # Check number of features
 
-
   ## Set up problem -------------------------------------------------
 
-  if (f_no == 1) { # If geometry is the only column
+  if (f_no == 1) {
+    # If geometry is the only column
 
-    shinyalert::shinyalert("Error", "No features have been selected. You can't run a spatial prioritization without any features.",
+    shinyalert::shinyalert(
+      "Error",
+      "No features have been selected. You can't run a spatial prioritization without any features.",
       type = "error",
       callbackR = shinyjs::runjs("window.scrollTo(0, 0)")
     )
@@ -180,7 +202,11 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       sum()
 
     # Get budget value - use budget1/budget2 for comparison module, budget for scenario module
-    budget_id <- if (compare_id == "") "budget" else paste0("budget", compare_id)
+    budget_id <- if (compare_id == "") {
+      "budget"
+    } else {
+      paste0("budget", compare_id)
+    }
     budget_value <- input[[budget_id]]
 
     p1 <- prioritizr::problem(
@@ -188,12 +214,13 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
       features = targets$feature, # targets ensures the features are in the correct order
       cost_column = input[[paste0("costid", compare_id)]]
     ) %>%
-      prioritizr::add_min_shortfall_objective(budget = (budget_value / 100) * total_cost) %>% # Create budget from total_cost and %
+      prioritizr::add_min_shortfall_objective(
+        budget = (budget_value / 100) * total_cost
+      ) %>% # Create budget from total_cost and %
       prioritizr::add_relative_targets(targets$target) %>%
       prioritizr::add_binary_decisions() %>%
       prioritizr::add_default_solver(verbose = TRUE)
   } # End objective function selection
-
 
   ## Do Locked In Regions ----------------------------------------------------
 
@@ -202,7 +229,9 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   if (length(LI) > 0) {
     p1 <- purrr::reduce(
       LI,
-      \(prob, li) prob %>% prioritizr::add_locked_in_constraints(as.logical(raw_sf[[li]])),
+      \(prob, li) {
+        prob %>% prioritizr::add_locked_in_constraints(as.logical(raw_sf[[li]]))
+      },
       .init = p1
     )
   }
@@ -214,11 +243,13 @@ fdefine_problem <- function(targets, raw_sf, options, input, name_check = "sli_"
   if (length(LO) > 0) {
     p1 <- purrr::reduce(
       LO,
-      \(prob, lo) prob %>% prioritizr::add_locked_out_constraints(as.logical(raw_sf[[lo]])),
+      \(prob, lo) {
+        prob %>%
+          prioritizr::add_locked_out_constraints(as.logical(raw_sf[[lo]]))
+      },
       .init = p1
     )
   }
-
 
   rm(p_dat)
 

@@ -74,24 +74,24 @@ test_that("mod_2scenario_ui() Report tab is always present in HTML regardless of
   expect_match(html_no_report, "dlReport", fixed = TRUE)
 
   cfg_with_report <- cfg
-  cfg_with_report$options <- modifyList(cfg$options, list(include_report = TRUE))
-  ui_with_report <- mod_2scenario_ui(id = "test_with_report", cfg = cfg_with_report)
+  cfg_with_report$options <- modifyList(
+    cfg$options,
+    list(include_report = TRUE)
+  )
+  ui_with_report <- mod_2scenario_ui(
+    id = "test_with_report",
+    cfg = cfg_with_report
+  )
   html_with_report <- as.character(ui_with_report)
   expect_match(html_with_report, "dlReport", fixed = TRUE)
 })
 
-test_that("mod_2scenario_ui() shows master slider panel when targetsBy is 'master'", {
-  cfg_master <- cfg
-  cfg_master$options <- modifyList(cfg$options, list(targetsBy = "master"))
-
-  ui <- mod_2scenario_ui(id = "test_master", cfg = cfg_master)
-  html <- as.character(ui)
-  expect_match(html, "switchMasterTargets", fixed = TRUE)
-})
-
 test_that("mod_2scenario_ui() shows climate panel when include_climateChange is TRUE", {
   cfg_clim <- cfg
-  cfg_clim$options <- modifyList(cfg$options, list(include_climateChange = TRUE))
+  cfg_clim$options <- modifyList(
+    cfg$options,
+    list(include_climateChange = TRUE)
+  )
 
   ui <- mod_2scenario_ui(id = "test_clim", cfg = cfg_clim)
   html <- as.character(ui)
@@ -128,7 +128,7 @@ test_that("mod_2scenario_server() registers dlReport as a download handler", {
       # downloadHandler outputs are registered in the MockShinySession's private
       # $outs list (keyed as "proxy1-<name>"). We check this without triggering
       # a reactive flush (reading output$x directly flushes all pending observers,
-      # which errors when inputs like slider_varsCat are NULL in the test context).
+      # which errors when slider inputs are NULL in the test context).
       mock_session <- .subset2(session$output, "impl")
       registered <- names(mock_session$.__enclos_env__$private$outs)
       expect_true(

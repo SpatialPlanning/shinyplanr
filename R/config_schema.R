@@ -16,7 +16,7 @@
 #   4. Update data-raw/build_stub_sysdata.R to match the new structure,
 #      then re-run it to regenerate R/sysdata.rda
 
-.shinyplanr_schema_version <- 3L
+.shinyplanr_schema_version <- 4L
 
 
 # Human-readable changelog for each schema version bump.
@@ -52,6 +52,16 @@
     "  shinyplanr_options and add these two lines after the Dict block:",
     "  shinyplanr_options$include_silentFeature <- any(Dict$type == 'SilentFeature')",
     "  shinyplanr_options$include_bioregion     <- any(Dict$type == 'Bioregion')"
+  ),
+  `4` = c(
+    "Removed master and category slider infrastructure. Individual sliders are now",
+    "  the only target-setting mode. Category lock toggles replace the old category",
+    "  sliders (they are rendered automatically in the UI -- no setup change needed).",
+    "In 3_setup_app.R:",
+    "  1. Remove slider_varsCat from sidebar$scenario:",
+    "       slider_varsCat = shinyplanr:::fcreate_vars(..., byCategory = TRUE)",
+    "  2. Remove targetsBy from shinyplanr_options:",
+    "       targetsBy = 'individual'  # this line can be deleted"
   )
 )
 
@@ -101,7 +111,9 @@ schema_changelog <- function(from = 2L) {
 
   message(
     "shinyplanr config schema changelog",
-    " (current version: ", current, ")"
+    " (current version: ",
+    current,
+    ")"
   )
   message(strrep("-", 50))
 
@@ -170,14 +182,17 @@ schema_changelog <- function(from = 2L) {
   if (!is.list(config)) {
     stop(
       "The config file does not contain a valid list: ",
-      normalizePath(config_path, mustWork = FALSE), "\n",
+      normalizePath(config_path, mustWork = FALSE),
+      "\n",
       "The file may be corrupted. Re-run setup/3_setup_app.R to regenerate it."
     )
   }
 
   # Check schema version
   config_schema <- config[["schema_version"]]
-  if (is.null(config_schema)) config_schema <- 0L
+  if (is.null(config_schema)) {
+    config_schema <- 0L
+  }
 
   if (!identical(as.integer(config_schema), .shinyplanr_schema_version)) {
     # Build a changelog summary covering all versions between the config's
@@ -188,7 +203,7 @@ schema_changelog <- function(from = 2L) {
 
     changelog_versions <- seq(
       from = max(old_v + 1L, 2L),
-      to   = new_v
+      to = new_v
     )
 
     changelog_lines <- unlist(lapply(changelog_versions, function(v) {
@@ -201,10 +216,15 @@ schema_changelog <- function(from = 2L) {
 
     stop(
       "Config schema version mismatch.\n",
-      "  Config was generated with schema version: ", config_schema, "\n",
-      "  Installed shinyplanr expects schema version: ", new_v, "\n\n",
+      "  Config was generated with schema version: ",
+      config_schema,
+      "\n",
+      "  Installed shinyplanr expects schema version: ",
+      new_v,
+      "\n\n",
       "What changed between your config and the current version:\n",
-      paste(changelog_lines, collapse = "\n"), "\n\n",
+      paste(changelog_lines, collapse = "\n"),
+      "\n\n",
       "To fix:\n",
       "  1. Update setup/3_setup_app.R manually (see changes above)\n",
       "     OR run shinyplanr::update_shinyplanr_template() to refresh\n",
@@ -212,7 +232,8 @@ schema_changelog <- function(from = 2L) {
       "  2. Re-run setup/3_setup_app.R to regenerate the config\n",
       "  3. Run renv::snapshot() to update the version lock\n",
       "  4. Redeploy with source('deploy.R')\n\n",
-      "Config path: ", normalizePath(config_path, mustWork = FALSE),
+      "Config path: ",
+      normalizePath(config_path, mustWork = FALSE),
       call. = FALSE
     )
   }
@@ -222,9 +243,11 @@ schema_changelog <- function(from = 2L) {
   if (length(missing_keys) > 0) {
     stop(
       "Config is missing required keys: ",
-      paste(missing_keys, collapse = ", "), "\n\n",
+      paste(missing_keys, collapse = ", "),
+      "\n\n",
       "To fix: re-run setup/3_setup_app.R to regenerate the config file.\n",
-      "Config path: ", normalizePath(config_path, mustWork = FALSE),
+      "Config path: ",
+      normalizePath(config_path, mustWork = FALSE),
       call. = FALSE
     )
   }

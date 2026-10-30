@@ -54,9 +54,9 @@ test_that("get_lockIn() returns empty vector when all checkLI_ inputs are FALSE"
 
 test_that("get_lockIn() returns nameVariable for selected checkLI_ inputs", {
   input <- list(
-    checkLI_mpas     = TRUE,
+    checkLI_mpas = TRUE,
     checkLI_reserves = FALSE,
-    sli_feature_A    = 30
+    sli_feature_A = 30
   )
 
   result <- shinyplanr:::get_lockIn(input, num = "")
@@ -66,9 +66,9 @@ test_that("get_lockIn() returns nameVariable for selected checkLI_ inputs", {
 
 test_that("get_lockIn() returns multiple nameVariables when multiple inputs selected", {
   input <- list(
-    checkLI_mpas     = TRUE,
+    checkLI_mpas = TRUE,
     checkLI_reserves = TRUE,
-    checkLI_other    = FALSE
+    checkLI_other = FALSE
   )
 
   result <- shinyplanr:::get_lockIn(input, num = "")
@@ -83,9 +83,9 @@ test_that("get_lockIn() returns multiple nameVariables when multiple inputs sele
 
 test_that("get_lockIn() respects num suffix for comparison module (num = '1')", {
   input <- list(
-    check1LI_mpas     = TRUE,
+    check1LI_mpas = TRUE,
     check1LI_reserves = FALSE,
-    checkLI_mpas      = TRUE # scenario module input — should be ignored
+    checkLI_mpas = TRUE # scenario module input — should be ignored
   )
 
   result <- shinyplanr:::get_lockIn(input, num = "1")
@@ -125,7 +125,7 @@ test_that("get_lockOut() returns empty character vector when no checkLO_ inputs 
 
 test_that("get_lockOut() returns empty vector when all checkLO_ inputs are FALSE", {
   input <- list(
-    checkLO_mpas     = FALSE,
+    checkLO_mpas = FALSE,
     checkLO_reserves = FALSE
   )
 
@@ -140,7 +140,7 @@ test_that("get_lockOut() returns empty vector when all checkLO_ inputs are FALSE
 
 test_that("get_lockOut() returns nameVariable for selected checkLO_ inputs", {
   input <- list(
-    checkLO_mpas     = TRUE,
+    checkLO_mpas = TRUE,
     checkLO_reserves = FALSE
   )
 
@@ -151,9 +151,9 @@ test_that("get_lockOut() returns nameVariable for selected checkLO_ inputs", {
 
 test_that("get_lockOut() returns multiple nameVariables when multiple inputs selected", {
   input <- list(
-    checkLO_mpas     = TRUE,
+    checkLO_mpas = TRUE,
     checkLO_reserves = TRUE,
-    checkLO_other    = FALSE
+    checkLO_other = FALSE
   )
 
   result <- shinyplanr:::get_lockOut(input, num = "")
@@ -169,7 +169,7 @@ test_that("get_lockOut() returns multiple nameVariables when multiple inputs sel
 test_that("get_lockOut() respects num suffix for comparison module (num = '1')", {
   input <- list(
     check1LO_mpas = TRUE,
-    checkLO_mpas  = TRUE # scenario module input — should be ignored
+    checkLO_mpas = TRUE # scenario module input — should be ignored
   )
 
   result <- shinyplanr:::get_lockOut(input, num = "1")

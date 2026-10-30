@@ -34,7 +34,6 @@ fsolve_problem <- function(problem_data) {
     return(NULL)
   }
 
-
   # attempt to solve the problem
   ## note we use presolve_check = FALSE to avoid redoing the checks
   solve_result <- s_solve(problem_data, run_checks = FALSE)
@@ -45,8 +44,13 @@ fsolve_problem <- function(problem_data) {
     shinyalert::shinyalert(
       title = "Error",
       text = paste(
-        "<h4>", solve_result$error$message, "</h4>", "<br>",
-        "<p>", solve_result$error$body, "</p>"
+        "<h4>",
+        solve_result$error$message,
+        "</h4>",
+        "<br>",
+        "<p>",
+        solve_result$error$body,
+        "</p>"
       ),
       type = "error",
       html = TRUE,
@@ -81,7 +85,10 @@ fsolve_with_log <- function(problem_data, cost_id = NULL) {
   log_lines <- c(log_lines, "========================================")
   log_lines <- c(log_lines, "PRIORITIZR PROBLEM SETUP")
   log_lines <- c(log_lines, "========================================")
-  log_lines <- c(log_lines, paste("Timestamp:", format(solve_start, "%Y-%m-%d %H:%M:%S")))
+  log_lines <- c(
+    log_lines,
+    paste("Timestamp:", format(solve_start, "%Y-%m-%d %H:%M:%S"))
+  )
   log_lines <- c(log_lines, "")
 
   # Capture summary(problem_data) to a temporary file and clean ANSI
@@ -136,7 +143,10 @@ fsolve_with_log <- function(problem_data, cost_id = NULL) {
   log_lines <- c(log_lines, "========================================")
   log_lines <- c(log_lines, "SOLVE SUMMARY")
   log_lines <- c(log_lines, "========================================")
-  log_lines <- c(log_lines, paste("Runtime:", round(runtime_secs, 2), "seconds"))
+  log_lines <- c(
+    log_lines,
+    paste("Runtime:", round(runtime_secs, 2), "seconds")
+  )
 
   if (inherits(sol, "sf")) {
     log_lines <- c(log_lines, "Status: Solution found")
@@ -145,7 +155,16 @@ fsolve_with_log <- function(problem_data, cost_id = NULL) {
     n_selected <- sum(sol$solution_1 == 1, na.rm = TRUE)
     n_total <- nrow(sol)
     pct_selected <- round(100 * n_selected / max(n_total, 1), 2)
-    log_lines <- c(log_lines, paste("Planning units selected:", n_selected, "of", n_total, paste0("(", pct_selected, "%)")))
+    log_lines <- c(
+      log_lines,
+      paste(
+        "Planning units selected:",
+        n_selected,
+        "of",
+        n_total,
+        paste0("(", pct_selected, "%)")
+      )
+    )
 
     # Area (km^2)
     total_area_all_km2 <- tryCatch(
@@ -156,17 +175,27 @@ fsolve_with_log <- function(problem_data, cost_id = NULL) {
     )
     total_area_sel_km2 <- tryCatch(
       {
-        sum(as.numeric(sf::st_area(sol[sol$solution_1 == 1, ])), na.rm = TRUE) / 1e6
+        sum(as.numeric(sf::st_area(sol[sol$solution_1 == 1, ])), na.rm = TRUE) /
+          1e6
       },
       error = function(e) NA_real_
     )
-    if (is.finite(total_area_all_km2) && total_area_all_km2 > 0 && is.finite(total_area_sel_km2)) {
+    if (
+      is.finite(total_area_all_km2) &&
+        total_area_all_km2 > 0 &&
+        is.finite(total_area_sel_km2)
+    ) {
       pct_area <- round(100 * total_area_sel_km2 / total_area_all_km2, 2)
       log_lines <- c(
         log_lines,
         paste0(
-          "Area selected: ", format(round(total_area_sel_km2, 2), big.mark = ","), " km^2 of ",
-          format(round(total_area_all_km2, 2), big.mark = ","), " km^2 (", pct_area, "%)"
+          "Area selected: ",
+          format(round(total_area_sel_km2, 2), big.mark = ","),
+          " km^2 of ",
+          format(round(total_area_all_km2, 2), big.mark = ","),
+          " km^2 (",
+          pct_area,
+          "%)"
         )
       )
     }
@@ -180,12 +209,22 @@ fsolve_with_log <- function(problem_data, cost_id = NULL) {
         log_lines <- c(
           log_lines,
           paste0(
-            "Cost selected (", cost_id, "): ", format(round(total_cost_sel, 2), big.mark = ","),
-            " of ", format(round(total_cost_all, 2), big.mark = ","), " (", pct_cost, "%)"
+            "Cost selected (",
+            cost_id,
+            "): ",
+            format(round(total_cost_sel, 2), big.mark = ","),
+            " of ",
+            format(round(total_cost_all, 2), big.mark = ","),
+            " (",
+            pct_cost,
+            "%)"
           )
         )
       } else {
-        log_lines <- c(log_lines, paste0("Cost selected (", cost_id, "): ", round(total_cost_sel, 2)))
+        log_lines <- c(
+          log_lines,
+          paste0("Cost selected (", cost_id, "): ", round(total_cost_sel, 2))
+        )
       }
     }
 

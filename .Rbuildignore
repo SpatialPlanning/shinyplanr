@@ -28,3 +28,5 @@ $run_dev.*
 ^CLAUDE\.md$
 ^\.agents$
 ^AGENTS\.md$
+^[.]?air[.]toml$
+^\.vscode$

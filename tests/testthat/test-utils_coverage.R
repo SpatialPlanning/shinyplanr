@@ -65,7 +65,10 @@ test_that("fread_uploaded_spatial() returns failure when file_input is NULL", {
 })
 
 test_that("fread_uploaded_spatial() returns failure when datapath is NULL", {
-  result <- shinyplanr:::fread_uploaded_spatial(list(datapath = NULL, name = "test.gpkg"))
+  result <- shinyplanr:::fread_uploaded_spatial(list(
+    datapath = NULL,
+    name = "test.gpkg"
+  ))
 
   expect_false(result$success)
   expect_null(result$data)
@@ -212,10 +215,17 @@ test_that("fcalculate_coverage() returns a tibble with expected columns", {
   result <- shinyplanr:::fcalculate_coverage(uploaded_sf, raw_sf, Dict)
 
   expect_s3_class(result, "data.frame")
-  expect_named(result, c(
-    "feature", "total_amount", "absolute_held",
-    "relative_held", "target", "incidental"
-  ))
+  expect_named(
+    result,
+    c(
+      "feature",
+      "total_amount",
+      "absolute_held",
+      "relative_held",
+      "target",
+      "incidental"
+    )
+  )
 })
 
 test_that("fcalculate_coverage() returns one row per active Feature in Dict", {

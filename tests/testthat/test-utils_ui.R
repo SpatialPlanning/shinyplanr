@@ -66,8 +66,8 @@ make_dict_lock <- function() {
 
 test_that("fcreate_vars() returns a data frame with expected columns (no category)", {
   result <- shinyplanr:::fcreate_vars(
-    id         = "mod1",
-    Dict       = make_dict_ui(),
+    id = "mod1",
+    Dict = make_dict_ui(),
     name_check = "sli_"
   )
 
@@ -85,8 +85,8 @@ test_that("fcreate_vars() returns a data frame with expected columns (no categor
 
 test_that("fcreate_vars() builds correct id_in values", {
   result <- shinyplanr:::fcreate_vars(
-    id         = "mod1",
-    Dict       = make_dict_ui(),
+    id = "mod1",
+    Dict = make_dict_ui(),
     name_check = "sli_"
   )
 
@@ -98,21 +98,29 @@ test_that("fcreate_vars() builds correct id_in values", {
 test_that("fcreate_vars() filters to the requested dataType", {
   Dict <- make_dict_ui()
   # Add a Cost row that should be excluded when dataType = "Feature"
-  Dict <- rbind(Dict, data.frame(
-    nameCommon = "Cost", nameVariable = "Cost_Area",
-    category = "Cost", categoryID = "Cost",
-    type = "Cost",
-    targetInitial = NA_real_, targetMin = NA_real_, targetMax = NA_real_,
-    includeApp = TRUE, includeJust = FALSE,
-    justification = NA_character_,
-    stringsAsFactors = FALSE
-  ))
+  Dict <- rbind(
+    Dict,
+    data.frame(
+      nameCommon = "Cost",
+      nameVariable = "Cost_Area",
+      category = "Cost",
+      categoryID = "Cost",
+      type = "Cost",
+      targetInitial = NA_real_,
+      targetMin = NA_real_,
+      targetMax = NA_real_,
+      includeApp = TRUE,
+      includeJust = FALSE,
+      justification = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  )
 
   result <- shinyplanr:::fcreate_vars(
-    id         = "mod1",
-    Dict       = Dict,
+    id = "mod1",
+    Dict = Dict,
     name_check = "sli_",
-    dataType   = "Feature"
+    dataType = "Feature"
   )
 
   expect_false("sli_Cost_Area" %in% result$id_in)
@@ -121,9 +129,9 @@ test_that("fcreate_vars() filters to the requested dataType", {
 
 test_that("fcreate_vars() returns category columns when categoryOut = TRUE", {
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE
   )
 
@@ -138,11 +146,11 @@ test_that("fcreate_vars() returns category columns when categoryOut = TRUE", {
 test_that("fcreate_vars() with byCategory = TRUE returns one row per category", {
   # Dict has 2 Habitat features and 1 Coral feature → 2 categories
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory = TRUE
   )
 
   expect_equal(nrow(result), 2L)
@@ -151,11 +159,11 @@ test_that("fcreate_vars() with byCategory = TRUE returns one row per category", 
 
 test_that("fcreate_vars() byCategory id_in uses name_check prefix directly (no master_ prepend)", {
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory = TRUE
   )
 
   # id_in should be "sli_<categoryID>" — fcreate_vars() uses name_check directly
@@ -165,11 +173,11 @@ test_that("fcreate_vars() byCategory id_in uses name_check prefix directly (no m
 
 test_that("fcreate_vars() byCategory targetMin is min across category features", {
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory = TRUE
   )
 
   hab_row <- result[result$nameCommon == "Habitat", ]
@@ -179,11 +187,11 @@ test_that("fcreate_vars() byCategory targetMin is min across category features",
 
 test_that("fcreate_vars() byCategory targetMax is max across category features", {
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory = TRUE
   )
 
   hab_row <- result[result$nameCommon == "Habitat", ]
@@ -193,11 +201,11 @@ test_that("fcreate_vars() byCategory targetMax is max across category features",
 
 test_that("fcreate_vars() byCategory targetInitial is rounded mean across category", {
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory = TRUE
   )
 
   hab_row <- result[result$nameCommon == "Habitat", ]
@@ -211,27 +219,33 @@ test_that("fcreate_vars() byCategory targetInitial is rounded mean across catego
 
 test_that("fcreate_vars() SilentFeature byCategory labels include (n = XX) count", {
   dict_silent <- data.frame(
-    nameCommon    = c("Wahoo", "Mahi Mahi", "Swordfish", "Black Noddy", "Brown Noddy"),
-    nameVariable  = c("wahoo", "mahi", "sword", "b_noddy", "br_noddy"),
-    category      = c("Fish", "Fish", "Fish", "Birds", "Birds"),
-    categoryID    = c("Fish", "Fish", "Fish", "Birds", "Birds"),
-    type          = rep("SilentFeature", 5),
+    nameCommon = c(
+      "Wahoo",
+      "Mahi Mahi",
+      "Swordfish",
+      "Black Noddy",
+      "Brown Noddy"
+    ),
+    nameVariable = c("wahoo", "mahi", "sword", "b_noddy", "br_noddy"),
+    category = c("Fish", "Fish", "Fish", "Birds", "Birds"),
+    categoryID = c("Fish", "Fish", "Fish", "Birds", "Birds"),
+    type = rep("SilentFeature", 5),
     targetInitial = rep(30L, 5),
-    targetMin     = rep(0L, 5),
-    targetMax     = rep(85L, 5),
-    includeApp    = rep(TRUE, 5),
-    includeJust   = rep(TRUE, 5),
+    targetMin = rep(0L, 5),
+    targetMax = rep(85L, 5),
+    includeApp = rep(TRUE, 5),
+    includeJust = rep(TRUE, 5),
     justification = rep("", 5),
     stringsAsFactors = FALSE
   )
 
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = dict_silent,
-    name_check  = "silent_sli_",
+    id = "mod1",
+    Dict = dict_silent,
+    name_check = "silent_sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE,
-    dataType    = "SilentFeature"
+    byCategory = TRUE,
+    dataType = "SilentFeature"
   )
 
   # Fish has 3 features, Birds has 2 features
@@ -242,12 +256,12 @@ test_that("fcreate_vars() SilentFeature byCategory labels include (n = XX) count
 
 test_that("fcreate_vars() Feature byCategory labels do NOT include (n = XX) count", {
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE,
-    dataType    = "Feature"
+    byCategory = TRUE,
+    dataType = "Feature"
   )
 
   # Regular Feature labels should be plain category names, no count suffix
@@ -261,9 +275,9 @@ test_that("fcreate_vars() Feature byCategory labels do NOT include (n = XX) coun
 
 test_that("fcreate_check() returns a data frame with expected columns (no category)", {
   result <- shinyplanr:::fcreate_check(
-    id         = "mod1",
-    Dict       = make_dict_lock(),
-    idType     = "LockIn",
+    id = "mod1",
+    Dict = make_dict_lock(),
+    idType = "LockIn",
     name_check = "checkLI_"
   )
 
@@ -273,9 +287,9 @@ test_that("fcreate_check() returns a data frame with expected columns (no catego
 
 test_that("fcreate_check() builds correct id_in values", {
   result <- shinyplanr:::fcreate_check(
-    id         = "mod1",
-    Dict       = make_dict_lock(),
-    idType     = "LockIn",
+    id = "mod1",
+    Dict = make_dict_lock(),
+    idType = "LockIn",
     name_check = "checkLI_"
   )
 
@@ -285,10 +299,10 @@ test_that("fcreate_check() builds correct id_in values", {
 
 test_that("fcreate_check() includes category column when categoryOut = TRUE", {
   result <- shinyplanr:::fcreate_check(
-    id          = "mod1",
-    Dict        = make_dict_lock(),
-    idType      = "LockIn",
-    name_check  = "checkLI_",
+    id = "mod1",
+    Dict = make_dict_lock(),
+    idType = "LockIn",
+    name_check = "checkLI_",
     categoryOut = TRUE
   )
 
@@ -297,20 +311,28 @@ test_that("fcreate_check() includes category column when categoryOut = TRUE", {
 })
 
 test_that("fcreate_check() filters to the requested idType", {
-  Dict <- rbind(make_dict_lock(), data.frame(
-    nameCommon = "Exclude Zone", nameVariable = "excl_zone",
-    category = "Exclusion", categoryID = "Excl",
-    type = "LockOut",
-    targetInitial = NA_real_, targetMin = NA_real_, targetMax = NA_real_,
-    includeApp = TRUE, includeJust = FALSE,
-    justification = NA_character_,
-    stringsAsFactors = FALSE
-  ))
+  Dict <- rbind(
+    make_dict_lock(),
+    data.frame(
+      nameCommon = "Exclude Zone",
+      nameVariable = "excl_zone",
+      category = "Exclusion",
+      categoryID = "Excl",
+      type = "LockOut",
+      targetInitial = NA_real_,
+      targetMin = NA_real_,
+      targetMax = NA_real_,
+      includeApp = TRUE,
+      includeJust = FALSE,
+      justification = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  )
 
   result <- shinyplanr:::fcreate_check(
-    id         = "mod1",
-    Dict       = Dict,
-    idType     = "LockIn",
+    id = "mod1",
+    Dict = Dict,
+    idType = "LockIn",
     name_check = "checkLI_"
   )
 
@@ -340,13 +362,17 @@ test_that("fcustom_sliderCategory() returns NULL when varsIn has 0 rows", {
 
 test_that("fcustom_sliderCategory() returns a list when byCategory = FALSE", {
   vars <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE
   )
 
-  result <- shinyplanr:::fcustom_sliderCategory(vars, labelNum = 1, byCategory = FALSE)
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = FALSE
+  )
 
   expect_type(result, "list")
   # 2 categories × 2 entries (header + sliders) = 4 list elements
@@ -355,15 +381,17 @@ test_that("fcustom_sliderCategory() returns a list when byCategory = FALSE", {
 
 test_that("fcustom_sliderCategory() labelCategory = FALSE uses invisible spacer", {
   vars <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE
   )
 
   result <- shinyplanr:::fcustom_sliderCategory(
     vars,
-    labelNum = 1, byCategory = FALSE, labelCategory = FALSE
+    labelNum = 1,
+    byCategory = FALSE,
+    labelCategory = FALSE
   )
 
   # shiny::HTML() returns class c("html", "character"), not "shiny.tag".
@@ -372,20 +400,103 @@ test_that("fcustom_sliderCategory() labelCategory = FALSE uses invisible spacer"
   expect_true(inherits(header_el, "html"))
 })
 
+test_that("fcustom_sliderCategory() labelCategory = TRUE renders a lock toggle with lock_prefix", {
+  vars <- shinyplanr:::fcreate_vars(
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
+    categoryOut = TRUE
+  )
+
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = FALSE,
+    labelCategory = TRUE,
+    lock_prefix = "lock_"
+  )
+
+  # The header element (odd index) should be a div containing the lock toggle.
+  # materialSwitch renders with an input id containing the lock_prefix + categoryID.
+  header_el <- result[[1]]
+  html_str <- as.character(header_el)
+  # Should contain the lock toggle input id: lock_<categoryID>
+  expect_match(html_str, "lock_", fixed = TRUE)
+})
+
+test_that("fcustom_sliderCategory() lock toggle id uses custom lock_prefix", {
+  vars <- shinyplanr:::fcreate_vars(
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
+    categoryOut = TRUE
+  )
+
+  result_lock1 <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = FALSE,
+    labelCategory = TRUE,
+    lock_prefix = "lock1_"
+  )
+  result_lock2 <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = FALSE,
+    labelCategory = TRUE,
+    lock_prefix = "lock2_"
+  )
+
+  html1 <- as.character(result_lock1[[1]])
+  html2 <- as.character(result_lock2[[1]])
+
+  expect_match(html1, "lock1_", fixed = TRUE)
+  expect_match(html2, "lock2_", fixed = TRUE)
+  # Ensure the prefixes are distinct
+  expect_false(grepl("lock2_", html1, fixed = TRUE))
+  expect_false(grepl("lock1_", html2, fixed = TRUE))
+})
+
+test_that("fcustom_sliderCategory() byCategory = TRUE does not render lock toggle", {
+  vars <- shinyplanr:::fcreate_vars(
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
+    categoryOut = TRUE,
+    byCategory = TRUE
+  )
+
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = TRUE,
+    lock_prefix = "lock_"
+  )
+
+  # byCategory = TRUE: no header elements, just slider lists — no lock toggle.
+  # result is a list so as.character() returns a vector; collapse before grepl.
+  html_str <- paste(as.character(result), collapse = "")
+  expect_false(grepl("materialSwitch", html_str, fixed = TRUE))
+})
+
 # ---------------------------------------------------------------------------
 # fcustom_sliderCategory() — byCategory = TRUE (the coverage gap)
 # ---------------------------------------------------------------------------
 
 test_that("fcustom_sliderCategory() returns a list when byCategory = TRUE", {
   vars <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory = TRUE
   )
 
-  result <- shinyplanr:::fcustom_sliderCategory(vars, labelNum = 1, byCategory = TRUE)
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = TRUE
+  )
 
   expect_type(result, "list")
 })
@@ -393,14 +504,18 @@ test_that("fcustom_sliderCategory() returns a list when byCategory = TRUE", {
 test_that("fcustom_sliderCategory() byCategory = TRUE returns one entry per category", {
   # Dict has 2 categories (Habitat, Coral) → 2 master sliders
   vars <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory = TRUE
   )
 
-  result <- shinyplanr:::fcustom_sliderCategory(vars, labelNum = 1, byCategory = TRUE)
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = TRUE
+  )
 
   # byCategory = TRUE: one list entry per category (no separate header entries)
   expect_length(result, 2L)
@@ -408,14 +523,18 @@ test_that("fcustom_sliderCategory() byCategory = TRUE returns one entry per cate
 
 test_that("fcustom_sliderCategory() byCategory = TRUE entries are lists of slider tags", {
   vars <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = make_dict_ui(),
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE
+    byCategory = TRUE
   )
 
-  result <- shinyplanr:::fcustom_sliderCategory(vars, labelNum = 1, byCategory = TRUE)
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = TRUE
+  )
 
   # Each element is a list produced by purrr::pmap → list of shiny.tag objects
   expect_type(result[[1]], "list")
@@ -428,39 +547,47 @@ test_that("fcustom_sliderCategory() byCategory = TRUE slider ids use name_check 
   # Bioregion callers pass "bioregion_sli_" and SilentFeature callers pass
   # "silent_sli_". Here we use "bioregion_sli_" to mirror the Bioregion case.
   dict_bio <- data.frame(
-    nameCommon    = c("Zone 1", "Zone 2"),
-    nameVariable  = c("zone_1", "zone_2"),
-    category      = c("EnviroZone", "EnviroZone"),
-    categoryID    = c("EnviroZone", "EnviroZone"),
-    type          = rep("Bioregion", 2),
+    nameCommon = c("Zone 1", "Zone 2"),
+    nameVariable = c("zone_1", "zone_2"),
+    category = c("EnviroZone", "EnviroZone"),
+    categoryID = c("EnviroZone", "EnviroZone"),
+    type = rep("Bioregion", 2),
     targetInitial = rep(30L, 2),
-    targetMin     = rep(0L, 2),
-    targetMax     = rep(85L, 2),
-    includeApp    = rep(TRUE, 2),
-    includeJust   = rep(TRUE, 2),
+    targetMin = rep(0L, 2),
+    targetMax = rep(85L, 2),
+    includeApp = rep(TRUE, 2),
+    includeJust = rep(TRUE, 2),
     justification = rep("", 2),
     stringsAsFactors = FALSE
   )
 
   vars <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = dict_bio,
-    name_check  = "bioregion_sli_",
+    id = "mod1",
+    Dict = dict_bio,
+    name_check = "bioregion_sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE,
-    dataType    = "Bioregion"
+    byCategory = TRUE,
+    dataType = "Bioregion"
   )
 
-  result <- shinyplanr:::fcustom_sliderCategory(vars, labelNum = 1, byCategory = TRUE)
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = TRUE
+  )
 
   # Each element of result is a list (from purrr::pmap) of sliderInput div tags.
   # sliderInput wraps everything in a div; the label child has
   # attribs$id = "<namespace>-<id_in>-label".  We extract those label ids to
   # confirm the bioregion_sli_ prefix is present.
   all_slider_divs <- unlist(result, recursive = FALSE)
-  label_ids <- vapply(all_slider_divs, function(tag) {
-    tag$children[[1]]$attribs$id
-  }, character(1))
+  label_ids <- vapply(
+    all_slider_divs,
+    function(tag) {
+      tag$children[[1]]$attribs$id
+    },
+    character(1)
+  )
   expect_true(all(grepl("bioregion_sli_", label_ids)))
   expect_false(any(grepl("^master_", label_ids)))
 })
@@ -501,14 +628,18 @@ test_that("fcustom_sliderCategory() (byCategory = FALSE) respects forder_dict_ca
   Dict <- shinyplanr:::forder_dict_categories(make_ordering_dict())
 
   vars <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = Dict,
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = Dict,
+    name_check = "sli_",
     categoryOut = TRUE,
-    dataType    = "Feature"
+    dataType = "Feature"
   )
 
-  result <- shinyplanr:::fcustom_sliderCategory(vars, labelNum = 1, byCategory = FALSE)
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = FALSE
+  )
 
   # 2 categories x 2 entries (header, sliders) = 4. Header at index 1 should
   # be "Zebra Zone" (categoryOrder = 1), NOT "Aardvark Zone" (alphabetical).
@@ -520,12 +651,12 @@ test_that("fcreate_vars(byCategory = TRUE) master sliders respect forder_dict_ca
   Dict <- shinyplanr:::forder_dict_categories(make_ordering_dict())
 
   result <- shinyplanr:::fcreate_vars(
-    id          = "mod1",
-    Dict        = Dict,
-    name_check  = "sli_",
+    id = "mod1",
+    Dict = Dict,
+    name_check = "sli_",
     categoryOut = TRUE,
-    byCategory  = TRUE,
-    dataType    = "Feature"
+    byCategory = TRUE,
+    dataType = "Feature"
   )
 
   # dplyr::summarise(.by = "category") on an ordered factor preserves the
@@ -540,9 +671,9 @@ test_that("create_fancy_dropdown() respects forder_dict_categories() order via g
   # create_fancy_dropdown() is defined in R/utils_ui.R and used by mod_2scenario /
   # mod_3compare / mod_4features. It filters internally, so pass the full Dict.
   widget <- shinyplanr:::create_fancy_dropdown(
-    id    = "mod1",
+    id = "mod1",
     id_in = "testdrop",
-    Dict  = Dict
+    Dict = Dict
   )
 
   # shiny::selectInput() renders its <optgroup> choices as a single raw HTML
@@ -570,6 +701,10 @@ test_that("create_fancy_dropdown() does not error when Dict$category is an order
   Dict <- shinyplanr:::forder_dict_categories(make_ordering_dict())
 
   expect_no_error(
-    shinyplanr:::create_fancy_dropdown(id = "mod1", id_in = "testdrop", Dict = Dict)
+    shinyplanr:::create_fancy_dropdown(
+      id = "mod1",
+      id_in = "testdrop",
+      Dict = Dict
+    )
   )
 })

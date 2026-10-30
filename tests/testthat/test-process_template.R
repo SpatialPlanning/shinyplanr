@@ -23,7 +23,7 @@ make_template_file <- function(lines) {
 
 test_that(".process_template() returns lines unchanged when no conditions or substitutions", {
   lines <- c("library(sf)", "", "x <- 1")
-  path  <- make_template_file(lines)
+  path <- make_template_file(lines)
 
   result <- shinyplanr:::.process_template(path)
 
@@ -36,7 +36,7 @@ test_that(".process_template() returns lines unchanged when no conditions or sub
 
 test_that(".process_template() substitutes {placeholder} tokens", {
   lines <- c('country <- "{country}"', 'crs <- "{crs}"')
-  path  <- make_template_file(lines)
+  path <- make_template_file(lines)
 
   result <- shinyplanr:::.process_template(
     path,
@@ -49,7 +49,7 @@ test_that(".process_template() substitutes {placeholder} tokens", {
 
 test_that(".process_template() substitutes {resolution} with a numeric value", {
   lines <- c("resolution <- {resolution}L")
-  path  <- make_template_file(lines)
+  path <- make_template_file(lines)
 
   result <- shinyplanr:::.process_template(
     path,
@@ -147,7 +147,7 @@ test_that(".process_template() substitutes tokens inside a kept [IF] block", {
 
   result <- shinyplanr:::.process_template(
     path,
-    conditions    = list(myblock = TRUE),
+    conditions = list(myblock = TRUE),
     substitutions = list(value = "hello")
   )
 
@@ -165,7 +165,7 @@ test_that(".process_template() does NOT substitute tokens inside a FALSE [IF] bl
 
   result <- shinyplanr:::.process_template(
     path,
-    conditions    = list(myblock = FALSE),
+    conditions = list(myblock = FALSE),
     substitutions = list(value = "hello")
   )
 
@@ -269,9 +269,9 @@ test_that("1_setup_enviro.R template output contains no [IF]/[END] markers", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "ProcTpl",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "ProcTpl",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -301,10 +301,10 @@ test_that("1_setup_enviro.R includes oceandatr install when oceandatr = TRUE", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "OceanTpl",
-      oceandatr    = TRUE,
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "OceanTpl",
+      oceandatr = TRUE,
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -329,15 +329,18 @@ test_that("1_setup_enviro.R includes oceandatr install when oceandatr = TRUE", {
 # ---------------------------------------------------------------------------
 
 test_that("1_setup_enviro.R omits oceandatr install when oceandatr = FALSE", {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_NoOceanTpl_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_NoOceanTpl_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "NoOceanTpl",
-      oceandatr    = FALSE,
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "NoOceanTpl",
+      oceandatr = FALSE,
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -363,10 +366,10 @@ test_that("2_setup_data.R substitutes country and crs tokens correctly", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "TokenTest",
-      crs          = "EPSG:32760",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "TokenTest",
+      crs = "EPSG:32760",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -395,15 +398,18 @@ test_that("2_setup_data.R substitutes country and crs tokens correctly", {
 # ---------------------------------------------------------------------------
 
 test_that("2_setup_data.R includes st_simplify() calls for bndry and coast", {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_SimplifyTpl_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_SimplifyTpl_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "SimplifyTpl",
-      resolution   = 100,
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "SimplifyTpl",
+      resolution = 100,
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -418,20 +424,26 @@ test_that("2_setup_data.R includes st_simplify() calls for bndry and coast", {
     label = "2_setup_data.R should define simplify_tol relative to resolution"
   )
   expect_true(
-    grepl('bndry <- sf::st_simplify(bndry, preserveTopology = TRUE, dTolerance = simplify_tol)',
-      data_text, fixed = TRUE),
+    grepl(
+      'bndry <- sf::st_simplify(bndry, preserveTopology = TRUE, dTolerance = simplify_tol)',
+      data_text,
+      fixed = TRUE
+    ),
     label = "2_setup_data.R should simplify bndry before saving"
   )
   expect_true(
-    grepl('coast <- sf::st_simplify(coast, preserveTopology = TRUE, dTolerance = simplify_tol)',
-      data_text, fixed = TRUE),
+    grepl(
+      'coast <- sf::st_simplify(coast, preserveTopology = TRUE, dTolerance = simplify_tol)',
+      data_text,
+      fixed = TRUE
+    ),
     label = "2_setup_data.R should simplify coast before saving"
   )
 
   # The simplification block must appear AFTER the planning unit grid (PUs)
   # is created, so it never affects the spatial analysis - only the saved
   # plotting geometry.
-  pu_pos       <- regexpr("PUs <- spatialgridr::get_grid", data_text, fixed = TRUE)
+  pu_pos <- regexpr("PUs <- spatialgridr::get_grid", data_text, fixed = TRUE)
   simplify_pos <- regexpr("simplify_tol <- resolution", data_text, fixed = TRUE)
   expect_true(
     pu_pos > 0 && simplify_pos > pu_pos,
@@ -449,11 +461,11 @@ test_that("3_setup_app.R omits climate options when include_climate = FALSE", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country         = "NoClimTpl",
+      country = "NoClimTpl",
       include_climate = FALSE,
-      output_dir      = out_dir,
-      use_renv        = FALSE,
-      create_rproj    = FALSE
+      output_dir = out_dir,
+      use_renv = FALSE,
+      create_rproj = FALSE
     )
   )
 
@@ -478,11 +490,11 @@ test_that("3_setup_app.R includes climate options when include_climate = TRUE", 
 
   suppressMessages(
     create_shinyplanr_template(
-      country         = "ClimTpl",
+      country = "ClimTpl",
       include_climate = TRUE,
-      output_dir      = out_dir,
-      use_renv        = FALSE,
-      create_rproj    = FALSE
+      output_dir = out_dir,
+      use_renv = FALSE,
+      create_rproj = FALSE
     )
   )
 

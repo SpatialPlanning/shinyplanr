@@ -107,14 +107,44 @@ renv::install("emlab-ucsb/spatialgridr@HEAD", prompt = FALSE)
 
 renv::install("terra@1.9-27", prompt = FALSE)
 
-renv::install(c(
-  "shiny", "tidyverse", "sf", "ggplot2", "readr", "dplyr",
-  "tidyr", "purrr", "stringr", "tibble", "tidyselect", "bslib",
-  "leafgl", "leaflet", "htmltools", "patchwork", "gridExtra", "reactable",
-  "shinyalert", "shinycssloaders", "shinydisconnect", "shinyjs",
-  "prioritizr", "highs", "rnaturalearth", "rnaturalearthdata", "units",
-  "quarto", "withr", "rsconnect", "ggridges", "kableExtra", "rstudioapi"
-), prompt = FALSE)
+renv::install(
+  c(
+    "shiny",
+    "tidyverse",
+    "sf",
+    "ggplot2",
+    "readr",
+    "dplyr",
+    "tidyr",
+    "purrr",
+    "stringr",
+    "tibble",
+    "tidyselect",
+    "bslib",
+    "leafgl",
+    "leaflet",
+    "htmltools",
+    "patchwork",
+    "gridExtra",
+    "reactable",
+    "shinyalert",
+    "shinycssloaders",
+    "shinydisconnect",
+    "shinyjs",
+    "prioritizr",
+    "highs",
+    "rnaturalearth",
+    "rnaturalearthdata",
+    "units",
+    "quarto",
+    "withr",
+    "rsconnect",
+    "ggridges",
+    "kableExtra",
+    "rstudioapi"
+  ),
+  prompt = FALSE
+)
 
 # =============================================================================
 # STEP 3 — Optional: faster solvers
@@ -145,9 +175,18 @@ renv::install(c(
 
 local({
   required <- c(
-    "shinyplanr", "spatialplanr", "shinyWidgets",
-    "shiny", "sf", "prioritizr", "highs",
-    "leafgl", "leaflet", "reactable", "bslib", "ggridges"
+    "shinyplanr",
+    "spatialplanr",
+    "shinyWidgets",
+    "shiny",
+    "sf",
+    "prioritizr",
+    "highs",
+    "leafgl",
+    "leaflet",
+    "reactable",
+    "bslib",
+    "ggridges"
   )
   missing_pkgs <- required[
     !vapply(required, requireNamespace, logical(1L), quietly = TRUE)
@@ -192,6 +231,8 @@ message("\nAll packages installed. renv.lock written.")
 message("Next: open setup/2_setup_data.R and prepare the spatial data.")
 
 # Open the next setup script -----------------------------------------------
-if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {
+if (
+  requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()
+) {
   rstudioapi::navigateToFile('setup/2_setup_data.R')
 }

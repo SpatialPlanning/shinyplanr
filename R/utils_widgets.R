@@ -2,7 +2,6 @@
 # Shiny input/widget helpers: functions that interact with Shiny inputs or
 # session objects but are not full module-lifecycle patterns.
 
-
 #' Update a checkbox group input from the feature dictionary
 #'
 #' Refreshes the choices in a checkbox group input using entries from the
@@ -42,9 +41,9 @@ fupdate_checkbox <- function(session, id_in, Dict, selected = NA) {
   sel <- if (is.na(selected)) unlist(choice) else selected
 
   shiny::updateCheckboxGroupInput(
-    session  = session,
-    inputId  = id_in,
-    choices  = choice,
+    session = session,
+    inputId = id_in,
+    choices = choice,
     selected = sel
   )
 }
@@ -64,7 +63,9 @@ fresetSlider <- function(session, slider_vars) {
   purrr::walk2(
     .x = slider_vars$id_in,
     .y = slider_vars$targetInitial,
-    .f = \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y)
+    .f = \(x, y) {
+      shiny::updateSliderInput(session = session, inputId = x, value = y)
+    }
   )
 }
 

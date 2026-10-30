@@ -3,7 +3,6 @@
 # These functions take data in and return data out; they can be unit-tested
 # without a Shiny session.
 
-
 # Canonical "master category" (type) display order -------------------------
 #
 # This fixes the order in which the different Dict$type groups appear
@@ -20,7 +19,14 @@
 # noRd because this is an internal implementation detail, not part of the
 # public API. Changing the order here changes ordering everywhere at once.
 .shinyplanr_type_order <- c(
-  "Feature", "SilentFeature", "Bioregion", "Cost", "Climate", "LockIn", "LockOut", "EcosystemServices"
+  "Feature",
+  "SilentFeature",
+  "Bioregion",
+  "Cost",
+  "Climate",
+  "LockIn",
+  "LockOut",
+  "EcosystemServices"
 )
 
 
@@ -96,8 +102,14 @@ forder_dict_categories <- function(Dict) {
   # Master type rank: known types get their position in .shinyplanr_type_order;
   # anything else (e.g. "Justification") is ranked after all known types, in
   # order of first appearance, so it is appended rather than dropped/NA'd.
-  known_types_present <- intersect(.shinyplanr_type_order, unique(cat_lookup$type))
-  other_types_present <- setdiff(unique(cat_lookup$type), .shinyplanr_type_order)
+  known_types_present <- intersect(
+    .shinyplanr_type_order,
+    unique(cat_lookup$type)
+  )
+  other_types_present <- setdiff(
+    unique(cat_lookup$type),
+    .shinyplanr_type_order
+  )
   # Order "other" types by their first appearance in Dict for determinism.
   other_types_present <- cat_lookup %>%
     dplyr::filter(.data$type %in% other_types_present) %>%
@@ -127,7 +139,11 @@ forder_dict_categories <- function(Dict) {
 
   Dict %>%
     dplyr::mutate(
-      category = factor(.data$category, levels = category_levels, ordered = TRUE)
+      category = factor(
+        .data$category,
+        levels = category_levels,
+        ordered = TRUE
+      )
     ) %>%
     dplyr::arrange(.data$category)
 }
@@ -163,13 +179,17 @@ fformat_feature_table <- function(tpd, Dict, suffix = "") {
 
   # Mark zero-target features as incidental (consistent across both modules)
   tpd <- tpd %>%
-    dplyr::mutate(incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental))
+    dplyr::mutate(
+      incidental = dplyr::if_else(.data$target == 0, TRUE, .data$incidental)
+    )
 
   # Build replacement lookup: "^nameVariable$" -> nameCommon
   rpl <- Dict %>%
     dplyr::filter(.data$nameVariable %in% tpd$feature) %>%
     dplyr::select("nameVariable", "nameCommon") %>%
-    dplyr::mutate(nameVariable = stringr::str_c("^", .data$nameVariable, "$")) %>%
+    dplyr::mutate(
+      nameVariable = stringr::str_c("^", .data$nameVariable, "$")
+    ) %>%
     tibble::deframe()
 
   tpd %>%
@@ -178,7 +198,7 @@ fformat_feature_table <- function(tpd, Dict, suffix = "") {
       by = c("feature" = "nameVariable")
     ) %>%
     dplyr::mutate(
-      value  = as.integer(round(.data$relative_held * 100)),
+      value = as.integer(round(.data$relative_held * 100)),
       target = as.integer(round(.data$target * 100))
     ) %>%
     dplyr::select("category", "feature", "target", "value", "incidental") %>%
@@ -200,7 +220,9 @@ fformat_feature_table <- function(tpd, Dict, suffix = "") {
 #'
 fget_category <- function(Dict) {
   category <- Dict %>%
-    dplyr::filter(.data$type %in% c("Feature", "SilentFeature", "Bioregion")) %>%
+    dplyr::filter(
+      .data$type %in% c("Feature", "SilentFeature", "Bioregion")
+    ) %>%
     dplyr::select("nameVariable", "category") %>%
     dplyr::rename(feature = "nameVariable")
 
@@ -229,7 +251,12 @@ fget_category <- function(Dict) {
 #'
 #' @noRd
 #'
-fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature") {
+fget_targets <- function(
+  input,
+  Dict,
+  name_check = "sli_",
+  dataType = "Feature"
+) {
   ft <- Dict %>%
     dplyr::filter(.data$type %in% dataType) %>%
     dplyr::pull("nameVariable")
@@ -240,7 +267,8 @@ fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature")
   # NULL rows, which could produce a shorter-than-expected targets data frame.
   targets <- tibble::tibble(
     feature = ft,
-    target  = purrr::map_dbl(ft, \(x) input[[paste0(name_check, x)]] %||% 0) / 100
+    target = purrr::map_dbl(ft, \(x) input[[paste0(name_check, x)]] %||% 0) /
+      100
   )
 
   return(targets)
@@ -282,7 +310,12 @@ fget_targets <- function(input, Dict, name_check = "sli_", dataType = "Feature")
 #'
 fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
   # --- 1. Regular Feature targets (one slider per feature) -------------------
-  targets <- fget_targets(input, Dict = Dict, name_check = name_check, dataType = "Feature")
+  targets <- fget_targets(
+    input,
+    Dict = Dict,
+    name_check = name_check,
+    dataType = "Feature"
+  )
 
   # --- 2. SilentFeature targets (one slider per category -> one row per feature) ---
   ft_silent <- Dict %>%
@@ -303,10 +336,17 @@ fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
 
     targets_silent_raw <- tibble::tibble(
       categoryID = cats_silent,
-      target     = purrr::map_dbl(cats_silent, \(x) input[[paste0(silent_name_check, x)]] %||% 0) / 100
+      target = purrr::map_dbl(cats_silent, \(x) {
+        input[[paste0(silent_name_check, x)]] %||% 0
+      }) /
+        100
     )
 
-    targets_silent <- dplyr::left_join(ft_silent, targets_silent_raw, by = "categoryID") %>%
+    targets_silent <- dplyr::left_join(
+      ft_silent,
+      targets_silent_raw,
+      by = "categoryID"
+    ) %>%
       dplyr::select(-"categoryID")
 
     targets <- dplyr::bind_rows(targets, targets_silent)
@@ -334,10 +374,17 @@ fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
     # initialised).
     targets_bioregion_raw <- tibble::tibble(
       categoryID = cats,
-      target     = purrr::map_dbl(cats, \(x) input[[paste0(bioregion_name_check, x)]] %||% 0) / 100
+      target = purrr::map_dbl(cats, \(x) {
+        input[[paste0(bioregion_name_check, x)]] %||% 0
+      }) /
+        100
     )
 
-    targets_bioregion <- dplyr::left_join(ft_bioregion, targets_bioregion_raw, by = "categoryID") %>%
+    targets_bioregion <- dplyr::left_join(
+      ft_bioregion,
+      targets_bioregion_raw,
+      by = "categoryID"
+    ) %>%
       dplyr::select(-"categoryID")
 
     targets <- dplyr::bind_rows(targets, targets_bioregion)
@@ -379,7 +426,14 @@ fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
 #'
 #' @noRd
 #'
-fget_feature_representation <- function(soln, problem_data, targets, climate_id, options, Dict) {
+fget_feature_representation <- function(
+  soln,
+  problem_data,
+  targets,
+  climate_id,
+  options,
+  Dict
+) {
   # Check if solution is valid
   if (!inherits(soln, "sf")) {
     return(NULL)
@@ -416,10 +470,10 @@ fget_feature_representation <- function(soln, problem_data, targets, climate_id,
     dplyr::pull("nameVariable")
 
   if (length(silent_vars) > 0) {
-    main_rep   <- all_rep %>% dplyr::filter(!.data$feature %in% silent_vars)
+    main_rep <- all_rep %>% dplyr::filter(!.data$feature %in% silent_vars)
     silent_rep <- all_rep %>% dplyr::filter(.data$feature %in% silent_vars)
   } else {
-    main_rep   <- all_rep
+    main_rep <- all_rep
     silent_rep <- NULL
   }
 
@@ -532,7 +586,9 @@ fcalculate_feature_density <- function(raw_sf, Dict) {
   # SilentFeature layers are included so that feature density reflects the
   # actual number of underlying layers (not just the number of visible sliders).
   density_vars <- Dict %>%
-    dplyr::filter(.data$type %in% c("Feature", "SilentFeature", "Bioregion")) %>%
+    dplyr::filter(
+      .data$type %in% c("Feature", "SilentFeature", "Bioregion")
+    ) %>%
     dplyr::pull("nameVariable") %>%
     intersect(names(raw_sf))
 
@@ -568,7 +624,9 @@ fCheckFeatureNo <- function(dat, Dict = NULL) {
 
   if (!is.null(Dict)) {
     feature_vars <- Dict %>%
-      dplyr::filter(.data$type %in% c("Feature", "SilentFeature", "Bioregion")) %>%
+      dplyr::filter(
+        .data$type %in% c("Feature", "SilentFeature", "Bioregion")
+      ) %>%
       dplyr::pull("nameVariable")
     f_no <- sum(names(dat_plain) %in% feature_vars)
   } else {

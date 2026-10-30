@@ -40,14 +40,16 @@ make_hex <- function(cx, cy, r = 10000) {
 }
 
 geoms <- st_sfc(
-  lapply(seq_len(nrow(centres)), function(i) make_hex(centres$x[i], centres$y[i])),
+  lapply(seq_len(nrow(centres)), function(i) {
+    make_hex(centres$x[i], centres$y[i])
+  }),
   crs = "ESRI:54009"
 )
 
 raw_sf <- st_sf(
   feature_A = c(0.8, 0.2, 0.5, 0.9, 0.1),
   feature_B = c(0.3, 0.7, 0.4, 0.1, 0.6),
-  geometry  = geoms
+  geometry = geoms
 )
 
 # ---------------------------------------------------------------------------
@@ -82,7 +84,7 @@ Dict <- data.frame(
 )
 
 # Schema version (must match .shinyplanr_schema_version in config_schema.R)
-schema_version <- 3L
+schema_version <- 4L
 
 # ---------------------------------------------------------------------------
 # Options (stub)
@@ -108,7 +110,6 @@ options <- list(
   include_climateChange = FALSE,
   climate_change = 0,
   include_lockedArea = FALSE,
-  targetsBy = "individual",
   obj_func = "min_set",
   cCRS = "ESRI:54009"
 )
@@ -157,67 +158,116 @@ tx_6changelog <- ""
 
 sidebar <- list(
   scenario = list(
-    slider_vars = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
-      categoryOut = TRUE, byCategory = FALSE
+    slider_vars = shinyplanr:::fcreate_vars(
+      "2scenario_ui_1",
+      Dict,
+      "sli_",
+      categoryOut = TRUE,
+      byCategory = FALSE
     ),
     # SilentFeature: stub Dict has no SilentFeature rows, so this returns an
     # empty data frame. The UI switchSilentFeatures div will remain hidden.
-    slider_varsSilent = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "silent_sli_",
-      categoryOut = TRUE, byCategory = TRUE,
+    slider_varsSilent = shinyplanr:::fcreate_vars(
+      "2scenario_ui_1",
+      Dict,
+      "silent_sli_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
       dataType = "SilentFeature"
     ),
-    slider_varsBioR = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
-      categoryOut = TRUE, byCategory = TRUE,
+    slider_varsBioR = shinyplanr:::fcreate_vars(
+      "2scenario_ui_1",
+      Dict,
+      "sli_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
       dataType = "Bioregion"
     ),
-    slider_varsCat = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
-      categoryOut = TRUE, byCategory = TRUE
-    ),
-    check_lockIn = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockIn",
+    check_lockIn = shinyplanr:::fcreate_check(
+      "2scenario_ui_1",
+      Dict,
+      "LockIn",
       "checkLI_",
       categoryOut = TRUE
     ),
-    check_lockOut = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockOut",
+    check_lockOut = shinyplanr:::fcreate_check(
+      "2scenario_ui_1",
+      Dict,
+      "LockOut",
       "checkLO_",
       categoryOut = TRUE
     )
   ),
   compare = list(
-    Vars1 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
+    Vars1 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "sli_",
       categoryOut = TRUE
     ),
-    Vars2 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
+    Vars2 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "sli2_",
       categoryOut = TRUE
     ),
-    slider_varsSilent1 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "silent_sli1_",
-      categoryOut = TRUE, byCategory = TRUE,
+    slider_varsSilent1 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "silent_sli1_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
       dataType = "SilentFeature"
     ),
-    slider_varsSilent2 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "silent_sli2_",
-      categoryOut = TRUE, byCategory = TRUE,
+    slider_varsSilent2 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "silent_sli2_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
       dataType = "SilentFeature"
     ),
-    slider_varsBioR1 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli_",
-      categoryOut = TRUE, byCategory = TRUE,
+    slider_varsBioR1 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "sli_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
       dataType = "Bioregion"
     ),
-    slider_varsBioR2 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
-      categoryOut = TRUE, byCategory = TRUE,
+    slider_varsBioR2 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "sli2_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
       dataType = "Bioregion"
     ),
-    check_lockIn1 = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
+    check_lockIn1 = shinyplanr:::fcreate_check(
+      "3compare_ui_1",
+      Dict,
+      "LockIn",
       "check1LI_",
       categoryOut = TRUE
     ),
-    check_lockIn2 = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
+    check_lockIn2 = shinyplanr:::fcreate_check(
+      "3compare_ui_1",
+      Dict,
+      "LockIn",
       "check2LI_",
       categoryOut = TRUE
     ),
-    check_lockOut1 = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
+    check_lockOut1 = shinyplanr:::fcreate_check(
+      "3compare_ui_1",
+      Dict,
+      "LockOut",
       "check1LO_",
       categoryOut = TRUE
     ),
-    check_lockOut2 = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
+    check_lockOut2 = shinyplanr:::fcreate_check(
+      "3compare_ui_1",
+      Dict,
+      "LockOut",
       "check2LO_",
       categoryOut = TRUE
     )
@@ -248,7 +298,7 @@ usethis::use_data(
   tx_6technical,
   tx_6changelog,
   overwrite = TRUE,
-  internal  = TRUE
+  internal = TRUE
 )
 
 message("\nStub R/sysdata.rda written successfully.")

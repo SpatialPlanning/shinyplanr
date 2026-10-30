@@ -26,9 +26,14 @@
 #'
 #' @noRd
 #'
-fcreate_vars <- function(id, Dict, name_check = "check",
-                         categoryOut = FALSE, byCategory = FALSE,
-                         dataType = "Feature") {
+fcreate_vars <- function(
+  id,
+  Dict,
+  name_check = "check",
+  categoryOut = FALSE,
+  byCategory = FALSE,
+  dataType = "Feature"
+) {
   vars <- Dict %>%
     dplyr::filter(.data$type == dataType) %>%
     dplyr::select(-c("justification", "includeApp", "includeJust", "type")) %>%
@@ -37,16 +42,32 @@ fcreate_vars <- function(id, Dict, name_check = "check",
       id_in = paste(name_check, .data$nameVariable, sep = "")
     )
 
-  if (nrow(vars) > 0) { # If dataType doesn't exist, vars will be 0 here. Just return
+  if (nrow(vars) > 0) {
+    # If dataType doesn't exist, vars will be 0 here. Just return
 
     if (categoryOut == TRUE) {
       vars <- vars %>%
-        dplyr::select("id", "id_in", "nameCommon", "category", "categoryID", "targetMin", "targetMax", "targetInitial")
+        dplyr::select(
+          "id",
+          "id_in",
+          "nameCommon",
+          "category",
+          "categoryID",
+          "targetMin",
+          "targetMax",
+          "targetInitial"
+        )
     } else {
       vars <- vars %>%
-        dplyr::select("id", "id_in", "nameCommon", "targetMin", "targetMax", "targetInitial")
+        dplyr::select(
+          "id",
+          "id_in",
+          "nameCommon",
+          "targetMin",
+          "targetMax",
+          "targetInitial"
+        )
     }
-
 
     if (isTRUE(byCategory) & isTRUE(categoryOut)) {
       vars <- vars %>%
@@ -91,10 +112,20 @@ fcreate_vars <- function(id, Dict, name_check = "check",
 #'
 #' @noRd
 #'
-fcreate_check <- function(id, Dict, idType, name_check = "check", categoryOut = FALSE) {
+fcreate_check <- function(
+  id,
+  Dict,
+  idType,
+  name_check = "check",
+  categoryOut = FALSE
+) {
   vars <- Dict %>%
     dplyr::filter(.data$type == idType) %>%
-    dplyr::select(tidyselect::all_of(c("nameCommon", "nameVariable", "category"))) %>%
+    dplyr::select(tidyselect::all_of(c(
+      "nameCommon",
+      "nameVariable",
+      "category"
+    ))) %>%
     dplyr::mutate(
       id = id,
       id_in = paste(name_check, .data$nameVariable, sep = "")
@@ -127,7 +158,14 @@ fcreate_check <- function(id, Dict, idType, name_check = "check", categoryOut = 
 #'
 #' @noRd
 #'
-fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetInitial) {
+fcustom_slider <- function(
+  id,
+  id_in,
+  nameCommon,
+  targetMin,
+  targetMax,
+  targetInitial
+) {
   shiny::sliderInput(
     inputId = shiny::NS(namespace = id, id = id_in),
     label = shiny::div(
@@ -145,8 +183,8 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #' Build a list of sliders grouped by category
 #'
 #' Takes the output of \code{fcreate_vars()} and returns a list of Shiny tags
-#' comprising category headers (h3) and individual \code{sliderInput} widgets,
-#' ready to be passed into a \code{sidebarPanel}.
+#' comprising category headers (h3), optional lock toggles, and individual
+#' \code{sliderInput} widgets, ready to be passed into a \code{sidebarPanel}.
 #'
 #' @param varsIn Data frame. Output of \code{fcreate_vars()} containing
 #'   columns \code{id}, \code{id_in}, \code{nameCommon}, \code{category},
@@ -155,16 +193,29 @@ fcustom_slider <- function(id, id_in, nameCommon, targetMin, targetMax, targetIn
 #' @param labelNum Character or numeric. Section number prepended to category
 #'   headings (e.g. \code{1} produces headings "1.1 Habitat", "1.2 Coral").
 #' @param byCategory Logical. If \code{TRUE}, one slider per category is
-#'   rendered (category-level master sliders). Default \code{FALSE}.
+#'   rendered (silent feature / bioregion sliders). No lock toggle is shown
+#'   in this mode. Default \code{FALSE}.
 #' @param labelCategory Logical. If \code{FALSE}, category headings are
 #'   replaced with an invisible spacer (used in the two-column Compare layout).
+#'   No lock toggle is rendered when \code{labelCategory = FALSE}.
 #'   Default \code{TRUE}.
+#' @param lock_prefix Character. Prefix for the lock toggle input IDs.
+#'   The full ID is \code{paste0(lock_prefix, categoryID)}, e.g.
+#'   \code{"lock_Habitat"} for the scenario module or
+#'   \code{"lock1_Habitat"} / \code{"lock2_Habitat"} for the compare module.
+#'   Default \code{"lock_"}.
 #'
 #' @return A list of Shiny tags.
 #'
 #' @noRd
 #'
-fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCategory = TRUE) {
+fcustom_sliderCategory <- function(
+  varsIn,
+  labelNum,
+  byCategory = FALSE,
+  labelCategory = TRUE,
+  lock_prefix = "lock_"
+) {
   if (is.null(varsIn) || nrow(varsIn) == 0) {
     return(NULL)
   }
@@ -179,12 +230,35 @@ fcustom_sliderCategory <- function(varsIn, labelNum, byCategory = FALSE, labelCa
         dplyr::filter(.data$category == ctgs[ctg]) %>%
         dplyr::select(-c("category", "categoryID"))
 
+      cat_id <- varsIn %>%
+        dplyr::filter(.data$category == ctgs[ctg]) %>%
+        dplyr::pull(.data$categoryID) %>%
+        dplyr::first()
+
       shinyList[ctg * 2] <- # times as many entries as you want to have for one category per list: here: title and sliders (=2); for example with gap between = 3
         list(purrr::pmap(feats, fcustom_slider))
 
-      if (isTRUE(labelCategory)) { # Show category label
-        shinyList[ctg * 2 - 1] <- list(shiny::h3(paste0(labelNum, ".", ctg, " ", ctgs[ctg])))
-      } else { # Don't show category label (ie for 2 column of comparison)
+      if (isTRUE(labelCategory)) {
+        # Show category label + lock toggle
+        lock_id <- paste0(lock_prefix, cat_id)
+        shinyList[ctg * 2 - 1] <- list(
+          shiny::div(
+            style = "display:flex; align-items:center; gap:8px;",
+            shiny::h3(
+              paste0(labelNum, ".", ctg, " ", ctgs[ctg]),
+              style = "margin:0;"
+            ),
+            shinyWidgets::materialSwitch(
+              inputId = shiny::NS(namespace = feats$id[1], id = lock_id),
+              label = "Lock",
+              value = FALSE,
+              status = "primary",
+              inline = TRUE
+            )
+          )
+        )
+      } else {
+        # Don't show category label (ie for 2 column of comparison)
         shinyList[ctg * 2 - 1] <- list(shiny::HTML("<h3>&nbsp;</h3>"))
       }
     }

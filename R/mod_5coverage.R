@@ -13,7 +13,9 @@ mod_5coverage_ui <- function(id, cfg) {
   shiny::sidebarLayout(
     shiny::sidebarPanel(
       shiny::h2("Upload Spatial File"),
-      shiny::p("Upload a spatial file containing polygons to evaluate how well they conserve the features in the planning domain."),
+      shiny::p(
+        "Upload a spatial file containing polygons to evaluate how well they conserve the features in the planning domain."
+      ),
       shiny::br(),
       shiny::fileInput(
         inputId = ns("uploadFile"),
@@ -21,14 +23,18 @@ mod_5coverage_ui <- function(id, cfg) {
         accept = c(".gpkg", ".gdb", ".geojson"),
         multiple = FALSE
       ),
-      shiny::helpText("Accepted formats: GeoPackage (.gpkg), File Geodatabase (.gdb), GeoJSON (.geojson)."),
+      shiny::helpText(
+        "Accepted formats: GeoPackage (.gpkg), File Geodatabase (.gdb), GeoJSON (.geojson)."
+      ),
       shiny::br(),
       shiny::uiOutput(ns("uploadStatus")),
       width = 4
     ),
     shiny::mainPanel(
       shiny::h2("Coverage Analysis"),
-      shiny::p("Upload a spatial file to visualise the protected area and evaluate feature coverage."),
+      shiny::p(
+        "Upload a spatial file to visualise the protected area and evaluate feature coverage."
+      ),
       shiny::br(),
 
       # Leaflet map for uploaded polygons
@@ -41,7 +47,9 @@ mod_5coverage_ui <- function(id, cfg) {
 
       # Feature coverage plot
       shiny::h3("Feature Coverage"),
-      shiny::p("This plot shows how well the uploaded polygons conserve each feature."),
+      shiny::p(
+        "This plot shows how well the uploaded polygons conserve each feature."
+      ),
       shiny::uiOutput(ns("coveragePlotContainer")),
       width = 8
     )
@@ -70,7 +78,9 @@ mod_5coverage_server <- function(id, cfg) {
     # Initialize the base leaflet map (runs once)
     output$leaflet_coverage <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
-        leaflet::addProviderTiles(options$leaflet_provider %||% "Esri.WorldGrayCanvas")
+        leaflet::addProviderTiles(
+          options$leaflet_provider %||% "Esri.WorldGrayCanvas"
+        )
     })
 
     # Handle file upload
@@ -88,7 +98,11 @@ mod_5coverage_server <- function(id, cfg) {
         uploaded_sf(result$data)
         upload_status(list(
           type = "success",
-          message = paste0("Successfully loaded ", nrow(result$data), " polygon(s).")
+          message = paste0(
+            "Successfully loaded ",
+            nrow(result$data),
+            " polygon(s)."
+          )
         ))
       } else {
         upload_status(list(
@@ -149,7 +163,7 @@ mod_5coverage_server <- function(id, cfg) {
       bbox <- sf::st_bbox(sf_wgs84)
 
       # Single uniform fill colour — use a hex string (supported by leafgl 0.2.4)
-      fill_hex <- "#d3d3d3"  # lightgrey
+      fill_hex <- "#d3d3d3" # lightgrey
 
       # Update map with WebGL polygons using leafletProxy
       leaflet::leafletProxy("leaflet_coverage", session = session) %>%
@@ -162,11 +176,11 @@ mod_5coverage_server <- function(id, cfg) {
           lat2 = as.numeric(bbox["ymax"])
         ) %>%
         leafgl::addGlPolygons(
-          data        = sf_wgs84,
-          fillColor   = fill_hex,
+          data = sf_wgs84,
+          fillColor = fill_hex,
           fillOpacity = 0.7,
-          color       = fill_hex,
-          group       = "uploaded_polygons",
+          color = fill_hex,
+          group = "uploaded_polygons",
           # digits truncates coordinate precision in the serialised GeoJSON
           # payload. leafgl has no incremental-update API — every call
           # re-serialises the full geometry — so reducing precision is the
@@ -174,7 +188,7 @@ mod_5coverage_server <- function(id, cfg) {
           # infrastructure (e.g. Posit Connect Cloud). 5 decimal degrees
           # (~1.1 m at the equator) is well below planning-unit scale.
           # See mod_4afeatures.R for full rationale.
-          digits      = 5
+          digits = 5
         )
     })
 
@@ -206,8 +220,14 @@ mod_5coverage_server <- function(id, cfg) {
       ) +
         bar_theme +
         ggplot2::theme(
-          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+          plot.background = ggplot2::element_rect(
+            fill = "transparent",
+            colour = NA
+          ),
+          legend.background = ggplot2::element_rect(
+            fill = "transparent",
+            colour = NA
+          )
         )
     })
 
@@ -229,7 +249,8 @@ mod_5coverage_server <- function(id, cfg) {
           shiny::icon("upload", style = "font-size: 48px; color: #999;"),
           shiny::br(),
           shiny::br(),
-          shiny::p("Upload a spatial file to see the feature coverage analysis.",
+          shiny::p(
+            "Upload a spatial file to see the feature coverage analysis.",
             style = "color: #666; font-style: italic;"
           )
         )

@@ -8,7 +8,8 @@ create_welcome_page <- function(x, ns) {
       !!!purrr::map2(
         x,
         seq_along(x),
-        ~ shiny::tabPanel(.x$title,
+        ~ shiny::tabPanel(
+          .x$title,
           value = .y,
           shiny::div(
             shiny::br(),
@@ -44,7 +45,6 @@ mod_1welcome_ui <- function(id, cfg) {
   ns <- shiny::NS(id)
   shiny::fluidPage(
     create_welcome_page(tx$welcome, ns),
-
 
     # Footer section with logos and funding information
     shiny::div(

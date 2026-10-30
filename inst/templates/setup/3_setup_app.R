@@ -10,9 +10,9 @@
 library(tidyverse)
 library(sf)
 
-country   <- "{country}"
-setup_dir <- "setup"                              # Location of the setup folder
-data_path <- file.path(setup_dir, "data")         # Raw spatial data files
+country <- "{country}"
+setup_dir <- "setup" # Location of the setup folder
+data_path <- file.path(setup_dir, "data") # Raw spatial data files
 
 # =============================================================================
 # APP OPTIONS
@@ -25,11 +25,10 @@ data_path <- file.path(setup_dir, "data")         # Raw spatial data files
 # of the function and crash R immediately.
 
 shinyplanr_options <- list(
-
   ## General
-  app_title  = "{country}: shinyplanr",
-  nav_title  = "{country} Spatial Planning",
-  navbar = list(theme = "dark"),  # "light" or "dark"
+  app_title = "{country}: shinyplanr",
+  nav_title = "{country} Spatial Planning",
+  navbar = list(theme = "dark"), # "light" or "dark"
 
   ## Funder link
   funder_url = "https://spatialplanning.github.io",
@@ -46,11 +45,11 @@ shinyplanr_options <- list(
   #
   # The option values are the SOURCE paths (in setup/logos/).
   # This script copies them to www/ with the same filenames.
-  file_logo_navbar  = file.path(setup_dir, "logos", "logo_navbar.png"),
+  file_logo_navbar = file.path(setup_dir, "logos", "logo_navbar.png"),
   file_logo_welcome = file.path(setup_dir, "logos", "logo_welcome.png"),
-  file_logo_funder  = file.path(setup_dir, "logos", "logo_funder.png"),
-  file_favicon      = file.path(setup_dir, "logos", "favicon.png"),
-  file_data        = file.path(data_path, paste0(country, "_RawData.rda")),
+  file_logo_funder = file.path(setup_dir, "logos", "logo_funder.png"),
+  file_favicon = file.path(setup_dir, "logos", "favicon.png"),
+  file_data = file.path(data_path, paste0(country, "_RawData.rda")),
 
   ## Module switches (TRUE = enabled, FALSE = disabled)
   mod_1welcome = TRUE,
@@ -71,9 +70,9 @@ shinyplanr_options <- list(
   include_report = TRUE,
 
   ## Optional tabs
-  include_ess     = FALSE,  # Ecosystem Services tab - set TRUE if Dict contains EcosystemServices rows
-  include_explore = TRUE,  # Explore tab
-  include_log     = TRUE,  # Log tab
+  include_ess = FALSE, # Ecosystem Services tab - set TRUE if Dict contains EcosystemServices rows
+  include_explore = TRUE, # Explore tab
+  include_log = TRUE, # Log tab
 
   ## Second funder logo in welcome footer (optional)
   # The default is the UQ logo (shinyplanr was developed at UQ).
@@ -81,26 +80,23 @@ shinyplanr_options <- list(
   # the path below, or comment out file_logo_funder2 to show only one
   # funder logo.
   file_logo_funder2 = file.path(setup_dir, "logos", "uq-logo-white.png"),
-  funder2_url       = "https://spatialplanning.github.io",
+  funder2_url = "https://spatialplanning.github.io",
 
   ## Institution text in welcome footer
   # institution_text = "This application was developed by researchers at My Institution."
   # Leave commented out to use the default UQ text.
-# [IF include_climate]
+  # [IF include_climate]
 
   ## Climate-smart planning
-  include_climateChange = FALSE,  # Set TRUE when climate data is available
-  climate_change = 1,  # 0 = off; 1 = CPA; 2 = Feature; 3 = Percentile
-  percentile     = 5,
-  direction      = -1,  # 1 = high values are refugia; -1 = low values
-  refugiaTarget  = 1,
-# [END include_climate]
+  include_climateChange = FALSE, # Set TRUE when climate data is available
+  climate_change = 1, # 0 = off; 1 = CPA; 2 = Feature; 3 = Percentile
+  percentile = 5,
+  direction = -1, # 1 = high values are refugia; -1 = low values
+  refugiaTarget = 1,
+  # [END include_climate]
 
   ## Locked areas
   include_lockedArea = TRUE,
-
-  ## Target grouping
-  targetsBy = "individual",  # "individual", "category", or "master"
 
   ## Objective function
   #
@@ -111,7 +107,7 @@ shinyplanr_options <- list(
   #                  overall shortfall across features while staying within a
   #                  fixed budget (set as a % of the total cost layer).
   #                  Only use this when you have a hard budget constraint.
-  obj_func = "min_set",  # "min_set" or "min_shortfall"
+  obj_func = "min_set", # "min_set" or "min_shortfall"
 
   ## CRS
   cCRS = "{crs}",
@@ -133,16 +129,18 @@ shinyplanr_options <- list(
 # COPY LOGOS TO www/
 # =============================================================================
 
-if (!dir.exists("www")) dir.create("www", recursive = TRUE)
+if (!dir.exists("www")) {
+  dir.create("www", recursive = TRUE)
+}
 
 # Maps each option key to its fixed destination filename in www/.
 # The filenames in www/ are what the running app loads - do not change them.
 logo_map <- list(
-  file_logo_navbar  = "logo_navbar.png",
+  file_logo_navbar = "logo_navbar.png",
   file_logo_welcome = "logo_welcome.png",
-  file_logo_funder  = "logo_funder.png",
+  file_logo_funder = "logo_funder.png",
   file_logo_funder2 = "logo_funder2.png",
-  file_favicon      = "favicon.png"
+  file_favicon = "favicon.png"
 )
 
 for (opt_name in names(logo_map)) {
@@ -158,12 +156,17 @@ for (opt_name in names(logo_map)) {
 
 # Derive show_logo_funder2: TRUE only if the file was successfully copied.
 # This is set automatically - do not set it manually in shinyplanr_options.
-shinyplanr_options$show_logo_funder2 <- file.exists(file.path("www", "logo_funder2.png"))
+shinyplanr_options$show_logo_funder2 <- file.exists(file.path(
+  "www",
+  "logo_funder2.png"
+))
 
 # Copy custom CSS override if present (overrides package default styling)
 # Edit setup/content/custom.css to change colours, fonts, etc.
 custom_css_src <- file.path(setup_dir, "content", "custom.css")
-if (!file.exists(custom_css_src)) custom_css_src <- file.path(setup_dir, "custom.css")
+if (!file.exists(custom_css_src)) {
+  custom_css_src <- file.path(setup_dir, "custom.css")
+}
 if (file.exists(custom_css_src)) {
   file.copy(custom_css_src, file.path("www", "custom.css"), overwrite = TRUE)
   message("Copied: www/custom.css")
@@ -218,7 +221,7 @@ Dict <- Dict_raw %>%
 # server code (utils_server.R) and validation (validate_config.R) can read them
 # without needing to inspect Dict directly.
 shinyplanr_options$include_silentFeature <- any(Dict$type == "SilentFeature")
-shinyplanr_options$include_bioregion     <- any(Dict$type == "Bioregion")
+shinyplanr_options$include_bioregion <- any(Dict$type == "Bioregion")
 
 vars <- Dict %>%
   dplyr::filter(!type %in% c("Justification")) %>%
@@ -238,8 +241,8 @@ zero_cols <- colnames(raw_sf)[which(colSums(raw_sf, na.rm = TRUE) == 0)]
 if (length(zero_cols) > 0) {
   message("Removing all-zero columns: ", paste(zero_cols, collapse = ", "))
   raw_sf <- raw_sf %>% dplyr::select(-tidyselect::any_of(zero_cols))
-  vars   <- vars[!vars %in% zero_cols]
-  Dict   <- Dict %>% dplyr::filter(!nameVariable %in% zero_cols)
+  vars <- vars[!vars %in% zero_cols]
+  Dict <- Dict %>% dplyr::filter(!nameVariable %in% zero_cols)
 }
 
 raw_sf <- raw_sf %>%
@@ -254,7 +257,9 @@ raw_sf <- raw_sf %>%
 raw_sf <- sf::st_set_agr(raw_sf, "constant")
 
 if (length(unique(vars)) != ncol(raw_sf) - 1) {
-  stop("Mismatch between Dict variables and data columns. Check Dict_Feature.csv")
+  stop(
+    "Mismatch between Dict variables and data columns. Check Dict_Feature.csv"
+  )
 }
 
 # Add display-only combined bioregion columns (one integer column per categoryID).
@@ -267,7 +272,7 @@ raw_sf <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
 # PLOTTING OVERLAYS
 # =============================================================================
 
-bndry   <- sf::st_set_agr(bndry, "constant")
+bndry <- sf::st_set_agr(bndry, "constant")
 overlay <- sf::st_set_agr(coast, "constant")
 
 # =============================================================================
@@ -278,37 +283,74 @@ content_dir <- file.path(setup_dir, "content")
 
 tx <- list(
   welcome = list(
-    list(title = "Welcome",      text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome1.md"))),
-    list(title = "Terminology",  text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome2.md"))),
-    list(title = "Instructions", text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome3.md"))),
-    list(title = "CARE",         text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome4.md"))),
-    list(title = "References",   text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome5.md")))
+    list(
+      title = "Welcome",
+      text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome1.md"))
+    ),
+    list(
+      title = "Terminology",
+      text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome2.md"))
+    ),
+    list(
+      title = "Instructions",
+      text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome3.md"))
+    ),
+    list(
+      title = "CARE",
+      text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome4.md"))
+    ),
+    list(
+      title = "References",
+      text = readr::read_file(file.path(content_dir, "shinyplanr_1welcome5.md"))
+    )
   )
 )
 
 tx_1footer_path <- file.path(content_dir, "shinyplanr_1footer.md")
-tx_1footer <- if (file.exists(tx_1footer_path)) readr::read_file(tx_1footer_path) else ""
-tx_2solution  <- readr::read_file(file.path(content_dir, "shinyplanr_2solution.md"))
-tx_2targets   <- readr::read_file(file.path(content_dir, "shinyplanr_2targets.md"))
-tx_2cost      <- readr::read_file(file.path(content_dir, "shinyplanr_2cost.md"))
-tx_2climate   <- readr::read_file(file.path(content_dir, "shinyplanr_2climate.md"))
-tx_2ess       <- readr::read_file(file.path(content_dir, "shinyplanr_2ecosystemServices.md"))
-tx_6faq       <- readr::read_file(file.path(content_dir, "shinyplanr_6faq.md"))
-tx_6technical <- readr::read_file(file.path(content_dir, "shinyplanr_6technical.md"))
-tx_6changelog <- readr::read_file(file.path(content_dir, "shinyplanr_6changelog.md"))
+tx_1footer <- if (file.exists(tx_1footer_path)) {
+  readr::read_file(tx_1footer_path)
+} else {
+  ""
+}
+tx_2solution <- readr::read_file(file.path(
+  content_dir,
+  "shinyplanr_2solution.md"
+))
+tx_2targets <- readr::read_file(file.path(
+  content_dir,
+  "shinyplanr_2targets.md"
+))
+tx_2cost <- readr::read_file(file.path(content_dir, "shinyplanr_2cost.md"))
+tx_2climate <- readr::read_file(file.path(
+  content_dir,
+  "shinyplanr_2climate.md"
+))
+tx_2ess <- readr::read_file(file.path(
+  content_dir,
+  "shinyplanr_2ecosystemServices.md"
+))
+tx_6faq <- readr::read_file(file.path(content_dir, "shinyplanr_6faq.md"))
+tx_6technical <- readr::read_file(file.path(
+  content_dir,
+  "shinyplanr_6technical.md"
+))
+tx_6changelog <- readr::read_file(file.path(
+  content_dir,
+  "shinyplanr_6changelog.md"
+))
 
 # =============================================================================
 # PLOTTING THEMES
 # =============================================================================
 
-map_theme <- 
+map_theme <-
   ggplot2::theme(
     legend.position = "right",
     legend.direction = "vertical",
     axis.title = ggplot2::element_blank()
   )
 
-bar_theme <- 
+bar_theme <-
   ggplot2::theme(
     plot.background = ggplot2::element_rect(fill = "transparent", colour = NA)
   )
@@ -323,69 +365,140 @@ bar_theme <-
 
 sidebar <- list(
   scenario = list(
-    slider_vars       = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
-                                                  categoryOut = TRUE, byCategory = FALSE),
-    slider_varsSilent = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "silent_sli_",
-                                                  categoryOut = TRUE, byCategory = TRUE,
-                                                  dataType = "SilentFeature"),
-    slider_varsBioR   = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "bioregion_sli_",
-                                                  categoryOut = TRUE, byCategory = TRUE,
-                                                  dataType = "Bioregion"),
-    slider_varsCat    = shinyplanr:::fcreate_vars("2scenario_ui_1", Dict, "sli_",
-                                                  categoryOut = TRUE, byCategory = TRUE),
-    check_lockIn      = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockIn",
-                                                   "checkLI_", categoryOut = TRUE),
-    check_lockOut     = shinyplanr:::fcreate_check("2scenario_ui_1", Dict, "LockOut",
-                                                   "checkLO_", categoryOut = TRUE)
+    slider_vars = shinyplanr:::fcreate_vars(
+      "2scenario_ui_1",
+      Dict,
+      "sli_",
+      categoryOut = TRUE,
+      byCategory = FALSE
+    ),
+    slider_varsSilent = shinyplanr:::fcreate_vars(
+      "2scenario_ui_1",
+      Dict,
+      "silent_sli_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
+      dataType = "SilentFeature"
+    ),
+    slider_varsBioR = shinyplanr:::fcreate_vars(
+      "2scenario_ui_1",
+      Dict,
+      "bioregion_sli_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
+      dataType = "Bioregion"
+    ),
+    check_lockIn = shinyplanr:::fcreate_check(
+      "2scenario_ui_1",
+      Dict,
+      "LockIn",
+      "checkLI_",
+      categoryOut = TRUE
+    ),
+    check_lockOut = shinyplanr:::fcreate_check(
+      "2scenario_ui_1",
+      Dict,
+      "LockOut",
+      "checkLO_",
+      categoryOut = TRUE
+    )
   ),
   compare = list(
-    Vars1              = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli1_",
-                                                   categoryOut = TRUE),
-    Vars2              = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "sli2_",
-                                                   categoryOut = TRUE),
-    slider_varsSilent1 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "silent_sli1_",
-                                                   categoryOut = TRUE, byCategory = TRUE,
-                                                   dataType = "SilentFeature"),
-    slider_varsSilent2 = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "silent_sli2_",
-                                                   categoryOut = TRUE, byCategory = TRUE,
-                                                   dataType = "SilentFeature"),
-    slider_varsBioR1   = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "bioregion_sli1_",
-                                                   categoryOut = TRUE, byCategory = TRUE,
-                                                   dataType = "Bioregion"),
-    slider_varsBioR2   = shinyplanr:::fcreate_vars("3compare_ui_1", Dict, "bioregion_sli2_",
-                                                   categoryOut = TRUE, byCategory = TRUE,
-                                                   dataType = "Bioregion"),
-    check_lockIn1      = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
-                                                    "check1LI_", categoryOut = TRUE),
-    check_lockIn2      = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockIn",
-                                                    "check2LI_", categoryOut = TRUE),
-    check_lockOut1     = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
-                                                    "check1LO_", categoryOut = TRUE),
-    check_lockOut2     = shinyplanr:::fcreate_check("3compare_ui_1", Dict, "LockOut",
-                                                    "check2LO_", categoryOut = TRUE)
+    Vars1 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "sli1_",
+      categoryOut = TRUE
+    ),
+    Vars2 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "sli2_",
+      categoryOut = TRUE
+    ),
+    slider_varsSilent1 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "silent_sli1_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
+      dataType = "SilentFeature"
+    ),
+    slider_varsSilent2 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "silent_sli2_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
+      dataType = "SilentFeature"
+    ),
+    slider_varsBioR1 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "bioregion_sli1_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
+      dataType = "Bioregion"
+    ),
+    slider_varsBioR2 = shinyplanr:::fcreate_vars(
+      "3compare_ui_1",
+      Dict,
+      "bioregion_sli2_",
+      categoryOut = TRUE,
+      byCategory = TRUE,
+      dataType = "Bioregion"
+    ),
+    check_lockIn1 = shinyplanr:::fcreate_check(
+      "3compare_ui_1",
+      Dict,
+      "LockIn",
+      "check1LI_",
+      categoryOut = TRUE
+    ),
+    check_lockIn2 = shinyplanr:::fcreate_check(
+      "3compare_ui_1",
+      Dict,
+      "LockIn",
+      "check2LI_",
+      categoryOut = TRUE
+    ),
+    check_lockOut1 = shinyplanr:::fcreate_check(
+      "3compare_ui_1",
+      Dict,
+      "LockOut",
+      "check1LO_",
+      categoryOut = TRUE
+    ),
+    check_lockOut2 = shinyplanr:::fcreate_check(
+      "3compare_ui_1",
+      Dict,
+      "LockOut",
+      "check2LO_",
+      categoryOut = TRUE
+    )
   )
 )
 
 config_list <- list(
   schema_version = shinyplanr::get_schema_version(),
-  options        = shinyplanr_options,
-  map_theme      = map_theme,
-  bar_theme      = bar_theme,
-  Dict           = Dict,
-  raw_sf         = raw_sf,
-  bndry          = bndry,
-  overlay        = overlay,
-  sidebar        = sidebar,
-  tx             = tx,
-  tx_1footer     = tx_1footer,
-  tx_2solution   = tx_2solution,
-  tx_2targets    = tx_2targets,
-  tx_2cost       = tx_2cost,
-  tx_2climate    = tx_2climate,
-  tx_2ess        = tx_2ess,
-  tx_6faq        = tx_6faq,
-  tx_6technical  = tx_6technical,
-  tx_6changelog  = tx_6changelog
+  options = shinyplanr_options,
+  map_theme = map_theme,
+  bar_theme = bar_theme,
+  Dict = Dict,
+  raw_sf = raw_sf,
+  bndry = bndry,
+  overlay = overlay,
+  sidebar = sidebar,
+  tx = tx,
+  tx_1footer = tx_1footer,
+  tx_2solution = tx_2solution,
+  tx_2targets = tx_2targets,
+  tx_2cost = tx_2cost,
+  tx_2climate = tx_2climate,
+  tx_2ess = tx_2ess,
+  tx_6faq = tx_6faq,
+  tx_6technical = tx_6technical,
+  tx_6changelog = tx_6changelog
 )
 
 # =============================================================================
@@ -407,7 +520,9 @@ shinyplanr::validate_shinyplanr_data(config_list)
 # SAVE CONFIGURATION
 # =============================================================================
 
-if (!dir.exists("config")) dir.create("config", recursive = TRUE)
+if (!dir.exists("config")) {
+  dir.create("config", recursive = TRUE)
+}
 saveRDS(config_list, file.path("config", "shinyplanr_config.rds"))
 
 message("\nConfig saved: config/shinyplanr_config.rds")
@@ -424,21 +539,55 @@ message("Run shiny::runApp() to test, or source('deploy.R') to deploy.")
 # base::options()). Remove the known objects, then restart R before running
 # the app.
 
-rm(list = intersect(
-  ls(),
-  c('shinyplanr_options', 'config_list', 'dat_sf', 'raw_sf', 'bndry',
-    'coast', 'overlay', 'Dict', 'Dict_raw', 'vars', 'sidebar', 'tx', 'map_theme',
-    'bar_theme', 'tx_1footer', 'tx_2solution', 'tx_2targets', 'tx_2cost',
-    'tx_2climate', 'tx_2ess', 'tx_6faq', 'tx_6technical', 'tx_6changelog',
-    'zero_cols', 'logo_map', 'opt_name', 'src', 'dst', 'custom_css_src',
-    'content_dir', 'tx_1footer_path', 'country', 'setup_dir', 'data_path')
-))
+rm(
+  list = intersect(
+    ls(),
+    c(
+      'shinyplanr_options',
+      'config_list',
+      'dat_sf',
+      'raw_sf',
+      'bndry',
+      'coast',
+      'overlay',
+      'Dict',
+      'Dict_raw',
+      'vars',
+      'sidebar',
+      'tx',
+      'map_theme',
+      'bar_theme',
+      'tx_1footer',
+      'tx_2solution',
+      'tx_2targets',
+      'tx_2cost',
+      'tx_2climate',
+      'tx_2ess',
+      'tx_6faq',
+      'tx_6technical',
+      'tx_6changelog',
+      'zero_cols',
+      'logo_map',
+      'opt_name',
+      'src',
+      'dst',
+      'custom_css_src',
+      'content_dir',
+      'tx_1footer_path',
+      'country',
+      'setup_dir',
+      'data_path'
+    )
+  )
+)
 message('\nSetup objects removed from global environment.')
 message('IMPORTANT: Please restart R before running the app.')
 message('  Session > Restart R  (or Ctrl/Cmd+Shift+F10 in RStudio)')
 message('Then open app.R and run shiny::runApp() to test the app.')
 
 # Open app.R so it is ready to run after the user restarts R.
-if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {
+if (
+  requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()
+) {
   rstudioapi::navigateToFile('app.R')
 }

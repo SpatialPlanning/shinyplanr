@@ -77,7 +77,11 @@ test_that("fformat_feature_table() returns a data frame with expected columns (n
 })
 
 test_that("fformat_feature_table() appends suffix to column names", {
-  result <- shinyplanr:::fformat_feature_table(make_tpd(), make_dict(), suffix = " 1")
+  result <- shinyplanr:::fformat_feature_table(
+    make_tpd(),
+    make_dict(),
+    suffix = " 1"
+  )
 
   expect_true("Target 1 (%)" %in% names(result))
   expect_true("Selected 1 (%)" %in% names(result))
@@ -172,11 +176,16 @@ test_that("fget_category() filters to Feature and Bioregion types only", {
   Dict <- make_dict()
   # Add a Bioregion row
   bio_row <- data.frame(
-    nameCommon = "Bio 1", nameVariable = "bio_1",
-    category = "Bioregion", categoryID = "Bio",
+    nameCommon = "Bio 1",
+    nameVariable = "bio_1",
+    category = "Bioregion",
+    categoryID = "Bio",
     type = "Bioregion",
-    targetInitial = 40, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE,
+    targetInitial = 40,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
     justification = "Bio.",
     stringsAsFactors = FALSE
   )
@@ -243,11 +252,16 @@ test_that("fCheckFeatureNo() counts Bioregion columns when Dict has Bioregion ty
 
   Dict <- make_dict()
   bio_row <- data.frame(
-    nameCommon = "Bio 1", nameVariable = "bio_1",
-    category = "Bioregion", categoryID = "Bio",
+    nameCommon = "Bio 1",
+    nameVariable = "bio_1",
+    category = "Bioregion",
+    categoryID = "Bio",
     type = "Bioregion",
-    targetInitial = 40, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE,
+    targetInitial = 40,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
     justification = "Bio.",
     stringsAsFactors = FALSE
   )
@@ -309,16 +323,18 @@ test_that("fCheckFeatureNo() works on a plain data frame (no geometry)", {
 make_multi_type_dict <- function() {
   data.frame(
     nameCommon = c(
-      "Seamounts", "Corals",                # Feature: Seamt, Corals
-      "Zone 1",                              # Bioregion: EnviroZone
-      "Equal Area Cost",                     # Cost: Cost
-      "SST Trend",                           # Climate: Climate
-      "MPA (in)",                            # LockIn: MPAs
-      "Shipping (out)",                      # LockOut: Shipping
-      "Fish Biomass"                         # EcosystemServices: FishBio
+      "Seamounts",
+      "Corals", # Feature: Seamt, Corals
+      "Zone 1", # Bioregion: EnviroZone
+      "Equal Area Cost", # Cost: Cost
+      "SST Trend", # Climate: Climate
+      "MPA (in)", # LockIn: MPAs
+      "Shipping (out)", # LockOut: Shipping
+      "Fish Biomass" # EcosystemServices: FishBio
     ),
     nameVariable = c(
-      "seamounts", "corals",
+      "seamounts",
+      "corals",
       "zone_1",
       "cost_area",
       "sst_trend",
@@ -327,7 +343,8 @@ make_multi_type_dict <- function() {
       "fish_biomass"
     ),
     category = c(
-      "Seamounts", "Deep-sea Corals",
+      "Seamounts",
+      "Deep-sea Corals",
       "Environmental Zones",
       "Cost",
       "Climate",
@@ -336,7 +353,8 @@ make_multi_type_dict <- function() {
       "Ecosystem Services"
     ),
     categoryID = c(
-      "Seamt", "Corals",
+      "Seamt",
+      "Corals",
       "EnviroZone",
       "Cost",
       "Climate",
@@ -345,7 +363,8 @@ make_multi_type_dict <- function() {
       "FishBio"
     ),
     type = c(
-      "Feature", "Feature",
+      "Feature",
+      "Feature",
       "Bioregion",
       "Cost",
       "Climate",
@@ -381,7 +400,15 @@ test_that("forder_dict_categories() orders categories by master type order (Feat
 
   expect_equal(
     first_appearance_types,
-    c("Feature", "Bioregion", "Cost", "Climate", "LockIn", "LockOut", "EcosystemServices")
+    c(
+      "Feature",
+      "Bioregion",
+      "Cost",
+      "Climate",
+      "LockIn",
+      "LockOut",
+      "EcosystemServices"
+    )
   )
 })
 
@@ -393,7 +420,16 @@ test_that("forder_dict_categories() re-arranges Dict rows to match the factor le
   # then Bioregion, then Cost, etc.
   expect_equal(
     as.character(result$type),
-    c("Feature", "Feature", "Bioregion", "Cost", "Climate", "LockIn", "LockOut", "EcosystemServices")
+    c(
+      "Feature",
+      "Feature",
+      "Bioregion",
+      "Cost",
+      "Climate",
+      "LockIn",
+      "LockOut",
+      "EcosystemServices"
+    )
   )
 })
 
@@ -402,10 +438,17 @@ test_that("forder_dict_categories() orders categories within a type alphabetical
   # Add a second Feature category whose categoryID alphabetically precedes
   # "Corals" and "Seamt" -- "Abyssal" should come first among Feature rows.
   extra <- data.frame(
-    nameCommon = "Abyssal Plains", nameVariable = "abyssal_plains",
-    category = "Geomorphology", categoryID = "Abyssal", type = "Feature",
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE, justification = "Stub.",
+    nameCommon = "Abyssal Plains",
+    nameVariable = "abyssal_plains",
+    category = "Geomorphology",
+    categoryID = "Abyssal",
+    type = "Feature",
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    justification = "Stub.",
     stringsAsFactors = FALSE
   )
   Dict2 <- rbind(Dict, extra)
@@ -445,8 +488,12 @@ test_that("forder_dict_categories() sorts categoryOrder numerically, not lexicog
     category = c("Cat A", "Cat B", "Cat C"),
     categoryID = c("A", "B", "C"),
     type = "Feature",
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE, justification = "Stub.",
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    justification = "Stub.",
     stringsAsFactors = FALSE
   )
   Dict2 <- rbind(Dict, extra)
@@ -457,7 +504,9 @@ test_that("forder_dict_categories() sorts categoryOrder numerically, not lexicog
   Dict2$categoryOrder[Dict2$category == "Cat A"] <- 1
 
   result <- shinyplanr:::forder_dict_categories(Dict2)
-  feature_cats <- as.character(unique(result$category[result$type == "Feature"]))
+  feature_cats <- as.character(unique(result$category[
+    result$type == "Feature"
+  ]))
 
   # "Cat A" (1) < "Deep-sea Corals" (2) < "Seamounts" (10); "Cat B"/"Cat C"
   # have no categoryOrder so fall back to categoryID and sort after.
@@ -467,10 +516,17 @@ test_that("forder_dict_categories() sorts categoryOrder numerically, not lexicog
 test_that("forder_dict_categories() appends types outside the master order (e.g. Justification) without dropping rows", {
   Dict <- make_multi_type_dict()
   extra <- data.frame(
-    nameCommon = "Note", nameVariable = "note_var",
-    category = "Notes", categoryID = "Notes", type = "Justification",
-    targetInitial = NA, targetMin = NA, targetMax = NA,
-    includeApp = TRUE, includeJust = TRUE, justification = "Just a note.",
+    nameCommon = "Note",
+    nameVariable = "note_var",
+    category = "Notes",
+    categoryID = "Notes",
+    type = "Justification",
+    targetInitial = NA,
+    targetMin = NA,
+    targetMax = NA,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    justification = "Just a note.",
     stringsAsFactors = FALSE
   )
   Dict2 <- rbind(Dict, extra)
@@ -491,10 +547,17 @@ test_that("forder_dict_categories() preserves original row order as a tiebreak w
   # Add a second row to an existing category ("Seamounts") to confirm
   # feature-level (within-category) order is untouched.
   extra <- data.frame(
-    nameCommon = "Knolls", nameVariable = "knolls",
-    category = "Seamounts", categoryID = "Seamt", type = "Feature",
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE, justification = "Stub.",
+    nameCommon = "Knolls",
+    nameVariable = "knolls",
+    category = "Seamounts",
+    categoryID = "Seamt",
+    type = "Feature",
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    justification = "Stub.",
     stringsAsFactors = FALSE
   )
   Dict2 <- rbind(Dict, extra)
@@ -517,14 +580,14 @@ test_that("forder_dict_categories() preserves original row order as a tiebreak w
 
 make_density_sf <- function() {
   sf::st_sf(
-    feature_A     = c(0.8, 0.2, 0.5, 0.9, 0.1),
-    feature_B     = c(0.3, 0.7, 0.4, 0.1, 0.6),
+    feature_A = c(0.8, 0.2, 0.5, 0.9, 0.1),
+    feature_B = c(0.3, 0.7, 0.4, 0.1, 0.6),
     enviro_zone_1 = c(1, 1, 0, 1, 0),
     enviro_zone_2 = c(0, 0, 0, 0, 0),
     enviro_zone_3 = c(0, 0, 0, 0, 0), # PUs 3 and 5: no EnviroZone coverage
-    depth_zone_1  = c(1, 0, 0, 0, 0),
-    depth_zone_2  = c(0, 0, 0, 0, 0), # PUs 2,3,4,5: no DepthZone coverage
-    geometry      = sf::st_sfc(
+    depth_zone_1 = c(1, 0, 0, 0, 0),
+    depth_zone_2 = c(0, 0, 0, 0, 0), # PUs 2,3,4,5: no DepthZone coverage
+    geometry = sf::st_sfc(
       lapply(1:5, function(i) sf::st_point(c(i, i))),
       crs = 4326
     )
@@ -534,32 +597,56 @@ make_density_sf <- function() {
 make_density_dict <- function() {
   data.frame(
     nameCommon = c(
-      "Feature A", "Feature B",
-      "EnviroZone 1", "EnviroZone 2", "EnviroZone 3",
-      "DepthZone 1", "DepthZone 2"
+      "Feature A",
+      "Feature B",
+      "EnviroZone 1",
+      "EnviroZone 2",
+      "EnviroZone 3",
+      "DepthZone 1",
+      "DepthZone 2"
     ),
     nameVariable = c(
-      "feature_A", "feature_B",
-      "enviro_zone_1", "enviro_zone_2", "enviro_zone_3",
-      "depth_zone_1", "depth_zone_2"
+      "feature_A",
+      "feature_B",
+      "enviro_zone_1",
+      "enviro_zone_2",
+      "enviro_zone_3",
+      "depth_zone_1",
+      "depth_zone_2"
     ),
     category = c(
-      "Habitat", "Habitat",
-      "Biogeog", "Biogeog", "Biogeog",
-      "Depth", "Depth"
+      "Habitat",
+      "Habitat",
+      "Biogeog",
+      "Biogeog",
+      "Biogeog",
+      "Depth",
+      "Depth"
     ),
     categoryID = c(
-      "Hab", "Hab",
-      "EnviroZone", "EnviroZone", "EnviroZone",
-      "DepthZone", "DepthZone"
+      "Hab",
+      "Hab",
+      "EnviroZone",
+      "EnviroZone",
+      "EnviroZone",
+      "DepthZone",
+      "DepthZone"
     ),
     type = c(
-      "Feature", "Feature",
-      "Bioregion", "Bioregion", "Bioregion",
-      "Bioregion", "Bioregion"
+      "Feature",
+      "Feature",
+      "Bioregion",
+      "Bioregion",
+      "Bioregion",
+      "Bioregion",
+      "Bioregion"
     ),
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE, units = "",
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
     justification = "Stub.",
     stringsAsFactors = FALSE
   )
@@ -595,7 +682,9 @@ test_that("fcalculate_feature_density() correctly accounts for multiple independ
   Dict <- make_density_dict()
 
   result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict)
-  bioregion_only <- result - (sf::st_drop_geometry(raw_sf)$feature_A + sf::st_drop_geometry(raw_sf)$feature_B)
+  bioregion_only <- result -
+    (sf::st_drop_geometry(raw_sf)$feature_A +
+      sf::st_drop_geometry(raw_sf)$feature_B)
 
   expect_equal(bioregion_only, c(2, 1, 0, 1, 0))
 })
@@ -629,10 +718,13 @@ test_that("fcalculate_feature_density() treats NA values as 0 (na.rm = TRUE)", {
 })
 
 test_that("fcalculate_feature_density() ignores Dict entries absent from raw_sf (zero-column filtering guard)", {
-  raw_sf <- make_density_sf() %>% dplyr::select(-"depth_zone_1", -"depth_zone_2")
+  raw_sf <- make_density_sf() %>%
+    dplyr::select(-"depth_zone_1", -"depth_zone_2")
   Dict <- make_density_dict() # still references depth_zone_1 / depth_zone_2
 
-  expect_no_error(result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict))
+  expect_no_error(
+    result <- shinyplanr:::fcalculate_feature_density(raw_sf, Dict)
+  )
 
   # DepthZone columns absent from raw_sf entirely -> contribute nothing.
   # PU1: 0.8+0.3 (features) + 1 (EnviroZone) = 2.1
@@ -667,9 +759,9 @@ make_bioregion_sf <- function() {
     enviro_zone_1 = c(1L, 0L, 0L, 1L),
     enviro_zone_2 = c(0L, 1L, 0L, 0L),
     enviro_zone_3 = c(0L, 0L, 1L, 0L),
-    depth_zone_1  = c(1L, 1L, 0L, 0L),
-    depth_zone_2  = c(0L, 0L, 1L, 1L),
-    feature_A     = c(1L, 0L, 1L, 0L),
+    depth_zone_1 = c(1L, 1L, 0L, 0L),
+    depth_zone_2 = c(0L, 0L, 1L, 1L),
+    feature_A = c(1L, 0L, 1L, 0L),
     geometry = sf::st_sfc(
       lapply(1:4, function(i) sf::st_point(c(i, i))),
       crs = 4326
@@ -679,20 +771,44 @@ make_bioregion_sf <- function() {
 
 make_bioregion_dict <- function() {
   data.frame(
-    nameCommon   = c("EZ1", "EZ2", "EZ3", "DZ1", "DZ2", "Feature A"),
+    nameCommon = c("EZ1", "EZ2", "EZ3", "DZ1", "DZ2", "Feature A"),
     nameVariable = c(
-      "enviro_zone_1", "enviro_zone_2", "enviro_zone_3",
-      "depth_zone_1", "depth_zone_2",
+      "enviro_zone_1",
+      "enviro_zone_2",
+      "enviro_zone_3",
+      "depth_zone_1",
+      "depth_zone_2",
       "feature_A"
     ),
-    category   = c("EnviroZone", "EnviroZone", "EnviroZone", "DepthZone", "DepthZone", "Habitat"),
-    categoryID = c("EnviroZone", "EnviroZone", "EnviroZone", "DepthZone", "DepthZone", "Hab"),
-    type       = c("Bioregion", "Bioregion", "Bioregion", "Bioregion", "Bioregion", "Feature"),
+    category = c(
+      "EnviroZone",
+      "EnviroZone",
+      "EnviroZone",
+      "DepthZone",
+      "DepthZone",
+      "Habitat"
+    ),
+    categoryID = c(
+      "EnviroZone",
+      "EnviroZone",
+      "EnviroZone",
+      "DepthZone",
+      "DepthZone",
+      "Hab"
+    ),
+    type = c(
+      "Bioregion",
+      "Bioregion",
+      "Bioregion",
+      "Bioregion",
+      "Bioregion",
+      "Feature"
+    ),
     targetInitial = c(30, 30, 30, 30, 30, 30),
-    targetMin     = c(0, 0, 0, 0, 0, 0),
-    targetMax     = c(85, 85, 85, 85, 85, 85),
-    includeApp    = TRUE,
-    includeJust   = TRUE,
+    targetMin = c(0, 0, 0, 0, 0, 0),
+    targetMax = c(85, 85, 85, 85, 85, 85),
+    includeApp = TRUE,
+    includeJust = TRUE,
     justification = "Stub.",
     stringsAsFactors = FALSE
   )
@@ -712,18 +828,18 @@ test_that("fbuild_bioregion_display() is a no-op when Dict has no Bioregion rows
 
 test_that("fbuild_bioregion_display() adds one column per unique categoryID", {
   raw_sf <- make_bioregion_sf()
-  Dict   <- make_bioregion_dict()
+  Dict <- make_bioregion_dict()
 
   result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
 
   # Two unique categoryIDs: EnviroZone and DepthZone
   expect_true("EnviroZone" %in% names(result))
-  expect_true("DepthZone"  %in% names(result))
+  expect_true("DepthZone" %in% names(result))
 })
 
 test_that("fbuild_bioregion_display() derived column contains correct zone indices", {
   raw_sf <- make_bioregion_sf()
-  Dict   <- make_bioregion_dict()
+  Dict <- make_bioregion_dict()
 
   result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
 
@@ -738,7 +854,7 @@ test_that("fbuild_bioregion_display() derived column contains correct zone indic
 
 test_that("fbuild_bioregion_display() handles multiple independent bioregion schemes", {
   raw_sf <- make_bioregion_sf()
-  Dict   <- make_bioregion_dict()
+  Dict <- make_bioregion_dict()
 
   result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
 
@@ -752,7 +868,7 @@ test_that("fbuild_bioregion_display() handles multiple independent bioregion sch
 
 test_that("fbuild_bioregion_display() preserves existing columns unchanged", {
   raw_sf <- make_bioregion_sf()
-  Dict   <- make_bioregion_dict()
+  Dict <- make_bioregion_dict()
 
   result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
 
@@ -769,18 +885,18 @@ test_that("fbuild_bioregion_display() preserves existing columns unchanged", {
 
 test_that("fbuild_bioregion_display() derived column is NOT added to Dict (display-only)", {
   raw_sf <- make_bioregion_sf()
-  Dict   <- make_bioregion_dict()
+  Dict <- make_bioregion_dict()
 
   shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
 
   # Dict must not be modified — the derived column is display-only
   expect_false("EnviroZone" %in% Dict$nameVariable)
-  expect_false("DepthZone"  %in% Dict$nameVariable)
+  expect_false("DepthZone" %in% Dict$nameVariable)
 })
 
 test_that("fbuild_bioregion_display() result is still an sf object", {
   raw_sf <- make_bioregion_sf()
-  Dict   <- make_bioregion_dict()
+  Dict <- make_bioregion_dict()
 
   result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
 

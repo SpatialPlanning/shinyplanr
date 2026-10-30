@@ -25,50 +25,126 @@ make_valid_config <- function() {
   )
   sidebar <- list(
     scenario = list(
-      slider_vars       = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = FALSE),
-      slider_varsSilent = fcreate_vars("2scenario_ui_1", Dict, "silent_sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "SilentFeature"),
-      slider_varsBioR   = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "Bioregion"),
-      slider_varsCat    = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE),
-      check_lockIn      = fcreate_check("2scenario_ui_1", Dict, "LockIn", "checkLI_", categoryOut = TRUE),
-      check_lockOut     = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
+      slider_vars = fcreate_vars(
+        "2scenario_ui_1",
+        Dict,
+        "sli_",
+        categoryOut = TRUE,
+        byCategory = FALSE
+      ),
+      slider_varsSilent = fcreate_vars(
+        "2scenario_ui_1",
+        Dict,
+        "silent_sli_",
+        categoryOut = TRUE,
+        byCategory = TRUE,
+        dataType = "SilentFeature"
+      ),
+      slider_varsBioR = fcreate_vars(
+        "2scenario_ui_1",
+        Dict,
+        "sli_",
+        categoryOut = TRUE,
+        byCategory = TRUE,
+        dataType = "Bioregion"
+      ),
+      slider_varsCat = fcreate_vars(
+        "2scenario_ui_1",
+        Dict,
+        "sli_",
+        categoryOut = TRUE,
+        byCategory = TRUE
+      ),
+      check_lockIn = fcreate_check(
+        "2scenario_ui_1",
+        Dict,
+        "LockIn",
+        "checkLI_",
+        categoryOut = TRUE
+      ),
+      check_lockOut = fcreate_check(
+        "2scenario_ui_1",
+        Dict,
+        "LockOut",
+        "checkLO_",
+        categoryOut = TRUE
+      )
     ),
     compare = list(
-      Vars1              = fcreate_vars("3compare_ui_1", Dict, "sli_", categoryOut = TRUE),
-      Vars2              = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
-      slider_varsSilent1 = fcreate_vars("3compare_ui_1", Dict, "silent_sli1_", categoryOut = TRUE, byCategory = TRUE, dataType = "SilentFeature"),
-      slider_varsSilent2 = fcreate_vars("3compare_ui_1", Dict, "silent_sli2_", categoryOut = TRUE, byCategory = TRUE, dataType = "SilentFeature"),
-      check_lockIn1      = fcreate_check("3compare_ui_1", Dict, "LockIn", "check1LI_", categoryOut = TRUE),
-      check_lockIn2      = fcreate_check("3compare_ui_1", Dict, "LockIn", "check2LI_", categoryOut = TRUE),
-      check_lockOut1     = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
-      check_lockOut2     = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
+      Vars1 = fcreate_vars("3compare_ui_1", Dict, "sli_", categoryOut = TRUE),
+      Vars2 = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
+      slider_varsSilent1 = fcreate_vars(
+        "3compare_ui_1",
+        Dict,
+        "silent_sli1_",
+        categoryOut = TRUE,
+        byCategory = TRUE,
+        dataType = "SilentFeature"
+      ),
+      slider_varsSilent2 = fcreate_vars(
+        "3compare_ui_1",
+        Dict,
+        "silent_sli2_",
+        categoryOut = TRUE,
+        byCategory = TRUE,
+        dataType = "SilentFeature"
+      ),
+      check_lockIn1 = fcreate_check(
+        "3compare_ui_1",
+        Dict,
+        "LockIn",
+        "check1LI_",
+        categoryOut = TRUE
+      ),
+      check_lockIn2 = fcreate_check(
+        "3compare_ui_1",
+        Dict,
+        "LockIn",
+        "check2LI_",
+        categoryOut = TRUE
+      ),
+      check_lockOut1 = fcreate_check(
+        "3compare_ui_1",
+        Dict,
+        "LockOut",
+        "check1LO_",
+        categoryOut = TRUE
+      ),
+      check_lockOut2 = fcreate_check(
+        "3compare_ui_1",
+        Dict,
+        "LockOut",
+        "check2LO_",
+        categoryOut = TRUE
+      )
     )
   )
   list(
     schema_version = shinyplanr::get_schema_version(),
     options = list(
-      app_title             = "Test App",
-      nav_title             = "Test Region",
-      funder_url            = "https://example.com",
-      mod_1welcome          = TRUE,
-      mod_2scenario         = TRUE,
-      mod_3compare          = FALSE,
-      mod_4features         = FALSE,
-      mod_5coverage         = FALSE,
-      mod_6help             = TRUE,
-      mod_7credit           = FALSE,
-      include_report        = FALSE,
-      include_ess           = FALSE,
-      include_explore       = FALSE,
-      include_log           = FALSE,
-      include_bioregion     = FALSE,
-      show_logo_funder2     = FALSE,
-      funder2_url           = "https://spatialplanning.github.io",
+      app_title = "Test App",
+      nav_title = "Test Region",
+      funder_url = "https://example.com",
+      mod_1welcome = TRUE,
+      mod_2scenario = TRUE,
+      mod_3compare = FALSE,
+      mod_4features = FALSE,
+      mod_5coverage = FALSE,
+      mod_6help = TRUE,
+      mod_7credit = FALSE,
+      include_report = FALSE,
+      include_ess = FALSE,
+      include_explore = FALSE,
+      include_log = FALSE,
+      include_bioregion = FALSE,
+      show_logo_funder2 = FALSE,
+      funder2_url = "https://spatialplanning.github.io",
       include_climateChange = FALSE,
-      climate_change        = 0L,
-      include_lockedArea    = FALSE,
-      targetsBy             = "individual",
-      obj_func              = "min_set",
-      cCRS                  = "ESRI:54009"
+      climate_change = 0L,
+      include_lockedArea = FALSE,
+      targetsBy = "individual",
+      obj_func = "min_set",
+      cCRS = "ESRI:54009"
     ),
     map_theme = ggplot2::theme_bw(),
     bar_theme = ggplot2::theme_bw(),

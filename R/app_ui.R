@@ -17,7 +17,8 @@ app_ui <- function(request) {
     tabs[["Welcome"]] <- shiny::tabPanel(
       "Welcome",
       shiny::fluidPage(
-        value = "welcome", mod_1welcome_ui("1welcome_ui_1", cfg)
+        value = "welcome",
+        mod_1welcome_ui("1welcome_ui_1", cfg)
       )
     )
   }
@@ -25,7 +26,8 @@ app_ui <- function(request) {
   tabs[["Scenario"]] <- shiny::tabPanel(
     "Scenario",
     shiny::fluidPage(
-      value = "soln", mod_2scenario_ui("2scenario_ui_1", cfg)
+      value = "soln",
+      mod_2scenario_ui("2scenario_ui_1", cfg)
     )
   )
 
@@ -33,12 +35,15 @@ app_ui <- function(request) {
     tabs[["Comparison"]] <- shiny::tabPanel(
       "Comparison",
       shiny::fluidPage(
-        value = "compare", mod_3compare_ui("3compare_ui_1", cfg)
+        value = "compare",
+        mod_3compare_ui("3compare_ui_1", cfg)
       )
     )
   }
 
-  if (isTRUE(options$mod_4features) || isTRUE(options$mod_4features_interactive)) {
+  if (
+    isTRUE(options$mod_4features) || isTRUE(options$mod_4features_interactive)
+  ) {
     tabs[["Layer Information"]] <- shiny::tabPanel(
       "Layer Information",
       shiny::fluidPage(
@@ -56,7 +61,8 @@ app_ui <- function(request) {
     tabs[["Check Coverage"]] <- shiny::tabPanel(
       "Check Coverage",
       shiny::fluidPage(
-        value = "coverage", mod_5coverage_ui("5coverage_ui_1", cfg)
+        value = "coverage",
+        mod_5coverage_ui("5coverage_ui_1", cfg)
       )
     )
   }
@@ -65,7 +71,8 @@ app_ui <- function(request) {
     tabs[["Help"]] <- shiny::tabPanel(
       "Help",
       shiny::fluidPage(
-        value = "help", mod_6help_ui("6help_ui_1", cfg)
+        value = "help",
+        mod_6help_ui("6help_ui_1", cfg)
       )
     )
   }
@@ -79,20 +86,24 @@ app_ui <- function(request) {
       list(
         id = "navbar",
         title = shiny::a(
-          shiny::img(src = "www/logo_navbar.png", height = 40, class = "navbar-logo"),
+          shiny::img(
+            src = "www/logo_navbar.png",
+            height = 40,
+            class = "navbar-logo"
+          ),
           options$nav_title
         ),
         header = shiny::tagList(
           golem_add_external_resources(options),
           shinyjs::useShinyjs(),
           shinydisconnect::disconnectMessage(
-            text           = "Your session timed out, reload the application.",
-            refresh        = "Reload now",
-            background     = "#f89f43",
-            colour         = "white",
-            overlayColour  = "grey",
+            text = "Your session timed out, reload the application.",
+            refresh = "Reload now",
+            background = "#f89f43",
+            colour = "white",
+            overlayColour = "grey",
             overlayOpacity = 0.3,
-            refreshColour  = "brown"
+            refreshColour = "brown"
           )
         ),
         theme = bslib::bs_theme(version = 5),
@@ -140,7 +151,7 @@ golem_add_external_resources <- function(options) {
     # stylesheet (navbar colours, footer, fonts, component rules) is always
     # loaded from the installed package — not from the deployment www/.
     tags$link(
-      rel  = "stylesheet",
+      rel = "stylesheet",
       type = "text/css",
       href = "shinyplanr-pkg/custom.css"
     ),

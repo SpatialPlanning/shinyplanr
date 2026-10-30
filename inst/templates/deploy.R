@@ -52,18 +52,24 @@ files_to_deploy <- c(
   "app.R",
   "deploy.R",
   list.files("config", full.names = TRUE, recursive = TRUE),
-  list.files("www",    full.names = TRUE, recursive = TRUE)
+  list.files("www", full.names = TRUE, recursive = TRUE)
 )
 
 # Include renv files needed by Posit Connect.
 # Connect reads renv.lock and installs packages server-side — do NOT include
 # renv/library/ (local compiled binaries that won't run on Connect's Linux server).
-if (file.exists("renv.lock"))        files_to_deploy <- c(files_to_deploy, "renv.lock")
-if (file.exists(".Rprofile"))        files_to_deploy <- c(files_to_deploy, ".Rprofile")
-if (file.exists("renv/activate.R")) files_to_deploy <- c(files_to_deploy, "renv/activate.R")
+if (file.exists("renv.lock")) {
+  files_to_deploy <- c(files_to_deploy, "renv.lock")
+}
+if (file.exists(".Rprofile")) {
+  files_to_deploy <- c(files_to_deploy, ".Rprofile")
+}
+if (file.exists("renv/activate.R")) {
+  files_to_deploy <- c(files_to_deploy, "renv/activate.R")
+}
 
 rsconnect::deployApp(
-  appName     = "{country}",
-  appFiles    = files_to_deploy,
+  appName = "{country}",
+  appFiles = files_to_deploy,
   forceUpdate = TRUE
 )

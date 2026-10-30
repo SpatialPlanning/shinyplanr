@@ -14,7 +14,7 @@
 #' @importFrom rlang .data
 #' @importFrom grDevices col2rgb
 mod_4afeatures_ui <- function(id, cfg) {
-  Dict    <- cfg$Dict
+  Dict <- cfg$Dict
   options <- cfg$options
 
   ns <- shiny::NS(id)
@@ -24,7 +24,15 @@ mod_4afeatures_ui <- function(id, cfg) {
   # We include all layer types that have spatial data in raw_sf (Feature, Cost,
   # EcosystemServices, LockIn, LockOut, Climate, Bioregion).
   # Justification-only rows are excluded because they have no spatial column.
-  displayable_types <- c("Feature", "Cost", "EcosystemServices", "LockIn", "LockOut", "Climate", "Bioregion")
+  displayable_types <- c(
+    "Feature",
+    "Cost",
+    "EcosystemServices",
+    "LockIn",
+    "LockOut",
+    "Climate",
+    "Bioregion"
+  )
 
   # For Bioregion rows: collapse to one entry per categoryID.
   # The value is the categoryID (= the combined display column built by
@@ -36,7 +44,10 @@ mod_4afeatures_ui <- function(id, cfg) {
     dplyr::mutate(category = .data$nameCommon)
 
   other_entries <- Dict %>%
-    dplyr::filter(.data$type %in% displayable_types, .data$type != "Bioregion") %>%
+    dplyr::filter(
+      .data$type %in% displayable_types,
+      .data$type != "Bioregion"
+    ) %>%
     dplyr::select("nameCommon", "nameVariable", "category")
 
   combined_dict <- dplyr::bind_rows(other_entries, bioregion_entries)
@@ -53,10 +64,11 @@ mod_4afeatures_ui <- function(id, cfg) {
     dplyr::group_by(.data$category) %>%
     dplyr::group_split() %>%
     purrr::set_names(purrr::map_chr(., ~ as.character(.x$category[1]))) %>%
-    purrr::map(~ (.x %>%
-      dplyr::select("nameCommon", "nameVariable") %>%
-      tibble::deframe()
-    ))
+    purrr::map(
+      ~ (.x %>%
+        dplyr::select("nameCommon", "nameVariable") %>%
+        tibble::deframe())
+    )
 
   # Prepend the density sentinel as a top-level (ungrouped) entry.
   # selectInput() accepts a mixed list where character scalars are ungrouped
@@ -75,44 +87,47 @@ mod_4afeatures_ui <- function(id, cfg) {
       # calc(100vh - Npx) is self-contained and does not require ancestor
       # elements to have explicit heights (unlike height: 100%).
       shinycssloaders::withSpinner(
-        leaflet::leafletOutput(ns("leaflet_map"), height = "calc(100vh - 180px)")
+        leaflet::leafletOutput(
+          ns("leaflet_map"),
+          height = "calc(100vh - 180px)"
+        )
       ),
 
       # Top-left absolutePanel: layer selector
       # left = "60px" clears the leaflet zoom control buttons.
       shiny::absolutePanel(
-        id        = ns("selectorPanel"),
-        fixed     = FALSE,
+        id = ns("selectorPanel"),
+        fixed = FALSE,
         draggable = TRUE,
-        top       = "10px",
-        left      = "60px",
-        width     = "280px",
-        style     = paste0(
+        top = "10px",
+        left = "60px",
+        width = "280px",
+        style = paste0(
           "background-color: rgba(255, 255, 255, 0.92); ",
           "padding: 10px; border-radius: 5px; z-index: 1000; ",
           "box-shadow: 0 1px 5px rgba(0,0,0,0.4);"
         ),
         shiny::h4("Select Layer", style = "margin-top: 0; margin-bottom: 8px;"),
         shiny::selectInput(
-          inputId  = ns("selectedLayer"),
-          label    = NULL,
-          choices  = layer_choices,
+          inputId = ns("selectedLayer"),
+          label = NULL,
+          choices = layer_choices,
           selected = "__density__",
           multiple = FALSE,
-          width    = "100%"
+          width = "100%"
         )
       ),
 
       # Top-right absolutePanel: layer information sidebar
       # Mirrors the featurePanel style from mod_2scenario.R (Explore tab).
       shiny::absolutePanel(
-        id        = ns("infoPanel"),
-        fixed     = FALSE,
+        id = ns("infoPanel"),
+        fixed = FALSE,
         draggable = TRUE,
-        top       = "10px",
-        right     = "10px",
-        width     = "260px",
-        style     = paste0(
+        top = "10px",
+        right = "10px",
+        width = "260px",
+        style = paste0(
           "background-color: rgba(255, 255, 255, 0.92); ",
           "padding: 10px; border-radius: 5px; ",
           "max-height: 600px; overflow-y: auto; z-index: 1000; ",
@@ -136,9 +151,9 @@ mod_4afeatures_ui <- function(id, cfg) {
 #'
 #' @noRd
 mod_4afeatures_server <- function(id, cfg, tab_visible) {
-  Dict    <- cfg$Dict
+  Dict <- cfg$Dict
   options <- cfg$options
-  raw_sf  <- cfg$raw_sf
+  raw_sf <- cfg$raw_sf
 
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -211,38 +226,40 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
     # precision reduction above addresses the actual payload-size bottleneck
     # regardless of caching strategy.
     render_layer <- function(sel) {
-      if (is.null(sel) || sel == "") return()
+      if (is.null(sel) || sel == "") {
+        return()
+      }
 
       if (sel == "__density__") {
         # ----------------------------------------------------------------
         # Feature Density: rowSums of all Feature columns
         # ----------------------------------------------------------------
         pal <- leaflet::colorNumeric(
-          palette  = "YlGnBu",
-          domain   = density_vals,
+          palette = "YlGnBu",
+          domain = density_vals,
           na.color = "#808080"
         )
 
         hex_colours <- pal(density_vals)
-        fill_rgb    <- hex_to_rgb_matrix(hex_colours)
+        fill_rgb <- hex_to_rgb_matrix(hex_colours)
 
         leaflet::leafletProxy("leaflet_map", session = session) %>%
           leafgl::clearGlLayers() %>%
           leaflet::clearControls() %>%
           leafgl::addGlPolygons(
-            data        = raw_wgs84,
-            fillColor   = fill_rgb,
+            data = raw_wgs84,
+            fillColor = fill_rgb,
             fillOpacity = 0.7,
-            stroke      = TRUE,
-            group       = "layer",
-            digits      = geojson_digits
+            stroke = TRUE,
+            group = "layer",
+            digits = geojson_digits
           ) %>%
           leaflet::addLegend(
             position = "bottomleft",
-            pal      = pal,
-            values   = density_vals,
-            title    = "Feature Density",
-            opacity  = 0.7
+            pal = pal,
+            values = density_vals,
+            title = "Feature Density",
+            opacity = 0.7
           )
 
         output$infoPanelContent <- shiny::renderUI({
@@ -259,7 +276,6 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
             )
           )
         })
-
       } else {
         # ----------------------------------------------------------------
         # Single feature layer OR combined bioregion display column
@@ -272,14 +288,19 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
           dplyr::pull("categoryID") %>%
           unique()
 
-        is_bioregion_display <- sel %in% bioregion_cat_ids && sel %in% names(raw_wgs84)
+        is_bioregion_display <- sel %in%
+          bioregion_cat_ids &&
+          sel %in% names(raw_wgs84)
 
         if (is_bioregion_display) {
           # ----------------------------------------------------------------
           # Combined bioregion display: integer zone index 1..N
           # ----------------------------------------------------------------
           bioregion_meta <- Dict %>%
-            dplyr::filter(.data$type == "Bioregion", .data$categoryID == sel) %>%
+            dplyr::filter(
+              .data$type == "Bioregion",
+              .data$categoryID == sel
+            ) %>%
             dplyr::slice(1)
 
           col_data <- sf::st_drop_geometry(raw_wgs84)[[sel]]
@@ -293,49 +314,54 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
           palette_cols <- grDevices::hcl.colors(n_zones, palette = "Set2")
 
           pal <- leaflet::colorFactor(
-            palette  = palette_cols,
-            domain   = zone_levels,
+            palette = palette_cols,
+            domain = zone_levels,
             na.color = "#808080"
           )
 
           hex_colours <- pal(col_data)
-          fill_rgb    <- hex_to_rgb_matrix(hex_colours)
+          fill_rgb <- hex_to_rgb_matrix(hex_colours)
 
           leaflet::leafletProxy("leaflet_map", session = session) %>%
             leafgl::clearGlLayers() %>%
             leaflet::clearControls() %>%
             leafgl::addGlPolygons(
-              data        = raw_wgs84,
-              fillColor   = fill_rgb,
+              data = raw_wgs84,
+              fillColor = fill_rgb,
               fillOpacity = 0.7,
-              stroke      = TRUE,
-              group       = "layer",
-              digits      = geojson_digits
+              stroke = TRUE,
+              group = "layer",
+              digits = geojson_digits
             ) %>%
             leaflet::addLegend(
               position = "bottomleft",
-              pal      = pal,
-              values   = zone_levels,
-              title    = bioregion_meta$category,
+              pal = pal,
+              values = zone_levels,
+              title = bioregion_meta$category,
               labFormat = leaflet::labelFormat(prefix = "Zone "),
-              opacity  = 0.7
+              opacity = 0.7
             )
 
           output$infoPanelContent <- shiny::renderUI({
-            just  <- bioregion_meta$justification
+            just <- bioregion_meta$justification
             # as.character() guards against bioregion_meta$category being a
             # length-1 factor (Dict$category is an ordered factor after
             # forder_dict_categories()) -- htmltools tags generally coerce
             # factors fine, but this keeps the value an explicit character
             # for clarity and to avoid any edge-case surprises in rendering.
             shiny::tagList(
-              shiny::h4(as.character(bioregion_meta$category), style = "margin-top: 0;"),
+              shiny::h4(
+                as.character(bioregion_meta$category),
+                style = "margin-top: 0;"
+              ),
               shiny::p(
-                shiny::strong("Type: "), "Bioregion",
+                shiny::strong("Type: "),
+                "Bioregion",
                 style = "margin-bottom: 4px;"
               ),
               shiny::p(
-                shiny::strong("Zones: "), n_zones,
+                shiny::strong("Zones: "),
+                n_zones,
                 style = "margin-bottom: 4px;"
               ),
               if (!is.na(just) && nchar(trimws(just)) > 0) {
@@ -363,7 +389,9 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         layer_info <- Dict %>%
           dplyr::filter(.data$nameVariable == sel)
 
-        if (nrow(layer_info) == 0) return()
+        if (nrow(layer_info) == 0) {
+          return()
+        }
 
         layer_type <- layer_info$type[1]
 
@@ -373,7 +401,8 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         # Palette selection:
         #   Continuous (YlGnBu): Cost, EcosystemServices, Climate
         #   Binary (grey/teal):  Feature, LockIn, LockOut — 0/1
-        is_continuous <- layer_type %in% c("Cost", "EcosystemServices", "Climate")
+        is_continuous <- layer_type %in%
+          c("Cost", "EcosystemServices", "Climate")
 
         # Binary fill colours (grey = absent, teal = present), defined once so
         # the addGlPolygons fill and the addLegend swatches can never drift
@@ -382,31 +411,31 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
 
         if (is_continuous) {
           pal <- leaflet::colorNumeric(
-            palette  = "YlGnBu",
-            domain   = col_data,
+            palette = "YlGnBu",
+            domain = col_data,
             na.color = "#808080"
           )
         } else {
           pal <- leaflet::colorFactor(
-            palette  = binary_colours,
-            domain   = c(0, 1),
+            palette = binary_colours,
+            domain = c(0, 1),
             na.color = "#808080"
           )
         }
 
         hex_colours <- pal(col_data)
-        fill_rgb    <- hex_to_rgb_matrix(hex_colours)
+        fill_rgb <- hex_to_rgb_matrix(hex_colours)
 
         map_proxy <- leaflet::leafletProxy("leaflet_map", session = session) %>%
           leafgl::clearGlLayers() %>%
           leaflet::clearControls() %>%
           leafgl::addGlPolygons(
-            data        = raw_wgs84,
-            fillColor   = fill_rgb,
+            data = raw_wgs84,
+            fillColor = fill_rgb,
             fillOpacity = 0.7,
-            stroke      = TRUE,
-            group       = "layer",
-            digits      = geojson_digits
+            stroke = TRUE,
+            group = "layer",
+            digits = geojson_digits
           )
 
         if (is_continuous) {
@@ -415,10 +444,10 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
           map_proxy %>%
             leaflet::addLegend(
               position = "bottomleft",
-              pal      = pal,
-              values   = col_data,
-              title    = layer_info$nameCommon[1],
-              opacity  = 0.7
+              pal = pal,
+              values = col_data,
+              title = layer_info$nameCommon[1],
+              opacity = 0.7
             )
         } else {
           # Binary presence/absence (Feature, LockIn, LockOut): pal/values
@@ -430,27 +459,33 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
           map_proxy %>%
             leaflet::addLegend(
               position = "bottomleft",
-              colors   = binary_colours,
-              labels   = c("Absent", "Present"),
-              title    = layer_info$nameCommon[1],
-              opacity  = 0.7
+              colors = binary_colours,
+              labels = c("Absent", "Present"),
+              title = layer_info$nameCommon[1],
+              opacity = 0.7
             )
         }
 
         # Sidebar: Dict metadata for the selected layer
         output$infoPanelContent <- shiny::renderUI({
-          just  <- layer_info$justification[1]
-          units <- if ("units" %in% names(layer_info)) layer_info$units[1] else NA_character_
+          just <- layer_info$justification[1]
+          units <- if ("units" %in% names(layer_info)) {
+            layer_info$units[1]
+          } else {
+            NA_character_
+          }
 
           # Base: name + category + type
           content <- shiny::tagList(
             shiny::h4(layer_info$nameCommon[1], style = "margin-top: 0;"),
             shiny::p(
-              shiny::strong("Category: "), as.character(layer_info$category[1]),
+              shiny::strong("Category: "),
+              as.character(layer_info$category[1]),
               style = "margin-bottom: 4px;"
             ),
             shiny::p(
-              shiny::strong("Type: "), layer_type,
+              shiny::strong("Type: "),
+              layer_type,
               style = "margin-bottom: 4px;"
             )
           )
@@ -460,7 +495,8 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
             content <- shiny::tagList(
               content,
               shiny::p(
-                shiny::strong("Units: "), units,
+                shiny::strong("Units: "),
+                units,
                 style = "margin-bottom: 4px;"
               )
             )
@@ -478,8 +514,8 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
 
           # Target range — only for Feature and Bioregion types
           if (layer_type %in% c("Feature", "Bioregion")) {
-            t_min  <- layer_info$targetMin[1]
-            t_max  <- layer_info$targetMax[1]
+            t_min <- layer_info$targetMin[1]
+            t_max <- layer_info$targetMax[1]
             t_init <- layer_info$targetInitial[1]
 
             if (!is.na(t_min) && !is.na(t_max) && !is.na(t_init)) {
@@ -506,14 +542,15 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
       } # end else (single layer)
     } # end render_layer()
 
-
     # --- Base map (rendered once) -------------------------------------------
     # renderLeaflet runs once at module initialisation.  The WebGL layer is
     # added separately via leafletProxy so it can be restored on every tab
     # visit without re-creating the base map (which would wipe the GL layer).
     output$leaflet_map <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
-        leaflet::addProviderTiles(options$leaflet_provider %||% "Esri.WorldGrayCanvas") %>%
+        leaflet::addProviderTiles(
+          options$leaflet_provider %||% "Esri.WorldGrayCanvas"
+        ) %>%
         leaflet::fitBounds(
           lng1 = as.numeric(bbox["xmin"]),
           lat1 = as.numeric(bbox["ymin"]),
@@ -521,7 +558,6 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
           lat2 = as.numeric(bbox["ymax"])
         )
     })
-
 
     # --- Tab-visibility observer --------------------------------------------
     # tab_visible() is TRUE whenever the Layer Information navbar tab is active.
@@ -540,13 +576,14 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
     shiny::observeEvent(
       tab_visible(),
       {
-        if (!isTRUE(tab_visible())) return()
+        if (!isTRUE(tab_visible())) {
+          return()
+        }
         shinyjs::delay(0, render_layer(shiny::isolate(input$selectedLayer)))
       },
       ignoreInit = FALSE,
       ignoreNULL = TRUE
     )
-
 
     # --- Dropdown change observer -------------------------------------------
     # Fires whenever the user changes the layer selection.
@@ -562,10 +599,8 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
       ignoreInit = TRUE,
       ignoreNULL = TRUE
     )
-
   }) # end moduleServer
 } # end mod_4afeatures_server
-
 
 ## To be copied in the UI
 # mod_4afeatures_ui("4afeatures_ui_1", cfg)
