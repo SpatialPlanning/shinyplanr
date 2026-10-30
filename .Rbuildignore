@@ -25,3 +25,6 @@ $run_dev.*
 ^doc$
 ^Meta$
 ^codecov\.yml$
+^CLAUDE\.md$
+^\.agents$
+^AGENTS\.md$
