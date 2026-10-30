@@ -48,7 +48,8 @@ make_soln_sf <- function(n_selected = 2L, n_total = 5L, include_cost = TRUE) {
 
 test_that("fSolnText() returns fallback message when soln is NULL", {
   result <- shinyplanr:::fSolnText(
-    input = list(), sDat = NULL,
+    input = list(),
+    sDat = NULL,
     cost_name = "Cost_Area"
   )
 
@@ -60,7 +61,8 @@ test_that("fSolnText() returns fallback message when soln is NULL", {
 
 test_that("fSolnText() returns fallback message when soln is not an sf object", {
   result <- shinyplanr:::fSolnText(
-    input = list(), sDat = data.frame(x = 1),
+    input = list(),
+    sDat = data.frame(x = 1),
     cost_name = "Cost_Area"
   )
 
@@ -78,7 +80,8 @@ test_that("fSolnText() returns 'No solution text available' when col_name absent
   names(soln)[names(soln) == "solution_1"] <- "solution_renamed"
 
   result <- shinyplanr:::fSolnText(
-    input = list(), sDat = soln,
+    input = list(),
+    sDat = soln,
     cost_name = "Cost_Area",
     col_name = "solution_1"
   )
@@ -95,7 +98,8 @@ test_that("fSolnText() returns selection percentage text when no cost column", {
   soln <- make_soln_sf(n_selected = 2L, n_total = 5L, include_cost = FALSE)
 
   result <- shinyplanr:::fSolnText(
-    input = list(), sDat = soln,
+    input = list(),
+    sDat = soln,
     cost_name = NULL
   )
 
@@ -111,7 +115,8 @@ test_that("fSolnText() computes correct selection percentage", {
   soln <- make_soln_sf(n_selected = 3L, n_total = 5L, include_cost = FALSE)
 
   result <- shinyplanr:::fSolnText(
-    input = list(), sDat = soln,
+    input = list(),
+    sDat = soln,
     cost_name = NULL
   )
 
@@ -126,7 +131,8 @@ test_that("fSolnText() returns both solution and cost text when cost column pres
   soln <- make_soln_sf(n_selected = 2L, n_total = 5L, include_cost = TRUE)
 
   result <- shinyplanr:::fSolnText(
-    input = list(), sDat = soln,
+    input = list(),
+    sDat = soln,
     cost_name = "Cost_Area"
   )
 
@@ -144,7 +150,8 @@ test_that("fSolnText() cost text: outside cost percentage is correct", {
   soln <- make_soln_sf(n_selected = 2L, n_total = 5L, include_cost = TRUE)
 
   result <- shinyplanr:::fSolnText(
-    input = list(), sDat = soln,
+    input = list(),
+    sDat = soln,
     cost_name = "Cost_Area"
   )
 
@@ -155,7 +162,8 @@ test_that("fSolnText() returns NULL cost text when cost_name not in solution", {
   soln <- make_soln_sf(n_selected = 2L, n_total = 5L, include_cost = FALSE)
 
   result <- shinyplanr:::fSolnText(
-    input = list(), sDat = soln,
+    input = list(),
+    sDat = soln,
     cost_name = "Cost_Area"
   ) # column absent
 
@@ -172,8 +180,8 @@ test_that("fplot_climate_density() returns NULL when all climate_ids are 'NA'", 
   dummy_soln <- make_soln_sf()
 
   result <- shinyplanr:::fplot_climate_density(
-    soln_list    = list(dummy_soln),
-    climate_ids  = "NA"
+    soln_list = list(dummy_soln),
+    climate_ids = "NA"
   )
 
   expect_null(result)
@@ -183,8 +191,8 @@ test_that("fplot_climate_density() returns NULL when all elements of climate_ids
   dummy_soln <- make_soln_sf()
 
   result <- shinyplanr:::fplot_climate_density(
-    soln_list    = list(dummy_soln, dummy_soln),
-    climate_ids  = c("NA", "NA")
+    soln_list = list(dummy_soln, dummy_soln),
+    climate_ids = c("NA", "NA")
   )
 
   expect_null(result)
@@ -241,8 +249,8 @@ test_that("fplot_climate_density() does not error when only scenario 2 has clima
   # splnr_plot_climKernelDensity() once with soln2 only.
   expect_no_error(
     shinyplanr:::fplot_climate_density(
-      soln_list      = list(soln1, soln2),
-      climate_ids    = c("NA", "clim_metric"),
+      soln_list = list(soln1, soln2),
+      climate_ids = c("NA", "clim_metric"),
       solution_names = c("solution_1", "solution_1")
     )
   )
@@ -258,8 +266,8 @@ test_that("fplot_climate_density() does not error when both scenarios have clima
   # with patchwork::wrap_plots(ncol = 1).
   expect_no_error(
     shinyplanr:::fplot_climate_density(
-      soln_list      = list(soln1, soln2),
-      climate_ids    = c("clim_metric", "clim_metric"),
+      soln_list = list(soln1, soln2),
+      climate_ids = c("clim_metric", "clim_metric"),
       solution_names = c("solution_1", "solution_1")
     )
   )
@@ -271,8 +279,8 @@ test_that("fplot_climate_density() returns a ggplot when a single scenario has c
   soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
 
   result <- shinyplanr:::fplot_climate_density(
-    soln_list      = list(soln1),
-    climate_ids    = "clim_metric",
+    soln_list = list(soln1),
+    climate_ids = "clim_metric",
     solution_names = "solution_1"
   )
 
@@ -286,8 +294,8 @@ test_that("fplot_climate_density() returns a patchwork when two scenarios have c
   soln2 <- make_clim_soln_sf(clim_col = "clim_metric")
 
   result <- shinyplanr:::fplot_climate_density(
-    soln_list      = list(soln1, soln2),
-    climate_ids    = c("clim_metric", "clim_metric"),
+    soln_list = list(soln1, soln2),
+    climate_ids = c("clim_metric", "clim_metric"),
     solution_names = c("solution_1", "solution_1")
   )
 
@@ -309,10 +317,10 @@ test_that("fplot_climate_density() uses Dict nameCommon as axis label when Dict 
   )
 
   result <- shinyplanr:::fplot_climate_density(
-    soln_list      = list(soln1),
-    climate_ids    = "clim_metric",
+    soln_list = list(soln1),
+    climate_ids = "clim_metric",
     solution_names = "solution_1",
-    Dict           = test_dict
+    Dict = test_dict
   )
 
   # The x-axis label should be the nameCommon, not the raw column name.
@@ -326,8 +334,8 @@ test_that("fplot_climate_density() suppresses colour-bar title by default (legen
   soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
 
   result <- shinyplanr:::fplot_climate_density(
-    soln_list      = list(soln1),
-    climate_ids    = "clim_metric",
+    soln_list = list(soln1),
+    climate_ids = "clim_metric",
     solution_names = "solution_1"
   )
 
@@ -348,8 +356,8 @@ test_that("fplot_climate_density() x-axis label falls back to raw climate_id whe
   soln1 <- make_clim_soln_sf(clim_col = "clim_metric")
 
   result <- shinyplanr:::fplot_climate_density(
-    soln_list      = list(soln1),
-    climate_ids    = "clim_metric",
+    soln_list = list(soln1),
+    climate_ids = "clim_metric",
     solution_names = "solution_1"
     # Dict intentionally omitted
   )

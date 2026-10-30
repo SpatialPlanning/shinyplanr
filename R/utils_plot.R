@@ -1,11 +1,13 @@
-
 #' Get solution text for plot
 #'
 #' @noRd
 fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
   # Guard: must be an sf object
   if (is.null(sDat) || !inherits(sDat, "sf")) {
-    return(list("No solution could be generated for the current settings.", NULL))
+    return(list(
+      "No solution could be generated for the current settings.",
+      NULL
+    ))
   }
 
   s_no_geom <- sf::st_drop_geometry(sDat)
@@ -18,7 +20,8 @@ fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
   # Planning unit selection text — always computed
   PU_count <- sum(s_no_geom[[col_name]] == 1, na.rm = TRUE)
   txt_soln <- paste0(
-    "In this scenario ", round(PU_count / nrow(s_no_geom) * 100),
+    "In this scenario ",
+    round(PU_count / nrow(s_no_geom) * 100),
     "% of the planning region was selected."
   )
 
@@ -61,7 +64,17 @@ fSolnText <- function(input, sDat, cost_name, col_name = "solution_1") {
 #'
 #' @noRd
 #'
-fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay, map_theme, num = "", Dict = NULL, base_size = 14) {
+fplot_solution_with_constraints <- function(
+  soln,
+  input,
+  raw_sf,
+  bndry,
+  overlay,
+  map_theme,
+  num = "",
+  Dict = NULL,
+  base_size = 14
+) {
   # Base solution plot
   plot_out <- spatialplanr::splnr_plot_solution(
     soln = soln,
@@ -135,8 +148,14 @@ fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay,
   # Apply consistent theme
   plot_out <- plot_out +
     ggplot2::theme(
-      plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-      legend.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+      plot.background = ggplot2::element_rect(
+        fill = "transparent",
+        colour = NA
+      ),
+      legend.background = ggplot2::element_rect(
+        fill = "transparent",
+        colour = NA
+      ),
       legend.position = "bottom",
       legend.direction = "horizontal",
       legend.box = "horizontal"
@@ -170,8 +189,13 @@ fplot_solution_with_constraints <- function(soln, input, raw_sf, bndry, overlay,
 #'
 #' @noRd
 #'
-fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
-                                  Dict = NULL, base_size = 14) {
+fplot_climate_density <- function(
+  soln_list,
+  climate_ids,
+  solution_names = NULL,
+  Dict = NULL,
+  base_size = 14
+) {
   # Filter out scenarios without climate data
   has_climate <- climate_ids != "NA"
 
@@ -204,7 +228,10 @@ fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
 
   # Derive a human-readable label for each active scenario.
   # dplyr::coalesce() falls back to the raw id when the lookup returns NA.
-  clim_labels <- dplyr::coalesce(clim_lookup[climate_filtered], climate_filtered)
+  clim_labels <- dplyr::coalesce(
+    clim_lookup[climate_filtered],
+    climate_filtered
+  )
 
   # Build one plot per active scenario, then stack vertically.
   # This allows each plot to have its own independent axis label and legend
@@ -219,19 +246,25 @@ fplot_climate_density <- function(soln_list, climate_ids, solution_names = NULL,
   # own value via a wrapper; this default matches the shinyplanr house style.
   plots <- purrr::map(seq_along(soln_filtered), function(i) {
     spatialplanr::splnr_plot_climKernelDensity(
-      soln          = soln_filtered[[i]],
+      soln = soln_filtered[[i]],
       solution_name = solution_names[[i]],
-      climate_name  = climate_filtered[[i]],
-      type          = "Normal",
-      legendTitle   = NULL,
-      xAxisLab      = clim_labels[[i]],
-      base_size     = base_size
+      climate_name = climate_filtered[[i]],
+      type = "Normal",
+      legendTitle = NULL,
+      xAxisLab = clim_labels[[i]],
+      base_size = base_size
     ) +
       ggplot2::theme(
-        plot.background    = ggplot2::element_rect(fill = "transparent", colour = NA),
-        legend.background  = ggplot2::element_rect(fill = "transparent", colour = NA),
-        legend.position    = "right",
-        legend.title       = ggplot2::element_text(angle = -90, hjust = 0.5)
+        plot.background = ggplot2::element_rect(
+          fill = "transparent",
+          colour = NA
+        ),
+        legend.background = ggplot2::element_rect(
+          fill = "transparent",
+          colour = NA
+        ),
+        legend.position = "right",
+        legend.title = ggplot2::element_text(angle = -90, hjust = 0.5)
       )
   })
 

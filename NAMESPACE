@@ -10,19 +10,26 @@ export(update_shinyplanr_template)
 export(validate_dict)
 export(validate_shinyplanr_data)
 import(shiny)
-importFrom(golem,activate_js)
-importFrom(golem,add_resource_path)
-importFrom(golem,bundle_resources)
-importFrom(golem,favicon)
-importFrom(golem,with_golem_options)
+importFrom(golem,
+  activate_js,
+  add_resource_path,
+  bundle_resources,
+  favicon,
+  with_golem_options
+)
 importFrom(grDevices,col2rgb)
 importFrom(highs,highs_solve)
 importFrom(magrittr,"%>%")
-importFrom(rlang,":=")
-importFrom(rlang,.data)
-importFrom(shiny,HTML)
-importFrom(shiny,column)
-importFrom(shiny,shinyApp)
-importFrom(shiny,tagAppendAttributes)
-importFrom(shiny,tagList)
-importFrom(shiny,tags)
+importFrom(ragg,agg_png)
+importFrom(rlang,
+  ":=",
+  .data
+)
+importFrom(shiny,
+  HTML,
+  column,
+  shinyApp,
+  tagAppendAttributes,
+  tagList,
+  tags
+)

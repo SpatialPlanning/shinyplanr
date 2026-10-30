@@ -18,19 +18,22 @@ mod_6help_ui <- function(id, cfg) {
   shiny::tabsetPanel(
     id = ns("tabs5"),
     type = "pills",
-    shiny::tabPanel("Frequently Asked Questions",
+    shiny::tabPanel(
+      "Frequently Asked Questions",
       value = 1,
       shiny::fluidPage(
         shiny::markdown(tx_6faq)
       )
     ),
-    shiny::tabPanel("Technical Information",
+    shiny::tabPanel(
+      "Technical Information",
       value = 2,
       shiny::fluidPage(
         shiny::markdown(tx_6technical)
       )
     ),
-    shiny::tabPanel("Changelog",
+    shiny::tabPanel(
+      "Changelog",
       value = 3,
       shiny::fluidPage(
         shiny::markdown(tx_6changelog)

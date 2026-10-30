@@ -28,7 +28,8 @@ load_config <- function(config_path = "config/shinyplanr_config.rds") {
   if (!file.exists(config_path)) {
     stop(
       "Config file not found: ",
-      normalizePath(config_path, mustWork = FALSE), "\n\n",
+      normalizePath(config_path, mustWork = FALSE),
+      "\n\n",
       "Have you run setup-app.R to generate it?\n",
       "Expected: config/shinyplanr_config.rds\n",
       "To generate: source('data-raw/<YourRegion>/setup-app.R')"
@@ -66,7 +67,9 @@ load_config <- function(config_path = "config/shinyplanr_config.rds") {
   message(
     "shinyplanr config loaded: ",
     config$options$app_title %||% "(no title)",
-    " (schema v", config$schema_version, ")"
+    " (schema v",
+    config$schema_version,
+    ")"
   )
 
   invisible(config)

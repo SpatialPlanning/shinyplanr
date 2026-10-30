@@ -19,7 +19,8 @@
 # ---------------------------------------------------------------------------
 solver_available <- any(vapply(
   c("highs", "gurobi", "rcbc", "cplexAPI", "lpsymphony", "Rsymphony"),
-  requireNamespace, logical(1L),
+  requireNamespace,
+  logical(1L),
   quietly = TRUE
 ))
 if (!solver_available) {
@@ -53,8 +54,8 @@ make_test_sf <- function() {
 # (highs, gurobi, rcbc, etc.) without requiring a specific backend.
 make_test_problem <- function(raw_sf = make_test_sf()) {
   prioritizr::problem(
-    x           = raw_sf,
-    features    = c("feature_A", "feature_B"),
+    x = raw_sf,
+    features = c("feature_A", "feature_B"),
     cost_column = "Cost_Area"
   ) |>
     prioritizr::add_min_set_objective() |>
@@ -68,8 +69,8 @@ make_test_problem <- function(raw_sf = make_test_sf()) {
 with_shiny_mocks <- function(expr, capture_alert = FALSE) {
   alert_called <- FALSE
   local_mocked_bindings(
-    runjs      = function(...) invisible(NULL),
-    .package   = "shinyjs"
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
   )
   local_mocked_bindings(
     shinyalert = function(...) {
@@ -88,8 +89,14 @@ with_shiny_mocks <- function(expr, capture_alert = FALSE) {
 
 test_that("fsolve_problem() returns an sf object for a feasible problem", {
   prob <- make_test_problem()
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   sol <- shinyplanr:::fsolve_problem(prob)
 
@@ -100,8 +107,14 @@ test_that("fsolve_problem() returns an sf object for a feasible problem", {
 
 test_that("fsolve_problem() solution selects at least one planning unit", {
   prob <- make_test_problem()
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   sol <- shinyplanr:::fsolve_problem(prob)
 
@@ -109,14 +122,13 @@ test_that("fsolve_problem() solution selects at least one planning unit", {
 })
 
 # ---------------------------------------------------------------------------
-# fsolve_problem() — presolve failure path
+# fsolve_problem() — zero-feature path
 # ---------------------------------------------------------------------------
 
-test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fails", {
-  # All-zero feature columns — prioritizr presolve_check will flag this.
-  # Both features must be zeroed: a single-feature problem also fails presolve,
-  # so we keep two features but zero both to ensure the failure is about data
-  # quality, not feature count.
+test_that("fsolve_problem() returns a solution with 0 PUs selected for all-zero features", {
+  # All-zero feature columns — prioritizr presolve_check passes (the problem is
+  # technically feasible: select nothing and meet 0% of a 0-amount target).
+  # The solver returns a valid sf with all solution_1 == 0.
   raw_sf <- make_test_sf()
   raw_sf$feature_A <- 0
   raw_sf$feature_B <- 0
@@ -124,8 +136,8 @@ test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fail
   # Build problem — prioritizr warns about zero columns but still constructs it
   prob <- suppressWarnings(
     prioritizr::problem(
-      x           = raw_sf,
-      features    = c("feature_A", "feature_B"),
+      x = raw_sf,
+      features = c("feature_A", "feature_B"),
       cost_column = "Cost_Area"
     ) |>
       prioritizr::add_min_set_objective() |>
@@ -134,20 +146,20 @@ test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fail
       prioritizr::add_default_solver(verbose = FALSE)
   )
 
-  alert_called <- FALSE
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
   local_mocked_bindings(
-    shinyalert = function(...) {
-      alert_called <<- TRUE
-      invisible(NULL)
-    },
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
     .package = "shinyalert"
   )
 
-  result <- shinyplanr:::fsolve_problem(prob)
+  result <- suppressWarnings(shinyplanr:::fsolve_problem(prob))
 
-  expect_null(result)
-  expect_true(alert_called)
+  expect_s3_class(result, "sf")
+  expect_true("solution_1" %in% names(result))
+  expect_equal(sum(result$solution_1), 0)
 })
 
 # ---------------------------------------------------------------------------
@@ -156,8 +168,14 @@ test_that("fsolve_problem() returns NULL and calls shinyalert when presolve fail
 
 test_that("fsolve_with_log() returns a list with 'solution' and 'log' elements", {
   prob <- make_test_problem()
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   result <- shinyplanr:::fsolve_with_log(prob, cost_id = "Cost_Area")
 
@@ -167,8 +185,14 @@ test_that("fsolve_with_log() returns a list with 'solution' and 'log' elements",
 
 test_that("fsolve_with_log() solution element is an sf object", {
   prob <- make_test_problem()
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   result <- shinyplanr:::fsolve_with_log(prob, cost_id = "Cost_Area")
 
@@ -177,8 +201,14 @@ test_that("fsolve_with_log() solution element is an sf object", {
 
 test_that("fsolve_with_log() log contains expected sections", {
   prob <- make_test_problem()
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   result <- shinyplanr:::fsolve_with_log(prob, cost_id = "Cost_Area")
 
@@ -190,8 +220,14 @@ test_that("fsolve_with_log() log contains expected sections", {
 
 test_that("fsolve_with_log() log includes cost summary when cost_id is provided", {
   prob <- make_test_problem()
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   result <- shinyplanr:::fsolve_with_log(prob, cost_id = "Cost_Area")
 
@@ -200,24 +236,32 @@ test_that("fsolve_with_log() log includes cost summary when cost_id is provided"
 
 test_that("fsolve_with_log() log omits cost summary when cost_id is NULL", {
   prob <- make_test_problem()
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   result <- shinyplanr:::fsolve_with_log(prob, cost_id = NULL)
 
   expect_false(grepl("Cost selected", result$log))
 })
 
-test_that("fsolve_with_log() returns NULL solution and logs failure for infeasible problem", {
-  # Zero out both features so presolve_check() reliably fails.
+test_that("fsolve_with_log() returns sf solution with 0 PUs selected for all-zero features", {
+  # Zero out both features — prioritizr presolve_check() passes (the problem is
+  # feasible: select nothing and meet 0% of a 0-amount target).
+  # The solver returns a valid sf with all solution_1 == 0.
   raw_sf <- make_test_sf()
   raw_sf$feature_A <- 0
   raw_sf$feature_B <- 0
 
   prob <- suppressWarnings(
     prioritizr::problem(
-      x           = raw_sf,
-      features    = c("feature_A", "feature_B"),
+      x = raw_sf,
+      features = c("feature_A", "feature_B"),
       cost_column = "Cost_Area"
     ) |>
       prioritizr::add_min_set_objective() |>
@@ -226,13 +270,23 @@ test_that("fsolve_with_log() returns NULL solution and logs failure for infeasib
       prioritizr::add_default_solver(verbose = FALSE)
   )
 
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
-  result <- shinyplanr:::fsolve_with_log(prob, cost_id = "Cost_Area")
+  result <- suppressWarnings(shinyplanr:::fsolve_with_log(
+    prob,
+    cost_id = "Cost_Area"
+  ))
 
-  expect_null(result$solution)
-  expect_match(result$log, "No solution found|Infeasible")
+  expect_s3_class(result$solution, "sf")
+  expect_equal(sum(result$solution$solution_1), 0)
+  expect_match(result$log, "Solution found")
 })
 
 # ---------------------------------------------------------------------------
@@ -243,26 +297,32 @@ test_that("fdefine_problem() returns a prioritizr problem for min_set", {
   raw_sf <- make_test_sf()
   targets <- data.frame(feature = "feature_A", target = 0.5)
   options <- list(
-    obj_func       = "min_set",
+    obj_func = "min_set",
     climate_change = 0L,
-    percentile     = 10,
-    direction      = -1,
-    refugiaTarget  = 0.1
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
   )
   # Plain list acts as a Shiny input — input[[key]] works on lists
   input <- list(
-    costid    = "Cost_Area",
+    costid = "Cost_Area",
     climateid = "NA"
   )
 
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   prob <- shinyplanr:::fdefine_problem(
-    targets    = targets,
-    raw_sf     = raw_sf,
-    options    = options,
-    input      = input,
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
     name_check = "sli_",
     clim_input = "NA",
     compare_id = ""
@@ -279,26 +339,32 @@ test_that("fdefine_problem() returns a prioritizr problem for min_shortfall", {
   raw_sf <- make_test_sf()
   targets <- data.frame(feature = "feature_A", target = 0.5)
   options <- list(
-    obj_func       = "min_shortfall",
+    obj_func = "min_shortfall",
     climate_change = 0L,
-    percentile     = 10,
-    direction      = -1,
-    refugiaTarget  = 0.1
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
   )
   input <- list(
-    costid    = "Cost_Area",
+    costid = "Cost_Area",
     climateid = "NA",
-    budget    = 50 # 50% of total cost
+    budget = 50 # 50% of total cost
   )
 
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   prob <- shinyplanr:::fdefine_problem(
-    targets    = targets,
-    raw_sf     = raw_sf,
-    options    = options,
-    input      = input,
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
     name_check = "sli_",
     clim_input = "NA",
     compare_id = ""
@@ -315,26 +381,32 @@ test_that("fdefine_problem() works with compare_id = '1' (Compare module suffix)
   raw_sf <- make_test_sf()
   targets <- data.frame(feature = "feature_A", target = 0.5)
   options <- list(
-    obj_func       = "min_set",
+    obj_func = "min_set",
     climate_change = 0L,
-    percentile     = 10,
-    direction      = -1,
-    refugiaTarget  = 0.1
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
   )
   # Compare module uses costid1, climateid1
   input <- list(
-    costid1    = "Cost_Area",
+    costid1 = "Cost_Area",
     climateid1 = "NA"
   )
 
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   prob <- shinyplanr:::fdefine_problem(
-    targets    = targets,
-    raw_sf     = raw_sf,
-    options    = options,
-    input      = input,
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
     name_check = "sli_",
     clim_input = "NA",
     compare_id = "1"
@@ -351,25 +423,31 @@ test_that("fdefine_problem() handles NULL clim_input without error", {
   raw_sf <- make_test_sf()
   targets <- data.frame(feature = "feature_A", target = 0.5)
   options <- list(
-    obj_func       = "min_set",
+    obj_func = "min_set",
     climate_change = 0L,
-    percentile     = 10,
-    direction      = -1,
-    refugiaTarget  = 0.1
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
   )
   input <- list(
-    costid    = "Cost_Area",
+    costid = "Cost_Area",
     climateid = NULL
   )
 
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   prob <- shinyplanr:::fdefine_problem(
-    targets    = targets,
-    raw_sf     = raw_sf,
-    options    = options,
-    input      = input,
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
     name_check = "sli_",
     clim_input = NULL,
     compare_id = ""
@@ -393,30 +471,265 @@ test_that("fdefine_problem() errors when no features are selected (known latent 
   raw_sf <- make_test_sf()
   targets <- data.frame(feature = character(0), target = numeric(0))
   options <- list(
-    obj_func       = "min_set",
+    obj_func = "min_set",
     climate_change = 0L,
-    percentile     = 10,
-    direction      = -1,
-    refugiaTarget  = 0.1
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
   )
   input <- list(
-    costid    = "Cost_Area",
+    costid = "Cost_Area",
     climateid = "NA"
   )
 
-  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
-  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
 
   # prioritizr::problem() rejects features = character(0)
   expect_error(
     shinyplanr:::fdefine_problem(
-      targets    = targets,
-      raw_sf     = raw_sf,
-      options    = options,
-      input      = input,
+      targets = targets,
+      raw_sf = raw_sf,
+      options = options,
+      input = input,
       name_check = "sli_",
       clim_input = "NA",
       compare_id = ""
     )
   )
+})
+
+# ---------------------------------------------------------------------------
+# fdefine_problem() — lock-in and lock-out constraints
+#
+# The purrr::reduce() loops over get_lockIn() / get_lockOut() results and
+# calls prioritizr::add_locked_in_constraints() / add_locked_out_constraints()
+# for each selected variable. These paths are exercised by adding checkLI_ /
+# checkLO_ entries to the input list.
+#
+# We verify the returned ConservationProblem has the expected constraint type
+# by inspecting prioritizr::constraints(prob), which returns a list of
+# constraint objects. Each has a $data$locked_in (or $data$locked_out) element.
+# ---------------------------------------------------------------------------
+
+# Helper: make a 4-cell sf with a binary lock-in column (mpas) and a binary
+# lock-out column (shipping). PU1 is an MPA; PU4 is a shipping lane.
+make_test_sf_with_locks <- function() {
+  sf::st_sf(
+    feature_A = c(1, 0, 1, 0),
+    feature_B = c(0, 1, 1, 0),
+    Cost_Area = c(1, 1, 2, 1),
+    mpas = c(TRUE, FALSE, FALSE, FALSE),
+    shipping = c(FALSE, FALSE, FALSE, TRUE),
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
+      sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
+      sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(1, 1, 2, 2, 1)))),
+      sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(1, 1, 2, 2, 1)))),
+      crs = "ESRI:54009"
+    )
+  )
+}
+
+test_that("fdefine_problem() applies lock-in constraint when checkLI_ input is TRUE", {
+  raw_sf <- make_test_sf_with_locks()
+  targets <- data.frame(
+    feature = c("feature_A", "feature_B"),
+    target = c(0.5, 0.5)
+  )
+  options <- list(
+    obj_func = "min_set",
+    climate_change = 0L,
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
+  )
+  # checkLI_mpas = TRUE signals that the "mpas" column should be locked in
+  input <- list(
+    costid = "Cost_Area",
+    climateid = "NA",
+    checkLI_mpas = TRUE
+  )
+
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
+
+  prob <- shinyplanr:::fdefine_problem(
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
+    name_check = "sli_",
+    clim_input = "NA",
+    compare_id = ""
+  )
+
+  expect_s3_class(prob, "ConservationProblem")
+
+  # Confirm a locked-in constraint is present by inspecting the R6 field.
+  # prob$constraints is a list of R6 constraint objects; each has a $name
+  # field (plain character) and a class vector starting with the constraint
+  # type (e.g. "LockedInConstraint").
+  constraint_names <- vapply(
+    prob$constraints,
+    function(x) x$name,
+    character(1L)
+  )
+  expect_true(any(grepl("locked in", constraint_names, ignore.case = TRUE)))
+})
+
+test_that("fdefine_problem() applies lock-out constraint when checkLO_ input is TRUE", {
+  raw_sf <- make_test_sf_with_locks()
+  targets <- data.frame(
+    feature = c("feature_A", "feature_B"),
+    target = c(0.5, 0.5)
+  )
+  options <- list(
+    obj_func = "min_set",
+    climate_change = 0L,
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
+  )
+  # checkLO_shipping = TRUE signals that the "shipping" column should be locked out
+  input <- list(
+    costid = "Cost_Area",
+    climateid = "NA",
+    checkLO_shipping = TRUE
+  )
+
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
+
+  prob <- shinyplanr:::fdefine_problem(
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
+    name_check = "sli_",
+    clim_input = "NA",
+    compare_id = ""
+  )
+
+  expect_s3_class(prob, "ConservationProblem")
+
+  constraint_names <- vapply(
+    prob$constraints,
+    function(x) x$name,
+    character(1L)
+  )
+  expect_true(any(grepl("locked out", constraint_names, ignore.case = TRUE)))
+})
+
+test_that("fdefine_problem() applies both lock-in and lock-out when both inputs are TRUE", {
+  raw_sf <- make_test_sf_with_locks()
+  targets <- data.frame(
+    feature = c("feature_A", "feature_B"),
+    target = c(0.5, 0.5)
+  )
+  options <- list(
+    obj_func = "min_set",
+    climate_change = 0L,
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
+  )
+  input <- list(
+    costid = "Cost_Area",
+    climateid = "NA",
+    checkLI_mpas = TRUE,
+    checkLO_shipping = TRUE
+  )
+
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
+
+  prob <- shinyplanr:::fdefine_problem(
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
+    name_check = "sli_",
+    clim_input = "NA",
+    compare_id = ""
+  )
+
+  expect_s3_class(prob, "ConservationProblem")
+
+  constraint_names <- vapply(
+    prob$constraints,
+    function(x) x$name,
+    character(1L)
+  )
+  expect_true(any(grepl("locked in", constraint_names, ignore.case = TRUE)))
+  expect_true(any(grepl("locked out", constraint_names, ignore.case = TRUE)))
+})
+
+test_that("fdefine_problem() with lock-in produces a solvable problem (PU1 always selected)", {
+  raw_sf <- make_test_sf_with_locks()
+  targets <- data.frame(
+    feature = c("feature_A", "feature_B"),
+    target = c(0.5, 0.5)
+  )
+  options <- list(
+    obj_func = "min_set",
+    climate_change = 0L,
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
+  )
+  input <- list(
+    costid = "Cost_Area",
+    climateid = "NA",
+    checkLI_mpas = TRUE
+  )
+
+  local_mocked_bindings(
+    runjs = function(...) invisible(NULL),
+    .package = "shinyjs"
+  )
+  local_mocked_bindings(
+    shinyalert = function(...) invisible(NULL),
+    .package = "shinyalert"
+  )
+
+  prob <- shinyplanr:::fdefine_problem(
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
+    name_check = "sli_",
+    clim_input = "NA",
+    compare_id = ""
+  )
+
+  sol <- shinyplanr:::fsolve_problem(prob)
+
+  # PU1 has mpas = TRUE (locked in) so solution_1[1] must be 1
+  expect_s3_class(sol, "sf")
+  expect_equal(sol$solution_1[1], 1L)
 })

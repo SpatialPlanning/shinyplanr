@@ -1,6 +1,5 @@
 # Utility functions for the coverage module
 
-
 #' Read and validate an uploaded spatial file
 #'
 #' @param file_input The file input object from shiny::fileInput
@@ -32,7 +31,8 @@ fread_uploaded_spatial <- function(file_input) {
       success = FALSE,
       data = NULL,
       message = paste0(
-        "Unsupported file format: .", file_ext,
+        "Unsupported file format: .",
+        file_ext,
         ". Please upload a GeoPackage (.gpkg), GeoJSON (.geojson) or File Geodatabase (.gdb)."
       )
     ))
@@ -60,7 +60,8 @@ fread_uploaded_spatial <- function(file_input) {
           success = FALSE,
           data = NULL,
           message = paste0(
-            "The uploaded file contains ", paste(geom_types, collapse = ", "),
+            "The uploaded file contains ",
+            paste(geom_types, collapse = ", "),
             " geometries. Only POLYGON or MULTIPOLYGON geometries are accepted."
           )
         ))
@@ -68,7 +69,9 @@ fread_uploaded_spatial <- function(file_input) {
 
       # Filter to only polygon geometries if mixed
       if (length(geom_types) > 1) {
-        sf_data <- sf_data[sf::st_geometry_type(sf_data) %in% c("POLYGON", "MULTIPOLYGON"), ]
+        sf_data <- sf_data[
+          sf::st_geometry_type(sf_data) %in% c("POLYGON", "MULTIPOLYGON"),
+        ]
       }
 
       # Validate geometries
@@ -141,7 +144,8 @@ fcalculate_coverage <- function(uploaded_sf, raw_sf, Dict) {
     non_binary <- !all(feat_values %in% c(0, 1, NA))
     if (non_binary) {
       warning(
-        "fcalculate_coverage(): feature '", feat,
+        "fcalculate_coverage(): feature '",
+        feat,
         "' contains non-binary values. Coverage sums may not be meaningful.",
         call. = FALSE
       )
@@ -158,7 +162,11 @@ fcalculate_coverage <- function(uploaded_sf, raw_sf, Dict) {
 
     # Get target from Dict
     target_val <- feature_info$targetInitial[feature_info$nameVariable == feat]
-    target <- if (length(target_val) > 0 && !is.na(target_val)) target_val / 100 else 0.3
+    target <- if (length(target_val) > 0 && !is.na(target_val)) {
+      target_val / 100
+    } else {
+      0.3
+    }
 
     tibble::tibble(
       feature = feat,

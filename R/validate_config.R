@@ -97,12 +97,19 @@ validate_dict <- function(Dict, strict = TRUE) {
   .check <- function(name, passed, msg = NULL) {
     results[[name]] <<- passed
     if (!passed) {
-      full_msg <- if (is.null(msg)) name else paste0("[Dict check '", name, "'] ", msg)
+      full_msg <- if (is.null(msg)) {
+        name
+      } else {
+        paste0("[Dict check '", name, "'] ", msg)
+      }
       messages <<- c(messages, full_msg)
       if (isTRUE(strict)) {
         stop(
-          "validate_dict() failed check '", name, "'.\n\n",
-          full_msg, "\n\n",
+          "validate_dict() failed check '",
+          name,
+          "'.\n\n",
+          full_msg,
+          "\n\n",
           "Fix Dict_Feature.csv and re-run setup/3_setup_app.R.",
           call. = FALSE
         )
@@ -118,17 +125,32 @@ validate_dict <- function(Dict, strict = TRUE) {
   # "SilentFeature" rows are individual layers whose targets are set at the
   # category level via a single slider; individual layers are never shown in the UI.
   .known_types <- c(
-    "Feature", "SilentFeature", "Cost", "LockIn", "LockOut",
-    "Bioregion", "EcosystemServices", "Justification", "Climate"
+    "Feature",
+    "SilentFeature",
+    "Cost",
+    "LockIn",
+    "LockOut",
+    "Bioregion",
+    "EcosystemServices",
+    "Justification",
+    "Climate"
   )
 
   # ---------------------------------------------------------------------------
   # Check 1: Required columns are present
   # ---------------------------------------------------------------------------
   required_cols <- c(
-    "nameCommon", "nameVariable", "category", "categoryID",
-    "type", "targetInitial", "targetMin", "targetMax",
-    "includeApp", "includeJust", "justification"
+    "nameCommon",
+    "nameVariable",
+    "category",
+    "categoryID",
+    "type",
+    "targetInitial",
+    "targetMin",
+    "targetMax",
+    "includeApp",
+    "includeJust",
+    "justification"
   )
 
   missing_cols <- setdiff(required_cols, names(Dict))
@@ -138,8 +160,11 @@ validate_dict <- function(Dict, strict = TRUE) {
     if (length(missing_cols) > 0) {
       paste0(
         "Dict_Feature.csv is missing required column(s): ",
-        paste(missing_cols, collapse = ", "), ".\n",
-        "  Expected columns: ", paste(required_cols, collapse = ", "), ".\n",
+        paste(missing_cols, collapse = ", "),
+        ".\n",
+        "  Expected columns: ",
+        paste(required_cols, collapse = ", "),
+        ".\n",
         "  Check that the CSV has not been accidentally edited to remove a ",
         "column header."
       )
@@ -168,7 +193,9 @@ validate_dict <- function(Dict, strict = TRUE) {
     include_app_ok,
     paste0(
       "The 'includeApp' column in Dict_Feature.csv must contain TRUE or FALSE ",
-      "(logical), but found class: ", class(Dict$includeApp)[1], ".\n",
+      "(logical), but found class: ",
+      class(Dict$includeApp)[1],
+      ".\n",
       "  This commonly happens when the CSV is opened and saved in Excel, ",
       "which converts TRUE/FALSE to 1/0 or the text \"TRUE\"/\"FALSE\".\n",
       "  Fix: open Dict_Feature.csv in a plain text editor and ensure the ",
@@ -181,7 +208,9 @@ validate_dict <- function(Dict, strict = TRUE) {
     include_just_ok,
     paste0(
       "The 'includeJust' column in Dict_Feature.csv must contain TRUE or FALSE ",
-      "(logical), but found class: ", class(Dict$includeJust)[1], ".\n",
+      "(logical), but found class: ",
+      class(Dict$includeJust)[1],
+      ".\n",
       "  Fix: open Dict_Feature.csv in a plain text editor and ensure the ",
       "column contains only TRUE or FALSE (no quotes, no 1/0)."
     )
@@ -197,9 +226,11 @@ validate_dict <- function(Dict, strict = TRUE) {
     if (length(unknown_types) > 0) {
       paste0(
         "Dict_Feature.csv contains unknown value(s) in the 'type' column: ",
-        paste(paste0('"', unknown_types, '"'), collapse = ", "), ".\n",
+        paste(paste0('"', unknown_types, '"'), collapse = ", "),
+        ".\n",
         "  Valid types are: ",
-        paste(paste0('"', .known_types, '"'), collapse = ", "), ".\n",
+        paste(paste0('"', .known_types, '"'), collapse = ", "),
+        ".\n",
         "  A typo (e.g. \"feature\" instead of \"Feature\") will silently ",
         "exclude that row from all app processing, including sliders, targets, ",
         "and constraints.\n",
@@ -228,15 +259,19 @@ validate_dict <- function(Dict, strict = TRUE) {
       nrow(dup_check) == 0,
       if (nrow(dup_check) > 0) {
         paste0(
-          nrow(dup_check), " nameVariable value(s) appear more than once within ",
+          nrow(dup_check),
+          " nameVariable value(s) appear more than once within ",
           "the same type among active (includeApp == TRUE) rows in Dict_Feature.csv:\n",
           paste(
             sprintf(
               "  type='%s', nameVariable='%s' (%d times)",
-              dup_check$type, dup_check$nameVariable, dup_check$n
+              dup_check$type,
+              dup_check$nameVariable,
+              dup_check$n
             ),
             collapse = "\n"
-          ), "\n",
+          ),
+          "\n",
           "  Duplicate nameVariable values within a type cause duplicate slider ",
           "input IDs in the Shiny UI and silent errors in prioritizr.\n",
           "  Note: the same nameVariable CAN appear in both 'LockIn' and ",
@@ -274,7 +309,7 @@ validate_dict <- function(Dict, strict = TRUE) {
         dplyr::group_by(.data$nameVariable) |>
         dplyr::summarise(
           n_types = dplyr::n_distinct(.data$type),
-          types   = paste(sort(unique(.data$type)), collapse = " + "),
+          types = paste(sort(unique(.data$type)), collapse = " + "),
           .groups = "drop"
         ) |>
         dplyr::filter(.data$n_types > 1)
@@ -284,16 +319,19 @@ validate_dict <- function(Dict, strict = TRUE) {
         nrow(cross_type_dups) == 0,
         if (nrow(cross_type_dups) > 0) {
           paste0(
-            nrow(cross_type_dups), " nameVariable value(s) appear as active rows ",
+            nrow(cross_type_dups),
+            " nameVariable value(s) appear as active rows ",
             "in more than one prioritizr feature type (Feature, SilentFeature, ",
             "Bioregion) in Dict_Feature.csv:\n",
             paste(
               sprintf(
                 "  nameVariable='%s'  (types: %s)",
-                cross_type_dups$nameVariable, cross_type_dups$types
+                cross_type_dups$nameVariable,
+                cross_type_dups$types
               ),
               collapse = "\n"
-            ), "\n",
+            ),
+            "\n",
             "  prioritizr requires all feature column names to be unique across ",
             "the entire problem. A nameVariable that appears in both Feature and ",
             "SilentFeature (or Bioregion) rows will cause the solver to crash ",
@@ -328,11 +366,19 @@ validate_dict <- function(Dict, strict = TRUE) {
   if (isTRUE(results[["includeApp_is_logical"]])) {
     categoryID_check <- Dict |>
       dplyr::filter(.data$includeApp) |>
-      dplyr::mutate(.categoryID_norm = dplyr::na_if(trimws(as.character(.data$categoryID)), "")) |>
+      dplyr::mutate(
+        .categoryID_norm = dplyr::na_if(
+          trimws(as.character(.data$categoryID)),
+          ""
+        )
+      ) |>
       dplyr::group_by(.data$type, .data$category) |>
       dplyr::summarise(
-        n_distinct_ids = dplyr::n_distinct(.data$.categoryID_norm, na.rm = FALSE),
-        any_blank      = anyNA(.data$.categoryID_norm),
+        n_distinct_ids = dplyr::n_distinct(
+          .data$.categoryID_norm,
+          na.rm = FALSE
+        ),
+        any_blank = anyNA(.data$.categoryID_norm),
         .groups = "drop"
       ) |>
       dplyr::filter(.data$n_distinct_ids > 1 | .data$any_blank)
@@ -342,12 +388,18 @@ validate_dict <- function(Dict, strict = TRUE) {
       nrow(categoryID_check) == 0,
       if (nrow(categoryID_check) > 0) {
         paste0(
-          nrow(categoryID_check), " (type, category) group(s) in Dict_Feature.csv ",
+          nrow(categoryID_check),
+          " (type, category) group(s) in Dict_Feature.csv ",
           "have an inconsistent or blank 'categoryID' among active rows:\n",
           paste(
-            sprintf("  type='%s', category='%s'", categoryID_check$type, categoryID_check$category),
+            sprintf(
+              "  type='%s', category='%s'",
+              categoryID_check$type,
+              categoryID_check$category
+            ),
             collapse = "\n"
-          ), "\n",
+          ),
+          "\n",
           "  categoryID is a category-level attribute: every active row sharing ",
           "the same type and category must have the SAME non-blank categoryID ",
           "value.\n",
@@ -373,7 +425,11 @@ validate_dict <- function(Dict, strict = TRUE) {
   # coercible to numeric (arrange() on a non-numeric column would sort
   # lexicographically, e.g. "10" before "2", which is almost never intended).
   # Only active rows are checked for the same reason as check 5.
-  if ("categoryOrder" %in% names(Dict) && isTRUE(results[["includeApp_is_logical"]])) {
+  if (
+    "categoryOrder" %in%
+      names(Dict) &&
+      isTRUE(results[["includeApp_is_logical"]])
+  ) {
     categoryOrder_check <- Dict |>
       dplyr::filter(.data$includeApp) |>
       dplyr::mutate(
@@ -381,8 +437,13 @@ validate_dict <- function(Dict, strict = TRUE) {
       ) |>
       dplyr::group_by(.data$type, .data$category) |>
       dplyr::summarise(
-        n_distinct_vals = dplyr::n_distinct(.data$.categoryOrder_num, na.rm = FALSE),
-        any_non_numeric = any(!is.na(.data$categoryOrder) & is.na(.data$.categoryOrder_num)),
+        n_distinct_vals = dplyr::n_distinct(
+          .data$.categoryOrder_num,
+          na.rm = FALSE
+        ),
+        any_non_numeric = any(
+          !is.na(.data$categoryOrder) & is.na(.data$.categoryOrder_num)
+        ),
         .groups = "drop"
       ) |>
       dplyr::filter(.data$n_distinct_vals > 1 | .data$any_non_numeric)
@@ -392,12 +453,18 @@ validate_dict <- function(Dict, strict = TRUE) {
       nrow(categoryOrder_check) == 0,
       if (nrow(categoryOrder_check) > 0) {
         paste0(
-          nrow(categoryOrder_check), " (type, category) group(s) in ",
+          nrow(categoryOrder_check),
+          " (type, category) group(s) in ",
           "Dict_Feature.csv have an invalid 'categoryOrder' among active rows:\n",
           paste(
-            sprintf("  type='%s', category='%s'", categoryOrder_check$type, categoryOrder_check$category),
+            sprintf(
+              "  type='%s', category='%s'",
+              categoryOrder_check$type,
+              categoryOrder_check$category
+            ),
             collapse = "\n"
-          ), "\n",
+          ),
+          "\n",
           "  categoryOrder must be numeric and identical across every active row ",
           "sharing the same type and category.\n",
           "  Fix: ensure categoryOrder contains only numeric values, and set ",
@@ -437,15 +504,27 @@ validate_dict <- function(Dict, strict = TRUE) {
   # Only meaningful when includeApp is logical; skip if Check 2 failed.
   if (isTRUE(results[["includeApp_is_logical"]])) {
     active_features <- Dict |>
-      dplyr::filter(.data$includeApp, .data$type %in% c("Feature", "SilentFeature")) |>
-      dplyr::select("nameVariable", "type", "targetMin", "targetMax", "targetInitial")
+      dplyr::filter(
+        .data$includeApp,
+        .data$type %in% c("Feature", "SilentFeature")
+      ) |>
+      dplyr::select(
+        "nameVariable",
+        "type",
+        "targetMin",
+        "targetMax",
+        "targetInitial"
+      )
 
     if (nrow(active_features) > 0) {
       out_of_range <- active_features |>
         dplyr::filter(
-          (!is.na(.data$targetMin) & (.data$targetMin < 0 | .data$targetMin > 100)) |
-            (!is.na(.data$targetMax) & (.data$targetMax < 0 | .data$targetMax > 100)) |
-            (!is.na(.data$targetInitial) & (.data$targetInitial < 0 | .data$targetInitial > 100))
+          (!is.na(.data$targetMin) &
+            (.data$targetMin < 0 | .data$targetMin > 100)) |
+            (!is.na(.data$targetMax) &
+              (.data$targetMax < 0 | .data$targetMax > 100)) |
+            (!is.na(.data$targetInitial) &
+              (.data$targetInitial < 0 | .data$targetInitial > 100))
         ) |>
         dplyr::pull("nameVariable")
 
@@ -454,9 +533,12 @@ validate_dict <- function(Dict, strict = TRUE) {
         length(out_of_range) == 0,
         if (length(out_of_range) > 0) {
           paste0(
-            length(out_of_range), " active Feature/SilentFeature row(s) in Dict_Feature.csv ",
+            length(out_of_range),
+            " active Feature/SilentFeature row(s) in Dict_Feature.csv ",
             "have target values outside the 0-100 range:\n",
-            "  ", paste(out_of_range, collapse = ", "), "\n",
+            "  ",
+            paste(out_of_range, collapse = ", "),
+            "\n",
             "  targetMin, targetMax, and targetInitial must all be between 0 ",
             "and 100 (inclusive).\n",
             "  These values are used as percentage targets in the ",
@@ -487,8 +569,8 @@ validate_dict <- function(Dict, strict = TRUE) {
       silent_target_check <- silent_active |>
         dplyr::group_by(.data$categoryID) |>
         dplyr::summarise(
-          n_min     = dplyr::n_distinct(.data$targetMin,     na.rm = FALSE),
-          n_max     = dplyr::n_distinct(.data$targetMax,     na.rm = FALSE),
+          n_min = dplyr::n_distinct(.data$targetMin, na.rm = FALSE),
+          n_max = dplyr::n_distinct(.data$targetMax, na.rm = FALSE),
           n_initial = dplyr::n_distinct(.data$targetInitial, na.rm = FALSE),
           .groups = "drop"
         ) |>
@@ -499,12 +581,14 @@ validate_dict <- function(Dict, strict = TRUE) {
         nrow(silent_target_check) == 0,
         if (nrow(silent_target_check) > 0) {
           paste0(
-            nrow(silent_target_check), " SilentFeature category/ies have ",
+            nrow(silent_target_check),
+            " SilentFeature category/ies have ",
             "inconsistent target values across their rows:\n",
             paste(
               sprintf("  categoryID='%s'", silent_target_check$categoryID),
               collapse = "\n"
-            ), "\n",
+            ),
+            "\n",
             "  The UI shows ONE slider per SilentFeature category, so all rows ",
             "in a category must share the same targetMin, targetMax, and ",
             "targetInitial.\n",
@@ -525,7 +609,9 @@ validate_dict <- function(Dict, strict = TRUE) {
 
   if (n_failed == 0) {
     message(
-      "validate_dict(): all ", n_checks, " checks passed. ",
+      "validate_dict(): all ",
+      n_checks,
+      " checks passed. ",
       "Dict_Feature.csv is valid."
     )
   } else {
@@ -533,7 +619,10 @@ validate_dict <- function(Dict, strict = TRUE) {
       warning(msg, call. = FALSE)
     }
     message(
-      "validate_dict(): ", n_failed, " of ", n_checks,
+      "validate_dict(): ",
+      n_failed,
+      " of ",
+      n_checks,
       " check(s) failed (see warnings above)."
     )
   }
@@ -603,8 +692,11 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       messages <<- c(messages, full_msg)
       if (isTRUE(strict)) {
         stop(
-          "validate_shinyplanr_data() failed check '", name, "'.\n",
-          full_msg, "\n\n",
+          "validate_shinyplanr_data() failed check '",
+          name,
+          "'.\n",
+          full_msg,
+          "\n\n",
           "Fix the issue in setup-app.R and re-run to regenerate the config.",
           call. = FALSE
         )
@@ -624,9 +716,17 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # 1. Dict required columns
   # -------------------------------------------------------------------------
   required_dict_cols <- c(
-    "nameCommon", "nameVariable", "category", "categoryID",
-    "type", "targetInitial", "targetMin", "targetMax",
-    "includeApp", "includeJust", "justification"
+    "nameCommon",
+    "nameVariable",
+    "category",
+    "categoryID",
+    "type",
+    "targetInitial",
+    "targetMin",
+    "targetMax",
+    "includeApp",
+    "includeJust",
+    "justification"
   )
 
   if (!is.data.frame(Dict)) {
@@ -658,8 +758,14 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     # "SilentFeature" columns are individual layers passed to prioritizr even
     # though only category-level sliders are shown in the UI.
     types_with_cols <- c(
-      "Feature", "SilentFeature", "Cost", "LockIn", "LockOut", "Bioregion",
-      "EcosystemServices", "Climate"
+      "Feature",
+      "SilentFeature",
+      "Cost",
+      "LockIn",
+      "LockOut",
+      "Bioregion",
+      "EcosystemServices",
+      "Climate"
     )
     dict_vars <- Dict %>%
       dplyr::filter(.data$type %in% types_with_cols) %>%
@@ -673,7 +779,8 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       length(missing_vars) == 0,
       if (length(missing_vars) > 0) {
         paste0(
-          length(missing_vars), " Dict variable(s) not found in raw_sf: ",
+          length(missing_vars),
+          " Dict variable(s) not found in raw_sf: ",
           paste(missing_vars, collapse = ", ")
         )
       }
@@ -695,8 +802,11 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       crs_match,
       if (!crs_match) {
         paste0(
-          "raw_sf CRS does not match options$cCRS ('", opts$cCRS, "').\n",
-          "  raw_sf CRS: ", sf::st_crs(raw_sf)$input
+          "raw_sf CRS does not match options$cCRS ('",
+          opts$cCRS,
+          "').\n",
+          "  raw_sf CRS: ",
+          sf::st_crs(raw_sf)$input
         )
       }
     )
@@ -731,8 +841,11 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       if (!crs_match_bndry) {
         paste0(
           "bndry CRS does not match raw_sf CRS.\n",
-          "  raw_sf: ", sf::st_crs(raw_sf)$input, "\n",
-          "  bndry:  ", sf::st_crs(bndry)$input
+          "  raw_sf: ",
+          sf::st_crs(raw_sf)$input,
+          "\n",
+          "  bndry:  ",
+          sf::st_crs(bndry)$input
         )
       }
     )
@@ -749,8 +862,11 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       if (!crs_match_overlay) {
         paste0(
           "overlay CRS does not match raw_sf CRS.\n",
-          "  raw_sf:  ", sf::st_crs(raw_sf)$input, "\n",
-          "  overlay: ", sf::st_crs(overlay)$input
+          "  raw_sf:  ",
+          sf::st_crs(raw_sf)$input,
+          "\n",
+          "  overlay: ",
+          sf::st_crs(overlay)$input
         )
       }
     )
@@ -779,8 +895,10 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
         length(zero_vars) == 0,
         if (length(zero_vars) > 0) {
           paste0(
-            length(zero_vars), " Feature column(s) are all-zero or all-NA in raw_sf: ",
-            paste(zero_vars, collapse = ", "), "\n",
+            length(zero_vars),
+            " Feature column(s) are all-zero or all-NA in raw_sf: ",
+            paste(zero_vars, collapse = ", "),
+            "\n",
             "These features would cause prioritizr to error. ",
             "Remove them from Dict or check your data pipeline."
           )
@@ -792,17 +910,17 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # -------------------------------------------------------------------------
   # 8. tx structure
   # -------------------------------------------------------------------------
-  tx_structure_ok <- (
-    is.list(tx) &&
-      !is.null(tx[["welcome"]]) &&
-      is.list(tx[["welcome"]]) &&
-      length(tx[["welcome"]]) >= 1 &&
-      all(purrr::map_lgl(tx[["welcome"]], function(entry) {
-        is.list(entry) &&
-          !is.null(entry[["title"]]) && is.character(entry[["title"]]) &&
-          !is.null(entry[["text"]]) && is.character(entry[["text"]])
-      }))
-  )
+  tx_structure_ok <- (is.list(tx) &&
+    !is.null(tx[["welcome"]]) &&
+    is.list(tx[["welcome"]]) &&
+    length(tx[["welcome"]]) >= 1 &&
+    all(purrr::map_lgl(tx[["welcome"]], function(entry) {
+      is.list(entry) &&
+        !is.null(entry[["title"]]) &&
+        is.character(entry[["title"]]) &&
+        !is.null(entry[["text"]]) &&
+        is.character(entry[["text"]])
+    })))
 
   .check(
     "tx_welcome_structure",
@@ -818,14 +936,12 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # 8b. sidebar structure
   # -------------------------------------------------------------------------
   sidebar <- config_list[["sidebar"]]
-  sidebar_ok <- (
-    is.list(sidebar) &&
-      is.list(sidebar[["scenario"]]) &&
-      is.list(sidebar[["compare"]]) &&
-      is.data.frame(sidebar[["scenario"]][["slider_vars"]]) &&
-      is.data.frame(sidebar[["compare"]][["Vars1"]]) &&
-      is.data.frame(sidebar[["compare"]][["Vars2"]])
-  )
+  sidebar_ok <- (is.list(sidebar) &&
+    is.list(sidebar[["scenario"]]) &&
+    is.list(sidebar[["compare"]]) &&
+    is.data.frame(sidebar[["scenario"]][["slider_vars"]]) &&
+    is.data.frame(sidebar[["compare"]][["Vars1"]]) &&
+    is.data.frame(sidebar[["compare"]][["Vars2"]]))
   .check(
     "sidebar_structure",
     sidebar_ok,
@@ -857,11 +973,11 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
   # 8d. sidebar bioregion structure (only when include_bioregion is TRUE)
   # -------------------------------------------------------------------------
   if (isTRUE(opts[["include_bioregion"]]) && isTRUE(sidebar_ok)) {
-    bioregion_sidebar_ok <- (
-      is.data.frame(sidebar[["scenario"]][["slider_varsBioR"]]) &&
-        is.data.frame(sidebar[["compare"]][["slider_varsBioR1"]]) &&
-        is.data.frame(sidebar[["compare"]][["slider_varsBioR2"]])
-    )
+    bioregion_sidebar_ok <- (is.data.frame(sidebar[["scenario"]][[
+      "slider_varsBioR"
+    ]]) &&
+      is.data.frame(sidebar[["compare"]][["slider_varsBioR1"]]) &&
+      is.data.frame(sidebar[["compare"]][["slider_varsBioR2"]]))
     .check(
       "sidebar_bioregion_structure",
       bioregion_sidebar_ok,
@@ -875,13 +991,19 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     )
   }
 
-
   # -------------------------------------------------------------------------
   # 9. All tx_* text fields are character strings
   # -------------------------------------------------------------------------
   tx_text_fields <- c(
-    "tx_1footer", "tx_2solution", "tx_2targets", "tx_2cost",
-    "tx_2climate", "tx_2ess", "tx_6faq", "tx_6technical", "tx_6changelog"
+    "tx_1footer",
+    "tx_2solution",
+    "tx_2targets",
+    "tx_2cost",
+    "tx_2climate",
+    "tx_2ess",
+    "tx_6faq",
+    "tx_6technical",
+    "tx_6changelog"
   )
 
   purrr::walk(tx_text_fields, function(field) {
@@ -904,9 +1026,12 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
     if (nrow(feature_dict) > 0) {
       out_of_range <- feature_dict %>%
         dplyr::filter(
-          (!is.na(.data$targetMin) & (.data$targetMin < 0 | .data$targetMin > 100)) |
-            (!is.na(.data$targetMax) & (.data$targetMax < 0 | .data$targetMax > 100)) |
-            (!is.na(.data$targetInitial) & (.data$targetInitial < 0 | .data$targetInitial > 100))
+          (!is.na(.data$targetMin) &
+            (.data$targetMin < 0 | .data$targetMin > 100)) |
+            (!is.na(.data$targetMax) &
+              (.data$targetMax < 0 | .data$targetMax > 100)) |
+            (!is.na(.data$targetInitial) &
+              (.data$targetInitial < 0 | .data$targetInitial > 100))
         ) %>%
         dplyr::pull("nameVariable")
 
@@ -915,7 +1040,8 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
         length(out_of_range) == 0,
         if (length(out_of_range) > 0) {
           paste0(
-            length(out_of_range), " Feature(s) have target values outside 0-100: ",
+            length(out_of_range),
+            " Feature(s) have target values outside 0-100: ",
             paste(out_of_range, collapse = ", ")
           )
         }
@@ -953,8 +1079,10 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
         length(zero_cost_vars) == 0,
         if (length(zero_cost_vars) > 0) {
           paste0(
-            length(zero_cost_vars), " Cost column(s) contain zero values in raw_sf: ",
-            paste(zero_cost_vars, collapse = ", "), "\n",
+            length(zero_cost_vars),
+            " Cost column(s) contain zero values in raw_sf: ",
+            paste(zero_cost_vars, collapse = ", "),
+            "\n",
             "  Cost layers must not contain zeros. A planning unit with cost = 0\n",
             "  can be selected by the solver for free, producing spurious results\n",
             "  (e.g. PUs selected even when all feature targets are zero).\n",
@@ -976,7 +1104,9 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
 
   if (n_failed == 0) {
     message(
-      "validate_shinyplanr_data(): all ", n_checks, " checks passed. ",
+      "validate_shinyplanr_data(): all ",
+      n_checks,
+      " checks passed. ",
       "Config is ready to save."
     )
   } else {
@@ -985,7 +1115,10 @@ validate_shinyplanr_data <- function(config_list, strict = TRUE) {
       warning(msg, call. = FALSE)
     }
     message(
-      "validate_shinyplanr_data(): ", n_failed, " of ", n_checks,
+      "validate_shinyplanr_data(): ",
+      n_failed,
+      " of ",
+      n_checks,
       " check(s) failed (see warnings above)."
     )
   }

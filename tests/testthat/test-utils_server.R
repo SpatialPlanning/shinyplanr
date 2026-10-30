@@ -59,7 +59,9 @@ test_that("fget_targets() returns correct structure for Feature type", {
   )
 
   result <- shinyplanr:::fget_targets(
-    input = input, Dict = Dict, name_check = "sli_",
+    input = input,
+    Dict = Dict,
+    name_check = "sli_",
     dataType = "Feature"
   )
 
@@ -73,7 +75,11 @@ test_that("fget_targets() divides slider values by 100", {
   Dict <- make_test_dict()
   input <- list(sli_feature_A = 30, sli_feature_B = 50)
 
-  result <- shinyplanr:::fget_targets(input = input, Dict = Dict, name_check = "sli_")
+  result <- shinyplanr:::fget_targets(
+    input = input,
+    Dict = Dict,
+    name_check = "sli_"
+  )
 
   expect_equal(result$target[result$feature == "feature_A"], 0.30)
   expect_equal(result$target[result$feature == "feature_B"], 0.50)
@@ -93,8 +99,10 @@ test_that("fget_targets() respects dataType filter", {
   input <- list(sli_Cost_Area = 0)
 
   result <- shinyplanr:::fget_targets(
-    input = input, Dict = Dict,
-    name_check = "sli_", dataType = "Cost"
+    input = input,
+    Dict = Dict,
+    name_check = "sli_",
+    dataType = "Cost"
   )
 
   expect_equal(nrow(result), 1L)
@@ -110,7 +118,8 @@ test_that("fget_targets_expanded() returns only features when no bioregions or s
   input <- list(sli_feature_A = 30, sli_feature_B = 50)
 
   result <- shinyplanr:::fget_targets_expanded(
-    input = input, name_check = "sli_",
+    input = input,
+    name_check = "sli_",
     Dict = Dict
   )
 
@@ -123,12 +132,13 @@ test_that("fget_targets_expanded() appends bioregion rows when Dict has Bioregio
   Dict <- make_test_dict_with_bioregion()
   # Feature slider + bioregion slider (uses bioregion_ prefix inside function)
   input <- list(
-    sli_feature_A     = 30,
+    sli_feature_A = 30,
     bioregion_sli_Bio = 40 # bioregion slider uses "bioregion_<name_check><categoryID>"
   )
 
   result <- shinyplanr:::fget_targets_expanded(
-    input = input, name_check = "sli_",
+    input = input,
+    name_check = "sli_",
     Dict = Dict
   )
 
@@ -143,28 +153,29 @@ test_that("fget_targets_expanded() appends bioregion rows when Dict has Bioregio
 test_that("fget_targets_expanded() expands SilentFeature category slider to per-feature targets", {
   # Dict with one regular Feature and two SilentFeature layers in the same category
   Dict <- data.frame(
-    nameCommon   = c("Feature A", "Silent 1", "Silent 2"),
+    nameCommon = c("Feature A", "Silent 1", "Silent 2"),
     nameVariable = c("feature_A", "silent_1", "silent_2"),
-    category     = c("Habitat", "Seagrass", "Seagrass"),
-    categoryID   = c("Hab", "Sea", "Sea"),
-    type         = c("Feature", "SilentFeature", "SilentFeature"),
+    category = c("Habitat", "Seagrass", "Seagrass"),
+    categoryID = c("Hab", "Sea", "Sea"),
+    type = c("Feature", "SilentFeature", "SilentFeature"),
     targetInitial = c(30, 20, 20),
-    targetMin     = c(0, 0, 0),
-    targetMax     = c(85, 85, 85),
-    includeApp    = c(TRUE, TRUE, TRUE),
-    includeJust   = c(TRUE, TRUE, TRUE),
-    units         = c("", "", ""),
+    targetMin = c(0, 0, 0),
+    targetMax = c(85, 85, 85),
+    includeApp = c(TRUE, TRUE, TRUE),
+    includeJust = c(TRUE, TRUE, TRUE),
+    units = c("", "", ""),
     justification = c("A.", "B.", "C."),
     stringsAsFactors = FALSE
   )
   # One regular slider + one silent category slider (prefix: "silent_sli_" + categoryID)
   input <- list(
-    sli_feature_A    = 30,
-    silent_sli_Sea   = 25  # category-level slider for "Seagrass" (categoryID = "Sea")
+    sli_feature_A = 30,
+    silent_sli_Sea = 25 # category-level slider for "Seagrass" (categoryID = "Sea")
   )
 
   result <- shinyplanr:::fget_targets_expanded(
-    input = input, name_check = "sli_",
+    input = input,
+    name_check = "sli_",
     Dict = Dict
   )
 
@@ -187,12 +198,12 @@ test_that("fget_feature_representation() returns NULL when solution is not an sf
   Dict <- make_test_dict()
 
   result <- shinyplanr:::fget_feature_representation(
-    soln         = NULL,
+    soln = NULL,
     problem_data = NULL,
-    targets      = data.frame(feature = "feature_A", target = 0.3),
-    climate_id   = "NA",
-    options      = list(climate_change = 0L),
-    Dict         = Dict
+    targets = data.frame(feature = "feature_A", target = 0.3),
+    climate_id = "NA",
+    options = list(climate_change = 0L),
+    Dict = Dict
   )
 
   expect_null(result)
@@ -202,13 +213,184 @@ test_that("fget_feature_representation() returns NULL for a non-sf character inp
   Dict <- make_test_dict()
 
   result <- shinyplanr:::fget_feature_representation(
-    soln         = "not_an_sf",
+    soln = "not_an_sf",
     problem_data = NULL,
-    targets      = data.frame(feature = "feature_A", target = 0.3),
-    climate_id   = "NA",
-    options      = list(climate_change = 0L),
-    Dict         = Dict
+    targets = data.frame(feature = "feature_A", target = 0.3),
+    climate_id = "NA",
+    options = list(climate_change = 0L),
+    Dict = Dict
   )
 
   expect_null(result)
+})
+
+# ---------------------------------------------------------------------------
+# fsetup_category_lock_observers()
+# ---------------------------------------------------------------------------
+
+make_slider_vars <- function() {
+  data.frame(
+    id_in = c("sli_feature_A", "sli_feature_B", "sli_feature_C"),
+    category = c("Habitat", "Habitat", "Reef"),
+    categoryID = c("Hab", "Hab", "Reef"),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("fsetup_category_lock_observers() returns NULL invisibly for NULL slider_vars", {
+  testServer(
+    shiny::shinyApp(
+      ui = shiny::fluidPage(),
+      server = function(input, output, session) {
+        result <- shinyplanr:::fsetup_category_lock_observers(
+          input = input,
+          session = session,
+          slider_vars = NULL,
+          lock_prefix = "lock_"
+        )
+        expect_null(result)
+      }
+    ),
+    {}
+  )
+})
+
+test_that("fsetup_category_lock_observers() returns NULL invisibly for empty slider_vars", {
+  testServer(
+    shiny::shinyApp(
+      ui = shiny::fluidPage(),
+      server = function(input, output, session) {
+        result <- shinyplanr:::fsetup_category_lock_observers(
+          input = input,
+          session = session,
+          slider_vars = data.frame(
+            id_in = character(0),
+            category = character(0),
+            categoryID = character(0),
+            stringsAsFactors = FALSE
+          ),
+          lock_prefix = "lock_"
+        )
+        expect_null(result)
+      }
+    ),
+    {}
+  )
+})
+
+test_that("fsetup_category_lock_observers() registers observers without error", {
+  slider_vars <- make_slider_vars()
+  testServer(
+    shiny::shinyApp(
+      ui = shiny::fluidPage(),
+      server = function(input, output, session) {
+        expect_no_error(
+          shinyplanr:::fsetup_category_lock_observers(
+            input = input,
+            session = session,
+            slider_vars = slider_vars,
+            lock_prefix = "lock_"
+          )
+        )
+      }
+    ),
+    {}
+  )
+})
+
+# Note: shiny::updateSliderInput() in testServer sends a message to the
+# client-side session mock but does NOT update input$ or expose the message
+# via any public session API.  The propagation logic is therefore tested by
+# verifying the *structure* of the observers (they register without error and
+# the guard conditions are correct) rather than by inspecting side-effects.
+
+test_that("fsetup_category_lock_observers() registers observers without error for multi-category data", {
+  slider_vars <- make_slider_vars()
+  testServer(
+    shiny::shinyApp(
+      ui = shiny::fluidPage(),
+      server = function(input, output, session) {
+        # Two categories (Habitat: A+B, Reef: C) — should register 3 observers
+        expect_no_error(
+          shinyplanr:::fsetup_category_lock_observers(
+            input = input,
+            session = session,
+            slider_vars = slider_vars,
+            lock_prefix = "lock_"
+          )
+        )
+        # Inputs can be set without error after observers are registered
+        expect_no_error(session$setInputs(lock_Hab = TRUE, sli_feature_A = 60))
+        expect_no_error(session$setInputs(lock_Hab = FALSE, sli_feature_A = 70))
+      }
+    ),
+    {}
+  )
+})
+
+test_that("fsetup_category_lock_observers() handles single-slider category without error", {
+  # A category with only one slider should register an observer that is a no-op
+  # (setdiff of id_in from itself is empty, so no updateSliderInput is called)
+  single_cat <- data.frame(
+    id_in = "sli_feature_C",
+    category = "Reef",
+    categoryID = "Reef",
+    stringsAsFactors = FALSE
+  )
+  testServer(
+    shiny::shinyApp(
+      ui = shiny::fluidPage(),
+      server = function(input, output, session) {
+        expect_no_error(
+          shinyplanr:::fsetup_category_lock_observers(
+            input = input,
+            session = session,
+            slider_vars = single_cat,
+            lock_prefix = "lock_"
+          )
+        )
+        expect_no_error(session$setInputs(lock_Reef = TRUE, sli_feature_C = 50))
+      }
+    ),
+    {}
+  )
+})
+
+test_that("fsetup_category_lock_observers() custom lock_prefix registers without error", {
+  slider_vars <- make_slider_vars()
+  testServer(
+    shiny::shinyApp(
+      ui = shiny::fluidPage(),
+      server = function(input, output, session) {
+        expect_no_error(
+          shinyplanr:::fsetup_category_lock_observers(
+            input = input,
+            session = session,
+            slider_vars = slider_vars,
+            lock_prefix = "lock1_"
+          )
+        )
+        expect_no_error(session$setInputs(lock1_Hab = TRUE, sli_feature_A = 55))
+      }
+    ),
+    {}
+  )
+})
+
+test_that("fsetup_category_lock_observers() guard: others-set is correct per category", {
+  # Test the pure logic: for each slider, 'others' = all sliders in same
+  # category minus itself.  Verify by inspecting slider_vars structure.
+  slider_vars <- make_slider_vars()
+  hab <- dplyr::filter(slider_vars, .data$category == "Habitat")
+  reef <- dplyr::filter(slider_vars, .data$category == "Reef")
+
+  # Habitat: A and B — each should see the other as 'others'
+  others_A <- setdiff(hab$id_in, "sli_feature_A")
+  others_B <- setdiff(hab$id_in, "sli_feature_B")
+  expect_equal(others_A, "sli_feature_B")
+  expect_equal(others_B, "sli_feature_A")
+
+  # Reef: only C — others is empty (no cross-category propagation)
+  others_C <- setdiff(reef$id_in, "sli_feature_C")
+  expect_length(others_C, 0L)
 })

@@ -27,10 +27,9 @@ mod_2scenario_ui <- function(id, cfg) {
   # rlang::env_bind() splices the named list so each key becomes a local variable
   # (e.g. sidebar$slider_vars -> slider_vars, sidebar$check_lockIn -> check_lockIn, etc.).
 
-  slider_vars <- slider_varsBioR <- slider_varsCat <- slider_varsSilent <- check_lockIn <- check_lockOut <- NULL
+  slider_vars <- slider_varsBioR <- slider_varsSilent <- check_lockIn <- check_lockOut <- NULL
 
   rlang::env_bind(environment(), !!!sidebar)
-
 
   # shiny::tagList(
   # shiny::fluidPage(
@@ -38,74 +37,79 @@ mod_2scenario_ui <- function(id, cfg) {
   shiny::sidebarLayout(
     shiny::sidebarPanel(
       width = 4,
-      shinyjs::hidden(div(
-        id = ns("switchMasterTargets"),
-        shiny::h2("1. Select Master Target"),
-        shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
-          width = "100%", class = "btn btn-outline-primary",
-          style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
-        ),
-        shiny::hr(style = "border-top: 1px solid #000000;"),
-        shiny::sliderInput(
-          inputId = ns("masterSli"), label = NULL,
-          min = min(Dict$targetMin, na.rm = TRUE), max = max(Dict$targetMax, na.rm = TRUE),
-          step = 5,
-          value = round(mean(Dict$targetInitial, na.rm = TRUE))
-        ),
-      )),
-      shinyjs::hidden(div(
-        id = ns("switchCategoryTargets"),
-        shiny::h2("1. Select Category Targets"),
-        shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
-          width = "100%", class = "btn btn-outline-primary",
-          style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
-        ),
-        shiny::hr(style = "border-top: 1px solid #000000;"),
-        fcustom_sliderCategory(slider_varsCat, labelNum = 1, byCategory = TRUE),
-      )),
-      shinyjs::hidden(div(
-        id = ns("switchIndividualTargets"),
-        shiny::h2("1. Select Feature Targets"),
-        shiny::actionButton(ns("resetSlider"), "Reset All Sliders",
-          width = "100%", class = "btn btn-outline-primary",
-          style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
-        ),
-        shiny::hr(style = "border-top: 1px solid #000000;"),
-        fcustom_sliderCategory(slider_vars, labelNum = 1, byCategory = FALSE),
-      )),
+      shiny::h2("1. Select Feature Targets"),
+      shiny::actionButton(
+        ns("resetSlider"),
+        "Reset All Features",
+        width = "100%",
+        class = "btn btn-outline-primary",
+        style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
+      ),
+      shiny::hr(style = "border-top: 1px solid #000000;"),
+      fcustom_sliderCategory(
+        slider_vars,
+        labelNum = 1,
+        byCategory = FALSE,
+        lock_prefix = "lock_"
+      ),
       shinyjs::hidden(div(
         id = ns("switchSilentFeatures"),
         # Hidden by default; shown by the server only when SilentFeature rows
         # exist in Dict (see utils_server.R fapply_ui_switches()). Each slider
         # represents one category; the individual layers are never shown in the UI
         # but all receive the same target value when the prioritisation runs.
-        shiny::h3(paste0("1.", length(unique(slider_vars$category)) + 1, " Grouped Features")),
-        fcustom_sliderCategory(slider_varsSilent, labelNum = 1, byCategory = TRUE),
+        shiny::h3(paste0(
+          "1.",
+          length(unique(slider_vars$category)) + 1,
+          " Grouped Features"
+        )),
+        fcustom_sliderCategory(
+          slider_varsSilent,
+          labelNum = 1,
+          byCategory = TRUE
+        ),
       )),
       shinyjs::hidden(div(
         id = ns("switchBioregions"),
         # Hidden by default; shown by the server only when options$include_bioregion
         # is TRUE (see utils_server.R fapply_ui_switches()). No UI-level conditional
         # is needed because shinyjs::hidden() already prevents rendering until shown.
-        shiny::h3(paste0("1.", length(unique(slider_vars$category)) + length(unique(slider_varsSilent$category)) + 1, " Bioregions")),
-        fcustom_sliderCategory(slider_varsBioR, labelNum = 1, byCategory = TRUE),
+        shiny::h3(paste0(
+          "1.",
+          length(unique(slider_vars$category)) +
+            length(unique(slider_varsSilent$category)) +
+            1,
+          " Bioregions"
+        )),
+        fcustom_sliderCategory(
+          slider_varsBioR,
+          labelNum = 1,
+          byCategory = TRUE
+        ),
       )),
       shiny::hr(style = "border-top: 1px solid #000000;"),
       shiny::h2("2. Select Cost Layer"),
-      create_fancy_dropdown(id, "costid", Dict %>%
-        dplyr::filter(.data$type == "Cost")),
-
+      create_fancy_dropdown(
+        id,
+        "costid",
+        Dict %>%
+          dplyr::filter(.data$type == "Cost")
+      ),
 
       # Define Objective Function -----
 
       shinyjs::hidden(div(
         id = ns("switchMinShortfall"),
         shiny::h3("Choose a Budget"),
-        shiny::p("This analysis will use the minimum shortfall objective which aims to find the set of
+        shiny::p(
+          "This analysis will use the minimum shortfall objective which aims to find the set of
                  planning units that minimize the overall shortfall for the targets for as many features
-                 as possible while staying within a fixed budget."),
+                 as possible while staying within a fixed budget."
+        ),
         shiny::br(),
-        shiny::p("Choose the total budget (% of cost layer) for your analysis."),
+        shiny::p(
+          "Choose the total budget (% of cost layer) for your analysis."
+        ),
         shiny::numericInput(
           inputId = ns("budget"),
           label = NULL,
@@ -131,7 +135,9 @@ mod_2scenario_ui <- function(id, cfg) {
         div(
           shiny::h2("3. Climate-smart"),
           shiny::p("Should the spatial plan be made climate-smart?"),
-          shiny::p("NOTE: This will slow down the analysis significantly. Be patient."),
+          shiny::p(
+            "NOTE: This will slow down the analysis significantly. Be patient."
+          ),
           create_fancy_dropdown(
             id = id,
             id_in = "climateid",
@@ -150,47 +156,70 @@ mod_2scenario_ui <- function(id, cfg) {
       shinyjs::hidden(div(
         id = ns("switchConstraints"),
         shiny::h2(paste0(LI_num, ". Constraints")),
-        shiny::p("You can also lock-in or lock-out some pre-defined areas to ensure they are either specifically included (lock-in) or excluded (lock-out) from the protected area. Planning Units outside these areas will be selected if needed to meet the targets."),
-        if (nrow(check_lockIn) > 0) shiny::h3(paste0(LI_num, ".1 Locked-In Areas")),
+        shiny::p(
+          "You can also lock-in or lock-out some pre-defined areas to ensure they are either specifically included (lock-in) or excluded (lock-out) from the protected area. Planning Units outside these areas will be selected if needed to meet the targets."
+        ),
+        if (nrow(check_lockIn) > 0) {
+          shiny::h3(paste0(LI_num, ".1 Locked-In Areas"))
+        },
         fcustom_checkCategory(check_lockIn),
-        if (nrow(check_lockOut) > 0) shiny::h3(paste0(LI_num, ".2 Locked-Out Areas")),
+        if (nrow(check_lockOut) > 0) {
+          shiny::h3(paste0(LI_num, ".2 Locked-Out Areas"))
+        },
         fcustom_checkCategory(check_lockOut),
       )),
       shiny::br(), # Leave space for analysis button at bottom
       shiny::br(), # Leave space for analysis button at bottom
       shiny::fixedPanel(
         style = "z-index:100", # To force the button above all plots.
-        shiny::actionButton(ns("analyse"), "Run Analysis", shiny::icon("paper-plane"),
-          width = "100%", class = "btn btn-primary",
+        shiny::actionButton(
+          ns("analyse"),
+          "Run Analysis",
+          shiny::icon("paper-plane"),
+          width = "100%",
+          class = "btn btn-primary",
           style = "display: block; float: left; padding:4px; font-size:150%;"
         ),
-        right = "71%", bottom = "1%", left = "5%"
+        right = "71%",
+        bottom = "1%",
+        left = "5%"
       )
     ),
     shiny::mainPanel(
       tabsetPanel(
         id = ns("tabs"),
         type = "pills",
-        tabPanel("Scenario",
+        tabPanel(
+          "Scenario",
           value = "1",
           shiny::fixedPanel(
             style = "z-index:100", # To force the buttons above all plots.
             shiny::div(
               style = "display:flex; gap:10px; justify-content:flex-end; align-items:center;",
-              shiny::downloadButton(ns("dlSpatial1"), "Download Spatial File",
+              shiny::downloadButton(
+                ns("dlSpatial1"),
+                "Download Spatial File",
                 style = "padding:4px; font-size:120%"
               ),
-              shiny::downloadButton(ns("dlPlot1"), "Download Plot",
+              shiny::downloadButton(
+                ns("dlPlot1"),
+                "Download Plot",
                 style = "padding:4px; font-size:120%"
               )
             ),
-            right = "1%", bottom = "1%", left = "34%"
+            right = "1%",
+            bottom = "1%",
+            left = "34%"
           ),
           shiny::span(shiny::h2(shiny::textOutput(ns("hdr_soln")))),
           shiny::textOutput(ns("txt_soln")),
-          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_soln"), height = "700px"))
+          shinycssloaders::withSpinner(shiny::plotOutput(
+            ns("gg_soln"),
+            height = "700px"
+          ))
         ),
-        tabPanel("Explore",
+        tabPanel(
+          "Explore",
           value = 4,
           shiny::span(shiny::h2(shiny::textOutput(ns("hdr_map")))),
           shiny::textOutput(ns("txt_map")),
@@ -213,14 +242,19 @@ mod_2scenario_ui <- function(id, cfg) {
             )
           )
         ),
-        tabPanel("Targets",
+        tabPanel(
+          "Targets",
           value = 2,
           shiny::fixedPanel(
             style = "z-index:100", # To force the button above all plots.
-            shiny::downloadButton(ns("dlPlot2"), "Download Plot",
+            shiny::downloadButton(
+              ns("dlPlot2"),
+              "Download Plot",
               style = "float: right; padding:4px; font-size:120%"
             ),
-            right = "1%", bottom = "1%", left = "34%"
+            right = "1%",
+            bottom = "1%",
+            left = "34%"
           ),
           shiny::span(shiny::h2(shiny::textOutput(ns("hdr_target")))),
           shiny::textOutput(ns("txt_target")),
@@ -234,58 +268,89 @@ mod_2scenario_ui <- function(id, cfg) {
               "Representation" = "representation",
               "Difference from Target" = "difference"
             ),
-            selected = "category", multiple = FALSE
+            selected = "category",
+            multiple = FALSE
           ),
-          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_targetPlot"), height = "600px"))
+          shinycssloaders::withSpinner(shiny::plotOutput(
+            ns("gg_targetPlot"),
+            height = "600px"
+          ))
         ),
-        tabPanel("Cost",
+        tabPanel(
+          "Cost",
           value = 3,
           shiny::fixedPanel(
             style = "z-index:100", # To force the button above all plots.
-            shiny::downloadButton(ns("dlPlot3"), "Download Plot",
+            shiny::downloadButton(
+              ns("dlPlot3"),
+              "Download Plot",
               style = "float: right; padding:4px; font-size:120%"
             ),
-            right = "1%", bottom = "1%", left = "34%"
+            right = "1%",
+            bottom = "1%",
+            left = "34%"
           ),
           shiny::span(shiny::h2(shiny::textOutput(ns("hdr_cost")))),
           shiny::textOutput(ns("txt_cost")),
-          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_cost"), height = "700px"))
+          shinycssloaders::withSpinner(shiny::plotOutput(
+            ns("gg_cost"),
+            height = "700px"
+          ))
         ),
-        tabPanel("Climate",
+        tabPanel(
+          "Climate",
           value = 6,
           shiny::fixedPanel(
             style = "z-index:100", # To force the button above all plots.
-            shiny::downloadButton(ns("dlPlot6"), "Download Plot",
+            shiny::downloadButton(
+              ns("dlPlot6"),
+              "Download Plot",
               style = "float: right; padding:4px; font-size:120%"
             ),
-            right = "1%", bottom = "1%", left = "34%"
+            right = "1%",
+            bottom = "1%",
+            left = "34%"
           ),
           shiny::span(shiny::h2(shiny::textOutput(ns("hdr_clim")))),
           shiny::textOutput(ns("txt_clim")),
-          shinycssloaders::withSpinner(shiny::plotOutput(ns("gg_clim"), height = "700px"))
+          shinycssloaders::withSpinner(shiny::plotOutput(
+            ns("gg_clim"),
+            height = "700px"
+          ))
         ),
-        tabPanel("Ecosystem Services",
+        tabPanel(
+          "Ecosystem Services",
           value = 5,
           shiny::htmlOutput(ns("txt_ess")),
-          shinycssloaders::withSpinner(reactable::reactableOutput(ns("soln_ess")))
+          shinycssloaders::withSpinner(reactable::reactableOutput(ns(
+            "soln_ess"
+          )))
         ),
-        tabPanel("Details",
+        tabPanel(
+          "Details",
           value = 7,
           shiny::fixedPanel(
             style = "z-index:100", # To force the button above all plots.=
-            shiny::downloadButton(ns("dlPlot7"), "Download Table",
+            shiny::downloadButton(
+              ns("dlPlot7"),
+              "Download Table",
               style = "float: right; padding:4px; font-size:120%"
             ),
-            right = "1%", bottom = "1%", left = "34%"
+            right = "1%",
+            bottom = "1%",
+            left = "34%"
           ),
           shiny::span(shiny::h2(shiny::textOutput(ns("hdr_DetsData")))),
           shiny::tableOutput(ns("DataTable")),
           shiny::uiOutput(ns("silentSection"))
         ),
-        tabPanel("Report",
+        tabPanel(
+          "Report",
           value = 10,
           shiny::span(shiny::h2("Generate Analysis Report")),
-          shiny::p("Download a comprehensive HTML report containing all analysis results from this scenario."),
+          shiny::p(
+            "Download a comprehensive HTML report containing all analysis results from this scenario."
+          ),
           shiny::p("The report includes:"),
           shiny::tags$ul(
             shiny::tags$li("Solution map with constraints"),
@@ -295,17 +360,23 @@ mod_2scenario_ui <- function(id, cfg) {
             shiny::tags$li(shiny::tagList(shiny::em("prioritizr"), " log")),
           ),
           shiny::br(),
-          shiny::downloadButton(ns("dlReport"), "Download Report",
+          shiny::downloadButton(
+            ns("dlReport"),
+            "Download Report",
             style = "padding:4px; font-size:120%"
           ),
           shiny::uiOutput(ns("reportStatus")),
           shiny::br(),
           shiny::br(),
-          shiny::p(shiny::em("Note: Report generation may take a few moments. The file will download automatically when ready."),
+          shiny::p(
+            shiny::em(
+              "Note: Report generation may take a few moments. The file will download automatically when ready."
+            ),
             style = "color: #666;"
           )
         ),
-        tabPanel("Log",
+        tabPanel(
+          "Log",
           value = 8,
           shiny::span(shiny::h2("Solver Log")),
           shiny::textOutput(ns("txt_log_hint")),
@@ -352,12 +423,14 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     . <- NULL
 
     # Apply all UI show/hide switches driven by options ----
-    fapply_ui_switches(options, session,
+    fapply_ui_switches(
+      options,
+      session,
       tab_climate = "6",
       tab_explore = "4",
-      tab_ess     = "5",
-      tab_report  = "10",
-      tab_log     = "8"
+      tab_ess = "5",
+      tab_report = "10",
+      tab_log = "8"
     )
 
     # Go back to the first tab and top of page when analyse is clicked.
@@ -366,68 +439,40 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       shinyjs::runjs("window.scrollTo(0, 0)")
     })
 
-
     # Unpack all pre-computed sidebar vars from config into the local environment.
     # rlang::env_bind() splices the named list so each key becomes a local variable
     # (e.g. sidebar$slider_vars -> slider_vars, sidebar$check_lockIn -> check_lockIn, etc.).
-    slider_vars <- slider_varsBioR <- slider_varsCat <- slider_varsSilent <- check_lockIn <- check_lockOut <- NULL
-  
-  
+    slider_vars <- slider_varsBioR <- slider_varsSilent <- check_lockIn <- check_lockOut <- NULL
+
     rlang::env_bind(environment(), !!!sidebar)
 
-
-    # Observe Event for categories - Updates individual sliders
+    # Reset all individual feature sliders to their initial targets.
     shiny::observeEvent(
+      input$resetSlider,
       {
-        purrr::map(slider_varsCat$id_in, \(x) input[[x]]) # All category slider inputs
-      },
-      {
-        inps <- slider_vars %>%
-          # dplyr::filter(category) %>% # TODO I can't filter by category yet. Need to identify changes by category
-          dplyr::pull(.data$id_in)
-
-        targ <- slider_varsCat %>%
-          dplyr::select("category") %>%
-          dplyr::mutate(targetCurrent = purrr::map_vec(slider_varsCat$id_in, \(x) input[[x]])) %>%
-          dplyr::right_join(slider_vars, by = "category")
-
-        purrr::map2(inps, targ$targetCurrent, \(x, y) shiny::updateSliderInput(session = session, inputId = x, value = y))
-      }
-    )
-
-
-    # Reset all slider groups so the full state is clean regardless of which
-    # target mode (master / category / individual) is currently active.
-    shiny::observeEvent(input$resetSlider,
-      {
-        fresetSlider(session, slider_vars) # individual feature sliders
-        fresetSlider(session, slider_varsCat) # per-category master sliders
+        fresetSlider(session, slider_vars)
         fresetSlider(session, slider_varsSilent) # silent feature category sliders
-        shiny::updateSliderInput( # single master slider
-          session = session,
-          inputId = "masterSli",
-          value   = round(mean(Dict$targetInitial, na.rm = TRUE))
-        )
       },
       ignoreInit = TRUE
     )
 
     # Set up paired lock-in/lock-out mutual exclusion observers
-    fsetup_lock_observers(input, check_lockIn, check_lockOut,
-      li_prefix = "checkLI_", lo_prefix = "checkLO_"
+    fsetup_lock_observers(
+      input,
+      check_lockIn,
+      check_lockOut,
+      li_prefix = "checkLI_",
+      lo_prefix = "checkLO_"
     )
 
-
-    # Observe Event for master slider. This updates the individual sliders.
-    observeEvent(input$masterSli,
-      {
-        inps <- names(input) %>%
-          stringr::str_subset("sli_")
-        purrr::map(inps, \(x) shiny::updateSliderInput(session = session, inputId = x, value = input$masterSli))
-      },
-      ignoreInit = TRUE
+    # Set up category lock observers — when a category lock toggle is ON,
+    # moving any slider in that category updates all others in the same category.
+    fsetup_category_lock_observers(
+      input,
+      session,
+      slider_vars,
+      lock_prefix = "lock_"
     )
-
 
     # Observe events from individual targets
     # Return targets and names for all features from sliders ---------------------------------------------------
@@ -435,7 +480,6 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       targets <- fget_targets_expanded(input, name_check = "sli_", Dict = Dict)
       return(targets)
     })
-
 
     # bindEvent(input$analyse) freezes p1Data to the inputs at click time,
     # matching solution() which is also bound to input$analyse.
@@ -448,11 +492,16 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       if (is.null(clim_val) || length(clim_val) == 0 || clim_val == "") {
         clim_val <- "NA"
       }
-      p1 <- fdefine_problem(targetData(), raw_sf, options, input, clim_input = clim_val)
+      p1 <- fdefine_problem(
+        targetData(),
+        raw_sf,
+        options,
+        input,
+        clim_input = clim_val
+      )
       return(p1)
     }) %>%
       shiny::bindEvent(input$analyse)
-
 
     # Solve the problem -------------------------------------------------------
     # Build custom log with problem summary and solve statistics
@@ -470,7 +519,8 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
 
       # Return solution
       return(res$solution)
-    }) %>% shiny::bindEvent(input$analyse)
+    }) %>%
+      shiny::bindEvent(input$analyse)
 
     # Render the log tab contents
     output$logText <- shiny::renderText({
@@ -493,7 +543,6 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     shiny::observeEvent(input$analyse, {
       analysisTime(format(Sys.time(), "%Y%m%d%H%M%S"))
     })
-
 
     ############## Plot reactives and caches ##################################
     #
@@ -520,11 +569,18 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         return(NULL)
       }
       fplot_solution_with_constraints(
-        soln = solution(), input = input, raw_sf = raw_sf,
-        bndry = bndry, overlay = overlay, map_theme = map_theme, num = "",
-        Dict = Dict, base_size = options$base_size
+        soln = solution(),
+        input = input,
+        raw_sf = raw_sf,
+        bndry = bndry,
+        overlay = overlay,
+        map_theme = map_theme,
+        num = "",
+        Dict = Dict,
+        base_size = options$base_size
       )
-    }) %>% shiny::bindEvent(input$analyse)
+    }) %>%
+      shiny::bindEvent(input$analyse)
 
     plot_data1_cache <- shiny::reactiveVal(NULL)
 
@@ -533,7 +589,8 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     # so observeEvent(input$tabs == 1) always fires too early and sees NULL.
     # solution() is bindEvent(input$analyse), so this fires exactly once per
     # analysis run, after the solve completes.
-    shiny::observeEvent(solution(),
+    shiny::observeEvent(
+      solution(),
       {
         val <- tryCatch(plot_data1(), error = function(e) NULL)
         if (!is.null(val)) plot_data1_cache(val)
@@ -556,7 +613,9 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
 
     output$txt_soln <- shiny::renderText({
       if (!inherits(solution(), "sf")) {
-        return("No solution could be generated with the current settings. Try lowering targets or adjusting constraints.")
+        return(
+          "No solution could be generated with the current settings. Try lowering targets or adjusting constraints."
+        )
       }
       soln_text <- fSolnText(input, solution(), input$costid)
       if (input$costid != "Cost_None") {
@@ -564,7 +623,8 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       } else {
         paste(tx_2solution, soln_text[[1]])
       }
-    }) %>% shiny::bindEvent(input$analyse)
+    }) %>%
+      shiny::bindEvent(input$analyse)
 
     output$dlPlot1 <- fDownloadPlotServer(
       gg_reactive = plot_data1_cache,
@@ -573,10 +633,11 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     )
 
     output$dlSpatial1 <- shiny::downloadHandler(
-      filename = function() paste0("Scenario_Spatial_", analysisTime(), ".geojson"),
-      content  = function(file) fdownload_solution_geojson(solution(), file)
+      filename = function() {
+        paste0("Scenario_Spatial_", analysisTime(), ".geojson")
+      },
+      content = function(file) fdownload_solution_geojson(solution(), file)
     )
-
 
     ## Target Plot -------------------------------------------------------------
 
@@ -603,7 +664,8 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         return(NULL)
       }
 
-      spatialplanr::splnr_plot_featureRep(tpd$main,
+      spatialplanr::splnr_plot_featureRep(
+        tpd$main,
         category = fget_category(Dict = Dict),
         renameFeatures = TRUE,
         namesToReplace = Dict,
@@ -645,7 +707,6 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       time_date_reactive = analysisTime
     )
 
-
     ## Cost Plot -------------------------------------------------------------
 
     costPlotData <- shiny::reactive({
@@ -670,14 +731,24 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
           ggtheme = map_theme
         ) +
         ggplot2::theme(
-          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the legend background transparent
+          plot.background = ggplot2::element_rect(
+            fill = "transparent",
+            colour = NA
+          ),
+          legend.background = ggplot2::element_rect(
+            fill = "transparent",
+            colour = NA
+          ) # Makes the legend background transparent
         )
     }) %>%
       shiny::bindEvent(input$analyse)
 
     # Cache populated on tab visit
-    costPlotData_cache <- fmake_tab_cache(costPlotData, tab_id = 3, input = input)
+    costPlotData_cache <- fmake_tab_cache(
+      costPlotData,
+      tab_id = 3,
+      input = input
+    )
 
     output$gg_cost <- shiny::renderPlot(
       {
@@ -712,11 +783,11 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     ggr_clim <- shiny::reactive({
       # Use consolidated helper function for climate plotting
       fplot_climate_density(
-        soln_list      = list(solution()),
-        climate_ids    = input$climateid,
+        soln_list = list(solution()),
+        climate_ids = input$climateid,
         solution_names = "solution_1",
-        Dict           = Dict,
-        base_size      = options$base_size
+        Dict = Dict,
+        base_size = options$base_size
       )
     }) %>%
       shiny::bindEvent(input$analyse)
@@ -757,7 +828,6 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       gg_prefix = "Climate",
       time_date_reactive = analysisTime
     )
-
 
     # Table of Targets --------------------------------------------------------
 
@@ -810,11 +880,12 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
 
     output$SilentTable_inner <- shiny::renderTable({
       tpd <- targetPlotData()
-      if (is.null(tpd) || is.null(tpd$silent)) return(NULL)
+      if (is.null(tpd) || is.null(tpd$silent)) {
+        return(NULL)
+      }
       fformat_feature_table(tpd$silent, Dict)
     }) %>%
       shiny::bindEvent(input$analyse)
-
 
     # Ecosystem Services Tab -------------------------------------------------
 
@@ -842,8 +913,15 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       total_values <- raw_sf %>%
         dplyr::select(dplyr::all_of(ess_layers)) %>%
         sf::st_drop_geometry() %>%
-        tidyr::pivot_longer(cols = dplyr::everything(), names_to = "nameVariable", values_to = "Value") %>%
-        dplyr::summarise(TotalValue = sum(.data$Value, na.rm = TRUE), .by = "nameVariable")
+        tidyr::pivot_longer(
+          cols = dplyr::everything(),
+          names_to = "nameVariable",
+          values_to = "Value"
+        ) %>%
+        dplyr::summarise(
+          TotalValue = sum(.data$Value, na.rm = TRUE),
+          .by = "nameVariable"
+        )
 
       # Calculate value in selected planning units (solution).
       ess_values <- raw_sf %>%
@@ -860,20 +938,43 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         dplyr::filter(.data$solution_1 == 1) %>%
         dplyr::select(dplyr::all_of(ess_layers)) %>%
         sf::st_drop_geometry() %>%
-        tidyr::pivot_longer(cols = dplyr::everything(), names_to = "nameVariable", values_to = "Value") %>%
-        dplyr::summarise(SelectedValue = sum(.data$Value, na.rm = TRUE), .by = "nameVariable") %>%
+        tidyr::pivot_longer(
+          cols = dplyr::everything(),
+          names_to = "nameVariable",
+          values_to = "Value"
+        ) %>%
+        dplyr::summarise(
+          SelectedValue = sum(.data$Value, na.rm = TRUE),
+          .by = "nameVariable"
+        ) %>%
         dplyr::left_join(total_values, by = "nameVariable") %>%
-        dplyr::left_join(Dict %>% dplyr::select("nameVariable", "nameCommon", "justification", "units"),
+        dplyr::left_join(
+          Dict %>%
+            dplyr::select(
+              "nameVariable",
+              "nameCommon",
+              "justification",
+              "units"
+            ),
           by = "nameVariable"
         ) %>%
         dplyr::mutate(
           Name = .data$nameCommon,
           Description = .data$justification,
           Value = paste0(round(.data$SelectedValue, 0), " ", .data$units),
-          pct_selected = round((.data$SelectedValue / .data$TotalValue) * 100, 1),
+          pct_selected = round(
+            (.data$SelectedValue / .data$TotalValue) * 100,
+            1
+          ),
           pct_unselected = 100 - .data$pct_selected
         ) %>%
-        dplyr::select("Name", "Description", "Value", "pct_selected", "pct_unselected")
+        dplyr::select(
+          "Name",
+          "Description",
+          "Value",
+          "pct_selected",
+          "pct_unselected"
+        )
 
       return(ess_values)
     }) %>%
@@ -889,9 +990,21 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       reactable::reactable(
         ess_data,
         columns = list(
-          Name = reactable::colDef(name = "Name", align = "left", minWidth = 120),
-          Description = reactable::colDef(name = "Description", align = "left", minWidth = 250),
-          Value = reactable::colDef(name = "Value", align = "right", minWidth = 80),
+          Name = reactable::colDef(
+            name = "Name",
+            align = "left",
+            minWidth = 120
+          ),
+          Description = reactable::colDef(
+            name = "Description",
+            align = "left",
+            minWidth = 250
+          ),
+          Value = reactable::colDef(
+            name = "Value",
+            align = "right",
+            minWidth = 80
+          ),
           pct_selected = reactable::colDef(
             name = "% of Value in Solution",
             align = "center",
@@ -908,7 +1021,11 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
                   class = "ess-progress-bar",
                   htmltools::div(
                     class = "ess-progress-selected",
-                    style = sprintf("width: %.1f%%; --pct: %.1f;", pct_sel, pct_sel),
+                    style = sprintf(
+                      "width: %.1f%%; --pct: %.1f;",
+                      pct_sel,
+                      pct_sel
+                    ),
                     if (pct_sel >= 12) sprintf("%.1f%%", pct_sel) else ""
                   ),
                   htmltools::div(
@@ -942,7 +1059,6 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     }) %>%
       shiny::bindEvent(input$analyse)
 
-
     ## Report Generation -------------------------------------------------------
     # Registered once at module init; content function is lazy (only called on download click).
     # Reads from per-tab caches populated when the user visits each tab.
@@ -962,22 +1078,30 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
           notification_msg = "Generating report... This may take a moment. Do not click anything or navigate away from this page while you wait.",
           tmp_dir_prefix = "qrender_",
           plots = list(
-            solution = plot_data1_cache() %||% tryCatch(plot_data1(), error = function(e) NULL),
-            target = gg_Target_cache() %||% tryCatch(gg_Target(), error = function(e) NULL),
-            cost = costPlotData_cache() %||% tryCatch(costPlotData(), error = function(e) NULL),
-            climate = ggr_clim_cache() %||% tryCatch(
-              if ((input$climateid %||% "NA") != "NA") ggr_clim() else NULL,
-              error = function(e) NULL
-            )
+            solution = plot_data1_cache() %||%
+              tryCatch(plot_data1(), error = function(e) NULL),
+            target = gg_Target_cache() %||%
+              tryCatch(gg_Target(), error = function(e) NULL),
+            cost = costPlotData_cache() %||%
+              tryCatch(costPlotData(), error = function(e) NULL),
+            climate = ggr_clim_cache() %||%
+              tryCatch(
+                if ((input$climateid %||% "NA") != "NA") ggr_clim() else NULL,
+                error = function(e) NULL
+              )
           ),
           tables = list(
-            details = DataTabler_cache() %||% tryCatch(DataTabler(), error = function(e) NULL)
+            details = DataTabler_cache() %||%
+              tryCatch(DataTabler(), error = function(e) NULL)
           ),
           params = list(
-            solver_log = tryCatch(paste0(solveLog(), collapse = "\n"), error = function(e) ""),
-            cost_id    = input$costid,
+            solver_log = tryCatch(
+              paste0(solveLog(), collapse = "\n"),
+              error = function(e) ""
+            ),
+            cost_id = input$costid,
             climate_id = input$climateid,
-            timestamp  = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+            timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
           ),
           ts = ts
         )
@@ -1001,7 +1125,8 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     output$featurePanelContent <- shiny::renderUI({
       content <- panel_content()
       if (is.null(content)) {
-        shiny::p("Click a planning unit on the map to see the features it contains.",
+        shiny::p(
+          "Click a planning unit on the map to see the features it contains.",
           style = "color: #666; font-style: italic;"
         )
       } else {
@@ -1036,14 +1161,17 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     # no layout issues.
     output$leaflet_map <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
-        leaflet::addProviderTiles(options$leaflet_provider %||% "Esri.WorldGrayCanvas")
+        leaflet::addProviderTiles(
+          options$leaflet_provider %||% "Esri.WorldGrayCanvas"
+        )
     })
 
     # Observer 1: prepare WGS84 solution data whenever a new analysis completes.
     # Runs regardless of which tab is active so the data is ready when the user
     # navigates to the Explore tab.  Mirrors the pattern used for plot_data1_cache
     # (observeEvent(solution(), ...)) elsewhere in this module.
-    shiny::observeEvent(solution(),
+    shiny::observeEvent(
+      solution(),
       {
         shiny::req(inherits(solution(), "sf"))
 
@@ -1069,14 +1197,22 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
             dplyr::mutate(
               # rowSums returns a length-n vector; scalar FALSE is recycled by
               # dplyr::mutate() when no lock-in/lock-out columns are selected.
-              is_locked_in  = if (length(LI) > 0) rowSums(raw_no_geom[LI], na.rm = TRUE) > 0 else FALSE,
-              is_locked_out = if (length(LO) > 0) rowSums(raw_no_geom[LO], na.rm = TRUE) > 0 else FALSE
+              is_locked_in = if (length(LI) > 0) {
+                rowSums(raw_no_geom[LI], na.rm = TRUE) > 0
+              } else {
+                FALSE
+              },
+              is_locked_out = if (length(LO) > 0) {
+                rowSums(raw_no_geom[LO], na.rm = TRUE) > 0
+              } else {
+                FALSE
+              }
             )
         } else {
           # Fallback: no constraint colouring if row counts diverge
           soln_wgs84 <- soln_wgs84 %>%
             dplyr::mutate(
-              is_locked_in  = FALSE,
+              is_locked_in = FALSE,
               is_locked_out = FALSE
             )
         }
@@ -1108,103 +1244,101 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     # event loop tick (via a zero-millisecond setTimeout round-trip).  This
     # gives the browser time to make the canvas visible and assign it correct
     # dimensions before the WebGL polygon commands arrive.
-    shiny::observeEvent(list(input$tabs, tab_visible()),
-      {
-        if (!isTRUE(tab_visible()) || input$tabs != "4") {
-          return()
-        }
-
-        soln_wgs84 <- map_solution_sf()
-        if (is.null(soln_wgs84)) {
-          return()
-        }
-
-        # Capture all values before the delay — shinyjs::delay() executes its
-        # body asynchronously after a browser round-trip, so reactive reads
-        # inside it may see stale or invalidated values.
-        bbox <- sf::st_bbox(soln_wgs84)
-
-        # 4-state colour scheme (priority: locked-out > locked-in > selected > unselected).
-        # A cell cannot logically be both locked-in and locked-out, but the
-        # priority order is a safe guard against malformed data.
-        #
-        # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with
-        # values in [0, 1] (r, g, b per row) for per-polygon colours.
-        # Passing a character hex vector triggers the hex branch in addGlPolygons
-        # which uses the `color=` argument instead of `fillColor=`, silently
-        # rendering all polygons the same colour.  col2rgb() + normalisation
-        # ensures the matrix branch is always taken.
-        pu_colour <- dplyr::case_when(
-          soln_wgs84$is_locked_out              ~ "#d62728", # red   — locked out
-          soln_wgs84$is_locked_in               ~ "#1f77b4", # blue  — locked in
-          soln_wgs84$solution_1 == 1            ~ "#2ca02c", # green — selected (free)
-          TRUE                                  ~ "#a8a8a8"  # grey  — not selected
-        )
-        fill_rgb <- t(col2rgb(pu_colour)) / 255  # normalise to [0, 1]; result is nrow x 3 matrix
-
-        # Build legend entries — only include locked-in/locked-out when at
-        # least one such cell exists in the current solution.
-        legend_colours <- c("#2ca02c", "#a8a8a8")
-        legend_labels  <- c("Selected", "Not Selected")
-        if (any(soln_wgs84$is_locked_in)) {
-          legend_colours <- c(legend_colours, "#1f77b4")
-          legend_labels  <- c(legend_labels,  "Locked In")
-        }
-        if (any(soln_wgs84$is_locked_out)) {
-          legend_colours <- c(legend_colours, "#d62728")
-          legend_labels  <- c(legend_labels,  "Locked Out")
-        }
-
-        # Defer proxy commands to the next browser event loop tick so the
-        # browser has initialised the leaflet map from renderLeaflet first.
-        shinyjs::delay(0, {
-          # Add WebGL polygons via leafletProxy.
-          # clearGlLayers() removes any previous GL layer (e.g. from a prior visit).
-          # The highlight group (SVG) is cleared separately with clearGroup().
-          leaflet::leafletProxy("leaflet_map", session = session) %>%
-            leafgl::clearGlLayers() %>%
-            leaflet::clearControls() %>%
-            leaflet::clearGroup("highlight") %>%
-            leaflet::fitBounds(
-              lng1 = as.numeric(bbox["xmin"]),
-              lat1 = as.numeric(bbox["ymin"]),
-              lng2 = as.numeric(bbox["xmax"]),
-              lat2 = as.numeric(bbox["ymax"])
-            ) %>%
-            leafgl::addGlPolygons(
-              data        = soln_wgs84,
-              layerId     = ~pu_id,
-              fillColor   = fill_rgb,
-              fillOpacity = 0.7,
-              stroke      = TRUE,
-              group       = "solution_polygons",
-              # digits truncates coordinate precision in the serialised GeoJSON
-              # payload sent to the browser on every render. leafgl has no
-              # incremental-update API (addGlPolygons() always re-serialises the
-              # full geometry), so reducing per-coordinate precision is the main
-              # lever available to cut websocket payload size, which matters far
-              # more on hosted infrastructure (e.g. Posit Connect Cloud) than on
-              # localhost. 5 decimal degrees (~1.1 m at the equator) is well
-              # below planning-unit scale. See mod_4afeatures.R for full rationale.
-              digits      = 5
-            ) %>%
-            leaflet::addLegend(
-              position = "bottomleft",
-              colors   = legend_colours,
-              labels   = legend_labels,
-              title    = "Solution",
-              opacity  = 0.7
-            )
-
-        })
+    shiny::observeEvent(list(input$tabs, tab_visible()), {
+      if (!isTRUE(tab_visible()) || input$tabs != "4") {
+        return()
       }
-    )
+
+      soln_wgs84 <- map_solution_sf()
+      if (is.null(soln_wgs84)) {
+        return()
+      }
+
+      # Capture all values before the delay — shinyjs::delay() executes its
+      # body asynchronously after a browser round-trip, so reactive reads
+      # inside it may see stale or invalidated values.
+      bbox <- sf::st_bbox(soln_wgs84)
+
+      # 4-state colour scheme (priority: locked-out > locked-in > selected > unselected).
+      # A cell cannot logically be both locked-in and locked-out, but the
+      # priority order is a safe guard against malformed data.
+      #
+      # leafgl 0.2.4 requires fillColor as a 3-column numeric matrix with
+      # values in [0, 1] (r, g, b per row) for per-polygon colours.
+      # Passing a character hex vector triggers the hex branch in addGlPolygons
+      # which uses the `color=` argument instead of `fillColor=`, silently
+      # rendering all polygons the same colour.  col2rgb() + normalisation
+      # ensures the matrix branch is always taken.
+      pu_colour <- dplyr::case_when(
+        soln_wgs84$is_locked_out ~ "#d62728", # red   — locked out
+        soln_wgs84$is_locked_in ~ "#1f77b4", # blue  — locked in
+        soln_wgs84$solution_1 == 1 ~ "#2ca02c", # green — selected (free)
+        TRUE ~ "#a8a8a8" # grey  — not selected
+      )
+      fill_rgb <- t(col2rgb(pu_colour)) / 255 # normalise to [0, 1]; result is nrow x 3 matrix
+
+      # Build legend entries — only include locked-in/locked-out when at
+      # least one such cell exists in the current solution.
+      legend_colours <- c("#2ca02c", "#a8a8a8")
+      legend_labels <- c("Selected", "Not Selected")
+      if (any(soln_wgs84$is_locked_in)) {
+        legend_colours <- c(legend_colours, "#1f77b4")
+        legend_labels <- c(legend_labels, "Locked In")
+      }
+      if (any(soln_wgs84$is_locked_out)) {
+        legend_colours <- c(legend_colours, "#d62728")
+        legend_labels <- c(legend_labels, "Locked Out")
+      }
+
+      # Defer proxy commands to the next browser event loop tick so the
+      # browser has initialised the leaflet map from renderLeaflet first.
+      shinyjs::delay(0, {
+        # Add WebGL polygons via leafletProxy.
+        # clearGlLayers() removes any previous GL layer (e.g. from a prior visit).
+        # The highlight group (SVG) is cleared separately with clearGroup().
+        leaflet::leafletProxy("leaflet_map", session = session) %>%
+          leafgl::clearGlLayers() %>%
+          leaflet::clearControls() %>%
+          leaflet::clearGroup("highlight") %>%
+          leaflet::fitBounds(
+            lng1 = as.numeric(bbox["xmin"]),
+            lat1 = as.numeric(bbox["ymin"]),
+            lng2 = as.numeric(bbox["xmax"]),
+            lat2 = as.numeric(bbox["ymax"])
+          ) %>%
+          leafgl::addGlPolygons(
+            data = soln_wgs84,
+            layerId = ~pu_id,
+            fillColor = fill_rgb,
+            fillOpacity = 0.7,
+            stroke = TRUE,
+            group = "solution_polygons",
+            # digits truncates coordinate precision in the serialised GeoJSON
+            # payload sent to the browser on every render. leafgl has no
+            # incremental-update API (addGlPolygons() always re-serialises the
+            # full geometry), so reducing per-coordinate precision is the main
+            # lever available to cut websocket payload size, which matters far
+            # more on hosted infrastructure (e.g. Posit Connect Cloud) than on
+            # localhost. 5 decimal degrees (~1.1 m at the equator) is well
+            # below planning-unit scale. See mod_4afeatures.R for full rationale.
+            digits = 5
+          ) %>%
+          leaflet::addLegend(
+            position = "bottomleft",
+            colors = legend_colours,
+            labels = legend_labels,
+            title = "Solution",
+            opacity = 0.7
+          )
+      })
+    })
 
     # Handle polygon click events.
     # leafgl fires input$<mapId>_glify_click (not _shape_click).
     # The highlight overlay is still drawn with leaflet::addPolygons() (SVG),
     # which fires _shape_click — we ignore those via the "highlight_" prefix guard.
-    shiny::observeEvent(input$leaflet_map_glify_click,
+    shiny::observeEvent(
+      input$leaflet_map_glify_click,
       {
         tryCatch(
           {
@@ -1241,14 +1375,19 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
             # Pre-filter to only columns that exist in pu_row for efficiency
             available_features <- intersect(target_features, names(pu_row))
             features_present <- available_features[
-              vapply(available_features, function(feat) {
-                val <- pu_row[[feat]]
-                !is.na(val) && as.numeric(val) == 1
-              }, logical(1))
+              vapply(
+                available_features,
+                function(feat) {
+                  val <- pu_row[[feat]]
+                  !is.na(val) && as.numeric(val) == 1
+                },
+                logical(1)
+              )
             ]
 
             # Create lookup for common names and categories from Dict
-            feature_info <- Dict[Dict$nameVariable %in% features_present,
+            feature_info <- Dict[
+              Dict$nameVariable %in% features_present,
               c("nameVariable", "nameCommon", "category"),
               drop = FALSE
             ]
@@ -1283,7 +1422,9 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
 
             # Get cost column name from input and extract value
             cost_col <- shiny::isolate(input$costid)
-            cost_value <- if (!is.null(cost_col) && cost_col %in% names(pu_row)) {
+            cost_value <- if (
+              !is.null(cost_col) && cost_col %in% names(pu_row)
+            ) {
               round(as.numeric(pu_row[[cost_col]]), 2)
             } else {
               NA
@@ -1291,7 +1432,11 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
 
             # Get cost display name from Dict
             cost_name <- if (!is.null(cost_col) && cost_col != "Cost_None") {
-              cost_info <- Dict[Dict$nameVariable == cost_col, "nameCommon", drop = TRUE]
+              cost_info <- Dict[
+                Dict$nameVariable == cost_col,
+                "nameCommon",
+                drop = TRUE
+              ]
               if (length(cost_info) > 0) cost_info[1] else cost_col
             } else {
               "Cost"
@@ -1300,20 +1445,32 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
             # Determine constraint membership for this planning unit.
             # soln_sf already has is_locked_in / is_locked_out columns (added in
             # Observer 1), so we read them directly rather than re-querying raw_sf.
-            pu_is_locked_in  <- isTRUE(pu_row[["is_locked_in"]])
+            pu_is_locked_in <- isTRUE(pu_row[["is_locked_in"]])
             pu_is_locked_out <- isTRUE(pu_row[["is_locked_out"]])
 
             # Identify which specific lock-in/lock-out areas this cell belongs to,
             # using nameCommon from Dict for human-readable labels.
             li_names <- if (pu_is_locked_in) {
               li_vars <- shiny::isolate(get_lockIn(input))
-              raw_row <- sf::st_drop_geometry(raw_sf)[pu_idx[1], li_vars, drop = FALSE]
-              active_li <- li_vars[vapply(li_vars, function(v) {
-                val <- raw_row[[v]]
-                !is.na(val) && as.numeric(val) == 1
-              }, logical(1))]
+              raw_row <- sf::st_drop_geometry(raw_sf)[
+                pu_idx[1],
+                li_vars,
+                drop = FALSE
+              ]
+              active_li <- li_vars[vapply(
+                li_vars,
+                function(v) {
+                  val <- raw_row[[v]]
+                  !is.na(val) && as.numeric(val) == 1
+                },
+                logical(1)
+              )]
               # Look up nameCommon; fall back to nameVariable if not in Dict
-              li_lookup <- Dict[Dict$nameVariable %in% active_li, c("nameVariable", "nameCommon"), drop = FALSE]
+              li_lookup <- Dict[
+                Dict$nameVariable %in% active_li,
+                c("nameVariable", "nameCommon"),
+                drop = FALSE
+              ]
               dplyr::coalesce(
                 li_lookup$nameCommon[match(active_li, li_lookup$nameVariable)],
                 active_li
@@ -1324,12 +1481,24 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
 
             lo_names <- if (pu_is_locked_out) {
               lo_vars <- shiny::isolate(get_lockOut(input))
-              raw_row <- sf::st_drop_geometry(raw_sf)[pu_idx[1], lo_vars, drop = FALSE]
-              active_lo <- lo_vars[vapply(lo_vars, function(v) {
-                val <- raw_row[[v]]
-                !is.na(val) && as.numeric(val) == 1
-              }, logical(1))]
-              lo_lookup <- Dict[Dict$nameVariable %in% active_lo, c("nameVariable", "nameCommon"), drop = FALSE]
+              raw_row <- sf::st_drop_geometry(raw_sf)[
+                pu_idx[1],
+                lo_vars,
+                drop = FALSE
+              ]
+              active_lo <- lo_vars[vapply(
+                lo_vars,
+                function(v) {
+                  val <- raw_row[[v]]
+                  !is.na(val) && as.numeric(val) == 1
+                },
+                logical(1)
+              )]
+              lo_lookup <- Dict[
+                Dict$nameVariable %in% active_lo,
+                c("nameVariable", "nameCommon"),
+                drop = FALSE
+              ]
               dplyr::coalesce(
                 lo_lookup$nameCommon[match(active_lo, lo_lookup$nameVariable)],
                 active_lo
@@ -1347,20 +1516,24 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
                 shiny::h5("Constraints"),
                 if (length(li_names) > 0) {
                   shiny::tagList(
-                    shiny::p(shiny::strong("Locked In:"),
+                    shiny::p(
+                      shiny::strong("Locked In:"),
                       style = "margin-bottom: 2px; color: #1f77b4;"
                     ),
-                    shiny::p(paste(li_names, collapse = ", "),
+                    shiny::p(
+                      paste(li_names, collapse = ", "),
                       style = "margin-left: 10px; margin-top: 0; margin-bottom: 8px;"
                     )
                   )
                 },
                 if (length(lo_names) > 0) {
                   shiny::tagList(
-                    shiny::p(shiny::strong("Locked Out:"),
+                    shiny::p(
+                      shiny::strong("Locked Out:"),
                       style = "margin-bottom: 2px; color: #d62728;"
                     ),
-                    shiny::p(paste(lo_names, collapse = ", "),
+                    shiny::p(
+                      paste(lo_names, collapse = ", "),
                       style = "margin-left: 10px; margin-top: 0; margin-bottom: 8px;"
                     )
                   )
@@ -1376,7 +1549,8 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
                 shiny::h4(shiny::strong(paste0("Planning Unit #", pu_id))),
                 shiny::hr(style = "margin: 5px 0;"),
                 constraints_section,
-                shiny::p("No features with targets found in this planning unit.",
+                shiny::p(
+                  "No features with targets found in this planning unit.",
                   style = "color: #666; font-style: italic;"
                 )
               )
@@ -1387,7 +1561,8 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
                 feats <- feature_info$nameCommon[feature_info$category == cat]
                 shiny::tagList(
                   shiny::p(shiny::strong(cat), style = "margin-bottom: 2px;"),
-                  shiny::p(paste(feats, collapse = ", "),
+                  shiny::p(
+                    paste(feats, collapse = ", "),
                     style = "margin-left: 10px; margin-top: 0; margin-bottom: 8px;"
                   )
                 )
@@ -1398,7 +1573,13 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
                 shiny::p(shiny::strong(paste0("Number: ", pu_id))),
                 shiny::p(
                   shiny::strong("Selected: "),
-                  if (is.na(is_selected)) "N/A" else if (is_selected) "TRUE" else "FALSE",
+                  if (is.na(is_selected)) {
+                    "N/A"
+                  } else if (is_selected) {
+                    "TRUE"
+                  } else {
+                    "FALSE"
+                  },
                   style = "margin-bottom: 2px;"
                 ),
                 constraints_section,
@@ -1406,7 +1587,11 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
                 shiny::h5("Cost Value"),
                 shiny::p(
                   shiny::strong(paste0(cost_name, ": ")),
-                  if (is.na(cost_value)) "N/A" else format(cost_value, big.mark = ","),
+                  if (is.na(cost_value)) {
+                    "N/A"
+                  } else {
+                    format(cost_value, big.mark = ",")
+                  },
                   style = "margin-bottom: 2px;"
                 ),
                 shiny::hr(style = "margin: 5px 0;"),

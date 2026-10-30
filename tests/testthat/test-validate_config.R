@@ -26,47 +26,102 @@ make_valid_config_v2 <- function() {
   )
   sidebar <- list(
     scenario = list(
-      slider_vars     = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = FALSE),
-      slider_varsBioR = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE, dataType = "Bioregion"),
-      slider_varsCat  = fcreate_vars("2scenario_ui_1", Dict, "sli_", categoryOut = TRUE, byCategory = TRUE),
-      check_lockIn    = fcreate_check("2scenario_ui_1", Dict, "LockIn", "checkLI_", categoryOut = TRUE),
-      check_lockOut   = fcreate_check("2scenario_ui_1", Dict, "LockOut", "checkLO_", categoryOut = TRUE)
+      slider_vars = fcreate_vars(
+        "2scenario_ui_1",
+        Dict,
+        "sli_",
+        categoryOut = TRUE,
+        byCategory = FALSE
+      ),
+      slider_varsBioR = fcreate_vars(
+        "2scenario_ui_1",
+        Dict,
+        "sli_",
+        categoryOut = TRUE,
+        byCategory = TRUE,
+        dataType = "Bioregion"
+      ),
+      slider_varsCat = fcreate_vars(
+        "2scenario_ui_1",
+        Dict,
+        "sli_",
+        categoryOut = TRUE,
+        byCategory = TRUE
+      ),
+      check_lockIn = fcreate_check(
+        "2scenario_ui_1",
+        Dict,
+        "LockIn",
+        "checkLI_",
+        categoryOut = TRUE
+      ),
+      check_lockOut = fcreate_check(
+        "2scenario_ui_1",
+        Dict,
+        "LockOut",
+        "checkLO_",
+        categoryOut = TRUE
+      )
     ),
     compare = list(
-      Vars1          = fcreate_vars("3compare_ui_1", Dict, "sli_", categoryOut = TRUE),
-      Vars2          = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
-      check_lockIn1  = fcreate_check("3compare_ui_1", Dict, "LockIn", "check1LI_", categoryOut = TRUE),
-      check_lockIn2  = fcreate_check("3compare_ui_1", Dict, "LockIn", "check2LI_", categoryOut = TRUE),
-      check_lockOut1 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check1LO_", categoryOut = TRUE),
-      check_lockOut2 = fcreate_check("3compare_ui_1", Dict, "LockOut", "check2LO_", categoryOut = TRUE)
+      Vars1 = fcreate_vars("3compare_ui_1", Dict, "sli_", categoryOut = TRUE),
+      Vars2 = fcreate_vars("3compare_ui_1", Dict, "sli2_", categoryOut = TRUE),
+      check_lockIn1 = fcreate_check(
+        "3compare_ui_1",
+        Dict,
+        "LockIn",
+        "check1LI_",
+        categoryOut = TRUE
+      ),
+      check_lockIn2 = fcreate_check(
+        "3compare_ui_1",
+        Dict,
+        "LockIn",
+        "check2LI_",
+        categoryOut = TRUE
+      ),
+      check_lockOut1 = fcreate_check(
+        "3compare_ui_1",
+        Dict,
+        "LockOut",
+        "check1LO_",
+        categoryOut = TRUE
+      ),
+      check_lockOut2 = fcreate_check(
+        "3compare_ui_1",
+        Dict,
+        "LockOut",
+        "check2LO_",
+        categoryOut = TRUE
+      )
     )
   )
   list(
     schema_version = 2L,
     options = list(
-      app_title             = "Test App",
-      nav_title             = "Test Region",
-      funder_url            = "https://example.com",
-      mod_1welcome          = TRUE,
-      mod_2scenario         = TRUE,
-      mod_3compare          = FALSE,
-      mod_4features         = FALSE,
-      mod_5coverage         = FALSE,
-      mod_6help             = TRUE,
-      mod_7credit           = FALSE,
-      include_report        = FALSE,
-      include_ess           = FALSE,
-      include_explore       = FALSE,
-      include_log           = FALSE,
-      include_bioregion     = FALSE,
-      show_logo_funder2     = FALSE,
-      funder2_url           = "https://spatialplanning.github.io",
+      app_title = "Test App",
+      nav_title = "Test Region",
+      funder_url = "https://example.com",
+      mod_1welcome = TRUE,
+      mod_2scenario = TRUE,
+      mod_3compare = FALSE,
+      mod_4features = FALSE,
+      mod_5coverage = FALSE,
+      mod_6help = TRUE,
+      mod_7credit = FALSE,
+      include_report = FALSE,
+      include_ess = FALSE,
+      include_explore = FALSE,
+      include_log = FALSE,
+      include_bioregion = FALSE,
+      show_logo_funder2 = FALSE,
+      funder2_url = "https://spatialplanning.github.io",
       include_climateChange = FALSE,
-      climate_change        = 0L,
-      include_lockedArea    = FALSE,
-      targetsBy             = "individual",
-      obj_func              = "min_set",
-      cCRS                  = "ESRI:54009"
+      climate_change = 0L,
+      include_lockedArea = FALSE,
+      targetsBy = "individual",
+      obj_func = "min_set",
+      cCRS = "ESRI:54009"
     ),
     map_theme = ggplot2::theme_bw(),
     bar_theme = ggplot2::theme_bw(),
@@ -352,17 +407,17 @@ make_config_with_cost <- function(cost_values = c(10, 20)) {
   cfg <- make_valid_config_v2()
 
   cost_row <- data.frame(
-    nameCommon    = "Fishing effort",
-    nameVariable  = "cost_fishing",
-    category      = "Cost",
-    categoryID    = "Cost",
-    type          = "Cost",
+    nameCommon = "Fishing effort",
+    nameVariable = "cost_fishing",
+    category = "Cost",
+    categoryID = "Cost",
+    type = "Cost",
     targetInitial = NA_real_,
-    targetMin     = NA_real_,
-    targetMax     = NA_real_,
-    includeApp    = TRUE,
-    includeJust   = TRUE,
-    units         = "hours",
+    targetMin = NA_real_,
+    targetMax = NA_real_,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "hours",
     justification = "Fishing effort.",
     stringsAsFactors = FALSE
   )
@@ -416,17 +471,17 @@ test_that("validate_shinyplanr_data() passes check 11 for Cost_None regardless o
   # We add it to raw_sf with a zero value to confirm check 11 ignores it.
   cfg <- make_valid_config_v2()
   cost_none_row <- data.frame(
-    nameCommon    = "Equal area",
-    nameVariable  = "Cost_None",
-    category      = "Cost",
-    categoryID    = "Cost",
-    type          = "Cost",
+    nameCommon = "Equal area",
+    nameVariable = "Cost_None",
+    category = "Cost",
+    categoryID = "Cost",
+    type = "Cost",
     targetInitial = NA_real_,
-    targetMin     = NA_real_,
-    targetMax     = NA_real_,
-    includeApp    = TRUE,
-    includeJust   = TRUE,
-    units         = "",
+    targetMin = NA_real_,
+    targetMax = NA_real_,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
     justification = "Equal area.",
     stringsAsFactors = FALSE
   )
@@ -634,10 +689,22 @@ test_that("validate_dict() passes check 3 for all known type values", {
   # climate-smart dropdown -- they are not features and have no targets.
   extra <- data.frame(
     nameCommon = c("LO", "Bio", "ESS", "Just", "SST Trend"),
-    nameVariable = c("lock_out_var", "bio_var", "ess_var", "just_var", "sst_trend"),
+    nameVariable = c(
+      "lock_out_var",
+      "bio_var",
+      "ess_var",
+      "just_var",
+      "sst_trend"
+    ),
     category = c("C", "C", "C", "C", "Climate"),
     categoryID = c("C", "C", "C", "C", "Climate"),
-    type = c("LockOut", "Bioregion", "EcosystemServices", "Justification", "Climate"),
+    type = c(
+      "LockOut",
+      "Bioregion",
+      "EcosystemServices",
+      "Justification",
+      "Climate"
+    ),
     targetInitial = c(NA, NA, NA, NA, NA),
     targetMin = c(NA, NA, NA, NA, NA),
     targetMax = c(NA, NA, NA, NA, NA),
@@ -675,7 +742,7 @@ test_that("validate_dict() passes check 4 when duplicate nameVariable has includ
   # cause duplicate slider IDs or prioritizr errors, so this must pass.
   d <- make_valid_dict()
   inactive_dup <- d[1, ]
-  inactive_dup$includeApp <- FALSE  # excluded — should not trigger check 4
+  inactive_dup$includeApp <- FALSE # excluded — should not trigger check 4
   d2 <- rbind(d, inactive_dup)
   expect_message(
     validate_dict(d2, strict = TRUE),
@@ -717,11 +784,18 @@ test_that("validate_dict() fails when categoryID differs within the same type+ca
   # Add a second active Habitat/Feature row with a different categoryID than the
   # existing Habitat rows ("Hab") -- same category, inconsistent categoryID.
   bad_row <- data.frame(
-    nameCommon = "Feature C", nameVariable = "feature_C",
-    category = "Habitat", categoryID = "Hab2", type = "Feature",
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE,
-    units = "", justification = "Stub C.",
+    nameCommon = "Feature C",
+    nameVariable = "feature_C",
+    category = "Habitat",
+    categoryID = "Hab2",
+    type = "Feature",
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
+    justification = "Stub C.",
     stringsAsFactors = FALSE
   )
   d2 <- rbind(d, bad_row)
@@ -734,11 +808,18 @@ test_that("validate_dict() fails when categoryID differs within the same type+ca
 test_that("validate_dict() fails when categoryID is blank on some active rows of a category", {
   d <- make_valid_dict()
   bad_row <- data.frame(
-    nameCommon = "Feature C", nameVariable = "feature_C",
-    category = "Habitat", categoryID = "", type = "Feature", # blank categoryID
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE,
-    units = "", justification = "Stub C.",
+    nameCommon = "Feature C",
+    nameVariable = "feature_C",
+    category = "Habitat",
+    categoryID = "",
+    type = "Feature", # blank categoryID
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
+    justification = "Stub C.",
     stringsAsFactors = FALSE
   )
   d2 <- rbind(d, bad_row)
@@ -753,11 +834,18 @@ test_that("validate_dict() passes check 5 when inconsistent categoryID is on an 
   # display at runtime, so check 5 must not fire for it.
   d <- make_valid_dict()
   inactive_bad <- data.frame(
-    nameCommon = "Feature C", nameVariable = "feature_C",
-    category = "Habitat", categoryID = "WrongID", type = "Feature",
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = FALSE, includeJust = FALSE,  # inactive
-    units = "", justification = "Stub C.",
+    nameCommon = "Feature C",
+    nameVariable = "feature_C",
+    category = "Habitat",
+    categoryID = "WrongID",
+    type = "Feature",
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = FALSE,
+    includeJust = FALSE, # inactive
+    units = "",
+    justification = "Stub C.",
     stringsAsFactors = FALSE
   )
   d2 <- rbind(d, inactive_bad)
@@ -774,12 +862,18 @@ test_that("validate_dict() passes when the same category label is reused across 
   # if the LockIn/LockOut categoryIDs ever differed.
   d <- make_valid_dict()
   lockout_row <- data.frame(
-    nameCommon = "MPAs", nameVariable = "mpas",
-    category = "Protected Areas", categoryID = "MPAs", # same categoryID here, but different type
+    nameCommon = "MPAs",
+    nameVariable = "mpas",
+    category = "Protected Areas",
+    categoryID = "MPAs", # same categoryID here, but different type
     type = "LockOut",
-    targetInitial = NA_real_, targetMin = NA_real_, targetMax = NA_real_,
-    includeApp = TRUE, includeJust = TRUE,
-    units = "", justification = "Existing MPAs.",
+    targetInitial = NA_real_,
+    targetMin = NA_real_,
+    targetMax = NA_real_,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
+    justification = "Existing MPAs.",
     stringsAsFactors = FALSE
   )
   d2 <- rbind(d, lockout_row)
@@ -816,11 +910,18 @@ test_that("validate_dict() fails when categoryOrder differs within the same type
   # Add a second active Habitat/Feature row so both rows in the category are
   # active, then give them different categoryOrder values.
   extra <- data.frame(
-    nameCommon = "Feature C", nameVariable = "feature_C",
-    category = "Habitat", categoryID = "Hab", type = "Feature",
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE,
-    units = "", justification = "Stub C.",
+    nameCommon = "Feature C",
+    nameVariable = "feature_C",
+    category = "Habitat",
+    categoryID = "Hab",
+    type = "Feature",
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
+    justification = "Stub C.",
     stringsAsFactors = FALSE
   )
   d2 <- rbind(d, extra)
@@ -910,18 +1011,18 @@ make_dict_with_silent <- function() {
   # Two active SilentFeature rows in the same category ("Sea"), plus one
   # regular Feature row so Check 7 (at_least_one_active_feature) passes.
   data.frame(
-    nameCommon    = c("Feature A", "Silent 1", "Silent 2"),
-    nameVariable  = c("feature_A", "silent_1", "silent_2"),
-    category      = c("Habitat",   "Sea",      "Sea"),
-    categoryID    = c("Hab",       "Sea",      "Sea"),
-    type          = c("Feature",   "SilentFeature", "SilentFeature"),
-    targetInitial = c(30,          25,         25),
-    targetMin     = c(0,           0,          0),
-    targetMax     = c(85,          50,         50),
-    includeApp    = c(TRUE,        TRUE,       TRUE),
-    includeJust   = c(TRUE,        TRUE,       TRUE),
-    units         = c("",          "",         ""),
-    justification = c("Stub A.",   "Stub S1.", "Stub S2."),
+    nameCommon = c("Feature A", "Silent 1", "Silent 2"),
+    nameVariable = c("feature_A", "silent_1", "silent_2"),
+    category = c("Habitat", "Sea", "Sea"),
+    categoryID = c("Hab", "Sea", "Sea"),
+    type = c("Feature", "SilentFeature", "SilentFeature"),
+    targetInitial = c(30, 25, 25),
+    targetMin = c(0, 0, 0),
+    targetMax = c(85, 50, 50),
+    includeApp = c(TRUE, TRUE, TRUE),
+    includeJust = c(TRUE, TRUE, TRUE),
+    units = c("", "", ""),
+    justification = c("Stub A.", "Stub S1.", "Stub S2."),
     stringsAsFactors = FALSE
   )
 }
@@ -936,7 +1037,7 @@ test_that("validate_dict() passes check 9 when SilentFeature targets are identic
 
 test_that("validate_dict() fails check 9 when SilentFeature targetMin differs within a category", {
   d <- make_dict_with_silent()
-  d$targetMin[d$nameVariable == "silent_2"] <- 10  # differs from silent_1 (0)
+  d$targetMin[d$nameVariable == "silent_2"] <- 10 # differs from silent_1 (0)
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "silentfeature_targets_identical_within_category"
@@ -945,7 +1046,7 @@ test_that("validate_dict() fails check 9 when SilentFeature targetMin differs wi
 
 test_that("validate_dict() fails check 9 when SilentFeature targetMax differs within a category", {
   d <- make_dict_with_silent()
-  d$targetMax[d$nameVariable == "silent_2"] <- 60  # differs from silent_1 (50)
+  d$targetMax[d$nameVariable == "silent_2"] <- 60 # differs from silent_1 (50)
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "silentfeature_targets_identical_within_category"
@@ -954,7 +1055,7 @@ test_that("validate_dict() fails check 9 when SilentFeature targetMax differs wi
 
 test_that("validate_dict() fails check 9 when SilentFeature targetInitial differs within a category", {
   d <- make_dict_with_silent()
-  d$targetInitial[d$nameVariable == "silent_2"] <- 40  # differs from silent_1 (25)
+  d$targetInitial[d$nameVariable == "silent_2"] <- 40 # differs from silent_1 (25)
   expect_error(
     suppressMessages(validate_dict(d, strict = TRUE)),
     regexp = "silentfeature_targets_identical_within_category"
@@ -965,7 +1066,7 @@ test_that("validate_dict() passes check 9 when inconsistent SilentFeature rows a
   # Inactive rows (includeApp == FALSE) are not checked — they may carry
   # placeholder values and are never used by the slider system.
   d <- make_dict_with_silent()
-  d$targetMin[d$nameVariable == "silent_2"] <- 99   # would fail if active
+  d$targetMin[d$nameVariable == "silent_2"] <- 99 # would fail if active
   d$includeApp[d$nameVariable == "silent_2"] <- FALSE
   expect_message(
     validate_dict(d, strict = TRUE),
@@ -974,7 +1075,7 @@ test_that("validate_dict() passes check 9 when inconsistent SilentFeature rows a
 })
 
 test_that("validate_dict() passes check 9 when there are no SilentFeature rows at all", {
-  d <- make_valid_dict()  # no SilentFeature rows
+  d <- make_valid_dict() # no SilentFeature rows
   expect_false(any(d$type == "SilentFeature"))
   expect_message(
     validate_dict(d, strict = TRUE),
@@ -990,18 +1091,18 @@ test_that("validate_dict() passes check 9 when two SilentFeature categories each
   # Add a second SilentFeature category "Land" with different (but internally
   # consistent) targets.
   land_rows <- data.frame(
-    nameCommon    = c("Land 1", "Land 2"),
-    nameVariable  = c("land_1", "land_2"),
-    category      = c("Land",   "Land"),
-    categoryID    = c("Land",   "Land"),
-    type          = c("SilentFeature", "SilentFeature"),
-    targetInitial = c(10,       10),
-    targetMin     = c(5,        5),
-    targetMax     = c(40,       40),
-    includeApp    = c(TRUE,     TRUE),
-    includeJust   = c(TRUE,     TRUE),
-    units         = c("",       ""),
-    justification = c("L1.",    "L2."),
+    nameCommon = c("Land 1", "Land 2"),
+    nameVariable = c("land_1", "land_2"),
+    category = c("Land", "Land"),
+    categoryID = c("Land", "Land"),
+    type = c("SilentFeature", "SilentFeature"),
+    targetInitial = c(10, 10),
+    targetMin = c(5, 5),
+    targetMax = c(40, 40),
+    includeApp = c(TRUE, TRUE),
+    includeJust = c(TRUE, TRUE),
+    units = c("", ""),
+    justification = c("L1.", "L2."),
     stringsAsFactors = FALSE
   )
   d2 <- rbind(d, land_rows)
@@ -1028,17 +1129,17 @@ test_that("validate_dict() fails check 4b when same nameVariable is active in Fe
   d <- make_valid_dict()
   # Add an active SilentFeature row with the same nameVariable as an existing Feature row
   dup_row <- data.frame(
-    nameCommon    = "Feature A (silent)",
-    nameVariable  = "feature_A",   # same as the Feature row
-    category      = "Sea",
-    categoryID    = "Sea",
-    type          = "SilentFeature",
+    nameCommon = "Feature A (silent)",
+    nameVariable = "feature_A", # same as the Feature row
+    category = "Sea",
+    categoryID = "Sea",
+    type = "SilentFeature",
     targetInitial = 30,
-    targetMin     = 0,
-    targetMax     = 85,
-    includeApp    = TRUE,
-    includeJust   = TRUE,
-    units         = "",
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
     justification = "Dup.",
     stringsAsFactors = FALSE
   )
@@ -1052,17 +1153,17 @@ test_that("validate_dict() fails check 4b when same nameVariable is active in Fe
 test_that("validate_dict() fails check 4b when same nameVariable is active in Feature and Bioregion", {
   d <- make_valid_dict()
   bio_row <- data.frame(
-    nameCommon    = "Feature A (bioregion)",
-    nameVariable  = "feature_A",   # same as the Feature row
-    category      = "Bioregion A",
-    categoryID    = "BioA",
-    type          = "Bioregion",
+    nameCommon = "Feature A (bioregion)",
+    nameVariable = "feature_A", # same as the Feature row
+    category = "Bioregion A",
+    categoryID = "BioA",
+    type = "Bioregion",
     targetInitial = 30,
-    targetMin     = 0,
-    targetMax     = 85,
-    includeApp    = TRUE,
-    includeJust   = TRUE,
-    units         = "",
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
     justification = "Bio.",
     stringsAsFactors = FALSE
   )
@@ -1077,17 +1178,17 @@ test_that("validate_dict() passes check 4b when duplicate nameVariable is inacti
   d <- make_valid_dict()
   # Same nameVariable as Feature row, but includeApp = FALSE → not active → no conflict
   inactive_dup <- data.frame(
-    nameCommon    = "Feature A (silent, inactive)",
-    nameVariable  = "feature_A",
-    category      = "Sea",
-    categoryID    = "Sea",
-    type          = "SilentFeature",
+    nameCommon = "Feature A (silent, inactive)",
+    nameVariable = "feature_A",
+    category = "Sea",
+    categoryID = "Sea",
+    type = "SilentFeature",
     targetInitial = 30,
-    targetMin     = 0,
-    targetMax     = 85,
-    includeApp    = FALSE,   # inactive — should not trigger check 4b
-    includeJust   = FALSE,
-    units         = "",
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = FALSE, # inactive — should not trigger check 4b
+    includeJust = FALSE,
+    units = "",
     justification = "",
     stringsAsFactors = FALSE
   )
@@ -1101,17 +1202,17 @@ test_that("validate_dict() passes check 4b when duplicate nameVariable is inacti
 test_that("validate_dict() error message for check 4b names the offending nameVariable and types", {
   d <- make_valid_dict()
   dup_row <- data.frame(
-    nameCommon    = "Feature A (silent)",
-    nameVariable  = "feature_A",
-    category      = "Sea",
-    categoryID    = "Sea",
-    type          = "SilentFeature",
+    nameCommon = "Feature A (silent)",
+    nameVariable = "feature_A",
+    category = "Sea",
+    categoryID = "Sea",
+    type = "SilentFeature",
     targetInitial = 30,
-    targetMin     = 0,
-    targetMax     = 85,
-    includeApp    = TRUE,
-    includeJust   = TRUE,
-    units         = "",
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
     justification = "Dup.",
     stringsAsFactors = FALSE
   )
@@ -1132,11 +1233,18 @@ test_that("validate_dict() with strict=FALSE returns list and warns on failure",
   # trigger the at_least_one_active_feature check (which would produce a
   # second, unexpected warning and cause the test to fail).
   extra_feature <- data.frame(
-    nameCommon = "Feature C", nameVariable = "feature_C",
-    category = "Habitat", categoryID = "Hab", type = "Feature",
-    targetInitial = 30, targetMin = 0, targetMax = 85,
-    includeApp = TRUE, includeJust = TRUE,
-    units = "", justification = "Stub C.",
+    nameCommon = "Feature C",
+    nameVariable = "feature_C",
+    category = "Habitat",
+    categoryID = "Hab",
+    type = "Feature",
+    targetInitial = 30,
+    targetMin = 0,
+    targetMax = 85,
+    includeApp = TRUE,
+    includeJust = TRUE,
+    units = "",
+    justification = "Stub C.",
     stringsAsFactors = FALSE
   )
   d <- rbind(d, extra_feature)

@@ -57,18 +57,41 @@ test_that("mod_2scenario_ui() has download buttons for Scenario and Targets tabs
   expect_match(html, "dlPlot2", fixed = TRUE)
 })
 
-test_that("mod_2scenario_ui() shows master slider panel when targetsBy is 'master'", {
-  cfg_master <- cfg
-  cfg_master$options <- modifyList(cfg$options, list(targetsBy = "master"))
-
-  ui <- mod_2scenario_ui(id = "test_master", cfg = cfg_master)
+test_that("mod_2scenario_ui() contains the 'Download Report' button (dlReport)", {
+  ui <- mod_2scenario_ui(id = "test", cfg = cfg)
   html <- as.character(ui)
-  expect_match(html, "switchMasterTargets", fixed = TRUE)
+  expect_match(html, "dlReport", fixed = TRUE)
+  expect_match(html, "Download Report", fixed = TRUE)
+})
+
+test_that("mod_2scenario_ui() Report tab is always present in HTML regardless of include_report", {
+  # The Report tab is always rendered in the HTML; server-side hideTab() controls
+  # visibility at runtime based on options$include_report.
+  cfg_no_report <- cfg
+  cfg_no_report$options <- modifyList(cfg$options, list(include_report = FALSE))
+  ui_no_report <- mod_2scenario_ui(id = "test_no_report", cfg = cfg_no_report)
+  html_no_report <- as.character(ui_no_report)
+  expect_match(html_no_report, "dlReport", fixed = TRUE)
+
+  cfg_with_report <- cfg
+  cfg_with_report$options <- modifyList(
+    cfg$options,
+    list(include_report = TRUE)
+  )
+  ui_with_report <- mod_2scenario_ui(
+    id = "test_with_report",
+    cfg = cfg_with_report
+  )
+  html_with_report <- as.character(ui_with_report)
+  expect_match(html_with_report, "dlReport", fixed = TRUE)
 })
 
 test_that("mod_2scenario_ui() shows climate panel when include_climateChange is TRUE", {
   cfg_clim <- cfg
-  cfg_clim$options <- modifyList(cfg$options, list(include_climateChange = TRUE))
+  cfg_clim$options <- modifyList(
+    cfg$options,
+    list(include_climateChange = TRUE)
+  )
 
   ui <- mod_2scenario_ui(id = "test_clim", cfg = cfg_clim)
   html <- as.character(ui)
@@ -86,9 +109,32 @@ test_that("mod_2scenario_server() has correct formals including 'cfg'", {
   expect_true("cfg" %in% names(fmls))
 })
 
-testServer(mod_2scenario_server, args = list(cfg = cfg), {
-  ns <- session$ns
-  expect_true(inherits(ns, "function"))
-  expect_true(grepl(id, ns("")))
-  expect_true(grepl("test", ns("test")))
+testServer(
+  mod_2scenario_server,
+  args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+  {
+    ns <- session$ns
+    expect_true(inherits(ns, "function"))
+    expect_true(grepl(id, ns("")))
+    expect_true(grepl("test", ns("test")))
+  }
+)
+
+test_that("mod_2scenario_server() registers dlReport as a download handler", {
+  testServer(
+    mod_2scenario_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      # downloadHandler outputs are registered in the MockShinySession's private
+      # $outs list (keyed as "proxy1-<name>"). We check this without triggering
+      # a reactive flush (reading output$x directly flushes all pending observers,
+      # which errors when slider inputs are NULL in the test context).
+      mock_session <- .subset2(session$output, "impl")
+      registered <- names(mock_session$.__enclos_env__$private$outs)
+      expect_true(
+        any(grepl("dlReport", registered)),
+        info = paste("Registered outputs:", paste(registered, collapse = ", "))
+      )
+    }
+  )
 })

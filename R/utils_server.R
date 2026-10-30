@@ -27,12 +27,15 @@
 #'
 #' @noRd
 #'
-fapply_ui_switches <- function(options, session,
-                               tab_climate = NULL,
-                               tab_explore = NULL,
-                               tab_ess = NULL,
-                               tab_report = NULL,
-                               tab_log = NULL) {
+fapply_ui_switches <- function(
+  options,
+  session,
+  tab_climate = NULL,
+  tab_explore = NULL,
+  tab_ess = NULL,
+  tab_report = NULL,
+  tab_log = NULL
+) {
   # --- Objective function switches ---
   if (options$obj_func == "min_shortfall") {
     shinyjs::show(id = "switchMinShortfall")
@@ -62,13 +65,6 @@ fapply_ui_switches <- function(options, session,
   if (isTRUE(options$include_lockedArea)) {
     shinyjs::show(id = "switchConstraints")
   }
-
-  # --- Target slider visibility ---
-  switch(options$targetsBy,
-    "master"     = shinyjs::show(id = "switchMasterTargets"),
-    "category"   = shinyjs::show(id = "switchCategoryTargets"),
-    "individual" = shinyjs::show(id = "switchIndividualTargets")
-  )
 
   # --- Tab visibility ---
   if (!isTRUE(options$include_climateChange) && !is.null(tab_climate)) {
@@ -148,16 +144,25 @@ fapply_ui_switches <- function(options, session,
 #'
 #' @noRd
 #'
-frender_report <- function(file, output, template_name, notification_id,
-                           notification_msg, tmp_dir_prefix,
-                           plots, tables, params, ts) {
+frender_report <- function(
+  file,
+  output,
+  template_name,
+  notification_id,
+  notification_msg,
+  tmp_dir_prefix,
+  plots,
+  tables,
+  params,
+  ts
+) {
   # 1. Progress notification + spinner
   shiny::showNotification(
     notification_msg,
-    duration    = NULL,
+    duration = NULL,
     closeButton = FALSE,
-    id          = notification_id,
-    type        = "message"
+    id = notification_id,
+    type = "message"
   )
   output$reportStatus <- shiny::renderUI({
     shiny::tagList(
@@ -175,7 +180,7 @@ frender_report <- function(file, output, template_name, notification_id,
     shiny::removeNotification(notification_id)
     shiny::showNotification(
       paste0("Report template not found: ", template_name),
-      type     = "error",
+      type = "error",
       duration = 10
     )
     return(invisible(NULL))
@@ -190,9 +195,13 @@ frender_report <- function(file, output, template_name, notification_id,
     }
     path <- file.path(out_dir, paste0(nm, "_", ts, ".png"))
     try(
-      ggplot2::ggsave(path,
-        plot = plt, width = 10, height = 8,
-        dpi = 150, bg = "white"
+      ggplot2::ggsave(
+        path,
+        plot = plt,
+        width = 10,
+        height = 8,
+        dpi = 150,
+        bg = "white"
       ),
       silent = TRUE
     )
@@ -220,7 +229,9 @@ frender_report <- function(file, output, template_name, notification_id,
   tryCatch(
     {
       tmp_dir <- file.path(tempdir(), paste0(tmp_dir_prefix, ts))
-      if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE)
+      if (!dir.exists(tmp_dir)) {
+        dir.create(tmp_dir, recursive = TRUE)
+      }
       tmp_qmd <- file.path(tmp_dir, template_name)
       file.copy(template_path, tmp_qmd, overwrite = TRUE)
 
@@ -232,13 +243,17 @@ frender_report <- function(file, output, template_name, notification_id,
 
       # 5. Copy rendered HTML to Shiny's expected path
       out_html <- file.path(tmp_dir, "report.html")
-      if (!file.exists(out_html)) stop("Rendered report not found at ", out_html)
+      if (!file.exists(out_html)) {
+        stop("Rendered report not found at ", out_html)
+      }
       file.copy(out_html, file, overwrite = TRUE)
 
       # 6a. Success
       shiny::removeNotification(notification_id)
-      shiny::showNotification("Report generated successfully!",
-        type = "message", duration = 3
+      shiny::showNotification(
+        "Report generated successfully!",
+        type = "message",
+        duration = 3
       )
       output$reportStatus <- shiny::renderUI({
         shiny::tagList(
@@ -255,7 +270,8 @@ frender_report <- function(file, output, template_name, notification_id,
       shiny::removeNotification(notification_id)
       shiny::showNotification(
         paste("Error generating report:", e$message),
-        type = "error", duration = 10
+        type = "error",
+        duration = 10
       )
       output$reportStatus <- shiny::renderUI({
         shiny::tagList(
@@ -311,7 +327,8 @@ fmake_tab_cache <- function(gg_reactive, tab_id, input, tabs_id = "tabs") {
 
   # Reset cache on every new analysis so the report handler's %||% fallback
   # re-evaluates the reactive rather than returning a plot from a prior run.
-  shiny::observeEvent(input$analyse,
+  shiny::observeEvent(
+    input$analyse,
     {
       cache(NULL)
     },
@@ -356,30 +373,119 @@ fmake_tab_cache <- function(gg_reactive, tab_id, input, tabs_id = "tabs") {
 #'
 #' @noRd
 #'
-fsetup_lock_observers <- function(input, check_lockIn, check_lockOut,
-                                  li_prefix, lo_prefix) {
+fsetup_lock_observers <- function(
+  input,
+  check_lockIn,
+  check_lockOut,
+  li_prefix,
+  lo_prefix
+) {
   get_feature <- function(id, prefix) stringr::str_remove(id, prefix)
 
-  lockIn_features <- purrr::map_chr(check_lockIn$id_in, get_feature, prefix = li_prefix)
-  lockOut_features <- purrr::map_chr(check_lockOut$id_in, get_feature, prefix = lo_prefix)
+  lockIn_features <- purrr::map_chr(
+    check_lockIn$id_in,
+    get_feature,
+    prefix = li_prefix
+  )
+  lockOut_features <- purrr::map_chr(
+    check_lockOut$id_in,
+    get_feature,
+    prefix = lo_prefix
+  )
 
   shared_features <- intersect(lockIn_features, lockOut_features)
 
   purrr::walk(shared_features, function(feat) {
     lockInId <- paste0(li_prefix, feat)
     lockOutId <- paste0(lo_prefix, feat)
-    shiny::observeEvent(input[[lockInId]],
+    shiny::observeEvent(
+      input[[lockInId]],
       {
         shinyjs::toggleState(lockOutId)
       },
       ignoreInit = TRUE
     )
-    shiny::observeEvent(input[[lockOutId]],
+    shiny::observeEvent(
+      input[[lockOutId]],
       {
         shinyjs::toggleState(lockInId)
       },
       ignoreInit = TRUE
     )
+  })
+
+  invisible(NULL)
+}
+
+
+#' Set up category lock observers for linked sliders
+#'
+#' For each category in \code{slider_vars}, registers an \code{observeEvent}
+#' on every individual slider in that category.  When a slider moves and the
+#' category lock toggle is \code{TRUE}, all other sliders in the same category
+#' are updated to the same value.
+#'
+#' A reactive cycle guard is applied: before calling
+#' \code{shiny::updateSliderInput()}, the current value of the target slider is
+#' read with \code{shiny::isolate()}.  If it already equals the new value, no
+#' update is sent, breaking the A -> B -> A cascade.
+#'
+#' Must be called from inside \code{shiny::moduleServer()} so that the
+#' observers are correctly bound to the active session.
+#'
+#' @param input Shiny input object (from the enclosing \code{moduleServer}).
+#' @param session Shiny session object (from the enclosing \code{moduleServer}).
+#' @param slider_vars Data frame. Output of \code{fcreate_vars()} with
+#'   \code{categoryOut = TRUE} and \code{byCategory = FALSE}. Must contain
+#'   columns \code{id_in}, \code{category}, \code{categoryID}.
+#' @param lock_prefix Character. Prefix used when building lock toggle input
+#'   IDs (e.g. \code{"lock_"} for scenario, \code{"lock1_"} for compare
+#'   scenario 1). The full ID is \code{paste0(lock_prefix, categoryID)}.
+#'
+#' @return Invisibly \code{NULL}. Called for its side-effect of registering
+#'   Shiny observers.
+#'
+#' @noRd
+#'
+fsetup_category_lock_observers <- function(
+  input,
+  session,
+  slider_vars,
+  lock_prefix = "lock_"
+) {
+  if (is.null(slider_vars) || nrow(slider_vars) == 0) {
+    return(invisible(NULL))
+  }
+
+  categories <- unique(slider_vars$category)
+
+  purrr::walk(categories, function(cat) {
+    cat_sliders <- dplyr::filter(slider_vars, .data$category == cat)
+    cat_id <- cat_sliders$categoryID[1]
+    lock_id <- paste0(lock_prefix, cat_id)
+
+    purrr::walk(cat_sliders$id_in, function(moved_id) {
+      shiny::observeEvent(
+        input[[moved_id]],
+        {
+          if (!isTRUE(input[[lock_id]])) {
+            return()
+          }
+          new_val <- input[[moved_id]]
+          others <- setdiff(cat_sliders$id_in, moved_id)
+          # Only update sliders whose current value differs from new_val.
+          # This breaks the reactive cascade: B's observer fires, sees its
+          # value already equals new_val, and skips the updateSliderInput call.
+          purrr::walk(others, function(other_id) {
+            current <- shiny::isolate(input[[other_id]])
+            if (!identical(current, new_val)) {
+              shiny::updateSliderInput(session, other_id, value = new_val)
+            }
+          })
+        },
+        ignoreInit = TRUE
+      )
+    })
   })
 
   invisible(NULL)
@@ -406,9 +512,14 @@ fsetup_lock_observers <- function(input, check_lockIn, check_lockOut,
 #'
 #' @noRd
 #'
-fDownloadPlotServer <- function(gg_reactive, gg_prefix, time_date_reactive,
-                                type = c("plot", "table"),
-                                width = 19, height = 18) {
+fDownloadPlotServer <- function(
+  gg_reactive,
+  gg_prefix,
+  time_date_reactive,
+  type = c("plot", "table"),
+  width = 19,
+  height = 18
+) {
   type <- match.arg(type)
 
   if (type == "plot") {
@@ -421,14 +532,19 @@ fDownloadPlotServer <- function(gg_reactive, gg_prefix, time_date_reactive,
         if (is.null(gg)) {
           shiny::showNotification(
             "Please run an analysis and generate the plot before downloading.",
-            type = "error", duration = 5
+            type = "error",
+            duration = 5
           )
           stop("No plot available to download.")
         }
-        ggplot2::ggsave(file,
+        ggplot2::ggsave(
+          file,
           plot = gg,
-          device = "png", width = width, height = height,
-          units = "in", dpi = 400
+          device = "png",
+          width = width,
+          height = height,
+          units = "in",
+          dpi = 400
         )
       }
     )
@@ -442,7 +558,8 @@ fDownloadPlotServer <- function(gg_reactive, gg_prefix, time_date_reactive,
         if (is.null(dat) || !is.data.frame(dat)) {
           shiny::showNotification(
             "No data available to download yet. Please run an analysis first.",
-            type = "error", duration = 5
+            type = "error",
+            duration = 5
           )
           stop("No data available to download.")
         }
@@ -475,7 +592,8 @@ fdownload_solution_geojson <- function(sol, file) {
   if (!inherits(sol, "sf")) {
     shiny::showNotification(
       "Please run an analysis before downloading the spatial file.",
-      type = "error", duration = 5
+      type = "error",
+      duration = 5
     )
     stop("No solution available.")
   }
@@ -493,6 +611,12 @@ fdownload_solution_geojson <- function(sol, file) {
     dplyr::select("solution") %>%
     sf::st_transform("EPSG:4326")
 
-  sf::st_write(sol_out, file, driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
+  sf::st_write(
+    sol_out,
+    file,
+    driver = "GeoJSON",
+    delete_dsn = TRUE,
+    quiet = TRUE
+  )
   invisible(NULL)
 }

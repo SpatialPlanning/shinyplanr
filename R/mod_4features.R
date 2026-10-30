@@ -14,7 +14,6 @@ mod_4features_ui <- function(id, cfg) {
 
   ns <- shiny::NS(id)
 
-
   check_ftd <- fcreate_check(
     id = id,
     Dict = Dict,
@@ -27,7 +26,8 @@ mod_4features_ui <- function(id, cfg) {
   shiny::tabsetPanel(
     id = ns("tabs4"),
     type = "pills",
-    shiny::tabPanel("Feature Density",
+    shiny::tabPanel(
+      "Feature Density",
       value = 3,
       shiny::sidebarLayout(
         shiny::sidebarPanel(
@@ -44,9 +44,11 @@ mod_4features_ui <- function(id, cfg) {
         shiny::mainPanel(
           shiny::p(""), # Add space
           shiny::h2("Examine Feature Density"),
-          shiny::p("This map shows the overall feature density for each planning unit within the domain.
+          shiny::p(
+            "This map shows the overall feature density for each planning unit within the domain.
                             Planning units with a higher density of features are more likely to be selected in a given scenario because
-                            (although it will depend on other factors such as targets and the cost layer)."),
+                            (although it will depend on other factors such as targets and the cost layer)."
+          ),
           shiny::p(""), # Add space
           shiny::plotOutput(ns("gg_dens"), height = "700px") %>%
             shinycssloaders::withSpinner(),
@@ -54,7 +56,8 @@ mod_4features_ui <- function(id, cfg) {
         )
       )
     ),
-    shiny::tabPanel("Feature Maps",
+    shiny::tabPanel(
+      "Feature Maps",
       value = 1,
       shiny::sidebarLayout(
         shiny::sidebarPanel(
@@ -74,7 +77,8 @@ mod_4features_ui <- function(id, cfg) {
         )
       )
     ),
-    shiny::tabPanel("Layer Information",
+    shiny::tabPanel(
+      "Layer Information",
       value = 2,
       shiny::fluidPage(
         shiny::tableOutput(ns("LayerTable")),
@@ -130,7 +134,12 @@ mod_4features_server <- function(id, cfg) {
 
       dens <- raw_sf %>%
         dplyr::mutate(DummyVar = 0) %>% # Create a dummy variable so it will still plot 0 when nothing selected
-        dplyr::mutate(FeatureSum = rowSums(dplyr::across(tidyselect::all_of(c(ftd, "DummyVar"))), na.rm = TRUE)) %>%
+        dplyr::mutate(
+          FeatureSum = rowSums(
+            dplyr::across(tidyselect::all_of(c(ftd, "DummyVar"))),
+            na.rm = TRUE
+          )
+        ) %>%
         dplyr::select("FeatureSum")
 
       gg <- spatialplanr::splnr_plot(
@@ -147,20 +156,26 @@ mod_4features_server <- function(id, cfg) {
           ggtheme = map_theme
         ) +
         ggplot2::theme(
-          plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-          legend.background = ggplot2::element_rect(fill = "transparent", colour = NA) # Makes the legend background transparent
+          plot.background = ggplot2::element_rect(
+            fill = "transparent",
+            colour = NA
+          ),
+          legend.background = ggplot2::element_rect(
+            fill = "transparent",
+            colour = NA
+          ) # Makes the legend background transparent
         )
       return(gg)
-    }) %>% shiny::bindCache(checked_ftd())
-
+    }) %>%
+      shiny::bindCache(checked_ftd())
 
     output$gg_dens <- shiny::renderPlot(
       {
         plotDensity()
       },
       bg = "transparent"
-    ) %>% shiny::bindCache(checked_ftd())
-
+    ) %>%
+      shiny::bindCache(checked_ftd())
 
     plotFeature <- shiny::reactive({
       sel <- input$checkFeat
@@ -168,12 +183,12 @@ mod_4features_server <- function(id, cfg) {
       # Determine if the selected value is a combined bioregion display column
       # (i.e. a categoryID added by fbuild_bioregion_display(), not a Dict nameVariable).
       # These columns are present in raw_sf but have no Dict row of their own.
-      is_bioregion_display <- sel %in% (
-        Dict %>%
+      is_bioregion_display <- sel %in%
+        (Dict %>%
           dplyr::filter(.data$type == "Bioregion") %>%
           dplyr::pull("categoryID") %>%
-          unique()
-      ) && sel %in% names(raw_sf)
+          unique()) &&
+        sel %in% names(raw_sf)
 
       if (is_bioregion_display) {
         # Combined bioregion column: integer zone index 1..N.
@@ -188,11 +203,13 @@ mod_4features_server <- function(id, cfg) {
           sf::st_drop_geometry() %>%
           dplyr::pull(dplyr::all_of(sel))
         zone_levels <- sort(unique(zone_vals))
-        n_zones     <- length(zone_levels)
+        n_zones <- length(zone_levels)
         palette_cols <- grDevices::hcl.colors(n_zones, palette = "Set2")
 
         plot_sf <- raw_sf %>%
-          dplyr::mutate(dplyr::across(dplyr::all_of(sel), \(x) factor(x, levels = zone_levels)))
+          dplyr::mutate(dplyr::across(dplyr::all_of(sel), \(x) {
+            factor(x, levels = zone_levels)
+          }))
 
         gg <- spatialplanr::splnr_plot(
           df = plot_sf,
@@ -207,14 +224,20 @@ mod_4features_server <- function(id, cfg) {
             ggtheme = map_theme
           ) +
           ggplot2::scale_fill_manual(
-            values   = stats::setNames(palette_cols, as.character(zone_levels)),
+            values = stats::setNames(palette_cols, as.character(zone_levels)),
             na.value = "grey80",
-            name     = pl_title,
-            labels   = function(x) paste0("Zone ", x)
+            name = pl_title,
+            labels = function(x) paste0("Zone ", x)
           ) +
           ggplot2::theme(
-            plot.background   = ggplot2::element_rect(fill = "transparent", colour = NA),
-            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+            plot.background = ggplot2::element_rect(
+              fill = "transparent",
+              colour = NA
+            ),
+            legend.background = ggplot2::element_rect(
+              fill = "transparent",
+              colour = NA
+            )
           )
 
         return(gg)
@@ -247,13 +270,20 @@ mod_4features_server <- function(id, cfg) {
             ggtheme = map_theme
           ) +
           ggplot2::theme(
-            plot.background  = ggplot2::element_rect(fill = "transparent", colour = NA),
-            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+            plot.background = ggplot2::element_rect(
+              fill = "transparent",
+              colour = NA
+            ),
+            legend.background = ggplot2::element_rect(
+              fill = "transparent",
+              colour = NA
+            )
           )
 
         return(gg)
       } else {
-        gg <- spatialplanr::splnr_plot(raw_sf,
+        gg <- spatialplanr::splnr_plot(
+          raw_sf,
           colNames = sel,
           legendTitle = pl_title,
           base_size = options$base_size
@@ -265,22 +295,28 @@ mod_4features_server <- function(id, cfg) {
             ggtheme = map_theme
           ) +
           ggplot2::theme(
-            plot.background  = ggplot2::element_rect(fill = "transparent", colour = NA),
-            legend.background = ggplot2::element_rect(fill = "transparent", colour = NA)
+            plot.background = ggplot2::element_rect(
+              fill = "transparent",
+              colour = NA
+            ),
+            legend.background = ggplot2::element_rect(
+              fill = "transparent",
+              colour = NA
+            )
           )
 
         return(gg)
       }
-    }) %>% shiny::bindCache(input$checkFeat)
-
+    }) %>%
+      shiny::bindCache(input$checkFeat)
 
     output$gg_feat <- shiny::renderPlot(
       {
         plotFeature()
       },
       bg = "transparent"
-    ) %>% shiny::bindCache(input$checkFeat)
-
+    ) %>%
+      shiny::bindCache(input$checkFeat)
 
     # Feature justification table
     output$LayerTable <- shiny::renderTable({
@@ -288,8 +324,8 @@ mod_4features_server <- function(id, cfg) {
         dplyr::filter(.data$includeJust == TRUE) %>%
         dplyr::select("category", "nameCommon", "justification") %>%
         dplyr::rename(
-          Category      = "category",
-          Name          = "nameCommon",
+          Category = "category",
+          Name = "nameCommon",
           Justification = "justification"
         ) %>%
         dplyr::arrange(.data$Category, .data$Name)
@@ -307,7 +343,6 @@ mod_4features_server <- function(id, cfg) {
     })
   })
 }
-
 
 ## To be copied in the UI
 # mod_4features_ui("4features_ui_1")

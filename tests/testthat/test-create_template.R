@@ -10,7 +10,10 @@
 # ---------------------------------------------------------------------------
 
 make_template <- function(country = "TestIsland", ...) {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_", country, "_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_", country, "_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages(
@@ -40,9 +43,9 @@ test_that("create_shinyplanr_template() stops when country is missing", {
 test_that("create_shinyplanr_template() stops when country is empty string", {
   expect_error(
     create_shinyplanr_template(
-      country    = "",
+      country = "",
       output_dir = tempdir(),
-      use_renv   = FALSE
+      use_renv = FALSE
     ),
     regexp = "country"
   )
@@ -51,10 +54,10 @@ test_that("create_shinyplanr_template() stops when country is empty string", {
 test_that("create_shinyplanr_template() stops when crs is empty string", {
   expect_error(
     create_shinyplanr_template(
-      country    = "TestIsland",
-      crs        = "",
+      country = "TestIsland",
+      crs = "",
       output_dir = tempdir(),
-      use_renv   = FALSE
+      use_renv = FALSE
     ),
     regexp = "crs"
   )
@@ -63,10 +66,10 @@ test_that("create_shinyplanr_template() stops when crs is empty string", {
 test_that("create_shinyplanr_template() stops when oceandatr is not logical", {
   expect_error(
     create_shinyplanr_template(
-      country    = "TestIsland",
-      oceandatr  = "yes",
+      country = "TestIsland",
+      oceandatr = "yes",
       output_dir = tempdir(),
-      use_renv   = FALSE
+      use_renv = FALSE
     ),
     regexp = "oceandatr"
   )
@@ -75,8 +78,8 @@ test_that("create_shinyplanr_template() stops when oceandatr is not logical", {
 test_that("create_shinyplanr_template() stops when use_renv is not logical", {
   expect_error(
     create_shinyplanr_template(
-      country    = "TestIsland",
-      use_renv   = "no",
+      country = "TestIsland",
+      use_renv = "no",
       output_dir = tempdir()
     ),
     regexp = "use_renv"
@@ -88,14 +91,17 @@ test_that("create_shinyplanr_template() stops when use_renv is not logical", {
 # ---------------------------------------------------------------------------
 
 test_that("create_shinyplanr_template() invisibly returns the output directory path", {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_ReturnTest_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_ReturnTest_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   result <- suppressMessages(
     create_shinyplanr_template(
-      country      = "ReturnTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "ReturnTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -113,9 +119,9 @@ test_that("create_shinyplanr_template() creates the expected top-level directori
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "DirTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "DirTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -139,9 +145,9 @@ test_that("create_shinyplanr_template() creates app.R in the project root", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "FileTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "FileTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -150,14 +156,17 @@ test_that("create_shinyplanr_template() creates app.R in the project root", {
 })
 
 test_that("create_shinyplanr_template() creates deploy.R in the project root", {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_DeployTest_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_DeployTest_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "DeployTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "DeployTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -166,14 +175,17 @@ test_that("create_shinyplanr_template() creates deploy.R in the project root", {
 })
 
 test_that("create_shinyplanr_template() creates a root .renvignore that excludes deploy.R", {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_RenvIgnoreTest_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_RenvIgnoreTest_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "RenvIgnoreTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "RenvIgnoreTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -189,14 +201,17 @@ test_that("create_shinyplanr_template() creates a root .renvignore that excludes
 })
 
 test_that("create_shinyplanr_template() creates setup/.renvignore that excludes all setup/ files", {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_SetupRenvIgnoreTest_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_SetupRenvIgnoreTest_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "SetupRenvIgnoreTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "SetupRenvIgnoreTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -220,9 +235,9 @@ test_that("create_shinyplanr_template() creates the three setup scripts", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "SetupTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "SetupTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -239,9 +254,9 @@ test_that("create_shinyplanr_template() creates setup/content/custom.css", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "CssTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "CssTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -270,9 +285,9 @@ test_that("create_shinyplanr_template() creates Dict_Feature.csv in setup/", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "DictTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "DictTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -290,9 +305,9 @@ test_that("create_shinyplanr_template() creates .Rproj when create_rproj = TRUE"
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "RprojTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "RprojTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = TRUE
     )
   )
@@ -301,14 +316,17 @@ test_that("create_shinyplanr_template() creates .Rproj when create_rproj = TRUE"
 })
 
 test_that("create_shinyplanr_template() does NOT create .Rproj when create_rproj = FALSE", {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_NoRprojTest_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_NoRprojTest_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "NoRprojTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "NoRprojTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
@@ -327,10 +345,10 @@ test_that("create_shinyplanr_template() succeeds with oceandatr = FALSE", {
   expect_no_error(
     suppressMessages(
       create_shinyplanr_template(
-        country      = "NoOcean",
-        oceandatr    = FALSE,
-        output_dir   = out_dir,
-        use_renv     = FALSE,
+        country = "NoOcean",
+        oceandatr = FALSE,
+        output_dir = out_dir,
+        use_renv = FALSE,
         create_rproj = FALSE
       )
     )
@@ -349,14 +367,17 @@ test_that("3_setup_app.R sets include_ess = FALSE by default", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "EssTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "EssTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
 
-  setup_app <- readLines(file.path(out_dir, "setup", "3_setup_app.R"), warn = FALSE)
+  setup_app <- readLines(
+    file.path(out_dir, "setup", "3_setup_app.R"),
+    warn = FALSE
+  )
   setup_app_text <- paste(setup_app, collapse = "\n")
 
   expect_true(
@@ -370,24 +391,34 @@ test_that("3_setup_app.R sets include_ess = FALSE by default", {
 # ---------------------------------------------------------------------------
 
 test_that("3_setup_app.R references get_schema_version() without ::: operator", {
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_SchemaTest_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_SchemaTest_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "SchemaTest",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "SchemaTest",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE
     )
   )
 
-  setup_app <- readLines(file.path(out_dir, "setup", "3_setup_app.R"), warn = FALSE)
+  setup_app <- readLines(
+    file.path(out_dir, "setup", "3_setup_app.R"),
+    warn = FALSE
+  )
   setup_app_text <- paste(setup_app, collapse = "\n")
 
   # Should use the public get_schema_version() function, not the internal :::
   expect_false(
-    grepl("shinyplanr:::.shinyplanr_schema_version", setup_app_text, fixed = TRUE),
+    grepl(
+      "shinyplanr:::.shinyplanr_schema_version",
+      setup_app_text,
+      fixed = TRUE
+    ),
     label = "3_setup_app.R must not use ::: to access internal schema version"
   )
   expect_true(
@@ -406,9 +437,9 @@ test_that("Dict_Feature.csv contains both LockIn and LockOut MPA rows when inclu
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "MpaDict",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "MpaDict",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE,
       include_mpas = TRUE
     )
@@ -433,9 +464,9 @@ test_that("Dict_Feature.csv contains no MPA rows when include_mpas = FALSE", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "NoMpaDict",
-      output_dir   = out_dir,
-      use_renv     = FALSE,
+      country = "NoMpaDict",
+      output_dir = out_dir,
+      use_renv = FALSE,
       create_rproj = FALSE,
       include_mpas = FALSE
     )
@@ -466,7 +497,10 @@ test_that("Dict_Feature.csv contains no MPA rows when include_mpas = FALSE", {
 test_that(".Rprofile gets ~/.Renviron prepend when use_renv = TRUE", {
   skip_if_not_installed("renv")
 
-  out_dir <- file.path(tempdir(), paste0("shinyplanr_RenvProfile_", Sys.getpid()))
+  out_dir <- file.path(
+    tempdir(),
+    paste0("shinyplanr_RenvProfile_", Sys.getpid())
+  )
   on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
 
   # Mock renv::init() to write the minimal .Rprofile renv would produce,
@@ -483,19 +517,23 @@ test_that(".Rprofile gets ~/.Renviron prepend when use_renv = TRUE", {
 
   suppressMessages(
     create_shinyplanr_template(
-      country      = "RenvProfile",
-      output_dir   = out_dir,
-      use_renv     = TRUE,
+      country = "RenvProfile",
+      output_dir = out_dir,
+      use_renv = TRUE,
       create_rproj = FALSE
     )
   )
 
   rprofile_path <- file.path(out_dir, ".Rprofile")
-  expect_true(file.exists(rprofile_path),
+  expect_true(
+    file.exists(rprofile_path),
     label = ".Rprofile should exist when use_renv = TRUE"
   )
 
-  rprofile_text <- paste(readLines(rprofile_path, warn = FALSE), collapse = "\n")
+  rprofile_text <- paste(
+    readLines(rprofile_path, warn = FALSE),
+    collapse = "\n"
+  )
 
   expect_true(
     grepl("readRenviron", rprofile_text),
@@ -514,7 +552,8 @@ test_that(".Rprofile gets ~/.Renviron prepend when use_renv = TRUE", {
   # when renv/activate.R runs.
   renviron_pos <- regexpr("readRenviron", rprofile_text)
   activate_pos <- regexpr('source\\("renv/activate\\.R"\\)', rprofile_text)
-  expect_true(renviron_pos < activate_pos,
+  expect_true(
+    renviron_pos < activate_pos,
     label = "~/.Renviron load should appear before renv activate"
   )
 })
