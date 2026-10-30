@@ -642,3 +642,147 @@ test_that("fcalculate_feature_density() ignores Dict entries absent from raw_sf 
   # PU5: 0.1+0.6 (features) + 0 (EnviroZone) = 0.7
   expect_equal(result, c(2.1, 1.9, 0.9, 2.0, 0.7))
 })
+
+# ---------------------------------------------------------------------------
+# fbuild_bioregion_display()
+# ---------------------------------------------------------------------------
+#
+# fbuild_bioregion_display() adds one integer column per unique categoryID in
+# the Bioregion rows of Dict. Each column is named after the categoryID and
+# contains the zone index (1..N) derived from which.max() across the
+# corresponding binary zone columns. It is a no-op when Dict has no Bioregion
+# rows.
+#
+# These tests exercise the function directly; fcalculate_feature_density()
+# already calls it indirectly but does not assert on the derived columns.
+
+make_bioregion_sf <- function() {
+  # 4 planning units; 3 binary zone columns for one bioregionalisation
+  # (EnviroZone) and 2 for another (DepthZone).
+  # PU1: EnviroZone 1, DepthZone 1
+  # PU2: EnviroZone 2, DepthZone 1
+  # PU3: EnviroZone 3, DepthZone 2
+  # PU4: EnviroZone 1, DepthZone 2
+  sf::st_sf(
+    enviro_zone_1 = c(1L, 0L, 0L, 1L),
+    enviro_zone_2 = c(0L, 1L, 0L, 0L),
+    enviro_zone_3 = c(0L, 0L, 1L, 0L),
+    depth_zone_1  = c(1L, 1L, 0L, 0L),
+    depth_zone_2  = c(0L, 0L, 1L, 1L),
+    feature_A     = c(1L, 0L, 1L, 0L),
+    geometry = sf::st_sfc(
+      lapply(1:4, function(i) sf::st_point(c(i, i))),
+      crs = 4326
+    )
+  )
+}
+
+make_bioregion_dict <- function() {
+  data.frame(
+    nameCommon   = c("EZ1", "EZ2", "EZ3", "DZ1", "DZ2", "Feature A"),
+    nameVariable = c(
+      "enviro_zone_1", "enviro_zone_2", "enviro_zone_3",
+      "depth_zone_1", "depth_zone_2",
+      "feature_A"
+    ),
+    category   = c("EnviroZone", "EnviroZone", "EnviroZone", "DepthZone", "DepthZone", "Habitat"),
+    categoryID = c("EnviroZone", "EnviroZone", "EnviroZone", "DepthZone", "DepthZone", "Hab"),
+    type       = c("Bioregion", "Bioregion", "Bioregion", "Bioregion", "Bioregion", "Feature"),
+    targetInitial = c(30, 30, 30, 30, 30, 30),
+    targetMin     = c(0, 0, 0, 0, 0, 0),
+    targetMax     = c(85, 85, 85, 85, 85, 85),
+    includeApp    = TRUE,
+    includeJust   = TRUE,
+    justification = "Stub.",
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("fbuild_bioregion_display() is a no-op when Dict has no Bioregion rows", {
+  raw_sf <- make_bioregion_sf()
+  Dict_no_bio <- make_bioregion_dict() %>%
+    dplyr::filter(.data$type != "Bioregion")
+
+  result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict_no_bio)
+
+  # No new columns should be added
+  expect_equal(names(result), names(raw_sf))
+  expect_equal(nrow(result), nrow(raw_sf))
+})
+
+test_that("fbuild_bioregion_display() adds one column per unique categoryID", {
+  raw_sf <- make_bioregion_sf()
+  Dict   <- make_bioregion_dict()
+
+  result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
+
+  # Two unique categoryIDs: EnviroZone and DepthZone
+  expect_true("EnviroZone" %in% names(result))
+  expect_true("DepthZone"  %in% names(result))
+})
+
+test_that("fbuild_bioregion_display() derived column contains correct zone indices", {
+  raw_sf <- make_bioregion_sf()
+  Dict   <- make_bioregion_dict()
+
+  result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
+
+  # EnviroZone columns: enviro_zone_1, enviro_zone_2, enviro_zone_3
+  # which.max() across each row:
+  # PU1: (1,0,0) -> zone 1
+  # PU2: (0,1,0) -> zone 2
+  # PU3: (0,0,1) -> zone 3
+  # PU4: (1,0,0) -> zone 1
+  expect_equal(sf::st_drop_geometry(result)$EnviroZone, c(1L, 2L, 3L, 1L))
+})
+
+test_that("fbuild_bioregion_display() handles multiple independent bioregion schemes", {
+  raw_sf <- make_bioregion_sf()
+  Dict   <- make_bioregion_dict()
+
+  result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
+
+  # DepthZone columns: depth_zone_1, depth_zone_2
+  # PU1: (1,0) -> zone 1
+  # PU2: (1,0) -> zone 1
+  # PU3: (0,1) -> zone 2
+  # PU4: (0,1) -> zone 2
+  expect_equal(sf::st_drop_geometry(result)$DepthZone, c(1L, 1L, 2L, 2L))
+})
+
+test_that("fbuild_bioregion_display() preserves existing columns unchanged", {
+  raw_sf <- make_bioregion_sf()
+  Dict   <- make_bioregion_dict()
+
+  result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
+
+  # feature_A and the raw binary zone columns must be unchanged
+  expect_equal(
+    sf::st_drop_geometry(result)$feature_A,
+    sf::st_drop_geometry(raw_sf)$feature_A
+  )
+  expect_equal(
+    sf::st_drop_geometry(result)$enviro_zone_1,
+    sf::st_drop_geometry(raw_sf)$enviro_zone_1
+  )
+})
+
+test_that("fbuild_bioregion_display() derived column is NOT added to Dict (display-only)", {
+  raw_sf <- make_bioregion_sf()
+  Dict   <- make_bioregion_dict()
+
+  shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
+
+  # Dict must not be modified — the derived column is display-only
+  expect_false("EnviroZone" %in% Dict$nameVariable)
+  expect_false("DepthZone"  %in% Dict$nameVariable)
+})
+
+test_that("fbuild_bioregion_display() result is still an sf object", {
+  raw_sf <- make_bioregion_sf()
+  Dict   <- make_bioregion_dict()
+
+  result <- shinyplanr:::fbuild_bioregion_display(raw_sf, Dict)
+
+  expect_s3_class(result, "sf")
+})

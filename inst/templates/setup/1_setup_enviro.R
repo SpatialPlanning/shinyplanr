@@ -57,7 +57,7 @@ if (!nzchar(Sys.which('quarto'))) {
 #      - Scopes: leave ALL boxes UNCHECKED (public repos need no scope)
 #      - Click 'Generate token' and copy it (starts with ghp_...)
 #
-if (!requireNamespace('gitcreds', quietly = TRUE)) install.packages('gitcreds', quiet = TRUE)
+renv::install('gitcreds', prompt = FALSE)
 local({
   cred <- tryCatch(gitcreds::gitcreds_get(), error = function(e) NULL)
   if (is.null(cred) || !nzchar(cred$password)) {
@@ -113,7 +113,7 @@ renv::install(c(
   "leafgl", "leaflet", "htmltools", "patchwork", "gridExtra", "reactable",
   "shinyalert", "shinycssloaders", "shinydisconnect", "shinyjs",
   "prioritizr", "highs", "rnaturalearth", "rnaturalearthdata", "units",
-  "quarto", "withr", "rsconnect", "ggridges", "kableExtra"
+  "quarto", "withr", "rsconnect", "ggridges", "kableExtra", "rstudioapi"
 ), prompt = FALSE)
 
 # =============================================================================

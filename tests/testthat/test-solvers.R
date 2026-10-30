@@ -420,3 +420,196 @@ test_that("fdefine_problem() errors when no features are selected (known latent 
     )
   )
 })
+
+# ---------------------------------------------------------------------------
+# fdefine_problem() — lock-in and lock-out constraints
+#
+# The purrr::reduce() loops over get_lockIn() / get_lockOut() results and
+# calls prioritizr::add_locked_in_constraints() / add_locked_out_constraints()
+# for each selected variable. These paths are exercised by adding checkLI_ /
+# checkLO_ entries to the input list.
+#
+# We verify the returned ConservationProblem has the expected constraint type
+# by inspecting prioritizr::constraints(prob), which returns a list of
+# constraint objects. Each has a $data$locked_in (or $data$locked_out) element.
+# ---------------------------------------------------------------------------
+
+# Helper: make a 4-cell sf with a binary lock-in column (mpas) and a binary
+# lock-out column (shipping). PU1 is an MPA; PU4 is a shipping lane.
+make_test_sf_with_locks <- function() {
+  sf::st_sf(
+    feature_A = c(1, 0, 1, 0),
+    feature_B = c(0, 1, 1, 0),
+    Cost_Area = c(1, 1, 2, 1),
+    mpas      = c(TRUE, FALSE, FALSE, FALSE),
+    shipping  = c(FALSE, FALSE, FALSE, TRUE),
+    geometry  = sf::st_sfc(
+      sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
+      sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(0, 0, 1, 1, 0)))),
+      sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(1, 1, 2, 2, 1)))),
+      sf::st_polygon(list(cbind(c(1, 2, 2, 1, 1), c(1, 1, 2, 2, 1)))),
+      crs = "ESRI:54009"
+    )
+  )
+}
+
+test_that("fdefine_problem() applies lock-in constraint when checkLI_ input is TRUE", {
+  raw_sf  <- make_test_sf_with_locks()
+  targets <- data.frame(feature = c("feature_A", "feature_B"), target = c(0.5, 0.5))
+  options <- list(
+    obj_func       = "min_set",
+    climate_change = 0L,
+    percentile     = 10,
+    direction      = -1,
+    refugiaTarget  = 0.1
+  )
+  # checkLI_mpas = TRUE signals that the "mpas" column should be locked in
+  input <- list(
+    costid      = "Cost_Area",
+    climateid   = "NA",
+    checkLI_mpas = TRUE
+  )
+
+  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
+  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+
+  prob <- shinyplanr:::fdefine_problem(
+    targets    = targets,
+    raw_sf     = raw_sf,
+    options    = options,
+    input      = input,
+    name_check = "sli_",
+    clim_input = "NA",
+    compare_id = ""
+  )
+
+  expect_s3_class(prob, "ConservationProblem")
+
+  # Confirm a locked-in constraint is present by inspecting the R6 field.
+  # prob$constraints is a list of R6 constraint objects; each has a $name
+  # field (plain character) and a class vector starting with the constraint
+  # type (e.g. "LockedInConstraint").
+  constraint_names <- vapply(
+    prob$constraints,
+    function(x) x$name,
+    character(1L)
+  )
+  expect_true(any(grepl("locked in", constraint_names, ignore.case = TRUE)))
+})
+
+test_that("fdefine_problem() applies lock-out constraint when checkLO_ input is TRUE", {
+  raw_sf  <- make_test_sf_with_locks()
+  targets <- data.frame(feature = c("feature_A", "feature_B"), target = c(0.5, 0.5))
+  options <- list(
+    obj_func       = "min_set",
+    climate_change = 0L,
+    percentile     = 10,
+    direction      = -1,
+    refugiaTarget  = 0.1
+  )
+  # checkLO_shipping = TRUE signals that the "shipping" column should be locked out
+  input <- list(
+    costid           = "Cost_Area",
+    climateid        = "NA",
+    checkLO_shipping = TRUE
+  )
+
+  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
+  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+
+  prob <- shinyplanr:::fdefine_problem(
+    targets    = targets,
+    raw_sf     = raw_sf,
+    options    = options,
+    input      = input,
+    name_check = "sli_",
+    clim_input = "NA",
+    compare_id = ""
+  )
+
+  expect_s3_class(prob, "ConservationProblem")
+
+  constraint_names <- vapply(
+    prob$constraints,
+    function(x) x$name,
+    character(1L)
+  )
+  expect_true(any(grepl("locked out", constraint_names, ignore.case = TRUE)))
+})
+
+test_that("fdefine_problem() applies both lock-in and lock-out when both inputs are TRUE", {
+  raw_sf  <- make_test_sf_with_locks()
+  targets <- data.frame(feature = c("feature_A", "feature_B"), target = c(0.5, 0.5))
+  options <- list(
+    obj_func       = "min_set",
+    climate_change = 0L,
+    percentile     = 10,
+    direction      = -1,
+    refugiaTarget  = 0.1
+  )
+  input <- list(
+    costid           = "Cost_Area",
+    climateid        = "NA",
+    checkLI_mpas     = TRUE,
+    checkLO_shipping = TRUE
+  )
+
+  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
+  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+
+  prob <- shinyplanr:::fdefine_problem(
+    targets    = targets,
+    raw_sf     = raw_sf,
+    options    = options,
+    input      = input,
+    name_check = "sli_",
+    clim_input = "NA",
+    compare_id = ""
+  )
+
+  expect_s3_class(prob, "ConservationProblem")
+
+  constraint_names <- vapply(
+    prob$constraints,
+    function(x) x$name,
+    character(1L)
+  )
+  expect_true(any(grepl("locked in",  constraint_names, ignore.case = TRUE)))
+  expect_true(any(grepl("locked out", constraint_names, ignore.case = TRUE)))
+})
+
+test_that("fdefine_problem() with lock-in produces a solvable problem (PU1 always selected)", {
+  raw_sf  <- make_test_sf_with_locks()
+  targets <- data.frame(feature = c("feature_A", "feature_B"), target = c(0.5, 0.5))
+  options <- list(
+    obj_func       = "min_set",
+    climate_change = 0L,
+    percentile     = 10,
+    direction      = -1,
+    refugiaTarget  = 0.1
+  )
+  input <- list(
+    costid       = "Cost_Area",
+    climateid    = "NA",
+    checkLI_mpas = TRUE
+  )
+
+  local_mocked_bindings(runjs = function(...) invisible(NULL), .package = "shinyjs")
+  local_mocked_bindings(shinyalert = function(...) invisible(NULL), .package = "shinyalert")
+
+  prob <- shinyplanr:::fdefine_problem(
+    targets    = targets,
+    raw_sf     = raw_sf,
+    options    = options,
+    input      = input,
+    name_check = "sli_",
+    clim_input = "NA",
+    compare_id = ""
+  )
+
+  sol <- shinyplanr:::fsolve_problem(prob)
+
+  # PU1 has mpas = TRUE (locked in) so solution_1[1] must be 1
+  expect_s3_class(sol, "sf")
+  expect_equal(sol$solution_1[1], 1L)
+})

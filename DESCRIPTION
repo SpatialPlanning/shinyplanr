@@ -42,6 +42,7 @@ Imports:
     highs,
     htmltools,
     httpuv,
+    kableExtra,
     leafgl,
     leaflet,
     magrittr,
@@ -67,7 +68,6 @@ Imports:
     tidyselect,
     withr
 Suggests:
-    kableExtra,
     knitr,
     rcbc,
     renv,
