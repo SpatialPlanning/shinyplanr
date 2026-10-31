@@ -78,12 +78,17 @@ mod_3compare_ui <- function(id, cfg) {
         style = "display: block; margin-left: auto; margin-right: auto; padding:4px; font-size:120%"
       ),
       shiny::splitLayout(
-        fcustom_sliderCategory(Vars1, labelNum = 1, lock_prefix = "lock1_"),
+        fcustom_sliderCategory(
+          Vars1,
+          labelNum = 1,
+          lock_prefix = "lock1_",
+          lock_label = "Lock Scenario 1 targets"
+        ),
         fcustom_sliderCategory(
           Vars2,
           labelNum = 1,
-          labelCategory = FALSE,
-          lock_prefix = "lock2_"
+          lock_prefix = "lock2_",
+          lock_label = "Lock Scenario 2 targets"
         )
       ),
       shinyjs::hidden(div(
@@ -98,6 +103,20 @@ mod_3compare_ui <- function(id, cfg) {
           " Grouped Features"
         )),
         shiny::splitLayout(
+          shinyWidgets::materialSwitch(
+            inputId = ns("lock_silent1"),
+            label = "Lock Scenario 1 targets",
+            value = FALSE,
+            status = "primary"
+          ),
+          shinyWidgets::materialSwitch(
+            inputId = ns("lock_silent2"),
+            label = "Lock Scenario 2 targets",
+            value = FALSE,
+            status = "primary"
+          )
+        ),
+        shiny::splitLayout(
           fcustom_sliderCategory(
             slider_varsSilent1,
             labelNum = 1,
@@ -106,8 +125,7 @@ mod_3compare_ui <- function(id, cfg) {
           fcustom_sliderCategory(
             slider_varsSilent2,
             labelNum = 1,
-            byCategory = TRUE,
-            labelCategory = FALSE
+            byCategory = TRUE
           )
         ),
       )),
@@ -124,6 +142,20 @@ mod_3compare_ui <- function(id, cfg) {
           " Bioregions"
         )),
         shiny::splitLayout(
+          shinyWidgets::materialSwitch(
+            inputId = ns("lock_bioregion1"),
+            label = "Lock Scenario 1 targets",
+            value = FALSE,
+            status = "primary"
+          ),
+          shinyWidgets::materialSwitch(
+            inputId = ns("lock_bioregion2"),
+            label = "Lock Scenario 2 targets",
+            value = FALSE,
+            status = "primary"
+          )
+        ),
+        shiny::splitLayout(
           fcustom_sliderCategory(
             slider_varsBioR1,
             labelNum = 1,
@@ -132,8 +164,7 @@ mod_3compare_ui <- function(id, cfg) {
           fcustom_sliderCategory(
             slider_varsBioR2,
             labelNum = 1,
-            byCategory = TRUE,
-            labelCategory = FALSE
+            byCategory = TRUE
           )
         ),
       )),
@@ -608,10 +639,123 @@ mod_3compare_server <- function(id, cfg) {
       lock_prefix = "lock2_"
     )
 
-    # Copy all Scenario 2 targets to Scenario 1 (sli2_ -> sli1_)
+    # Silent features lock for Scenario 1: lock_silent1 syncs all slider_varsSilent1 sliders
+    if (!is.null(slider_varsSilent1) && nrow(slider_varsSilent1) > 0) {
+      purrr::walk(slider_varsSilent1$id_in, function(moved_id) {
+        shiny::observeEvent(
+          input[[moved_id]],
+          {
+            if (!isTRUE(input$lock_silent1)) {
+              return()
+            }
+            new_val <- input[[moved_id]]
+            others <- setdiff(slider_varsSilent1$id_in, moved_id)
+            purrr::walk(others, function(other_id) {
+              current <- shiny::isolate(input[[other_id]])
+              if (!identical(current, new_val)) {
+                shiny::updateSliderInput(session, other_id, value = new_val)
+              }
+            })
+          },
+          ignoreInit = TRUE
+        )
+      })
+    }
+
+    # Silent features lock for Scenario 2: lock_silent2 syncs all slider_varsSilent2 sliders
+    if (!is.null(slider_varsSilent2) && nrow(slider_varsSilent2) > 0) {
+      purrr::walk(slider_varsSilent2$id_in, function(moved_id) {
+        shiny::observeEvent(
+          input[[moved_id]],
+          {
+            if (!isTRUE(input$lock_silent2)) {
+              return()
+            }
+            new_val <- input[[moved_id]]
+            others <- setdiff(slider_varsSilent2$id_in, moved_id)
+            purrr::walk(others, function(other_id) {
+              current <- shiny::isolate(input[[other_id]])
+              if (!identical(current, new_val)) {
+                shiny::updateSliderInput(session, other_id, value = new_val)
+              }
+            })
+          },
+          ignoreInit = TRUE
+        )
+      })
+    }
+
+    # Bioregion lock for Scenario 1: lock_bioregion1 syncs all slider_varsBioR1 sliders
+    if (!is.null(slider_varsBioR1) && nrow(slider_varsBioR1) > 0) {
+      purrr::walk(slider_varsBioR1$id_in, function(moved_id) {
+        shiny::observeEvent(
+          input[[moved_id]],
+          {
+            if (!isTRUE(input$lock_bioregion1)) {
+              return()
+            }
+            new_val <- input[[moved_id]]
+            others <- setdiff(slider_varsBioR1$id_in, moved_id)
+            purrr::walk(others, function(other_id) {
+              current <- shiny::isolate(input[[other_id]])
+              if (!identical(current, new_val)) {
+                shiny::updateSliderInput(session, other_id, value = new_val)
+              }
+            })
+          },
+          ignoreInit = TRUE
+        )
+      })
+    }
+
+    # Bioregion lock for Scenario 2: lock_bioregion2 syncs all slider_varsBioR2 sliders
+    if (!is.null(slider_varsBioR2) && nrow(slider_varsBioR2) > 0) {
+      purrr::walk(slider_varsBioR2$id_in, function(moved_id) {
+        shiny::observeEvent(
+          input[[moved_id]],
+          {
+            if (!isTRUE(input$lock_bioregion2)) {
+              return()
+            }
+            new_val <- input[[moved_id]]
+            others <- setdiff(slider_varsBioR2$id_in, moved_id)
+            purrr::walk(others, function(other_id) {
+              current <- shiny::isolate(input[[other_id]])
+              if (!identical(current, new_val)) {
+                shiny::updateSliderInput(session, other_id, value = new_val)
+              }
+            })
+          },
+          ignoreInit = TRUE
+        )
+      })
+    }
+
+    # Copy all Scenario 2 targets to Scenario 1 (sli2_ -> sli1_).
+    # Lock toggles are temporarily disabled before copying so that the
+    # category-lock observers do not propagate values and overwrite the
+    # individual targets being set. Lock states are restored afterwards.
     shiny::observeEvent(
       input$copyFromScen2,
       {
+        # Collect all Scenario 1 lock IDs (per-category + section-level)
+        lock1_ids <- c(
+          paste0("lock1_", unique(Vars1$categoryID)),
+          "lock_silent1",
+          "lock_bioregion1"
+        )
+        # Capture current lock states before disabling
+        lock1_states <- purrr::map(
+          lock1_ids,
+          ~ shiny::isolate(input[[.x]]) %||% FALSE
+        )
+        # Disable all Scenario 1 locks so copy does not trigger propagation
+        purrr::walk(
+          lock1_ids,
+          ~ shinyWidgets::updateMaterialSwitch(session, .x, value = FALSE)
+        )
+
+        # Copy slider values: Scenario 2 -> Scenario 1
         purrr::walk2(Vars1$id_in, Vars2$id_in, function(id1, id2) {
           val <- input[[id2]]
           if (!is.null(val)) shiny::updateSliderInput(session, id1, value = val)
@@ -636,14 +780,40 @@ mod_3compare_server <- function(id, cfg) {
             }
           }
         )
+
+        # Restore Scenario 1 lock states
+        purrr::walk2(
+          lock1_ids,
+          lock1_states,
+          ~ shinyWidgets::updateMaterialSwitch(session, .x, value = .y)
+        )
       },
       ignoreInit = TRUE
     )
 
-    # Copy all Scenario 1 targets to Scenario 2 (sli1_ -> sli2_)
+    # Copy all Scenario 1 targets to Scenario 2 (sli1_ -> sli2_).
+    # Same lock-disable/restore pattern as copyFromScen2 above.
     shiny::observeEvent(
       input$copyFromScen1,
       {
+        # Collect all Scenario 2 lock IDs (per-category + section-level)
+        lock2_ids <- c(
+          paste0("lock2_", unique(Vars2$categoryID)),
+          "lock_silent2",
+          "lock_bioregion2"
+        )
+        # Capture current lock states before disabling
+        lock2_states <- purrr::map(
+          lock2_ids,
+          ~ shiny::isolate(input[[.x]]) %||% FALSE
+        )
+        # Disable all Scenario 2 locks so copy does not trigger propagation
+        purrr::walk(
+          lock2_ids,
+          ~ shinyWidgets::updateMaterialSwitch(session, .x, value = FALSE)
+        )
+
+        # Copy slider values: Scenario 1 -> Scenario 2
         purrr::walk2(Vars2$id_in, Vars1$id_in, function(id2, id1) {
           val <- input[[id1]]
           if (!is.null(val)) shiny::updateSliderInput(session, id2, value = val)
@@ -667,6 +837,13 @@ mod_3compare_server <- function(id, cfg) {
               shiny::updateSliderInput(session, id2, value = val)
             }
           }
+        )
+
+        # Restore Scenario 2 lock states
+        purrr::walk2(
+          lock2_ids,
+          lock2_states,
+          ~ shinyWidgets::updateMaterialSwitch(session, .x, value = .y)
         )
       },
       ignoreInit = TRUE

@@ -379,7 +379,7 @@ test_that("fcustom_sliderCategory() returns a list when byCategory = FALSE", {
   expect_length(result, 4L)
 })
 
-test_that("fcustom_sliderCategory() labelCategory = FALSE uses invisible spacer", {
+test_that("fcustom_sliderCategory() labelCategory = FALSE renders spacer heading and lock toggle", {
   vars <- shinyplanr:::fcreate_vars(
     id = "mod1",
     Dict = make_dict_ui(),
@@ -391,13 +391,20 @@ test_that("fcustom_sliderCategory() labelCategory = FALSE uses invisible spacer"
     vars,
     labelNum = 1,
     byCategory = FALSE,
-    labelCategory = FALSE
+    labelCategory = FALSE,
+    lock_prefix = "lock_"
   )
 
-  # shiny::HTML() returns class c("html", "character"), not "shiny.tag".
-  # The odd-indexed elements should be raw HTML spacers.
+  # After the change, the header element is a shiny.tag div (not raw html)
+  # containing both the invisible spacer and the lock toggle.
   header_el <- result[[1]]
-  expect_true(inherits(header_el, "html"))
+  expect_true(inherits(header_el, "shiny.tag"))
+  html_str <- as.character(header_el)
+  # Should contain the invisible spacer
+  expect_match(html_str, "&nbsp;", fixed = TRUE)
+  # shinyWidgets::materialSwitch() renders with class "sw-material-switch-input"
+  # (not the literal string "materialSwitch" which is only the R function name)
+  expect_match(html_str, "sw-material-switch-input", fixed = TRUE)
 })
 
 test_that("fcustom_sliderCategory() labelCategory = TRUE renders a lock toggle with lock_prefix", {
@@ -474,9 +481,71 @@ test_that("fcustom_sliderCategory() byCategory = TRUE does not render lock toggl
   )
 
   # byCategory = TRUE: no header elements, just slider lists — no lock toggle.
+  # Section-level locks (silent features, bioregions) are added outside
+  # fcustom_sliderCategory() in the module UI, not inside this function.
   # result is a list so as.character() returns a vector; collapse before grepl.
+  # shinyWidgets::materialSwitch() renders with class "sw-material-switch-input".
   html_str <- paste(as.character(result), collapse = "")
-  expect_false(grepl("materialSwitch", html_str, fixed = TRUE))
+  expect_false(grepl("sw-material-switch-input", html_str, fixed = TRUE))
+})
+
+test_that("fcustom_sliderCategory() lock_label parameter controls toggle label text", {
+  vars <- shinyplanr:::fcreate_vars(
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
+    categoryOut = TRUE
+  )
+
+  result_default <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = FALSE,
+    labelCategory = TRUE,
+    lock_prefix = "lock_"
+    # lock_label defaults to "Lock targets"
+  )
+
+  result_custom <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = FALSE,
+    labelCategory = TRUE,
+    lock_prefix = "lock_",
+    lock_label = "Lock Scenario 1 targets"
+  )
+
+  html_default <- as.character(result_default[[1]])
+  html_custom <- as.character(result_custom[[1]])
+
+  # Default label
+  expect_match(html_default, "Lock targets", fixed = TRUE)
+  # Custom label
+  expect_match(html_custom, "Lock Scenario 1 targets", fixed = TRUE)
+  # Default should NOT contain the custom label text
+  expect_false(grepl("Lock Scenario 1 targets", html_default, fixed = TRUE))
+})
+
+test_that("fcustom_sliderCategory() lock_label applies to labelCategory = FALSE branch too", {
+  vars <- shinyplanr:::fcreate_vars(
+    id = "mod1",
+    Dict = make_dict_ui(),
+    name_check = "sli_",
+    categoryOut = TRUE
+  )
+
+  result <- shinyplanr:::fcustom_sliderCategory(
+    vars,
+    labelNum = 1,
+    byCategory = FALSE,
+    labelCategory = FALSE,
+    lock_prefix = "lock2_",
+    lock_label = "Lock Scenario 2 targets"
+  )
+
+  html_str <- as.character(result[[1]])
+  expect_match(html_str, "Lock Scenario 2 targets", fixed = TRUE)
+  expect_match(html_str, "lock2_", fixed = TRUE)
 })
 
 # ---------------------------------------------------------------------------

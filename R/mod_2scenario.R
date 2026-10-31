@@ -63,6 +63,12 @@ mod_2scenario_ui <- function(id, cfg) {
           length(unique(slider_vars$category)) + 1,
           " Grouped Features"
         )),
+        shinyWidgets::materialSwitch(
+          inputId = ns("lock_silent"),
+          label = "Lock targets",
+          value = FALSE,
+          status = "primary"
+        ),
         fcustom_sliderCategory(
           slider_varsSilent,
           labelNum = 1,
@@ -81,6 +87,12 @@ mod_2scenario_ui <- function(id, cfg) {
             1,
           " Bioregions"
         )),
+        shinyWidgets::materialSwitch(
+          inputId = ns("lock_bioregion"),
+          label = "Lock targets",
+          value = FALSE,
+          status = "primary"
+        ),
         fcustom_sliderCategory(
           slider_varsBioR,
           labelNum = 1,
@@ -473,6 +485,54 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       slider_vars,
       lock_prefix = "lock_"
     )
+
+    # Silent features lock: one global toggle (lock_silent) syncs all silent
+    # feature category sliders when any one of them is moved.
+    if (!is.null(slider_varsSilent) && nrow(slider_varsSilent) > 0) {
+      purrr::walk(slider_varsSilent$id_in, function(moved_id) {
+        shiny::observeEvent(
+          input[[moved_id]],
+          {
+            if (!isTRUE(input$lock_silent)) {
+              return()
+            }
+            new_val <- input[[moved_id]]
+            others <- setdiff(slider_varsSilent$id_in, moved_id)
+            purrr::walk(others, function(other_id) {
+              current <- shiny::isolate(input[[other_id]])
+              if (!identical(current, new_val)) {
+                shiny::updateSliderInput(session, other_id, value = new_val)
+              }
+            })
+          },
+          ignoreInit = TRUE
+        )
+      })
+    }
+
+    # Bioregion lock: one global toggle (lock_bioregion) syncs all bioregion
+    # category sliders when any one of them is moved.
+    if (!is.null(slider_varsBioR) && nrow(slider_varsBioR) > 0) {
+      purrr::walk(slider_varsBioR$id_in, function(moved_id) {
+        shiny::observeEvent(
+          input[[moved_id]],
+          {
+            if (!isTRUE(input$lock_bioregion)) {
+              return()
+            }
+            new_val <- input[[moved_id]]
+            others <- setdiff(slider_varsBioR$id_in, moved_id)
+            purrr::walk(others, function(other_id) {
+              current <- shiny::isolate(input[[other_id]])
+              if (!identical(current, new_val)) {
+                shiny::updateSliderInput(session, other_id, value = new_val)
+              }
+            })
+          },
+          ignoreInit = TRUE
+        )
+      })
+    }
 
     # Observe events from individual targets
     # Return targets and names for all features from sliders ---------------------------------------------------
