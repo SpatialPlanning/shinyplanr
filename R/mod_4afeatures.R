@@ -61,14 +61,18 @@ mod_4afeatures_ui <- function(id, cfg) {
   # .x$category[1] returns a length-1 factor (not character) when category
   # is a factor; as.character() is required because purrr::map_chr() does
   # not coerce factors and would otherwise error.
+  # NOTE: as.list(setNames(vals, nms)) is used instead of tibble::deframe()
+  # because deframe() returns a named *vector*, and selectize.js (Shiny's
+  # default select widget) re-sorts named vector elements alphabetically within
+  # each optgroup — overriding the Dict row order. A named *list* is preserved
+  # in insertion order by selectize.js, so Dict row order (controlled by
+  # forder_dict_categories() and the CSV row sequence) is respected.
   grouped_choices <- combined_dict %>%
     dplyr::group_by(.data$category) %>%
     dplyr::group_split() %>%
     purrr::set_names(purrr::map_chr(., ~ as.character(.x$category[1]))) %>%
     purrr::map(
-      ~ (.x %>%
-        dplyr::select("nameCommon", "nameVariable") %>%
-        tibble::deframe())
+      ~ as.list(setNames(.x$nameVariable, .x$nameCommon))
     )
 
   # Prepend the density sentinel as a top-level (ungrouped) entry.

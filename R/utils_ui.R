@@ -197,13 +197,17 @@ fcustom_slider <- function(
 #'   in this mode. Default \code{FALSE}.
 #' @param labelCategory Logical. If \code{FALSE}, category headings are
 #'   replaced with an invisible spacer (used in the two-column Compare layout).
-#'   No lock toggle is rendered when \code{labelCategory = FALSE}.
-#'   Default \code{TRUE}.
+#'   A lock toggle is still rendered below the spacer when
+#'   \code{labelCategory = FALSE}, using \code{lock_prefix} and
+#'   \code{lock_label}. Default \code{TRUE}.
 #' @param lock_prefix Character. Prefix for the lock toggle input IDs.
 #'   The full ID is \code{paste0(lock_prefix, categoryID)}, e.g.
 #'   \code{"lock_Habitat"} for the scenario module or
 #'   \code{"lock1_Habitat"} / \code{"lock2_Habitat"} for the compare module.
 #'   Default \code{"lock_"}.
+#' @param lock_label Character. Label text shown next to the lock toggle.
+#'   Default \code{"Lock targets"}. Use \code{"Lock Scenario 1 targets"} /
+#'   \code{"Lock Scenario 2 targets"} in the two-column Compare layout.
 #'
 #' @return A list of Shiny tags.
 #'
@@ -214,7 +218,8 @@ fcustom_sliderCategory <- function(
   labelNum,
   byCategory = FALSE,
   labelCategory = TRUE,
-  lock_prefix = "lock_"
+  lock_prefix = "lock_",
+  lock_label = "Lock targets"
 ) {
   if (is.null(varsIn) || nrow(varsIn) == 0) {
     return(NULL)
@@ -238,28 +243,34 @@ fcustom_sliderCategory <- function(
       shinyList[ctg * 2] <- # times as many entries as you want to have for one category per list: here: title and sliders (=2); for example with gap between = 3
         list(purrr::pmap(feats, fcustom_slider))
 
+      lock_id <- paste0(lock_prefix, cat_id)
+
       if (isTRUE(labelCategory)) {
-        # Show category label + lock toggle
-        lock_id <- paste0(lock_prefix, cat_id)
+        # Show category label above, lock toggle below
         shinyList[ctg * 2 - 1] <- list(
           shiny::div(
-            style = "display:flex; align-items:center; gap:8px;",
-            shiny::h3(
-              paste0(labelNum, ".", ctg, " ", ctgs[ctg]),
-              style = "margin:0;"
-            ),
+            shiny::h3(paste0(labelNum, ".", ctg, " ", ctgs[ctg])),
             shinyWidgets::materialSwitch(
               inputId = shiny::NS(namespace = feats$id[1], id = lock_id),
-              label = "Lock",
+              label = lock_label,
               value = FALSE,
-              status = "primary",
-              inline = TRUE
+              status = "primary"
             )
           )
         )
       } else {
-        # Don't show category label (ie for 2 column of comparison)
-        shinyList[ctg * 2 - 1] <- list(shiny::HTML("<h3>&nbsp;</h3>"))
+        # Invisible spacer heading to preserve column alignment, lock toggle below
+        shinyList[ctg * 2 - 1] <- list(
+          shiny::div(
+            shiny::HTML("<h3>&nbsp;</h3>"),
+            shinyWidgets::materialSwitch(
+              inputId = shiny::NS(namespace = feats$id[1], id = lock_id),
+              label = lock_label,
+              value = FALSE,
+              status = "primary"
+            )
+          )
+        )
       }
     }
   } else {
@@ -385,12 +396,17 @@ create_fancy_dropdown <- function(id, id_in, Dict, width = "100%") {
   # .x$category[1] returns a length-1 factor (not character) when category
   # is a factor; as.character() is required because purrr::map_chr() does
   # not coerce factors and would otherwise error.
+  # NOTE: as.list(setNames(vals, nms)) is used instead of tibble::deframe()
+  # because deframe() returns a named *vector*, and selectize.js (Shiny's
+  # default select widget) re-sorts named vector elements alphabetically within
+  # each optgroup — overriding the Dict row order. A named *list* is preserved
+  # in insertion order by selectize.js, so Dict row order (controlled by
+  # forder_dict_categories() and the CSV row sequence) is respected.
   featureList <- combined %>%
     dplyr::group_by(.data$category) %>%
     dplyr::group_split() %>%
     purrr::set_names(purrr::map_chr(., ~ as.character(.x$category[1]))) %>%
-    purrr::map(~ (.x %>% dplyr::select("nameCommon", "nameVariable"))) %>%
-    purrr::map(tibble::deframe)
+    purrr::map(~ as.list(setNames(.x$nameVariable, .x$nameCommon)))
 
   shiny::selectInput(
     inputId = shiny::NS(namespace = id, id = id_in),
