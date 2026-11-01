@@ -159,6 +159,7 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
   Dict <- cfg$Dict
   options <- cfg$options
   raw_sf <- cfg$raw_sf
+  overlay <- cfg$overlay
 
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -167,6 +168,35 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
     # raw_sf never changes during a session, so this is safe to do outside
     # any reactive context.
     raw_wgs84 <- raw_sf %>% sf::st_transform("EPSG:4326")
+
+    # Pre-transform coast overlay to WGS84 once at module init.
+    # NULL when show_coast_overlay is FALSE or overlay is empty.
+    coast_overlay_wgs84 <- if (
+      isTRUE(options$show_coast_overlay) &&
+        inherits(overlay, "sf") &&
+        nrow(overlay) > 0
+    ) {
+      sf::st_transform(overlay, "EPSG:4326")
+    } else {
+      NULL
+    }
+
+    # Helper: add coast overlay to a leafletProxy chain when enabled.
+    # Returns the proxy unchanged when coast_overlay_wgs84 is NULL.
+    add_coast_overlay <- function(proxy) {
+      if (is.null(coast_overlay_wgs84)) {
+        return(proxy)
+      }
+      leaflet::addPolygons(
+        proxy,
+        data = coast_overlay_wgs84,
+        color = options$coast_overlay_colour %||% "black",
+        fillColor = options$coast_overlay_fill %||% "grey50",
+        fillOpacity = 0.6,
+        weight = 1,
+        group = "coast_overlay"
+      )
+    }
 
     # Pre-compute the bounding box for fitBounds — done once, not per-render.
     bbox <- sf::st_bbox(raw_wgs84)
@@ -248,24 +278,26 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         hex_colours <- pal(density_vals)
         fill_rgb <- hex_to_rgb_matrix(hex_colours)
 
-        leaflet::leafletProxy("leaflet_map", session = session) %>%
-          leafgl::clearGlLayers() %>%
-          leaflet::clearControls() %>%
-          leafgl::addGlPolygons(
-            data = raw_wgs84,
-            fillColor = fill_rgb,
-            fillOpacity = 0.7,
-            stroke = TRUE,
-            group = "layer",
-            digits = geojson_digits
-          ) %>%
-          leaflet::addLegend(
-            position = "bottomleft",
-            pal = pal,
-            values = density_vals,
-            title = "Feature Density",
-            opacity = 0.7
-          )
+        add_coast_overlay(
+          leaflet::leafletProxy("leaflet_map", session = session) %>%
+            leafgl::clearGlLayers() %>%
+            leaflet::clearControls() %>%
+            leafgl::addGlPolygons(
+              data = raw_wgs84,
+              fillColor = fill_rgb,
+              fillOpacity = 0.7,
+              stroke = TRUE,
+              group = "layer",
+              digits = geojson_digits
+            ) %>%
+            leaflet::addLegend(
+              position = "bottomleft",
+              pal = pal,
+              values = density_vals,
+              title = "Feature Density",
+              opacity = 0.7
+            )
+        )
 
         output$infoPanelContent <- shiny::renderUI({
           shiny::tagList(
@@ -327,25 +359,27 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
           hex_colours <- pal(col_data)
           fill_rgb <- hex_to_rgb_matrix(hex_colours)
 
-          leaflet::leafletProxy("leaflet_map", session = session) %>%
-            leafgl::clearGlLayers() %>%
-            leaflet::clearControls() %>%
-            leafgl::addGlPolygons(
-              data = raw_wgs84,
-              fillColor = fill_rgb,
-              fillOpacity = 0.7,
-              stroke = TRUE,
-              group = "layer",
-              digits = geojson_digits
-            ) %>%
-            leaflet::addLegend(
-              position = "bottomleft",
-              pal = pal,
-              values = zone_levels,
-              title = bioregion_meta$category,
-              labFormat = leaflet::labelFormat(prefix = "Zone "),
-              opacity = 0.7
-            )
+          add_coast_overlay(
+            leaflet::leafletProxy("leaflet_map", session = session) %>%
+              leafgl::clearGlLayers() %>%
+              leaflet::clearControls() %>%
+              leafgl::addGlPolygons(
+                data = raw_wgs84,
+                fillColor = fill_rgb,
+                fillOpacity = 0.7,
+                stroke = TRUE,
+                group = "layer",
+                digits = geojson_digits
+              ) %>%
+              leaflet::addLegend(
+                position = "bottomleft",
+                pal = pal,
+                values = zone_levels,
+                title = bioregion_meta$category,
+                labFormat = leaflet::labelFormat(prefix = "Zone "),
+                opacity = 0.7
+              )
+          )
 
           output$infoPanelContent <- shiny::renderUI({
             just <- bioregion_meta$justification
@@ -446,14 +480,16 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         if (is_continuous) {
           # Continuous quantities (Cost, EcosystemServices, Climate): a
           # colorNumeric legend showing the raw value range is correct here.
-          map_proxy %>%
-            leaflet::addLegend(
-              position = "bottomleft",
-              pal = pal,
-              values = col_data,
-              title = layer_info$nameCommon[1],
-              opacity = 0.7
-            )
+          add_coast_overlay(
+            map_proxy %>%
+              leaflet::addLegend(
+                position = "bottomleft",
+                pal = pal,
+                values = col_data,
+                title = layer_info$nameCommon[1],
+                opacity = 0.7
+              )
+          )
         } else {
           # Binary presence/absence (Feature, LockIn, LockOut): pal/values
           # would ask leaflet to auto-label the legend from the 0/1 domain,
@@ -461,14 +497,16 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
           # avoids relying on that undocumented behaviour and mirrors the
           # explicit colors=/labels= legend used in mod_2scenario.R's
           # Explore tab for the same kind of categorical legend.
-          map_proxy %>%
-            leaflet::addLegend(
-              position = "bottomleft",
-              colors = binary_colours,
-              labels = c("Absent", "Present"),
-              title = layer_info$nameCommon[1],
-              opacity = 0.7
-            )
+          add_coast_overlay(
+            map_proxy %>%
+              leaflet::addLegend(
+                position = "bottomleft",
+                colors = binary_colours,
+                labels = c("Absent", "Present"),
+                title = layer_info$nameCommon[1],
+                opacity = 0.7
+              )
+          )
         }
 
         # Sidebar: Dict metadata for the selected layer
