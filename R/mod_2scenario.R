@@ -425,7 +425,12 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       inherits(overlay, "sf") &&
       nrow(overlay) > 0
   ) {
-    sf::st_transform(overlay, "EPSG:4326")
+    # st_make_valid() corrects ring winding order after projection transform.
+    # Some projected CRS (e.g. EPSG:8859 Equal Earth) produce CW exterior rings
+    # after st_transform() to WGS84, which leaflet's SVG renderer interprets as
+    # holes — filling the ocean black instead of the island polygons.
+    # st_make_valid() enforces CCW exterior / CW hole convention.
+    sf::st_make_valid(sf::st_transform(overlay, "EPSG:4326"))
   } else {
     NULL
   }
