@@ -732,39 +732,44 @@ mod_3compare_server <- function(id, cfg) {
     }
 
     # Copy all Scenario 2 targets to Scenario 1 (sli2_ -> sli1_).
-    # Lock toggles are temporarily disabled before copying so that the
+    # All Scenario 1 lock toggles are turned OFF before copying so that the
     # category-lock observers do not propagate values and overwrite the
-    # individual targets being set. Lock states are restored afterwards.
+    # individual targets being set. Locks are not restored — the user must
+    # re-enable them manually after matching. This avoids the async race
+    # condition that occurs when trying to restore locks in the same flush.
     shiny::observeEvent(
       input$copyFromScen2,
       {
-        # Collect all Scenario 1 lock IDs (per-category + section-level)
+        # Capture source values before any updates fire
+        vals_main <- purrr::map(Vars2$id_in, ~ shiny::isolate(input[[.x]]))
+        vals_silent <- purrr::map(
+          slider_varsSilent2$id_in,
+          ~ shiny::isolate(input[[.x]])
+        )
+        vals_bioR <- purrr::map(
+          slider_varsBioR2$id_in,
+          ~ shiny::isolate(input[[.x]])
+        )
+
+        # Turn off all Scenario 1 locks (permanently — user re-enables if needed)
         lock1_ids <- c(
           paste0("lock1_", unique(Vars1$categoryID)),
           "lock_silent1",
           "lock_bioregion1"
         )
-        # Capture current lock states before disabling
-        lock1_states <- purrr::map(
-          lock1_ids,
-          ~ shiny::isolate(input[[.x]]) %||% FALSE
-        )
-        # Disable all Scenario 1 locks so copy does not trigger propagation
         purrr::walk(
           lock1_ids,
           ~ shinyWidgets::updateMaterialSwitch(session, .x, value = FALSE)
         )
 
         # Copy slider values: Scenario 2 -> Scenario 1
-        purrr::walk2(Vars1$id_in, Vars2$id_in, function(id1, id2) {
-          val <- input[[id2]]
+        purrr::walk2(Vars1$id_in, vals_main, function(id1, val) {
           if (!is.null(val)) shiny::updateSliderInput(session, id1, value = val)
         })
         purrr::walk2(
           slider_varsSilent1$id_in,
-          slider_varsSilent2$id_in,
-          function(id1, id2) {
-            val <- input[[id2]]
+          vals_silent,
+          function(id1, val) {
             if (!is.null(val)) {
               shiny::updateSliderInput(session, id1, value = val)
             }
@@ -772,57 +777,53 @@ mod_3compare_server <- function(id, cfg) {
         )
         purrr::walk2(
           slider_varsBioR1$id_in,
-          slider_varsBioR2$id_in,
-          function(id1, id2) {
-            val <- input[[id2]]
+          vals_bioR,
+          function(id1, val) {
             if (!is.null(val)) {
               shiny::updateSliderInput(session, id1, value = val)
             }
           }
-        )
-
-        # Restore Scenario 1 lock states
-        purrr::walk2(
-          lock1_ids,
-          lock1_states,
-          ~ shinyWidgets::updateMaterialSwitch(session, .x, value = .y)
         )
       },
       ignoreInit = TRUE
     )
 
     # Copy all Scenario 1 targets to Scenario 2 (sli1_ -> sli2_).
-    # Same lock-disable/restore pattern as copyFromScen2 above.
+    # Same pattern as copyFromScen2: capture values, turn off Scenario 2 locks,
+    # then apply captured values.
     shiny::observeEvent(
       input$copyFromScen1,
       {
-        # Collect all Scenario 2 lock IDs (per-category + section-level)
+        # Capture source values before any updates fire
+        vals_main <- purrr::map(Vars1$id_in, ~ shiny::isolate(input[[.x]]))
+        vals_silent <- purrr::map(
+          slider_varsSilent1$id_in,
+          ~ shiny::isolate(input[[.x]])
+        )
+        vals_bioR <- purrr::map(
+          slider_varsBioR1$id_in,
+          ~ shiny::isolate(input[[.x]])
+        )
+
+        # Turn off all Scenario 2 locks (permanently — user re-enables if needed)
         lock2_ids <- c(
           paste0("lock2_", unique(Vars2$categoryID)),
           "lock_silent2",
           "lock_bioregion2"
         )
-        # Capture current lock states before disabling
-        lock2_states <- purrr::map(
-          lock2_ids,
-          ~ shiny::isolate(input[[.x]]) %||% FALSE
-        )
-        # Disable all Scenario 2 locks so copy does not trigger propagation
         purrr::walk(
           lock2_ids,
           ~ shinyWidgets::updateMaterialSwitch(session, .x, value = FALSE)
         )
 
         # Copy slider values: Scenario 1 -> Scenario 2
-        purrr::walk2(Vars2$id_in, Vars1$id_in, function(id2, id1) {
-          val <- input[[id1]]
+        purrr::walk2(Vars2$id_in, vals_main, function(id2, val) {
           if (!is.null(val)) shiny::updateSliderInput(session, id2, value = val)
         })
         purrr::walk2(
           slider_varsSilent2$id_in,
-          slider_varsSilent1$id_in,
-          function(id2, id1) {
-            val <- input[[id1]]
+          vals_silent,
+          function(id2, val) {
             if (!is.null(val)) {
               shiny::updateSliderInput(session, id2, value = val)
             }
@@ -830,20 +831,12 @@ mod_3compare_server <- function(id, cfg) {
         )
         purrr::walk2(
           slider_varsBioR2$id_in,
-          slider_varsBioR1$id_in,
-          function(id2, id1) {
-            val <- input[[id1]]
+          vals_bioR,
+          function(id2, val) {
             if (!is.null(val)) {
               shiny::updateSliderInput(session, id2, value = val)
             }
           }
-        )
-
-        # Restore Scenario 2 lock states
-        purrr::walk2(
-          lock2_ids,
-          lock2_states,
-          ~ shinyWidgets::updateMaterialSwitch(session, .x, value = .y)
         )
       },
       ignoreInit = TRUE
