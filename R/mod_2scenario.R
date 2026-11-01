@@ -1365,7 +1365,7 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         # Add WebGL polygons via leafletProxy.
         # clearGlLayers() removes any previous GL layer (e.g. from a prior visit).
         # The highlight group (SVG) is cleared separately with clearGroup().
-        leaflet::leafletProxy("leaflet_map", session = session) %>%
+        map_proxy <- leaflet::leafletProxy("leaflet_map", session = session) %>%
           leafgl::clearGlLayers() %>%
           leaflet::clearControls() %>%
           leaflet::clearGroup("highlight") %>%
@@ -1398,26 +1398,25 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
             labels = legend_labels,
             title = "Solution",
             opacity = 0.7
-          ) %>%
-          # Coast overlay: drawn as SVG on top of the WebGL planning-unit layer.
-          # SVG polygons always render above WebGL in leaflet, so the coastline
-          # is visible even when planning units cover the same area.
-          # Only added when show_coast_overlay = TRUE in shinyplanr_options.
-          {
-            if (!is.null(coast_overlay_wgs84)) {
-              leaflet::addPolygons(
-                .,
-                data = coast_overlay_wgs84,
-                color = options$coast_overlay_colour %||% "black",
-                fillColor = options$coast_overlay_fill %||% "grey50",
-                fillOpacity = 0.6,
-                weight = 1,
-                group = "coast_overlay"
-              )
-            } else {
-              .
-            }
-          }
+          )
+
+        # Coast overlay: drawn as SVG on top of the WebGL planning-unit layer.
+        # SVG polygons always render above WebGL in leaflet, so the coastline
+        # is visible even when planning units cover the same area.
+        # Assigned to a separate variable and called after the WebGL chain so
+        # it is guaranteed to be added last (and therefore rendered on top).
+        # Only added when show_coast_overlay = TRUE in shinyplanr_options.
+        if (!is.null(coast_overlay_wgs84)) {
+          map_proxy %>%
+            leaflet::addPolygons(
+              data = coast_overlay_wgs84,
+              color = options$coast_overlay_colour %||% "black",
+              fillColor = options$coast_overlay_fill %||% "grey50",
+              fillOpacity = 0.6,
+              weight = 1,
+              group = "coast_overlay"
+            )
+        }
       })
     })
 
