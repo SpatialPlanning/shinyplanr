@@ -65,6 +65,19 @@ mod_5coverage_server <- function(id, cfg) {
   raw_sf <- cfg$raw_sf
   Dict <- cfg$Dict
   bar_theme <- cfg$bar_theme
+  overlay <- cfg$overlay
+
+  # Pre-transform coast overlay to WGS84 once at module init.
+  # NULL when show_coast_overlay is FALSE or overlay is empty.
+  coast_overlay_wgs84 <- if (
+    isTRUE(options$show_coast_overlay) &&
+      inherits(overlay, "sf") &&
+      nrow(overlay) > 0
+  ) {
+    sf::st_transform(overlay, "EPSG:4326")
+  } else {
+    NULL
+  }
 
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -166,7 +179,7 @@ mod_5coverage_server <- function(id, cfg) {
       fill_hex <- "#d3d3d3" # lightgrey
 
       # Update map with WebGL polygons using leafletProxy
-      leaflet::leafletProxy("leaflet_coverage", session = session) %>%
+      proxy <- leaflet::leafletProxy("leaflet_coverage", session = session) %>%
         leafgl::clearGlLayers() %>%
         leaflet::clearControls() %>%
         leaflet::fitBounds(
@@ -190,6 +203,20 @@ mod_5coverage_server <- function(id, cfg) {
           # See mod_4afeatures.R for full rationale.
           digits = 5
         )
+
+      # Coast overlay: drawn as SVG on top of the WebGL uploaded-polygon layer.
+      # Only added when show_coast_overlay = TRUE in shinyplanr_options.
+      if (!is.null(coast_overlay_wgs84)) {
+        proxy %>%
+          leaflet::addPolygons(
+            data = coast_overlay_wgs84,
+            color = options$coast_overlay_colour %||% "black",
+            fillColor = options$coast_overlay_fill %||% "grey50",
+            fillOpacity = 0.6,
+            weight = 1,
+            group = "coast_overlay"
+          )
+      }
     })
 
     # Calculate coverage data when file is uploaded

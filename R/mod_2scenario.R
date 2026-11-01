@@ -420,6 +420,15 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
   raw_sf <- cfg$raw_sf
   bndry <- cfg$bndry
   overlay <- cfg$overlay
+  coast_overlay_wgs84 <- if (
+    isTRUE(options$show_coast_overlay) &&
+      inherits(overlay, "sf") &&
+      nrow(overlay) > 0
+  ) {
+    sf::st_transform(overlay, "EPSG:4326")
+  } else {
+    NULL
+  }
   map_theme <- cfg$map_theme
   bar_theme <- cfg$bar_theme
   sidebar <- cfg$sidebar$scenario
@@ -1389,7 +1398,26 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
             labels = legend_labels,
             title = "Solution",
             opacity = 0.7
-          )
+          ) %>%
+          # Coast overlay: drawn as SVG on top of the WebGL planning-unit layer.
+          # SVG polygons always render above WebGL in leaflet, so the coastline
+          # is visible even when planning units cover the same area.
+          # Only added when show_coast_overlay = TRUE in shinyplanr_options.
+          {
+            if (!is.null(coast_overlay_wgs84)) {
+              leaflet::addPolygons(
+                .,
+                data = coast_overlay_wgs84,
+                color = options$coast_overlay_colour %||% "black",
+                fillColor = options$coast_overlay_fill %||% "grey50",
+                fillOpacity = 0.6,
+                weight = 1,
+                group = "coast_overlay"
+              )
+            } else {
+              .
+            }
+          }
       })
     })
 

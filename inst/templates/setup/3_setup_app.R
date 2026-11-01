@@ -122,7 +122,21 @@ shinyplanr_options <- list(
   # (Check Coverage). Any provider name from leaflet::providers is valid,
   # e.g. "OpenStreetMap.CAT", "CartoDB.Positron", "OpenTopoMap".
   # See https://leaflet-extras.github.io/leaflet-providers/preview/ for options.
-  leaflet_provider = "Esri.WorldGrayCanvas"
+  leaflet_provider = "Esri.WorldGrayCanvas",
+
+  ## Coastline overlay on interactive leaflet maps
+  #
+  # When show_coast_overlay = TRUE, the `coast` sf object (stored as `overlay`
+  # in the config) is drawn as a filled polygon on top of the WebGL planning-unit
+  # layer in all interactive leaflet maps (Explore, Layer Information, Coverage).
+  # This is useful when planning units are small or islands are hard to see.
+  #
+  # Set show_coast_overlay = TRUE to enable.
+  # coast_overlay_colour controls the border/line colour.
+  # coast_overlay_fill   controls the fill/shading colour.
+  show_coast_overlay = FALSE,
+  coast_overlay_colour = "black",
+  coast_overlay_fill = "grey50"
 )
 
 # =============================================================================
