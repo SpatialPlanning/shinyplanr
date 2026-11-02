@@ -842,6 +842,12 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         dplyr::filter(.data$nameVariable == input$costid) %>%
         dplyr::pull("justification")
 
+      # Fall back to a generic sentence when no justification text is available
+      # (NA or empty), so the UI doesn't display the literal string "NA".
+      if (length(cost_txt) == 0 || is.na(cost_txt) || nchar(cost_txt) == 0) {
+        cost_txt <- "No further detail is provided on this cost layer."
+      }
+
       paste(tx_2cost, "\n", "\n", cost_txt)
     }) %>%
       shiny::bindEvent(input$analyse)
@@ -1514,9 +1520,7 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
 
             # Get cost column name from input and extract value
             cost_col <- shiny::isolate(input$costid)
-            cost_value <- if (
-              !is.null(cost_col) && cost_col %in% names(pu_row)
-            ) {
+            cost_value <- if (!is.null(cost_col) && cost_col %in% names(pu_row)) {
               round(as.numeric(pu_row[[cost_col]]), 2)
             } else {
               NA
