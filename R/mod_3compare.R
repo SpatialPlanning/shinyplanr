@@ -1326,7 +1326,12 @@ mod_3compare_server <- function(id, cfg) {
         costName = input$costid1,
         legendTitle = cost_label1,
         plotTitle = "Solution overlaid with cost",
-        base_size = options$base_size
+        base_size = options$base_size,
+        costAlpha = options$cost_plot_alpha %||% 0.1,
+        costLowColour = options$cost_plot_low_colour %||% "#fff5eb",
+        costHighColour = options$cost_plot_high_colour %||% "#d94801",
+        costLowerPercentile = options$cost_plot_lower_percentile %||% 0.05,
+        costUpperPercentile = options$cost_plot_upper_percentile %||% 0.95
       ) +
         spatialplanr::splnr_gg_add(
           Bndry = bndry,
@@ -1351,7 +1356,12 @@ mod_3compare_server <- function(id, cfg) {
         costName = input$costid2,
         legendTitle = cost_label2,
         plotTitle = "Solution overlaid with cost",
-        base_size = options$base_size
+        base_size = options$base_size,
+        costAlpha = options$cost_plot_alpha %||% 0.1,
+        costLowColour = options$cost_plot_low_colour %||% "#fff5eb",
+        costHighColour = options$cost_plot_high_colour %||% "#d94801",
+        costLowerPercentile = options$cost_plot_lower_percentile %||% 0.05,
+        costUpperPercentile = options$cost_plot_upper_percentile %||% 0.95
       ) +
         spatialplanr::splnr_gg_add(
           Bndry = bndry,

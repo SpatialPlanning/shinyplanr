@@ -1,6 +1,6 @@
 Package: shinyplanr
 Title: Spatial Planning in Shiny
-Version: 0.1.8
+Version: 0.1.9
 Authors@R: c(
     person(
       given = "Jason D.", 
@@ -60,7 +60,7 @@ Imports:
     shinydisconnect,
     shinyjs,
     shinyWidgets,
-    spatialplanr (>= 0.7.6),
+    spatialplanr (>= 0.7.7),
     stringr,
     tibble,
     tidyr,
