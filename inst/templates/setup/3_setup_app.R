@@ -115,6 +115,27 @@ shinyplanr_options <- list(
   ## Plotting defaults
   base_size = 18,
 
+  ## Cost overlay plot styling (Scenario and Compare tabs' "Cost" sub-tab)
+  #
+  # Controls the appearance of the cost layer overlaid on the selected
+  # solution. The colour scale limits are set to the lower/upper percentile
+  # of the cost distribution (across all Planning Units), with values outside
+  # these limits clamped ("squished") to the low/high colour.
+  #
+  # cost_plot_alpha: opacity of the cost fill (0 = fully transparent,
+  #   1 = fully opaque). Increase this if the cost overlay looks washed out.
+  # cost_plot_low_colour / cost_plot_high_colour: colours for the low/high
+  #   end of the cost gradient (hex or named colour).
+  # cost_plot_lower_percentile / cost_plot_upper_percentile: percentile of the
+  #   cost distribution used as the colour scale's lower/upper limit (0-1).
+  #   Narrowing this range (e.g. 0.10-0.90) increases contrast between
+  #   typical values at the cost of clipping extreme outliers.
+  cost_plot_alpha = 0.1,
+  cost_plot_low_colour = "#fff5eb",
+  cost_plot_high_colour = "#d94801",
+  cost_plot_lower_percentile = 0.05,
+  cost_plot_upper_percentile = 0.95,
+
   ## Leaflet basemap tile provider
   #
   # Used by the interactive leaflet maps in mod_2scenario (Explore tab),
@@ -600,8 +621,6 @@ message('  Session > Restart R  (or Ctrl/Cmd+Shift+F10 in RStudio)')
 message('Then open app.R and run shiny::runApp() to test the app.')
 
 # Open app.R so it is ready to run after the user restarts R.
-if (
-  requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()
-) {
+if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {
   rstudioapi::navigateToFile('app.R')
 }

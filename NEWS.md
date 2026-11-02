@@ -1,3 +1,20 @@
+# shinyplanr 0.1.9
+
+## New features
+
+* The Cost overlay plot (Scenario tab "Cost" sub-tab, and Compare tab "Cost"
+  sub-tab) now supports configurable styling via five new optional
+  `shinyplanr_options` keys: `cost_plot_alpha`, `cost_plot_low_colour`,
+  `cost_plot_high_colour`, `cost_plot_lower_percentile` and
+  `cost_plot_upper_percentile`. These are passed through to
+  `spatialplanr::splnr_plot_costOverlay()` (requires spatialplanr >= 0.7.7).
+  If omitted, they default to the previous appearance (`alpha = 0.1`,
+  `"#fff5eb"` -> `"#d94801"`), except that the colour scale limits now
+  default to the 5th-95th percentile of the cost distribution (previously a
+  fixed 0-99th percentile range), giving better colour contrast out of the
+  box. Existing `3_setup_app.R` scripts do not need to be updated -- add
+  these keys only if you want to customise the cost plot's appearance.
+
 # shinyplanr 0.1.8
 
 ## New features
