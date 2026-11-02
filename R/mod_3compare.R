@@ -1417,10 +1417,14 @@ mod_3compare_server <- function(id, cfg) {
     output$txt_cost <- shiny::renderText({
       cost_txt1 <- Dict %>% dplyr::filter(.data$nameVariable == input$costid1)
       cost_txt2 <- Dict %>% dplyr::filter(.data$nameVariable == input$costid2)
-      # Strip a leading "This cost" sentence if present, otherwise use justification as-is
+      # Strip a leading "This cost" sentence if present, otherwise use justification as-is.
+      # Falls back to a generic sentence when no justification text is available (NA or "").
       strip_cost_prefix <- function(just) {
+        if (length(just) == 0 || is.na(just) || nchar(just) == 0) {
+          return("no further detail is provided on this cost layer.")
+        }
         stripped <- stringr::str_remove(just, "^This cost[^.]*\\.\\s*")
-        if (nchar(stripped) == 0) just else stripped
+        if (is.na(stripped) || nchar(stripped) == 0) just else stripped
       }
       paste0(
         "To illustrate how the chosen cost influences the spatial plan, this plot shows the",
