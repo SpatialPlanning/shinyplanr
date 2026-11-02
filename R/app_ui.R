@@ -41,9 +41,7 @@ app_ui <- function(request) {
     )
   }
 
-  if (
-    isTRUE(options$mod_4features) || isTRUE(options$mod_4features_interactive)
-  ) {
+  if (isTRUE(options$mod_4features) || isTRUE(options$mod_4features_interactive)) {
     tabs[["Layer Information"]] <- shiny::tabPanel(
       "Layer Information",
       shiny::fluidPage(
@@ -123,19 +121,20 @@ app_ui <- function(request) {
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
 golem_add_external_resources <- function(options) {
-  # Register package's built-in www/ under two URL prefixes:
-  #   "www"              — used by bundle_resources() and logo src= paths
-  #   "shinyplanr-pkg"   — a stable prefix that is NEVER overridden, used to
-  #                        load the package CSS after the deployment www/ override
+  # Register the package's built-in www/ under two URL prefixes:
+  #   "www"            — used by bundle_resources() and logo src= paths
+  #   "shinyplanr-pkg" — stable prefix never overridden by the deployment www/;
+  #                      used to serve shinyplanr.css reliably from the package
   add_resource_path("www", app_sys("app/www"))
   add_resource_path("shinyplanr-pkg", app_sys("app/www"))
 
-  # If running from a deployment project, register the deployment www/ at the
-  # "www" prefix. This replaces the package registration at "www", so deployment
-  # logos (logo_navbar.png, logo_welcome.png, etc.) override the package defaults.
-  # The "shinyplanr-pkg" prefix is NOT overridden, so the package CSS is always
-  # served from the package regardless of what the deployment www/ contains.
-  # All required files are copied to the deployment www/ by setup/3_setup_app.R.
+  # If running from a deployment project, override the "www" prefix with the
+  # deployment www/ folder. This makes logo src= paths resolve to the
+  # deployment's copies (logo_navbar.png, logo_welcome.png, etc.), which are
+  # copied there by setup/3_setup_app.R.
+  # The "shinyplanr-pkg" prefix is NOT overridden, so shinyplanr.css is always
+  # served from the installed package regardless of what the deployment www/
+  # contains.
   if (dir.exists("www")) {
     shiny::addResourcePath("www", normalizePath("www", mustWork = FALSE))
   }
@@ -146,18 +145,27 @@ golem_add_external_resources <- function(options) {
       path = app_sys("app/www"),
       app_title = options$app_title
     ),
-    # Load the package CSS via the stable "shinyplanr-pkg" prefix. This is
-    # immune to the deployment www/ override above, so the full package
-    # stylesheet (navbar colours, footer, fonts, component rules) is always
-    # loaded from the installed package — not from the deployment www/.
+    # Load the package stylesheet (shinyplanr.css) via the stable
+    # "shinyplanr-pkg" prefix. This file contains all layout, typography,
+    # component rules, and default :root colour variables.
+    #
+    # The file is named shinyplanr.css (not custom.css) to avoid a naming
+    # collision with the deployment override below. Previously, when the
+    # package stylesheet was named custom.css, the golem html_dependency
+    # (all_files=TRUE) caused Shiny to inject a <link> for the package
+    # custom.css AFTER the deployment override, resetting the colours.
+    # With the rename, bundle_resources() emits a <link href="www/shinyplanr.css">
+    # which 404s harmlessly in deployment (deployment www/ has no shinyplanr.css),
+    # and this explicit tag below loads the package CSS reliably.
     tags$link(
       rel = "stylesheet",
       type = "text/css",
-      href = "shinyplanr-pkg/custom.css"
+      href = "shinyplanr-pkg/shinyplanr.css"
     ),
     # Deployment CSS override: if the deployment project contains www/custom.css
-    # (copied there by setup/3_setup_app.R), load it last. It contains only
-    # :root variable overrides (colours, font) and wins by cascade position.
+    # (copied there by setup/3_setup_app.R), load it AFTER the package
+    # stylesheet. It contains only :root variable overrides (colours, font)
+    # and wins by cascade position because it is the last stylesheet loaded.
     if (file.exists("www/custom.css")) {
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
     }
