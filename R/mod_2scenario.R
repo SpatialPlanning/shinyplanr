@@ -728,7 +728,12 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         Dict = Dict
       )
     }) %>%
-      shiny::bindCache(input$analyse)
+      # cache = "session" scopes this to the current browser session only.
+      # The default cache = "app" is shared across ALL concurrent users; keying
+      # solely on input$analyse (a per-session click counter that restarts at 1
+      # for every new session) can otherwise return another user's stale
+      # feature-representation data for the same click count.
+      shiny::bindCache(input$analyse, cache = "session")
 
     # Reactive for on-screen display — updates when analyse is clicked or sort changes.
     # Consumes targetPlotData() so the expensive data step is not repeated.
@@ -750,7 +755,8 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       ) +
         bar_theme
     }) %>%
-      shiny::bindCache(input$analyse, input$checkSort)
+      # cache = "session" — see note above on targetPlotData's bindCache().
+      shiny::bindCache(input$analyse, input$checkSort, cache = "session")
 
     # Cache for report — populated on tab visit using the already-memoised gg_Target().
     # The report uses whatever sort the user last selected (input$checkSort).
