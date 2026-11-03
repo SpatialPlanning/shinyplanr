@@ -1210,7 +1210,12 @@ mod_3compare_server <- function(id, cfg) {
         Dict = Dict
       )
     }) %>%
-      shiny::bindCache(input$analyse)
+      # cache = "session" scopes this to the current browser session only.
+      # The default cache = "app" is shared across ALL concurrent users; keying
+      # solely on input$analyse (a per-session click counter that restarts at 1
+      # for every new session) can otherwise return another user's stale
+      # feature-representation data for the same click count.
+      shiny::bindCache(input$analyse, cache = "session")
 
     targetPlotData2 <- shiny::reactive({
       fget_feature_representation(
@@ -1222,7 +1227,8 @@ mod_3compare_server <- function(id, cfg) {
         Dict = Dict
       )
     }) %>%
-      shiny::bindCache(input$analyse)
+      # cache = "session" — see note above on targetPlotData1's bindCache().
+      shiny::bindCache(input$analyse, cache = "session")
 
     # On-screen reactive — updates when analyse is clicked or sort changes.
     # Consumes targetPlotData1/2() so the expensive data step is not repeated.
@@ -1276,7 +1282,8 @@ mod_3compare_server <- function(id, cfg) {
           )
         )
     }) %>%
-      shiny::bindCache(input$analyse, input$checkSort)
+      # cache = "session" — see note above on targetPlotData1's bindCache().
+      shiny::bindCache(input$analyse, input$checkSort, cache = "session")
 
     # Cache for report — populated on tab visit using the already-memoised ggr_target().
     # The report uses whatever sort the user last selected (input$checkSort).
