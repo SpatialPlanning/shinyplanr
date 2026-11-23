@@ -434,7 +434,11 @@ create_fancy_dropdown <- function(id, id_in, Dict, width = "100%") {
 #' in \code{utils_server.R}). The \code{refugiaTarget} slider is nested in its
 #' own \code{shinyjs::hidden()} wrapper because it has no effect on the
 #' Percentile approach (\code{climate_change == 3}); it is shown/hidden by the
-#' same server helper whenever the approach changes.
+#' same server helper whenever the approach changes. The slider is displayed
+#' as a 0-100 percentage (consistent with the \code{percentile} control and
+#' the feature-target sliders), even though \code{options$refugiaTarget} and
+#' the value ultimately passed to \code{spatialplanr} are on a 0-1 scale --
+#' see the conversion in \code{fdefine_problem()}.
 #'
 #' @param id Character. Shiny module namespace ID (the raw module id string,
 #'   matching the convention used by \code{create_fancy_dropdown()}).
@@ -501,11 +505,15 @@ fclimate_options_ui <- function(id, options, suffix = "") {
               namespace = id,
               id = paste0("refugiaTarget", suffix)
             ),
-            label = "Refugia target",
+            label = "Refugia target (%)",
             min = 0,
-            max = 1,
-            step = 0.05,
-            value = options$refugiaTarget %||% 1
+            max = 100,
+            step = 5,
+            # options$refugiaTarget is stored on a 0-1 scale (the scale
+            # spatialplanr expects); the slider displays it as a 0-100
+            # percentage, consistent with the percentile control. The
+            # reverse conversion happens in fdefine_problem().
+            value = (options$refugiaTarget %||% 1) * 100
           )
         )
       )

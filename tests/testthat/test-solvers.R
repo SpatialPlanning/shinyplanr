@@ -773,7 +773,9 @@ test_that("fdefine_problem() prefers input$percentile/direction/refugiaTarget ov
     climate_change = "1",
     percentile = 42,
     direction = "1",
-    refugiaTarget = 0.77
+    # input$refugiaTarget is on a 0-100 scale (matching the live slider);
+    # fdefine_problem() converts it back to the 0-1 scale spatialplanr expects.
+    refugiaTarget = 77
   )
 
   captured <- NULL
