@@ -25,6 +25,10 @@ importFrom(rlang,
   ":=",
   .data
 )
+importFrom(sf,
+  st_shift_longitude,
+  st_transform
+)
 importFrom(shiny,
   HTML,
   column,

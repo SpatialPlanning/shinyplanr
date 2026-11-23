@@ -2,6 +2,23 @@
 
 ## New features
 
+* New optional `shinyplanr_options` key `antimeridian` (default `FALSE`).
+  Set `TRUE` for deployments whose planning region crosses the +/-180
+  degree line (e.g. Fiji, Tonga, or a multi-country West Pacific
+  deployment). ggplot2 maps are unaffected, since they are drawn directly
+  in the working CRS set by `cCRS`. Interactive leaflet maps
+  (`mod_2scenario` Explore tab, `mod_4afeatures` interactive Layer
+  Information, `mod_5coverage` Check Coverage), however, always reproject
+  to WGS84 (lon/lat) before rendering, which previously caused
+  antimeridian-crossing polygons to be drawn as giant bands spanning the
+  entire map. When `antimeridian = TRUE`, all data shown on these leaflet
+  maps is additionally shifted to 0-360 degree longitude (via
+  `sf::st_shift_longitude()`) immediately before rendering, keeping the
+  region compact on screen. GeoJSON downloads are never shifted and
+  remain standard -180..180 files. Existing `3_setup_app.R` scripts do not
+  need to be updated -- add `antimeridian = TRUE` only if your region
+  crosses the dateline.
+
 * New optional `shinyplanr_options` key `visible_climateOptions` (default
   `FALSE`). When set `TRUE`, the climate-smart approach parameters
   (`climate_change`, `percentile`, `direction`, `refugiaTarget`) -- previously

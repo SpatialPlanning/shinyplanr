@@ -433,7 +433,10 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
     # after st_transform() to WGS84, which leaflet's SVG renderer interprets as
     # holes — filling the ocean black instead of the island polygons.
     # st_make_valid() enforces CCW exterior / CW hole convention.
-    sf::st_make_valid(sf::st_transform(overlay, "EPSG:4326"))
+    # fprep_wgs84() additionally shifts longitudes to 0-360 when
+    # options$antimeridian is TRUE, so regions crossing the dateline (e.g.
+    # WestPacific) render as a compact polygon instead of spanning the globe.
+    sf::st_make_valid(fprep_wgs84(overlay, options$antimeridian))
   } else {
     NULL
   }
@@ -1275,9 +1278,11 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       {
         shiny::req(inherits(solution(), "sf"))
 
+        # fprep_wgs84() shifts longitudes to 0-360 when options$antimeridian
+        # is TRUE, so dateline-crossing regions render compactly on the map.
         soln_wgs84 <- solution() %>%
           dplyr::mutate(pu_id = dplyr::row_number()) %>%
-          sf::st_transform("EPSG:4326")
+          fprep_wgs84(options$antimeridian)
 
         # Compute per-cell lock state from raw_sf constraint columns.
         # raw_sf rows are guaranteed to align with solution() rows because

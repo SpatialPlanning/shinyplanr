@@ -41,9 +41,7 @@ app_ui <- function(request) {
     )
   }
 
-  if (
-    isTRUE(options$mod_4features) || isTRUE(options$mod_4features_interactive)
-  ) {
+  if (isTRUE(options$mod_4features) || isTRUE(options$mod_4features_interactive)) {
     tabs[["Layer Information"]] <- shiny::tabPanel(
       "Layer Information",
       shiny::fluidPage(
@@ -168,8 +166,16 @@ golem_add_external_resources <- function(options) {
     # (copied there by setup/3_setup_app.R), load it AFTER the package
     # stylesheet. It contains only :root variable overrides (colours, font)
     # and wins by cascade position because it is the last stylesheet loaded.
+    #
+    # href uses the "www/" prefix to match the shiny::addResourcePath("www", ...)
+    # registered above. The unprefixed root path ("custom.css") only resolved
+    # when Shiny happened to register an automatic www/ -> "/" fallthrough
+    # (shinyAppDir_appR's directory-launch code path, e.g. shiny::runApp(dir)).
+    # That fallthrough is never registered when the app is launched as a
+    # shiny.appobj (e.g. sourcing app.R directly in Positron/RStudio console),
+    # so the unprefixed link silently 404'd and the override never applied.
     if (file.exists("www/custom.css")) {
-      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+      tags$link(rel = "stylesheet", type = "text/css", href = "www/custom.css")
     }
   )
 }

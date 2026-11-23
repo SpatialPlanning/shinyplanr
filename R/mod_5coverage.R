@@ -73,12 +73,15 @@ mod_5coverage_server <- function(id, cfg) {
   # Some projected CRS (e.g. EPSG:8859 Equal Earth) produce CW exterior rings
   # after st_transform() to WGS84, which leaflet's SVG renderer interprets as
   # holes — filling the ocean black instead of the island polygons.
+  # fprep_wgs84() additionally shifts longitudes to 0-360 when
+  # options$antimeridian is TRUE, so dateline-crossing regions render
+  # compactly on the map.
   coast_overlay_wgs84 <- if (
     isTRUE(options$show_coast_overlay) &&
       inherits(overlay, "sf") &&
       nrow(overlay) > 0
   ) {
-    sf::st_make_valid(sf::st_transform(overlay, "EPSG:4326"))
+    sf::st_make_valid(fprep_wgs84(overlay, options$antimeridian))
   } else {
     NULL
   }
@@ -172,9 +175,10 @@ mod_5coverage_server <- function(id, cfg) {
         return()
       }
 
-      # Transform to WGS84 for Leaflet
+      # fprep_wgs84() shifts longitudes to 0-360 when options$antimeridian is
+      # TRUE, so dateline-crossing regions render compactly on the map.
       sf_wgs84 <- sf_data %>%
-        sf::st_transform("EPSG:4326")
+        fprep_wgs84(options$antimeridian)
 
       # Get bounding box for map view
       bbox <- sf::st_bbox(sf_wgs84)

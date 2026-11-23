@@ -151,6 +151,22 @@ shinyplanr_options <- list(
   # See https://leaflet-extras.github.io/leaflet-providers/preview/ for options.
   leaflet_provider = "Esri.WorldGrayCanvas",
 
+  ## Antimeridian handling for interactive leaflet maps
+  #
+  # Set antimeridian = TRUE if your planning region crosses the +/-180
+  # degree line (e.g. a Pacific region such as Fiji, Tonga, or a
+  # multi-country West Pacific deployment). ggplot2 maps are unaffected
+  # (they stay in the working CRS set by cCRS above), but leaflet maps
+  # always reproject to WGS84 (lon/lat), which otherwise causes
+  # antimeridian-crossing polygons to be drawn as giant bands spanning the
+  # entire map. When TRUE, all data shown on leaflet maps (mod_2scenario,
+  # mod_4afeatures interactive, mod_5coverage) is additionally shifted to
+  # 0-360 degree longitude (via sf::st_shift_longitude()) immediately
+  # before rendering, which keeps the region compact on screen.
+  # GeoJSON downloads are never shifted, so they remain standard -180..180
+  # files that open correctly in any GIS tool.
+  antimeridian = FALSE,
+
   ## Coastline overlay on interactive leaflet maps
   #
   # When show_coast_overlay = TRUE, the `coast` sf object (stored as `overlay`
