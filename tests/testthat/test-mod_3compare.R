@@ -130,9 +130,26 @@ test_that("mod_3compare_ui() renders separate Display Mode and Planning Unit pan
   expect_match(html, "displayModePanel", fixed = TRUE)
   expect_match(html, "planningUnitPanel", fixed = TRUE)
   expect_match(html, "Display Mode", fixed = TRUE)
-  expect_match(html, "Planning Unit", fixed = TRUE)
-  # The old combined panel id must no longer be present.
+  # The "Planning Unit" heading is rendered server-side (inside
+  # exploreInfoPanelContent) rather than hardcoded in the static UI, so
+  # that a clicked planning unit's heading replaces it instead of adding a
+  # second heading below it (see next test).
   expect_false(grepl("explorePanel", html, fixed = TRUE))
+})
+
+test_that("mod_3compare_server() exploreInfoPanelContent shows a single 'Planning Unit' heading by default, with no duplicate after a click", {
+  testServer(
+    mod_3compare_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      default_html <- output$exploreInfoPanelContent$html
+      # Exactly one heading occurrence before any click.
+      expect_equal(
+        length(gregexpr("Planning Unit", default_html, fixed = TRUE)[[1]]),
+        1
+      )
+    }
+  )
 })
 
 test_that("mod_3compare_ui() Explore tab is always present in HTML regardless of include_explore", {
@@ -234,15 +251,19 @@ test_that("mod_3compare_server() uses the updated light/dark green Scenario-mode
   expect_match(src, "#00441b", fixed = TRUE)
 })
 
-test_that("mod_3compare_server() Explore map legends use bottomright position", {
-  # Legend moved to bottomright so it doesn't collide with the zoom control,
-  # which is relocated to bottomleft via onRender().
+test_that("mod_3compare_server() Explore map legends use bottomleft position", {
+  # Legend sits at bottomleft, next to the zoom control (also bottomleft) --
+  # Leaflet stacks same-corner controls, and a CSS rule (shinyplanr.css)
+  # arranges them in a row so the legend appears beside the zoom buttons.
   src <- paste(readLines("../../R/mod_3compare.R"), collapse = "\n")
-  expect_match(src, 'position = "bottomright"', fixed = TRUE)
+  expect_match(src, 'position = "bottomleft"', fixed = TRUE)
 })
 
-test_that("mod_3compare_server() relocates the zoom control via onRender()", {
+test_that("mod_3compare_server() suppresses the default zoom control and relocates a single one via onRender()", {
   src <- paste(readLines("../../R/mod_3compare.R"), collapse = "\n")
+  # zoomControl = FALSE at map creation prevents a duplicate top-left control
+  # from appearing alongside the bottom-left one added by onRender().
+  expect_match(src, "zoomControl = FALSE", fixed = TRUE)
   expect_match(src, "L.control.zoom", fixed = TRUE)
   expect_match(src, "bottomleft", fixed = TRUE)
 })

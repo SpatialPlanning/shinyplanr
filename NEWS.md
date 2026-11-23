@@ -1,5 +1,16 @@
 # shinyplanr 0.1.9
 
+## Bug fixes
+
+* Fixed several display issues in the Comparison module's new "Explore" tab:
+  a duplicate zoom control (one top-left, one bottom-left) is now a single
+  control at bottom-left; the legend now sits at bottom-left next to the
+  zoom buttons instead of bottom-right; the "Planning Unit" panel no longer
+  shows two headings when a planning unit is clicked (the click-to-inspect
+  heading now replaces the default placeholder heading instead of adding a
+  second one); and the Display Mode panel is back in the top-left corner
+  instead of overlapping the zoom control.
+
 ## New features
 
 * New "Explore" tab in the Comparison module (`mod_3compare`), matching the
