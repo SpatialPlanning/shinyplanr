@@ -879,3 +879,21 @@ div.shiny-table-output {
   margin-right: var(--spacing-2px);
   margin-left: var(--spacing-8px);
 }
+
+/* ==========================================================================
+   Comparison module - Explore tab map controls
+   ========================================================================== */
+
+/* The Explore tab's zoom control and legend both live in the bottom-left
+   corner (see mod_3compare.R's render_explore_layer()). Leaflet's default
+   bottom-left container stacks controls vertically; override to a row so
+   the legend sits beside the zoom buttons instead of below them. Scoped to
+   this specific map's container (matched by id suffix, since golem
+   namespaces the leafletOutput id with the module's instance prefix) so
+   other leaflet maps in the app (which don't relocate their zoom control)
+   are unaffected. */
+div[id$="-leaflet_map_explore"] .leaflet-bottom.leaflet-left {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+}

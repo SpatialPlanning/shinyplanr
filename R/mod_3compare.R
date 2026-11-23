@@ -366,13 +366,17 @@ mod_3compare_ui <- function(id, cfg) {
                 height = "650px"
               )
             ),
+            # Top-left: Display Mode controls. The leaflet zoom control for
+            # this map lives at bottom-left only (see
+            # output$leaflet_map_explore's renderLeaflet()), so this panel
+            # does not need to be offset to clear it.
             shiny::absolutePanel(
               id = ns("displayModePanel"),
               class = "panel panel-default",
               fixed = FALSE,
               draggable = TRUE,
               top = "10px",
-              left = "60px",
+              left = "10px",
               width = "260px",
               style = "background-color: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; z-index: 1000;",
               shiny::h4("Display Mode", style = "margin-top: 0;"),
@@ -398,6 +402,7 @@ mod_3compare_ui <- function(id, cfg) {
                 )
               )
             ),
+            # Top-right: Planning Unit click-to-inspect panel.
             shiny::absolutePanel(
               id = ns("planningUnitPanel"),
               class = "panel panel-default",
@@ -407,7 +412,11 @@ mod_3compare_ui <- function(id, cfg) {
               right = "10px",
               width = "260px",
               style = "background-color: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; max-height: 600px; overflow-y: auto; z-index: 1000;",
-              shiny::h4("Planning Unit", style = "margin-top: 0;"),
+              # No static "Planning Unit" heading here - the single heading
+              # ("Planning Unit" by default, "Planning Unit #<id>" once a
+              # planning unit is clicked) is rendered entirely inside
+              # exploreInfoPanelContent so the 2nd heading replaces the 1st
+              # rather than appearing in addition to it.
               shiny::uiOutput(ns("exploreInfoPanelContent"))
             )
           )
@@ -1751,12 +1760,19 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
     # mod_2scenario.R's panel_content pattern.
     explore_panel_content <- shiny::reactiveVal(NULL)
 
+    # Default placeholder includes its own "Planning Unit" heading so there
+    # is only ever a single heading in this panel: the click handler's
+    # content (built below) replaces this entire output - including the
+    # heading, now "Planning Unit #<id>" - rather than appending to it.
     output$exploreInfoPanelContent <- shiny::renderUI({
       content <- explore_panel_content()
       if (is.null(content)) {
-        shiny::p(
-          "Click a planning unit on the map to see its status in each scenario.",
-          style = "color: #666; font-style: italic;"
+        shiny::tagList(
+          shiny::h4("Planning Unit", style = "margin-top: 0;"),
+          shiny::p(
+            "Click a planning unit on the map to see its status in each scenario.",
+            style = "color: #666; font-style: italic;"
+          )
         )
       } else {
         content
@@ -1867,10 +1883,14 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
     # (which would wipe the GL layer). Mirrors mod_2scenario.R's
     # leaflet_map pattern, plus mod_4afeatures.R's initial fitBounds().
     #
-    # The zoom control is relocated to bottom-left via onRender() so it does
-    # not collide with the Display Mode absolutePanel (top-left).
+    # The default top-left zoom control is suppressed at map-creation time
+    # (zoomControl = FALSE) and a single replacement is added at bottom-left
+    # via onRender() - without suppressing the default first, both would be
+    # shown simultaneously (one top-left, one bottom-left).
     output$leaflet_map_explore <- leaflet::renderLeaflet({
-      leaflet::leaflet() %>%
+      leaflet::leaflet(
+        options = leaflet::leafletOptions(zoomControl = FALSE)
+      ) %>%
         leaflet::addProviderTiles(
           options$leaflet_provider %||% "Esri.WorldGrayCanvas"
         ) %>%
@@ -1970,7 +1990,7 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
           if (length(legend_colours) > 0) {
             map_proxy <- map_proxy %>%
               leaflet::addLegend(
-                position = "bottomright",
+                position = "bottomleft",
                 colors = legend_colours,
                 labels = legend_labels,
                 title = "Comparison",
@@ -2100,7 +2120,7 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
           if (length(legend_colours) > 0) {
             map_proxy <- map_proxy %>%
               leaflet::addLegend(
-                position = "bottomright",
+                position = "bottomleft",
                 colors = legend_colours,
                 labels = legend_labels,
                 title = "Scenario",

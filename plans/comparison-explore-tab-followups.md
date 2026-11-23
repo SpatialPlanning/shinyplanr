@@ -8,6 +8,44 @@
 > (`devtools::document()`, `devtools::load_all()`, and the full
 > `devtools::test()` suite all pass with 0 failures).
 
+## Round 2 fixes (post-implementation bug reports)
+
+After the above landed, four further issues were reported and fixed:
+
+1. **Duplicate zoom controls** - `onRender()` added a second zoom control at
+   bottom-left without suppressing the default top-left one. Fixed by
+   constructing the base map with
+   `leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = FALSE))`
+   so only the bottom-left control (added via `onRender()`) exists.
+2. **Legend position** - both `addLegend()` calls in
+   `render_explore_layer()` used `position = "bottomright"`; changed to
+   `"bottomleft"` so the legend sits next to the zoom control. A scoped CSS
+   rule (`inst/app/www/shinyplanr.css`) arranges the
+   `.leaflet-bottom.leaflet-left` container as a row instead of Leaflet's
+   default column stacking, so the legend appears beside the zoom buttons
+   rather than below them.
+3. **Duplicate "Planning Unit" headings** - the `planningUnitPanel`
+   `absolutePanel` had a static `h4("Planning Unit")` heading *outside* the
+   `uiOutput(ns("exploreInfoPanelContent"))`, while the click handler's
+   dynamic content also rendered its own `h4("Planning Unit #<id>")`
+   *inside* the output - so after a click both were visible. Fixed by
+   removing the static heading from the UI and instead rendering the
+   default placeholder's heading inside `exploreInfoPanelContent` itself,
+   so the dynamic (clicked) content fully replaces it rather than
+   supplementing it.
+4. **Display Mode panel position** - temporarily moved to top-right during
+   this round, then corrected back to **top-left** per clarified
+   requirements (left = "10px", no longer offset for a top-left zoom
+   control since the zoom control now lives exclusively at bottom-left).
+   The Planning Unit panel remains at top-right.
+
+Tests updated in `tests/testthat/test-mod_3compare.R` to match: legend
+position assertion changed to `bottomleft`, a new assertion for
+`zoomControl = FALSE`, the static "Planning Unit" text assertion removed
+from the UI-only test, and a new `testServer()`-based test confirming
+`exploreInfoPanelContent` renders exactly one "Planning Unit" heading by
+default.
+
 ## Issues addressed
 
 1. The two greens used for "Selected" in Scenario mode (`#2ca02c` /
