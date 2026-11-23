@@ -224,6 +224,83 @@ test_that("fget_feature_representation() returns NULL for a non-sf character inp
   expect_null(result)
 })
 
+test_that("fget_feature_representation() defaults climate_change to options$climate_change", {
+  Dict <- make_test_dict()
+  soln <- sf::st_sf(
+    feature_A = 1,
+    solution_1 = 1L,
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
+      crs = "ESRI:54009"
+    )
+  )
+
+  captured_approach <- NULL
+  local_mocked_bindings(
+    splnr_get_featureRep = function(
+      soln,
+      pDat,
+      climsmart,
+      climsmartApproach = NULL,
+      targets = NULL
+    ) {
+      captured_approach <<- climsmartApproach
+      data.frame(feature = "feature_A", percent = 1)
+    },
+    .package = "spatialplanr"
+  )
+
+  shinyplanr:::fget_feature_representation(
+    soln = soln,
+    problem_data = NULL,
+    targets = data.frame(feature = "feature_A", target = 0.3),
+    climate_id = "sst_trend",
+    options = list(climate_change = 2L),
+    Dict = Dict
+  )
+
+  expect_equal(captured_approach, 2L)
+})
+
+test_that("fget_feature_representation() uses the explicit climate_change argument over options", {
+  Dict <- make_test_dict()
+  soln <- sf::st_sf(
+    feature_A = 1,
+    solution_1 = 1L,
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
+      crs = "ESRI:54009"
+    )
+  )
+
+  captured_approach <- NULL
+  local_mocked_bindings(
+    splnr_get_featureRep = function(
+      soln,
+      pDat,
+      climsmart,
+      climsmartApproach = NULL,
+      targets = NULL
+    ) {
+      captured_approach <<- climsmartApproach
+      data.frame(feature = "feature_A", percent = 1)
+    },
+    .package = "spatialplanr"
+  )
+
+  shinyplanr:::fget_feature_representation(
+    soln = soln,
+    problem_data = NULL,
+    targets = data.frame(feature = "feature_A", target = 0.3),
+    climate_id = "sst_trend",
+    options = list(climate_change = 2L),
+    Dict = Dict,
+    climate_change = 3L
+  )
+
+  expect_equal(captured_approach, 3L)
+})
+
 # ---------------------------------------------------------------------------
 # fsetup_category_lock_observers()
 # ---------------------------------------------------------------------------

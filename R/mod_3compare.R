@@ -248,7 +248,10 @@ mod_3compare_ui <- function(id, cfg) {
                     type = "Climate",
                     .before = 1
                   )
-              )
+              ),
+              if (isTRUE(options$visible_climateOptions)) {
+                fclimate_options_ui(id = id, options = options, suffix = "1")
+              }
             ),
             shiny::column(
               6,
@@ -264,7 +267,10 @@ mod_3compare_ui <- function(id, cfg) {
                     type = "Climate",
                     .before = 1
                   )
-              )
+              ),
+              if (isTRUE(options$visible_climateOptions)) {
+                fclimate_options_ui(id = id, options = options, suffix = "2")
+              }
             )
           )
         )
@@ -590,6 +596,11 @@ mod_3compare_server <- function(id, cfg) {
       tab_report = "10",
       tab_log = "9"
     )
+
+    # Show/hide the climate-smart approach controls for each scenario panel
+    # (no-op unless options$visible_climateOptions is TRUE) ----
+    fsetup_climate_option_observers(options, input, suffix = "1")
+    fsetup_climate_option_observers(options, input, suffix = "2")
 
     shiny::observeEvent(
       input$resetSlider,
@@ -1207,7 +1218,10 @@ mod_3compare_server <- function(id, cfg) {
         targets = targetData1(),
         climate_id = climVal1(),
         options = options,
-        Dict = Dict
+        Dict = Dict,
+        climate_change = as.numeric(
+          input$climate_change1 %||% options$climate_change
+        )
       )
     }) %>%
       # cache = "session" scopes this to the current browser session only.
@@ -1224,7 +1238,10 @@ mod_3compare_server <- function(id, cfg) {
         targets = targetData2(),
         climate_id = climVal2(),
         options = options,
-        Dict = Dict
+        Dict = Dict,
+        climate_change = as.numeric(
+          input$climate_change2 %||% options$climate_change
+        )
       )
     }) %>%
       # cache = "session" — see note above on targetPlotData1's bindCache().

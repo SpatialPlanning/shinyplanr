@@ -71,3 +71,41 @@ test_that("mod_3compare_server() copyFromScen2 button input exists in server", {
     }
   )
 })
+
+# ---------------------------------------------------------------------------
+# Climate-smart approach controls (visible_climateOptions)
+# ---------------------------------------------------------------------------
+
+test_that("mod_3compare_ui() does not render climate-options controls when visible_climateOptions is FALSE", {
+  cfg_clim <- cfg
+  cfg_clim$options <- modifyList(
+    cfg$options,
+    list(include_climateChange = TRUE, visible_climateOptions = FALSE)
+  )
+
+  ui <- mod_3compare_ui(id = "test_clim_hidden", cfg = cfg_clim)
+  html <- as.character(ui)
+  expect_false(grepl("climate_change1", html, fixed = TRUE))
+  expect_false(grepl("climate_change2", html, fixed = TRUE))
+  expect_false(grepl("refugiaTarget1", html, fixed = TRUE))
+  expect_false(grepl("refugiaTarget2", html, fixed = TRUE))
+})
+
+test_that("mod_3compare_ui() renders independent climate-options controls for both scenarios when visible_climateOptions is TRUE", {
+  cfg_clim <- cfg
+  cfg_clim$options <- modifyList(
+    cfg$options,
+    list(include_climateChange = TRUE, visible_climateOptions = TRUE)
+  )
+
+  ui <- mod_3compare_ui(id = "test_clim_visible", cfg = cfg_clim)
+  html <- as.character(ui)
+  expect_match(html, "climate_change1", fixed = TRUE)
+  expect_match(html, "climate_change2", fixed = TRUE)
+  expect_match(html, "percentile1", fixed = TRUE)
+  expect_match(html, "percentile2", fixed = TRUE)
+  expect_match(html, "direction1", fixed = TRUE)
+  expect_match(html, "direction2", fixed = TRUE)
+  expect_match(html, "refugiaTarget1", fixed = TRUE)
+  expect_match(html, "refugiaTarget2", fixed = TRUE)
+})

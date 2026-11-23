@@ -109,6 +109,7 @@ options <- list(
   funder2_url = "https://spatialplanning.github.io",
   include_climateChange = FALSE,
   climate_change = 0,
+  visible_climateOptions = FALSE,
   include_lockedArea = FALSE,
   obj_func = "min_set",
   cCRS = "ESRI:54009"

@@ -2,6 +2,7 @@ AJ
 Bathymetry
 Biogeographic
 Bioregion
+Bioregions
 CLI
 CMD
 CPLEX
@@ -11,16 +12,15 @@ Codecov
 Colours
 Ctrl
 Customise
-Customising
 DevTools
 EEZ
 EPSG
-Funder
 GL
 GeoJSON
 GeoPackage
 Geodatabase
 Geomorphological
+Geomorphology
 Gurobi
 HiGHS
 ILP
@@ -51,6 +51,7 @@ RStudio
 Refugia
 Rproj
 SHA
+Seagrass
 Sectoral
 Suboptimal
 UI
@@ -73,7 +74,6 @@ centred
 changelog
 choropleth
 colour
-colours
 config's
 csv
 customisations
@@ -108,7 +108,6 @@ metres
 minimise
 minimises
 minimising
-navbar
 oceandatr
 onwards
 optimisation
@@ -132,7 +131,7 @@ sectoral
 serialises
 spatialgridr
 spatialplanr
-tabset
+th
 truthing
 unmanaged
 websocket

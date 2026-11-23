@@ -471,8 +471,21 @@ include_climateChange = TRUE,
 climate_change = 1,    # 1 = CPA method
 percentile = 5,        # For percentile approach
 direction = -1,        # -1 = low values are refugia
-refugiaTarget = 1
+refugiaTarget = 1,
+visible_climateOptions = FALSE  # See below
 ```
+
+By default, `climate_change`, `percentile`, `direction`, and `refugiaTarget`
+above are fixed at deploy time -- app users only see the climate **layer**
+dropdown and never see or change the underlying approach parameters.
+
+Set `visible_climateOptions = TRUE` to expose these four parameters as live
+sidebar controls in both the Scenario and Comparison tabs, giving app users
+control over the climate-smart approach themselves. The values set above are
+used as the initial/default values of these controls. In the Comparison tab,
+each scenario panel gets its own independent set of controls. The
+`refugiaTarget` control is automatically hidden whenever the Percentile
+approach is selected, since it has no effect on that approach.
 
 ### Running 3_setup_app.R
 

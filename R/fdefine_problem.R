@@ -14,9 +14,17 @@
 #' @param options List. App-level options (from the deployment config), including
 #'   \code{obj_func} (\code{"min_set"} or \code{"min_shortfall"}),
 #'   \code{climate_change} (integer, 0–3), \code{percentile},
-#'   \code{direction}, and \code{refugiaTarget}.
+#'   \code{direction}, and \code{refugiaTarget}. These four climate-smart
+#'   parameters are used as the fallback whenever the corresponding Shiny
+#'   input is \code{NULL} -- see \code{input} below.
 #' @param input Shiny input object. Used to read cost, climate, budget, and
-#'   lock-in/lock-out input values.
+#'   lock-in/lock-out input values. When \code{options$visible_climateOptions}
+#'   is \code{TRUE}, the climate-smart parameters (\code{climate_change},
+#'   \code{percentile}, \code{direction}, \code{refugiaTarget}, each suffixed
+#'   with \code{compare_id}) are rendered as live sidebar controls (see
+#'   \code{fclimate_options_ui()}) and take precedence over \code{options}
+#'   (via the \code{\%||\%} fallback operator); otherwise they fall back to
+#'   the fixed \code{options} values.
 #' @param name_check Character. Prefix for slider input IDs. Default
 #'   \code{"sli_"} (Scenario module). Compare module passes \code{"sli1_"} or
 #'   \code{"sli2_"} explicitly.
@@ -71,6 +79,24 @@ fdefine_problem <- function(
     # Validate that climate column exists in raw_sf
     clim_col <- input[[paste0("climateid", compare_id)]]
 
+    # Resolve the four climate-smart parameters: prefer live Shiny inputs
+    # (rendered only when options$visible_climateOptions is TRUE -- see
+    # fclimate_options_ui() / fsetup_climate_option_observers()), falling
+    # back to the fixed deploy-time options value otherwise. Inputs are
+    # selectInput/sliderInput values, so numeric ones are coerced explicitly.
+    climate_change <- as.numeric(
+      input[[paste0("climate_change", compare_id)]] %||% options$climate_change
+    )
+    climate_percentile <- as.numeric(
+      input[[paste0("percentile", compare_id)]] %||% options$percentile
+    )
+    climate_direction <- as.numeric(
+      input[[paste0("direction", compare_id)]] %||% options$direction
+    )
+    climate_refugiaTarget <- as.numeric(
+      input[[paste0("refugiaTarget", compare_id)]] %||% options$refugiaTarget
+    )
+
     if (!clim_col %in% names(raw_sf)) {
       warning(paste0(
         "Climate column '",
@@ -82,40 +108,40 @@ fdefine_problem <- function(
       # Pass raw_sf directly with metric_col so spatialplanr can select the
       # correct column internally. This avoids creating a throwaway climate_sf
       # object with a hard-coded "metric" column name.
-      if (options$climate_change == 1) {
+      if (climate_change == 1) {
         # CPA approach
         CS_Approach <- spatialplanr::splnr_climate_priorityAreaApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
           metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
           metric_col = clim_col,
-          percentile = options$percentile,
+          percentile = climate_percentile,
           targets = targets,
-          direction = options$direction,
-          refugiaTarget = options$refugiaTarget
+          direction = climate_direction,
+          refugiaTarget = climate_refugiaTarget
         )
-      } else if (options$climate_change == 2) {
+      } else if (climate_change == 2) {
         # feature approach
         CS_Approach <- spatialplanr::splnr_climate_featureApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
           metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
           metric_col = clim_col,
-          percentile = options$percentile,
+          percentile = climate_percentile,
           targets = targets,
-          direction = options$direction,
-          refugiaTarget = options$refugiaTarget
+          direction = climate_direction,
+          refugiaTarget = climate_refugiaTarget
         )
-      } else if (options$climate_change == 3) {
+      } else if (climate_change == 3) {
         # percentile approach
         CS_Approach <- spatialplanr::splnr_climate_percentileApproach(
           features = out_sf %>%
             dplyr::select(-input[[paste0("costid", compare_id)]]), # out_sf without cost
           metric = raw_sf %>% dplyr::select(dplyr::all_of(clim_col)), # geometry is sticky
           metric_col = clim_col,
-          percentile = options$percentile,
+          percentile = climate_percentile,
           targets = targets,
-          direction = options$direction
+          direction = climate_direction
         )
       }
 
