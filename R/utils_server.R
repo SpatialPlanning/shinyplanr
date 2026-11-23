@@ -620,3 +620,66 @@ fdownload_solution_geojson <- function(sol, file) {
   )
   invisible(NULL)
 }
+
+
+#' Set up show/hide observers for the climate-smart approach controls
+#'
+#' Wires the visibility behaviour for the panel built by
+#' \code{fclimate_options_ui()}: the whole panel is shown only once the user
+#' selects an actual climate layer in the corresponding climate dropdown
+#' (\code{climateid<suffix>}), and the \code{refugiaTarget} slider within it
+#' is additionally hidden whenever the Percentile approach
+#' (\code{climate_change == 3}) is selected, since it has no effect on that
+#' approach (see \code{fdefine_problem()}).
+#'
+#' No-op (not registered) unless \code{options$visible_climateOptions} is
+#' \code{TRUE} -- the panel is never rendered in that case, so there is
+#' nothing to show/hide.
+#'
+#' @param options List of app options (from \code{load_config()}).
+#' @param input Shiny input object (from the enclosing \code{moduleServer}).
+#' @param suffix Character. Matches the suffix passed to
+#'   \code{fclimate_options_ui()}: \code{""} for the Scenario module,
+#'   \code{"1"} / \code{"2"} for the two Compare module panels.
+#'
+#' @return Invisibly \code{NULL}. Called for its side-effect of registering
+#'   Shiny observers.
+#'
+#' @noRd
+#'
+fsetup_climate_option_observers <- function(options, input, suffix = "") {
+  if (!isTRUE(options$visible_climateOptions)) {
+    return(invisible(NULL))
+  }
+
+  climateid <- paste0("climateid", suffix)
+  climate_change_id <- paste0("climate_change", suffix)
+  panel_id <- paste0("climateOptionsPanel", suffix)
+  refugia_wrapper_id <- paste0("refugiaTargetWrapper", suffix)
+
+  shiny::observeEvent(
+    input[[climateid]],
+    {
+      if ((input[[climateid]] %||% "NA") != "NA") {
+        shinyjs::show(id = panel_id)
+      } else {
+        shinyjs::hide(id = panel_id)
+      }
+    },
+    ignoreNULL = FALSE
+  )
+
+  shiny::observeEvent(
+    input[[climate_change_id]],
+    {
+      if ((input[[climate_change_id]] %||% "1") == "3") {
+        shinyjs::hide(id = refugia_wrapper_id)
+      } else {
+        shinyjs::show(id = refugia_wrapper_id)
+      }
+    },
+    ignoreNULL = FALSE
+  )
+
+  invisible(NULL)
+}

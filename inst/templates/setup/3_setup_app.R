@@ -93,6 +93,12 @@ shinyplanr_options <- list(
   percentile = 5,
   direction = -1, # 1 = high values are refugia; -1 = low values
   refugiaTarget = 1,
+  # visible_climateOptions: when FALSE (default), climate_change/percentile/
+  # direction/refugiaTarget above are fixed at deploy time and never shown to
+  # app users. Set TRUE to expose them as sidebar controls (in both the
+  # Scenario and Comparison tabs) so users can choose their own
+  # climate-smart approach, percentile, direction, and refugia target.
+  visible_climateOptions = FALSE,
   # [END include_climate]
 
   ## Locked areas
@@ -621,6 +627,8 @@ message('  Session > Restart R  (or Ctrl/Cmd+Shift+F10 in RStudio)')
 message('Then open app.R and run shiny::runApp() to test the app.')
 
 # Open app.R so it is ready to run after the user restarts R.
-if (requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()) {
+if (
+  requireNamespace('rstudioapi', quietly = TRUE) && rstudioapi::isAvailable()
+) {
   rstudioapi::navigateToFile('app.R')
 }

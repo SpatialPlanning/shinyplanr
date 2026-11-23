@@ -163,6 +163,9 @@ mod_2scenario_ui <- function(id, cfg) {
                 .before = 1
               )
           ),
+          if (isTRUE(options$visible_climateOptions)) {
+            fclimate_options_ui(id = id, options = options, suffix = "")
+          }
         )
       },
       shinyjs::hidden(div(
@@ -459,6 +462,10 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
       tab_log = "8"
     )
 
+    # Show/hide the climate-smart approach controls (no-op unless
+    # options$visible_climateOptions is TRUE) ----
+    fsetup_climate_option_observers(options, input, suffix = "")
+
     # Go back to the first tab and top of page when analyse is clicked.
     shiny::observeEvent(input$analyse, {
       shiny::updateTabsetPanel(session, "tabs", selected = "1")
@@ -725,7 +732,10 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         targets = targetData(),
         climate_id = input$climateid %||% "NA",
         options = options,
-        Dict = Dict
+        Dict = Dict,
+        climate_change = as.numeric(
+          input$climate_change %||% options$climate_change
+        )
       )
     }) %>%
       # cache = "session" scopes this to the current browser session only.
@@ -1530,7 +1540,9 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
 
             # Get cost column name from input and extract value
             cost_col <- shiny::isolate(input$costid)
-            cost_value <- if (!is.null(cost_col) && cost_col %in% names(pu_row)) {
+            cost_value <- if (
+              !is.null(cost_col) && cost_col %in% names(pu_row)
+            ) {
               round(as.numeric(pu_row[[cost_col]]), 2)
             } else {
               NA

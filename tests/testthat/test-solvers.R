@@ -733,3 +733,192 @@ test_that("fdefine_problem() with lock-in produces a solvable problem (PU1 alway
   expect_s3_class(sol, "sf")
   expect_equal(sol$solution_1[1], 1L)
 })
+
+# ---------------------------------------------------------------------------
+# fdefine_problem() — visible_climateOptions: input overrides options via %||%
+# ---------------------------------------------------------------------------
+#
+# When options$visible_climateOptions is TRUE, climate_change/percentile/
+# direction/refugiaTarget are rendered as live Shiny inputs (fclimate_options_ui())
+# and fdefine_problem() must prefer those inputs over the fixed options values
+# (see the %||% fallback in fdefine_problem.R). These tests use spy mocks on
+# the three spatialplanr climate-approach functions to verify which percentile/
+# direction/refugiaTarget values are actually passed through, without requiring
+# a solver backend.
+
+make_test_sf_with_climate <- function() {
+  sf <- make_test_sf()
+  sf$sst_trend <- c(0.1, 0.5, 0.3, 0.9)
+  sf
+}
+
+test_that("fdefine_problem() prefers input$percentile/direction/refugiaTarget over options when both are set (CPA approach)", {
+  raw_sf <- make_test_sf_with_climate()
+  targets <- data.frame(
+    feature = c("feature_A", "feature_B"),
+    target = c(0.5, 0.5)
+  )
+  # options values deliberately differ from the input values below, so the
+  # test fails if fdefine_problem() falls back to options instead of input.
+  options <- list(
+    obj_func = "min_set",
+    climate_change = 1L,
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
+  )
+  input <- list(
+    costid = "Cost_Area",
+    climateid = "sst_trend",
+    climate_change = "1",
+    percentile = 42,
+    direction = "1",
+    refugiaTarget = 0.77
+  )
+
+  captured <- NULL
+  local_mocked_bindings(
+    splnr_climate_priorityAreaApproach = function(
+      features,
+      metric,
+      targets,
+      direction,
+      percentile,
+      refugiaTarget,
+      metric_col
+    ) {
+      captured <<- list(
+        percentile = percentile,
+        direction = direction,
+        refugiaTarget = refugiaTarget
+      )
+      list(Targets = targets, Features = features)
+    },
+    .package = "spatialplanr"
+  )
+
+  shinyplanr:::fdefine_problem(
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
+    name_check = "sli_",
+    clim_input = "sst_trend",
+    compare_id = ""
+  )
+
+  expect_equal(captured$percentile, 42)
+  expect_equal(captured$direction, 1)
+  expect_equal(captured$refugiaTarget, 0.77)
+})
+
+test_that("fdefine_problem() falls back to options when climate inputs are NULL (visible_climateOptions FALSE)", {
+  raw_sf <- make_test_sf_with_climate()
+  targets <- data.frame(
+    feature = c("feature_A", "feature_B"),
+    target = c(0.5, 0.5)
+  )
+  options <- list(
+    obj_func = "min_set",
+    climate_change = 1L,
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
+  )
+  # No climate_change/percentile/direction/refugiaTarget inputs -- mirrors the
+  # default visible_climateOptions = FALSE case where that UI is never rendered.
+  input <- list(
+    costid = "Cost_Area",
+    climateid = "sst_trend"
+  )
+
+  captured <- NULL
+  local_mocked_bindings(
+    splnr_climate_priorityAreaApproach = function(
+      features,
+      metric,
+      targets,
+      direction,
+      percentile,
+      refugiaTarget,
+      metric_col
+    ) {
+      captured <<- list(
+        percentile = percentile,
+        direction = direction,
+        refugiaTarget = refugiaTarget
+      )
+      list(Targets = targets, Features = features)
+    },
+    .package = "spatialplanr"
+  )
+
+  shinyplanr:::fdefine_problem(
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
+    name_check = "sli_",
+    clim_input = "sst_trend",
+    compare_id = ""
+  )
+
+  expect_equal(captured$percentile, 10)
+  expect_equal(captured$direction, -1)
+  expect_equal(captured$refugiaTarget, 0.1)
+})
+
+test_that("fdefine_problem() uses input$climate_change<compare_id> to pick the approach (Feature approach, suffix '1')", {
+  raw_sf <- make_test_sf_with_climate()
+  targets <- data.frame(
+    feature = c("feature_A", "feature_B"),
+    target = c(0.5, 0.5)
+  )
+  options <- list(
+    obj_func = "min_set",
+    climate_change = 1L, # CPA by default in options
+    percentile = 10,
+    direction = -1,
+    refugiaTarget = 0.1
+  )
+  input <- list(
+    costid1 = "Cost_Area",
+    climateid1 = "sst_trend",
+    climate_change1 = "2" # Feature approach override, suffix "1"
+  )
+
+  feature_approach_called <- FALSE
+  cpa_approach_called <- FALSE
+  local_mocked_bindings(
+    splnr_climate_featureApproach = function(
+      features,
+      metric,
+      targets,
+      direction,
+      percentile,
+      refugiaTarget,
+      metric_col
+    ) {
+      feature_approach_called <<- TRUE
+      list(Targets = targets, Features = features)
+    },
+    splnr_climate_priorityAreaApproach = function(...) {
+      cpa_approach_called <<- TRUE
+      stop("CPA approach should not have been called")
+    },
+    .package = "spatialplanr"
+  )
+
+  shinyplanr:::fdefine_problem(
+    targets = targets,
+    raw_sf = raw_sf,
+    options = options,
+    input = input,
+    name_check = "sli1_",
+    clim_input = "sst_trend",
+    compare_id = "1"
+  )
+
+  expect_true(feature_approach_called)
+  expect_false(cpa_approach_called)
+})

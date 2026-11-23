@@ -2,6 +2,19 @@
 
 ## New features
 
+* New optional `shinyplanr_options` key `visible_climateOptions` (default
+  `FALSE`). When set `TRUE`, the climate-smart approach parameters
+  (`climate_change`, `percentile`, `direction`, `refugiaTarget`) -- previously
+  fixed at deploy time -- are exposed as live sidebar controls in both the
+  Scenario and Comparison tabs, letting app users choose their own
+  climate-smart approach instead of only picking the climate layer. In the
+  Comparison tab, each scenario panel gets independent controls. The
+  controls appear only once a climate layer is selected, and `refugiaTarget`
+  is hidden automatically when the Percentile approach is chosen (it has no
+  effect on that approach). Existing `3_setup_app.R` scripts do not need to
+  be updated -- add `visible_climateOptions = TRUE` only if you want to
+  enable this behaviour.
+
 * The Cost overlay plot (Scenario tab "Cost" sub-tab, and Compare tab "Cost"
   sub-tab) now supports configurable styling via five new optional
   `shinyplanr_options` keys: `cost_plot_alpha`, `cost_plot_low_colour`,

@@ -182,7 +182,7 @@ mod_<name>_server <- function(id) {
 ## Dependencies
 
 - Add with `usethis::use_package("pkg")` → goes into `Imports` in DESCRIPTION.
-- Always use `@importFrom` on top of each function. Whenever you can, check if new `@importFrom` are required.
+- Prefer to use pkg::function() whenever you can, rather than `@importFrom` at top of each function.
 - Never depend on {tidyverse} or {devtools} — depend on specific packages instead.
 - For optional (Suggested) packages, check availability with `requireNamespace("pkg", quietly = TRUE)` or `rlang::check_installed("pkg")`.
 - Use `Imports` over `Depends`. `Depends` is only for R version requirements.

@@ -412,6 +412,12 @@ fget_targets_expanded <- function(input, name_check = "sli_", Dict) {
 #'   into \code{$main} (non-SilentFeature rows, for the Targets plot) and
 #'   \code{$silent} (SilentFeature rows only, for the Details tab silent
 #'   section). Individual silent layers are never shown in the Targets plot.
+#' @param climate_change Numeric. The climate-smart approach actually used to
+#'   solve the problem (0–3). Defaults to \code{options$climate_change}, but
+#'   callers should pass the resolved value (live Shiny input when
+#'   \code{options$visible_climateOptions} is \code{TRUE}, falling back to
+#'   \code{options$climate_change} otherwise) so that reporting matches the
+#'   approach actually used by \code{fdefine_problem()}.
 #'
 #' @return A named list with two elements:
 #'   \describe{
@@ -432,7 +438,8 @@ fget_feature_representation <- function(
   targets,
   climate_id,
   options,
-  Dict
+  Dict,
+  climate_change = options$climate_change
 ) {
   # Check if solution is valid
   if (!inherits(soln, "sf")) {
@@ -455,7 +462,7 @@ fget_feature_representation <- function(
       soln = soln,
       pDat = problem_data,
       climsmart = TRUE,
-      climsmartApproach = options$climate_change,
+      climsmartApproach = climate_change,
       targets = targets
     )
   }

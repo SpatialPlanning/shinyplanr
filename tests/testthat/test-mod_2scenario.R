@@ -99,6 +99,34 @@ test_that("mod_2scenario_ui() shows climate panel when include_climateChange is 
   expect_match(html, "climateid", fixed = TRUE)
 })
 
+test_that("mod_2scenario_ui() does not render climate-options controls when visible_climateOptions is FALSE", {
+  cfg_clim <- cfg
+  cfg_clim$options <- modifyList(
+    cfg$options,
+    list(include_climateChange = TRUE, visible_climateOptions = FALSE)
+  )
+
+  ui <- mod_2scenario_ui(id = "test_clim_hidden", cfg = cfg_clim)
+  html <- as.character(ui)
+  expect_false(grepl("climate_change", html, fixed = TRUE))
+  expect_false(grepl("refugiaTarget", html, fixed = TRUE))
+})
+
+test_that("mod_2scenario_ui() renders climate-options controls when visible_climateOptions is TRUE", {
+  cfg_clim <- cfg
+  cfg_clim$options <- modifyList(
+    cfg$options,
+    list(include_climateChange = TRUE, visible_climateOptions = TRUE)
+  )
+
+  ui <- mod_2scenario_ui(id = "test_clim_visible", cfg = cfg_clim)
+  html <- as.character(ui)
+  expect_match(html, "climate_change", fixed = TRUE)
+  expect_match(html, "percentile", fixed = TRUE)
+  expect_match(html, "direction", fixed = TRUE)
+  expect_match(html, "refugiaTarget", fixed = TRUE)
+})
+
 # ---------------------------------------------------------------------------
 # Server tests
 # ---------------------------------------------------------------------------

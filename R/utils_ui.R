@@ -416,3 +416,99 @@ create_fancy_dropdown <- function(id, id_in, Dict, width = "100%") {
     width = width
   )
 }
+
+
+#' Build the climate-smart approach controls (approach, percentile,
+#' direction, refugia target)
+#'
+#' Renders the four climate-smart planning parameters
+#' (\code{climate_change}, \code{percentile}, \code{direction},
+#' \code{refugiaTarget}) as Shiny inputs, for use when
+#' \code{options$visible_climateOptions} is \code{TRUE}. When this option is
+#' \code{FALSE} (the default), these parameters stay fixed at their
+#' deploy-time \code{options} values and this UI is never rendered.
+#'
+#' The whole panel is wrapped in \code{shinyjs::hidden()}: it is shown by the
+#' server only once the user selects an actual climate layer in the
+#' corresponding climate dropdown (see \code{fsetup_climate_option_observers()}
+#' in \code{utils_server.R}). The \code{refugiaTarget} slider is nested in its
+#' own \code{shinyjs::hidden()} wrapper because it has no effect on the
+#' Percentile approach (\code{climate_change == 3}); it is shown/hidden by the
+#' same server helper whenever the approach changes.
+#'
+#' @param id Character. Shiny module namespace ID (the raw module id string,
+#'   matching the convention used by \code{create_fancy_dropdown()}).
+#' @param options List. App options (from the deployment config), used to set
+#'   each control's initial value (\code{options$climate_change},
+#'   \code{options$percentile}, \code{options$direction},
+#'   \code{options$refugiaTarget}).
+#' @param suffix Character. Appended to each input ID: \code{""} for the
+#'   Scenario module, \code{"1"} / \code{"2"} for the two Compare module
+#'   panels. Default \code{""}.
+#'
+#' @return A Shiny tag (\code{div}) containing the four controls.
+#'
+#' @noRd
+#'
+fclimate_options_ui <- function(id, options, suffix = "") {
+  panel_id <- shiny::NS(
+    namespace = id,
+    id = paste0("climateOptionsPanel", suffix)
+  )
+  refugia_wrapper_id <- shiny::NS(
+    namespace = id,
+    id = paste0("refugiaTargetWrapper", suffix)
+  )
+
+  shinyjs::hidden(
+    shiny::div(
+      id = panel_id,
+      shiny::selectInput(
+        inputId = shiny::NS(
+          namespace = id,
+          id = paste0("climate_change", suffix)
+        ),
+        label = "Climate-smart approach",
+        choices = c(
+          "Climate Priority Area (CPA)" = "1",
+          "Feature" = "2",
+          "Percentile" = "3"
+        ),
+        selected = as.character(options$climate_change %||% 1)
+      ),
+      shiny::sliderInput(
+        inputId = shiny::NS(namespace = id, id = paste0("percentile", suffix)),
+        label = "Percentile",
+        min = 0,
+        max = 100,
+        step = 1,
+        value = options$percentile %||% 5
+      ),
+      shiny::selectInput(
+        inputId = shiny::NS(namespace = id, id = paste0("direction", suffix)),
+        label = "Direction",
+        choices = c(
+          "High values are refugia" = "1",
+          "Low values are refugia" = "-1"
+        ),
+        selected = as.character(options$direction %||% -1)
+      ),
+      shinyjs::hidden(
+        shiny::div(
+          id = refugia_wrapper_id,
+          shiny::sliderInput(
+            inputId = shiny::NS(
+              namespace = id,
+              id = paste0("refugiaTarget", suffix)
+            ),
+            label = "Refugia target",
+            min = 0,
+            max = 1,
+            step = 0.05,
+            value = options$refugiaTarget %||% 1
+          )
+        )
+      )
+    )
+  )
+}
