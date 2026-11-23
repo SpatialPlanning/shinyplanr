@@ -124,6 +124,17 @@ test_that("mod_3compare_ui() contains the Explore tab, mode radio, and scenario 
   expect_match(html, "leaflet_map_explore", fixed = TRUE)
 })
 
+test_that("mod_3compare_ui() renders separate Display Mode and Planning Unit panels", {
+  ui <- mod_3compare_ui(id = "test", cfg = cfg)
+  html <- as.character(ui)
+  expect_match(html, "displayModePanel", fixed = TRUE)
+  expect_match(html, "planningUnitPanel", fixed = TRUE)
+  expect_match(html, "Display Mode", fixed = TRUE)
+  expect_match(html, "Planning Unit", fixed = TRUE)
+  # The old combined panel id must no longer be present.
+  expect_false(grepl("explorePanel", html, fixed = TRUE))
+})
+
 test_that("mod_3compare_ui() Explore tab is always present in HTML regardless of include_explore", {
   # The Explore tab is always rendered in the HTML; server-side hideTab()
   # controls visibility at runtime based on options$include_explore.
@@ -212,4 +223,26 @@ test_that("mod_3compare_server() glify click handler on Explore map does not err
       )
     }
   )
+})
+
+test_that("mod_3compare_server() uses the updated light/dark green Scenario-mode colours", {
+  # Scenario 1 "Selected" must be the light green (#7fc97f), Scenario 2 the
+  # dark green (#00441b) -- the old near-identical greens (#2ca02c/#1b7837)
+  # must no longer appear as colour_selected values.
+  src <- paste(readLines("../../R/mod_3compare.R"), collapse = "\n")
+  expect_match(src, "#7fc97f", fixed = TRUE)
+  expect_match(src, "#00441b", fixed = TRUE)
+})
+
+test_that("mod_3compare_server() Explore map legends use bottomright position", {
+  # Legend moved to bottomright so it doesn't collide with the zoom control,
+  # which is relocated to bottomleft via onRender().
+  src <- paste(readLines("../../R/mod_3compare.R"), collapse = "\n")
+  expect_match(src, 'position = "bottomright"', fixed = TRUE)
+})
+
+test_that("mod_3compare_server() relocates the zoom control via onRender()", {
+  src <- paste(readLines("../../R/mod_3compare.R"), collapse = "\n")
+  expect_match(src, "L.control.zoom", fixed = TRUE)
+  expect_match(src, "bottomleft", fixed = TRUE)
 })

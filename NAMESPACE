@@ -19,6 +19,7 @@ importFrom(golem,
 )
 importFrom(grDevices,col2rgb)
 importFrom(highs,highs_solve)
+importFrom(htmlwidgets,onRender)
 importFrom(magrittr,"%>%")
 importFrom(ragg,agg_png)
 importFrom(rlang,

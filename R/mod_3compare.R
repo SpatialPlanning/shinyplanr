@@ -367,17 +367,18 @@ mod_3compare_ui <- function(id, cfg) {
               )
             ),
             shiny::absolutePanel(
-              id = ns("explorePanel"),
+              id = ns("displayModePanel"),
               class = "panel panel-default",
               fixed = FALSE,
               draggable = TRUE,
-              top = "5%",
-              right = "10px",
+              top = "10px",
+              left = "60px",
               width = "260px",
-              style = "background-color: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; max-height: 600px; overflow-y: auto; z-index: 1000;",
+              style = "background-color: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; z-index: 1000;",
+              shiny::h4("Display Mode", style = "margin-top: 0;"),
               shiny::radioButtons(
                 inputId = ns("exploreMode"),
-                label = "Display Mode",
+                label = NULL,
                 choices = c("Compare" = "compare", "Scenario" = "scenario"),
                 selected = "compare"
               ),
@@ -395,8 +396,18 @@ mod_3compare_ui <- function(id, cfg) {
                     value = TRUE
                   )
                 )
-              ),
-              shiny::hr(),
+              )
+            ),
+            shiny::absolutePanel(
+              id = ns("planningUnitPanel"),
+              class = "panel panel-default",
+              fixed = FALSE,
+              draggable = TRUE,
+              top = "10px",
+              right = "10px",
+              width = "260px",
+              style = "background-color: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; max-height: 600px; overflow-y: auto; z-index: 1000;",
+              shiny::h4("Planning Unit", style = "margin-top: 0;"),
               shiny::uiOutput(ns("exploreInfoPanelContent"))
             )
           )
@@ -619,6 +630,7 @@ mod_3compare_ui <- function(id, cfg) {
 #' @noRd
 #'
 #' @importFrom grDevices col2rgb
+#' @importFrom htmlwidgets onRender
 mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
   # Extract config locals
   Dict <- cfg$Dict
@@ -1724,6 +1736,12 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
       NULL
     }
 
+    # Area-of-interest bounding box, computed once from raw_sf at module
+    # init (mirrors mod_4afeatures.R's `bbox`). Used to frame the base map
+    # correctly on first paint, instead of leaving it zoomed to the whole
+    # world until comp_map_sf() is populated asynchronously after a solve.
+    aoi_bbox <- sf::st_bbox(fprep_wgs84(raw_sf, options$antimeridian))
+
     # Store the combined, WGS84-transformed sf object (both scenarios' state)
     # for the Explore tab. Populated once both solutions resolve (see
     # observeEvent(solution2()) below), mirroring the ggr_comp_cache pattern.
@@ -1820,14 +1838,52 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
       ignoreNULL = TRUE
     )
 
-    # Base map, created once (empty tiles only). The WebGL layer is added
-    # separately via leafletProxy in render_explore_layer() below, so it can
-    # be restored on every tab visit without recreating the base map (which
-    # would wipe the GL layer). Mirrors mod_2scenario.R's leaflet_map pattern.
+    # Re-fit the map to the new solution's bounds once per analysis run.
+    # Fires only when comp_map_sf() changes (i.e. once per "Run Analysis"
+    # click, after both solves complete) -- NOT on Display Mode or scenario
+    # checkbox toggles, which must preserve the user's current zoom/pan
+    # (see render_explore_layer(), which no longer calls fitBounds()).
+    shiny::observeEvent(
+      comp_map_sf(),
+      {
+        soln_wgs84 <- comp_map_sf()
+        shiny::req(soln_wgs84)
+        bbox <- sf::st_bbox(soln_wgs84)
+        leaflet::leafletProxy("leaflet_map_explore", session = session) %>%
+          leaflet::fitBounds(
+            lng1 = as.numeric(bbox["xmin"]),
+            lat1 = as.numeric(bbox["ymin"]),
+            lng2 = as.numeric(bbox["xmax"]),
+            lat2 = as.numeric(bbox["ymax"])
+          )
+      },
+      ignoreNULL = TRUE
+    )
+
+    # Base map, created once (empty tiles only, framed to the AOI bbox so
+    # the first paint is not zoomed to the whole world). The WebGL layer is
+    # added separately via leafletProxy in render_explore_layer() below, so
+    # it can be restored on every tab visit without recreating the base map
+    # (which would wipe the GL layer). Mirrors mod_2scenario.R's
+    # leaflet_map pattern, plus mod_4afeatures.R's initial fitBounds().
+    #
+    # The zoom control is relocated to bottom-left via onRender() so it does
+    # not collide with the Display Mode absolutePanel (top-left).
     output$leaflet_map_explore <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
         leaflet::addProviderTiles(
           options$leaflet_provider %||% "Esri.WorldGrayCanvas"
+        ) %>%
+        leaflet::fitBounds(
+          lng1 = as.numeric(aoi_bbox["xmin"]),
+          lat1 = as.numeric(aoi_bbox["ymin"]),
+          lng2 = as.numeric(aoi_bbox["xmax"]),
+          lat2 = as.numeric(aoi_bbox["ymax"])
+        ) %>%
+        htmlwidgets::onRender(
+          "function(el, x) {
+            L.control.zoom({ position: 'bottomleft' }).addTo(this);
+          }"
         )
     })
 
@@ -1850,21 +1906,18 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
         return()
       }
 
-      bbox <- sf::st_bbox(soln_wgs84)
-
+      # NOTE: deliberately no fitBounds() here. This function re-runs on
+      # every Display Mode / scenario checkbox toggle; calling fitBounds()
+      # here would reset the user's zoom/pan on every toggle. Bounds are
+      # fitted exactly once per new analysis run, by a dedicated
+      # observeEvent(comp_map_sf(), ...) above.
       base_proxy <- leaflet::leafletProxy(
         "leaflet_map_explore",
         session = session
       ) %>%
         leafgl::clearGlLayers() %>%
         leaflet::clearControls() %>%
-        leaflet::clearGroup("highlight") %>%
-        leaflet::fitBounds(
-          lng1 = as.numeric(bbox["xmin"]),
-          lat1 = as.numeric(bbox["ymin"]),
-          lng2 = as.numeric(bbox["xmax"]),
-          lat2 = as.numeric(bbox["ymax"])
-        )
+        leaflet::clearGroup("highlight")
 
       if (identical(mode, "compare")) {
         # --- Compare mode: added / removed / selected-in-both -------------
@@ -1917,7 +1970,7 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
           if (length(legend_colours) > 0) {
             map_proxy <- map_proxy %>%
               leaflet::addLegend(
-                position = "bottomleft",
+                position = "bottomright",
                 colors = legend_colours,
                 labels = legend_labels,
                 title = "Comparison",
@@ -2000,14 +2053,14 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
               solution_col = "solution_1",
               locked_in_col = "is_locked_in1",
               locked_out_col = "is_locked_out1",
-              colour_selected = "#2ca02c",
+              colour_selected = "#7fc97f",
               colour_locked_in = "#1f77b4",
               colour_locked_out = "#d62728",
               colour_unselected = "#a8a8a8",
               group = "scen1_polygons"
             )
             map_proxy <- res1$proxy
-            legend_colours <- c(legend_colours, "#2ca02c")
+            legend_colours <- c(legend_colours, "#7fc97f")
             legend_labels <- c(legend_labels, "Scenario 1: Selected")
             if (res1$has_locked_in) {
               legend_colours <- c(legend_colours, "#1f77b4")
@@ -2025,14 +2078,14 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
               solution_col = "solution_2",
               locked_in_col = "is_locked_in2",
               locked_out_col = "is_locked_out2",
-              colour_selected = "#1b7837",
+              colour_selected = "#00441b",
               colour_locked_in = "#6baed6",
               colour_locked_out = "#fb6a4a",
               colour_unselected = "#a8a8a8",
               group = "scen2_polygons"
             )
             map_proxy <- res2$proxy
-            legend_colours <- c(legend_colours, "#1b7837")
+            legend_colours <- c(legend_colours, "#00441b")
             legend_labels <- c(legend_labels, "Scenario 2: Selected")
             if (res2$has_locked_in) {
               legend_colours <- c(legend_colours, "#6baed6")
@@ -2047,7 +2100,7 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
           if (length(legend_colours) > 0) {
             map_proxy <- map_proxy %>%
               leaflet::addLegend(
-                position = "bottomleft",
+                position = "bottomright",
                 colors = legend_colours,
                 labels = legend_labels,
                 title = "Scenario",
@@ -2086,9 +2139,11 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
     )
 
     # Click-to-inspect popup: shows planning unit ID, selection status in
-    # each scenario, and cost values. Does NOT show the full feature list
-    # (already available in the Details tab) — keeps the popup short and
-    # dual-scenario-friendly. Mirrors mod_2scenario.R's click handler.
+    # each scenario, cost values, and a feature list grouped by category
+    # (mirroring mod_2scenario.R's click handler). Feature presence is
+    # scenario-independent (only selection/targets differ between the two
+    # scenarios), so a single shared list is shown rather than duplicating
+    # it per scenario.
     shiny::observeEvent(
       input$leaflet_map_explore_glify_click,
       {
@@ -2148,6 +2203,32 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
             cost_value1 <- get_cost_value(cost_col1)
             cost_value2 <- get_cost_value(cost_col2)
 
+            # Feature list: union of both scenarios' target feature lists
+            # (features physically present in a PU don't depend on which
+            # scenario selected them), filtered to columns present in
+            # pu_row with value == 1, then grouped by category from Dict —
+            # same pattern as mod_2scenario.R's click handler.
+            target_features <- union(
+              shiny::isolate(targetData1()$feature),
+              shiny::isolate(targetData2()$feature)
+            )
+            available_features <- intersect(target_features, names(pu_row))
+            features_present <- available_features[
+              vapply(
+                available_features,
+                function(feat) {
+                  val <- pu_row[[feat]]
+                  !is.na(val) && as.numeric(val) == 1
+                },
+                logical(1)
+              )
+            ]
+            feature_info <- Dict[
+              Dict$nameVariable %in% features_present,
+              c("nameVariable", "nameCommon", "category"),
+              drop = FALSE
+            ]
+
             # Update highlight (clears any previous highlight polygon first)
             proxy <- leaflet::leafletProxy(
               "leaflet_map_explore",
@@ -2204,7 +2285,29 @@ mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
                   format(cost_value2, big.mark = ",")
                 },
                 style = "margin-bottom: 2px;"
-              )
+              ),
+              shiny::hr(style = "margin: 5px 0;"),
+              shiny::h5("Feature List"),
+              if (nrow(feature_info) == 0) {
+                shiny::p(
+                  "No features with targets found in this planning unit.",
+                  style = "color: #666; font-style: italic;"
+                )
+              } else {
+                categories <- unique(feature_info$category)
+                lapply(categories, function(cat) {
+                  feats <- feature_info$nameCommon[
+                    feature_info$category == cat
+                  ]
+                  shiny::tagList(
+                    shiny::p(shiny::strong(cat), style = "margin-bottom: 2px;"),
+                    shiny::p(
+                      paste(feats, collapse = ", "),
+                      style = "margin-left: 10px; margin-top: 0; margin-bottom: 8px;"
+                    )
+                  )
+                })
+              }
             )
 
             explore_panel_content(new_content)

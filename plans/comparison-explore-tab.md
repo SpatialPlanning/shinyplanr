@@ -30,8 +30,12 @@ Explore tabs (currently it only controls `mod_2scenario`'s).
 
 1. **Click-to-inspect popup**: **INCLUDED** in v1. On click, show a
    lightweight panel with: planning unit ID, selection status in Scenario 1,
-   selection status in Scenario 2, and cost value(s). Full feature-list
-   breakdown is NOT included (already available in the Details tab).
+   selection status in Scenario 2, and cost value(s).
+   > **Updated** (see
+   > [`plans/comparison-explore-tab-followups.md`](comparison-explore-tab-followups.md)):
+   > a feature list grouped by category (mirroring `mod_2scenario`'s popup)
+   > was added in a follow-up change, shown once per planning unit since
+   > feature presence is scenario-independent.
 2. **Constraints (lock-in/lock-out) overlay**:
    - **Compare mode**: omitted entirely (blue/red already mean added/removed
      here). Constraints remain inspectable via the Details tab tables.
@@ -45,10 +49,15 @@ Explore tabs (currently it only controls `mod_2scenario`'s).
 
    | Category      | Scenario 1 colour | Scenario 2 colour | Fill opacity |
    |---------------|--------------------|--------------------|--------------|
-   | Selected      | `#2ca02c` (green)  | `#1b7837` (dark green) | 0.5 |
+   | Selected      | `#7fc97f` (light green) | `#00441b` (dark green) | 0.5 |
    | Locked-in     | `#1f77b4` (blue)   | `#6baed6` (light blue) | 0.5 |
    | Locked-out    | `#d62728` (red)    | `#fb6a4a` (light red/orange) | 0.5 |
    | Not selected  | `#a8a8a8` (grey)   | `#a8a8a8` (grey)   | **0.15** (very transparent) |
+
+   > **Updated** (see
+   > [`plans/comparison-explore-tab-followups.md`](comparison-explore-tab-followups.md)):
+   > the original Selected colours (`#2ca02c` / `#1b7837`) were too similar
+   > to distinguish and were replaced with the light/dark green pair above.
 
    Priority order within each scenario layer (same as `mod_2scenario`):
    locked-out > locked-in > selected > not-selected.
