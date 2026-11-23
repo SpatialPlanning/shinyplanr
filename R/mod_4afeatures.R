@@ -167,7 +167,9 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
     # Transform raw_sf to WGS84 once at module init.
     # raw_sf never changes during a session, so this is safe to do outside
     # any reactive context.
-    raw_wgs84 <- raw_sf %>% sf::st_transform("EPSG:4326")
+    # fprep_wgs84() shifts longitudes to 0-360 when options$antimeridian is
+    # TRUE, so dateline-crossing regions render compactly on the map.
+    raw_wgs84 <- raw_sf %>% fprep_wgs84(options$antimeridian)
 
     # Pre-transform coast overlay to WGS84 once at module init.
     # NULL when show_coast_overlay is FALSE or overlay is empty.
@@ -180,7 +182,7 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
         inherits(overlay, "sf") &&
         nrow(overlay) > 0
     ) {
-      sf::st_make_valid(sf::st_transform(overlay, "EPSG:4326"))
+      sf::st_make_valid(fprep_wgs84(overlay, options$antimeridian))
     } else {
       NULL
     }
