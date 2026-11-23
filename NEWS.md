@@ -13,7 +13,9 @@
   is hidden automatically when the Percentile approach is chosen (it has no
   effect on that approach). Existing `3_setup_app.R` scripts do not need to
   be updated -- add `visible_climateOptions = TRUE` only if you want to
-  enable this behaviour.
+  enable this behaviour. The live `refugiaTarget` slider is shown as a 0-100
+  percentage (consistent with the `percentile` control), even though
+  `shinyplanr_options$refugiaTarget` itself remains on a 0-1 scale.
 
 * The Cost overlay plot (Scenario tab "Cost" sub-tab, and Compare tab "Cost"
   sub-tab) now supports configurable styling via five new optional

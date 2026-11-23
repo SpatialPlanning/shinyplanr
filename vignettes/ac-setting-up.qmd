@@ -487,6 +487,12 @@ each scenario panel gets its own independent set of controls. The
 `refugiaTarget` control is automatically hidden whenever the Percentile
 approach is selected, since it has no effect on that approach.
 
+Note on scale: `refugiaTarget` above is on a 0-1 scale (the scale
+`spatialplanr` expects internally). The live `refugiaTarget` slider shown to
+app users (when `visible_climateOptions = TRUE`) displays it as a 0-100
+percentage instead, for consistency with the `percentile` control and the
+feature-target sliders -- the conversion back to 0-1 happens automatically.
+
 ### Running 3_setup_app.R
 
 After configuring options:

@@ -24,7 +24,11 @@
 #'   with \code{compare_id}) are rendered as live sidebar controls (see
 #'   \code{fclimate_options_ui()}) and take precedence over \code{options}
 #'   (via the \code{\%||\%} fallback operator); otherwise they fall back to
-#'   the fixed \code{options} values.
+#'   the fixed \code{options} values. Note: \code{input$refugiaTarget} is on
+#'   a 0-100 scale (matching the slider shown to users), while
+#'   \code{options$refugiaTarget} and the value ultimately passed to
+#'   \code{spatialplanr} are on a 0-1 scale -- the 0-100 -> 0-1 conversion
+#'   happens internally.
 #' @param name_check Character. Prefix for slider input IDs. Default
 #'   \code{"sli_"} (Scenario module). Compare module passes \code{"sli1_"} or
 #'   \code{"sli2_"} explicitly.
@@ -93,9 +97,17 @@ fdefine_problem <- function(
     climate_direction <- as.numeric(
       input[[paste0("direction", compare_id)]] %||% options$direction
     )
-    climate_refugiaTarget <- as.numeric(
-      input[[paste0("refugiaTarget", compare_id)]] %||% options$refugiaTarget
-    )
+    # refugiaTarget is stored in options on a 0-1 scale (the scale
+    # spatialplanr expects), but the live slider (fclimate_options_ui())
+    # displays/accepts a 0-100 percentage for consistency with the
+    # percentile control -- convert it back to 0-1 here when it came from
+    # the input; the options fallback is already on the 0-1 scale.
+    refugiaTarget_input <- input[[paste0("refugiaTarget", compare_id)]]
+    climate_refugiaTarget <- if (!is.null(refugiaTarget_input)) {
+      as.numeric(refugiaTarget_input) / 100
+    } else {
+      as.numeric(options$refugiaTarget)
+    }
 
     if (!clim_col %in% names(raw_sf)) {
       warning(paste0(
