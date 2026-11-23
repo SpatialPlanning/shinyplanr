@@ -9,14 +9,22 @@
     (red), or selected in both scenarios (grey). Unselected-in-both cells
     are not drawn, consistent with every other plot in the app.
   - **Scenario**: shows Scenario 1 and/or Scenario 2's selected areas (each
-    independently toggleable via checkboxes) using the Scenario module's
-    green (Scenario 1) and a second, distinct green (Scenario 2), at 50%
-    opacity so overlapping areas remain visible. Locked-in/locked-out
-    constraints are also shown per scenario using lighter blue/red shades
-    for Scenario 2 to keep the two scenarios visually distinguishable.
-  Clicking a planning unit shows its selection status in each scenario and
-  cost values. The existing `include_explore` option now controls both the
-  Scenario and Comparison modules' Explore tabs.
+    independently toggleable via checkboxes) using a light green
+    (`#7fc97f`, Scenario 1) and a dark green (`#00441b`, Scenario 2) chosen
+    to be clearly distinguishable, at 50% opacity so overlapping areas
+    remain visible. Locked-in/locked-out constraints are also shown per
+    scenario using lighter blue/red shades for Scenario 2 to keep the two
+    scenarios visually distinguishable.
+  Clicking a planning unit shows its selection status in each scenario,
+  cost values, and a feature list grouped by category (mirroring the
+  Scenario module's Explore tab popup). The Display Mode controls and the
+  Planning Unit info are shown in two separate, independently draggable
+  panels (top-left and top-right respectively), and the map's zoom/pan is
+  preserved when toggling Display Mode or the scenario checkboxes — it only
+  re-fits to the solution's extent once per "Run Analysis" click, and is
+  correctly framed to the area of interest (rather than the whole world) on
+  first visiting the tab. The existing `include_explore` option now
+  controls both the Scenario and Comparison modules' Explore tabs.
 
 * New optional `shinyplanr_options` key `antimeridian` (default `FALSE`).
   Set `TRUE` for deployments whose planning region crosses the +/-180
