@@ -109,3 +109,107 @@ test_that("mod_3compare_ui() renders independent climate-options controls for bo
   expect_match(html, "refugiaTarget1", fixed = TRUE)
   expect_match(html, "refugiaTarget2", fixed = TRUE)
 })
+
+# ---------------------------------------------------------------------------
+# Explore tab
+# ---------------------------------------------------------------------------
+
+test_that("mod_3compare_ui() contains the Explore tab, mode radio, and scenario checkboxes", {
+  ui <- mod_3compare_ui(id = "test", cfg = cfg)
+  html <- as.character(ui)
+  expect_match(html, "Explore Map", fixed = TRUE)
+  expect_match(html, "exploreMode", fixed = TRUE)
+  expect_match(html, "showScen1", fixed = TRUE)
+  expect_match(html, "showScen2", fixed = TRUE)
+  expect_match(html, "leaflet_map_explore", fixed = TRUE)
+})
+
+test_that("mod_3compare_ui() Explore tab is always present in HTML regardless of include_explore", {
+  # The Explore tab is always rendered in the HTML; server-side hideTab()
+  # controls visibility at runtime based on options$include_explore.
+  cfg_no_explore <- cfg
+  cfg_no_explore$options <- modifyList(
+    cfg$options,
+    list(include_explore = FALSE)
+  )
+  ui_no_explore <- mod_3compare_ui(id = "test_no_explore", cfg = cfg_no_explore)
+  html_no_explore <- as.character(ui_no_explore)
+  expect_match(html_no_explore, "Explore Map", fixed = TRUE)
+
+  cfg_with_explore <- cfg
+  cfg_with_explore$options <- modifyList(
+    cfg$options,
+    list(include_explore = TRUE)
+  )
+  ui_with_explore <- mod_3compare_ui(
+    id = "test_with_explore",
+    cfg = cfg_with_explore
+  )
+  html_with_explore <- as.character(ui_with_explore)
+  expect_match(html_with_explore, "Explore Map", fixed = TRUE)
+})
+
+test_that("mod_3compare_server() accepts a tab_visible argument", {
+  fmls <- formals(mod_3compare_server)
+  expect_true("tab_visible" %in% names(fmls))
+})
+
+testServer(
+  mod_3compare_server,
+  args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+  {
+    ns <- session$ns
+    expect_true(inherits(ns, "function"))
+  }
+)
+
+test_that("mod_3compare_server() exploreMode input can be set without error", {
+  testServer(
+    mod_3compare_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      expect_no_error(session$setInputs(exploreMode = "compare"))
+      expect_no_error(session$setInputs(exploreMode = "scenario"))
+    }
+  )
+})
+
+test_that("mod_3compare_server() showScen1/showScen2 inputs can be set without error", {
+  testServer(
+    mod_3compare_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      expect_no_error(session$setInputs(showScen1 = FALSE))
+      expect_no_error(session$setInputs(showScen2 = FALSE))
+    }
+  )
+})
+
+test_that("mod_3compare_server() registers leaflet_map_explore as an output", {
+  testServer(
+    mod_3compare_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      mock_session <- .subset2(session$output, "impl")
+      registered <- names(mock_session$.__enclos_env__$private$outs)
+      expect_true(
+        any(grepl("leaflet_map_explore", registered)),
+        info = paste("Registered outputs:", paste(registered, collapse = ", "))
+      )
+    }
+  )
+})
+
+test_that("mod_3compare_server() glify click handler on Explore map does not error before an analysis has run", {
+  testServer(
+    mod_3compare_server,
+    args = list(cfg = cfg, tab_visible = shiny::reactive(TRUE)),
+    {
+      expect_no_error(
+        session$setInputs(
+          leaflet_map_explore_glify_click = list(id = 1)
+        )
+      )
+    }
+  )
+})

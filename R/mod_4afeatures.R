@@ -188,20 +188,10 @@ mod_4afeatures_server <- function(id, cfg, tab_visible) {
     }
 
     # Helper: add coast overlay to a leafletProxy chain when enabled.
-    # Returns the proxy unchanged when coast_overlay_wgs84 is NULL.
+    # Thin wrapper around the shared fadd_coast_overlay() (utils_leaflet.R)
+    # so the ~6 call sites below don't need to change.
     add_coast_overlay <- function(proxy) {
-      if (is.null(coast_overlay_wgs84)) {
-        return(proxy)
-      }
-      leaflet::addPolygons(
-        proxy,
-        data = coast_overlay_wgs84,
-        color = options$coast_overlay_colour %||% "black",
-        fillColor = options$coast_overlay_fill %||% "grey50",
-        fillOpacity = 0.6,
-        weight = 1,
-        group = "coast_overlay"
-      )
+      fadd_coast_overlay(proxy, coast_overlay_wgs84, options)
     }
 
     # Pre-compute the bounding box for fitBounds — done once, not per-render.

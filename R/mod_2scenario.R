@@ -1439,20 +1439,9 @@ mod_2scenario_server <- function(id, cfg, tab_visible) {
         # Coast overlay: drawn as SVG on top of the WebGL planning-unit layer.
         # SVG polygons always render above WebGL in leaflet, so the coastline
         # is visible even when planning units cover the same area.
-        # Assigned to a separate variable and called after the WebGL chain so
-        # it is guaranteed to be added last (and therefore rendered on top).
-        # Only added when show_coast_overlay = TRUE in shinyplanr_options.
-        if (!is.null(coast_overlay_wgs84)) {
-          map_proxy %>%
-            leaflet::addPolygons(
-              data = coast_overlay_wgs84,
-              color = options$coast_overlay_colour %||% "black",
-              fillColor = options$coast_overlay_fill %||% "grey50",
-              fillOpacity = 0.6,
-              weight = 1,
-              group = "coast_overlay"
-            )
-        }
+        # fadd_coast_overlay() is a no-op when coast_overlay_wgs84 is NULL
+        # (i.e. show_coast_overlay = FALSE in shinyplanr_options).
+        fadd_coast_overlay(map_proxy, coast_overlay_wgs84, options)
       })
     })
 

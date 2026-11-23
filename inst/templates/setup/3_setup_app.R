@@ -71,7 +71,7 @@ shinyplanr_options <- list(
 
   ## Optional tabs
   include_ess = FALSE, # Ecosystem Services tab - set TRUE if Dict contains EcosystemServices rows
-  include_explore = TRUE, # Explore tab
+  include_explore = TRUE, # Explore tab (Scenario and Comparison modules)
   include_log = TRUE, # Log tab
 
   ## Second funder logo in welcome footer (optional)

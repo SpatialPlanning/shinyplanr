@@ -44,3 +44,45 @@ fprep_wgs84 <- function(x, antimeridian = FALSE) {
   }
   out
 }
+
+
+#' Add a coastline overlay to a leafletProxy chain, if enabled
+#'
+#' Draws \code{coast_overlay_wgs84} as an SVG polygon layer on top of a
+#' WebGL (\code{leafgl}) planning-unit layer. SVG polygons always render
+#' above WebGL in Leaflet, so the coastline remains visible even where
+#' planning units cover the same area.
+#'
+#' This is a no-op (returns \code{proxy} unchanged) when
+#' \code{coast_overlay_wgs84} is \code{NULL} -- i.e. when
+#' \code{options$show_coast_overlay} is \code{FALSE} or the overlay is empty.
+#' Centralising this here avoids duplicating the same ~15-line block across
+#' every module with an interactive leaflet map
+#' (\code{mod_2scenario}, \code{mod_4afeatures}, \code{mod_3compare}).
+#'
+#' @param proxy A \code{leaflet::leafletProxy} (or a magrittr-piped chain
+#'   ending in one), typically straight after \code{leafgl::addGlPolygons()}.
+#' @param coast_overlay_wgs84 An \code{sf} object in WGS84 (already prepared
+#'   via \code{fprep_wgs84()} and \code{sf::st_make_valid()}), or \code{NULL}.
+#' @param options Named list of app options (from \code{load_config()}).
+#'   Reads \code{coast_overlay_colour} and \code{coast_overlay_fill}
+#'   (both optional, with \code{\%||\%} fallbacks).
+#'
+#' @return The \code{leafletProxy} chain, with the coastline layer appended
+#'   when applicable.
+#'
+#' @noRd
+fadd_coast_overlay <- function(proxy, coast_overlay_wgs84, options) {
+  if (is.null(coast_overlay_wgs84)) {
+    return(proxy)
+  }
+  leaflet::addPolygons(
+    proxy,
+    data = coast_overlay_wgs84,
+    color = options$coast_overlay_colour %||% "black",
+    fillColor = options$coast_overlay_fill %||% "grey50",
+    fillOpacity = 0.6,
+    weight = 1,
+    group = "coast_overlay"
+  )
+}
