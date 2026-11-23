@@ -43,7 +43,16 @@ app_server <- function(input, output, session) {
   if (isTRUE(options$mod_3compare)) {
     shiny::observeEvent(
       input$navbar == "Comparison",
-      mod_3compare_server("3compare_ui_1", cfg),
+      {
+        # tab_visible is a reactive that is TRUE whenever the Comparison
+        # navbar tab is active. Passed into the module so it can re-add the
+        # WebGL layer on the Explore sub-tab whenever the user returns to the
+        # Comparison tab after visiting another top-level tab (input$navbar
+        # is not accessible inside moduleServer — it belongs to the parent
+        # session). Mirrors the same pattern used for mod_2scenario.
+        tab_visible_3 <- shiny::reactive(input$navbar == "Comparison")
+        mod_3compare_server("3compare_ui_1", cfg, tab_visible = tab_visible_3)
+      },
       once = TRUE,
       ignoreInit = FALSE,
       ignoreNULL = TRUE

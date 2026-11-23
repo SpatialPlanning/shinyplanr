@@ -351,6 +351,57 @@ mod_3compare_ui <- function(id, cfg) {
           ))
         ),
         tabPanel(
+          "Explore",
+          value = "11",
+          shiny::span(shiny::h2("Explore Map")),
+          shiny::p(
+            "Compare the two scenarios spatially, or inspect each scenario's selected areas and constraints."
+          ),
+          shiny::br(),
+          shiny::div(
+            style = "position: relative;",
+            shinycssloaders::withSpinner(
+              leaflet::leafletOutput(
+                ns("leaflet_map_explore"),
+                height = "650px"
+              )
+            ),
+            shiny::absolutePanel(
+              id = ns("explorePanel"),
+              class = "panel panel-default",
+              fixed = FALSE,
+              draggable = TRUE,
+              top = "5%",
+              right = "10px",
+              width = "260px",
+              style = "background-color: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px; max-height: 600px; overflow-y: auto; z-index: 1000;",
+              shiny::radioButtons(
+                inputId = ns("exploreMode"),
+                label = "Display Mode",
+                choices = c("Compare" = "compare", "Scenario" = "scenario"),
+                selected = "compare"
+              ),
+              shinyjs::hidden(
+                shiny::div(
+                  id = ns("exploreScenarioToggles"),
+                  shiny::checkboxInput(
+                    ns("showScen1"),
+                    "Show Scenario 1",
+                    value = TRUE
+                  ),
+                  shiny::checkboxInput(
+                    ns("showScen2"),
+                    "Show Scenario 2",
+                    value = TRUE
+                  )
+                )
+              ),
+              shiny::hr(),
+              shiny::uiOutput(ns("exploreInfoPanelContent"))
+            )
+          )
+        ),
+        tabPanel(
           "Scenario",
           value = 2,
           shiny::fixedPanel(
@@ -557,8 +608,18 @@ mod_3compare_ui <- function(id, cfg) {
 
 #' 3compare Server Functions
 #'
+#' @param tab_visible A reactive that returns \code{TRUE} when the
+#'   Comparison tab is the active top-level navbar tab, and \code{FALSE}
+#'   otherwise. Passed from \code{app_server.R} as
+#'   \code{reactive(input$navbar == "Comparison")}. Used alongside
+#'   \code{input$tabs} to re-add the WebGL layer on the Explore sub-tab
+#'   whenever the user returns to the Comparison navbar tab after visiting
+#'   another top-level tab.
+#'
 #' @noRd
-mod_3compare_server <- function(id, cfg) {
+#'
+#' @importFrom grDevices col2rgb
+mod_3compare_server <- function(id, cfg, tab_visible = shiny::reactive(TRUE)) {
   # Extract config locals
   Dict <- cfg$Dict
   options <- cfg$options
@@ -589,10 +650,12 @@ mod_3compare_server <- function(id, cfg) {
     # Apply all UI show/hide switches driven by options ----
     # Note: switches for elements not yet in the compare UI (switchBoundaryPenalty)
     # are silently ignored by shinyjs until those features are added to this module.
+    # include_explore controls both mod_2scenario's and this module's Explore tabs.
     fapply_ui_switches(
       options,
       session,
       tab_climate = "7",
+      tab_explore = "11",
       tab_report = "10",
       tab_log = "9"
     )
@@ -1645,6 +1708,515 @@ mod_3compare_server <- function(id, cfg) {
     output$txt_log_hint <- shiny::renderText({
       "This tab displays the problem setup and solve summary for each scenario. Switch between tabs to view logs for Scenario 1 and Scenario 2."
     })
+
+    ## Explore Map Tab -----------------------------------------------------
+
+    # Coast overlay: pre-transformed to WGS84 once at module init, mirroring
+    # mod_2scenario.R / mod_4afeatures.R. NULL when show_coast_overlay is
+    # FALSE or overlay is empty.
+    coast_overlay_wgs84 <- if (
+      isTRUE(options$show_coast_overlay) &&
+        inherits(overlay, "sf") &&
+        nrow(overlay) > 0
+    ) {
+      sf::st_make_valid(fprep_wgs84(overlay, options$antimeridian))
+    } else {
+      NULL
+    }
+
+    # Store the combined, WGS84-transformed sf object (both scenarios' state)
+    # for the Explore tab. Populated once both solutions resolve (see
+    # observeEvent(solution2()) below), mirroring the ggr_comp_cache pattern.
+    comp_map_sf <- shiny::reactiveVal(NULL)
+
+    # Store panel content (click-to-inspect) as a reactiveVal, mirroring
+    # mod_2scenario.R's panel_content pattern.
+    explore_panel_content <- shiny::reactiveVal(NULL)
+
+    output$exploreInfoPanelContent <- shiny::renderUI({
+      content <- explore_panel_content()
+      if (is.null(content)) {
+        shiny::p(
+          "Click a planning unit on the map to see its status in each scenario.",
+          style = "color: #666; font-style: italic;"
+        )
+      } else {
+        content
+      }
+    })
+
+    # Build comp_map_sf once both solutions resolve. Mirrors the timing fix
+    # used for ggr_comp_cache/ggr_soln_cache: updateTabsetPanel() redirects to
+    # tab 1 before solution1()/solution2() are evaluated, so an
+    # observeEvent(input$tabs == "11") would fire too early. Observing
+    # solution2() (evaluated after solution1()) fires exactly once per
+    # analysis run, after both solves complete.
+    shiny::observeEvent(
+      solution2(),
+      {
+        sol1 <- solution1()
+        sol2 <- solution2()
+        shiny::req(inherits(sol1, "sf"), inherits(sol2, "sf"))
+
+        # fprep_wgs84() shifts longitudes to 0-360 when options$antimeridian
+        # is TRUE, so dateline-crossing regions render compactly on the map.
+        soln_wgs84 <- sol1 %>%
+          dplyr::mutate(
+            pu_id = dplyr::row_number(),
+            solution_2 = sol2[["solution_1"]]
+          ) %>%
+          fprep_wgs84(options$antimeridian)
+
+        # Compute per-scenario lock state from raw_sf constraint columns,
+        # mirroring mod_2scenario.R's is_locked_in/is_locked_out pattern but
+        # computed independently for each scenario (num = "1" / "2").
+        LI1 <- get_lockIn(input, num = "1")
+        LO1 <- get_lockOut(input, num = "1")
+        LI2 <- get_lockIn(input, num = "2")
+        LO2 <- get_lockOut(input, num = "2")
+
+        raw_no_geom <- sf::st_drop_geometry(raw_sf)
+
+        if (nrow(raw_no_geom) == nrow(soln_wgs84)) {
+          soln_wgs84 <- soln_wgs84 %>%
+            dplyr::mutate(
+              is_locked_in1 = if (length(LI1) > 0) {
+                rowSums(raw_no_geom[LI1], na.rm = TRUE) > 0
+              } else {
+                FALSE
+              },
+              is_locked_out1 = if (length(LO1) > 0) {
+                rowSums(raw_no_geom[LO1], na.rm = TRUE) > 0
+              } else {
+                FALSE
+              },
+              is_locked_in2 = if (length(LI2) > 0) {
+                rowSums(raw_no_geom[LI2], na.rm = TRUE) > 0
+              } else {
+                FALSE
+              },
+              is_locked_out2 = if (length(LO2) > 0) {
+                rowSums(raw_no_geom[LO2], na.rm = TRUE) > 0
+              } else {
+                FALSE
+              }
+            )
+        } else {
+          # Fallback: no constraint colouring if row counts diverge
+          soln_wgs84 <- soln_wgs84 %>%
+            dplyr::mutate(
+              is_locked_in1 = FALSE,
+              is_locked_out1 = FALSE,
+              is_locked_in2 = FALSE,
+              is_locked_out2 = FALSE
+            )
+        }
+
+        comp_map_sf(soln_wgs84)
+
+        # Reset click-to-inspect state for the new analysis
+        explore_panel_content(NULL)
+      },
+      ignoreNULL = TRUE
+    )
+
+    # Base map, created once (empty tiles only). The WebGL layer is added
+    # separately via leafletProxy in render_explore_layer() below, so it can
+    # be restored on every tab visit without recreating the base map (which
+    # would wipe the GL layer). Mirrors mod_2scenario.R's leaflet_map pattern.
+    output$leaflet_map_explore <- leaflet::renderLeaflet({
+      leaflet::leaflet() %>%
+        leaflet::addProviderTiles(
+          options$leaflet_provider %||% "Esri.WorldGrayCanvas"
+        )
+    })
+
+    # Show/hide the Scenario-mode checkboxes depending on the selected mode.
+    shiny::observeEvent(input$exploreMode, {
+      if (identical(input$exploreMode, "scenario")) {
+        shinyjs::show(id = "exploreScenarioToggles")
+      } else {
+        shinyjs::hide(id = "exploreScenarioToggles")
+      }
+    })
+
+    # render_explore_layer(): builds and renders the WebGL layer(s) + legend
+    # for the currently selected mode. Encapsulated so it can be called both
+    # from the tab-visit/mode-change observer below and (if needed) from
+    # future callers, without duplicating logic.
+    render_explore_layer <- function(mode, show_scen1, show_scen2) {
+      soln_wgs84 <- comp_map_sf()
+      if (is.null(soln_wgs84)) {
+        return()
+      }
+
+      bbox <- sf::st_bbox(soln_wgs84)
+
+      base_proxy <- leaflet::leafletProxy(
+        "leaflet_map_explore",
+        session = session
+      ) %>%
+        leafgl::clearGlLayers() %>%
+        leaflet::clearControls() %>%
+        leaflet::clearGroup("highlight") %>%
+        leaflet::fitBounds(
+          lng1 = as.numeric(bbox["xmin"]),
+          lat1 = as.numeric(bbox["ymin"]),
+          lng2 = as.numeric(bbox["xmax"]),
+          lat2 = as.numeric(bbox["ymax"])
+        )
+
+      if (identical(mode, "compare")) {
+        # --- Compare mode: added / removed / selected-in-both -------------
+        # Blue = added (Scenario 2 only), Red = removed (Scenario 1 only),
+        # Grey = selected in both. Unselected-in-both cells are omitted
+        # entirely (not drawn), matching every other plot in the app.
+        pu_colour <- dplyr::case_when(
+          soln_wgs84$solution_1 == 1 & soln_wgs84$solution_2 == 1 ~ "#808080",
+          soln_wgs84$solution_1 == 0 & soln_wgs84$solution_2 == 1 ~ "#1f77b4",
+          soln_wgs84$solution_1 == 1 & soln_wgs84$solution_2 == 0 ~ "#d62728",
+          TRUE ~ NA_character_
+        )
+
+        keep <- !is.na(pu_colour)
+        plot_data <- soln_wgs84[keep, , drop = FALSE]
+        plot_colour <- pu_colour[keep]
+
+        legend_colours <- character(0)
+        legend_labels <- character(0)
+        if (any(plot_colour == "#808080")) {
+          legend_colours <- c(legend_colours, "#808080")
+          legend_labels <- c(legend_labels, "Selected in Both")
+        }
+        if (any(plot_colour == "#1f77b4")) {
+          legend_colours <- c(legend_colours, "#1f77b4")
+          legend_labels <- c(legend_labels, "Added (Scenario 2 only)")
+        }
+        if (any(plot_colour == "#d62728")) {
+          legend_colours <- c(legend_colours, "#d62728")
+          legend_labels <- c(legend_labels, "Removed (Scenario 1 only)")
+        }
+
+        shinyjs::delay(0, {
+          map_proxy <- if (nrow(plot_data) > 0) {
+            fill_rgb <- t(col2rgb(plot_colour)) / 255
+            base_proxy %>%
+              leafgl::addGlPolygons(
+                data = plot_data,
+                layerId = ~pu_id,
+                fillColor = fill_rgb,
+                fillOpacity = 0.7,
+                stroke = TRUE,
+                group = "compare_polygons",
+                digits = 5
+              )
+          } else {
+            base_proxy
+          }
+
+          if (length(legend_colours) > 0) {
+            map_proxy <- map_proxy %>%
+              leaflet::addLegend(
+                position = "bottomleft",
+                colors = legend_colours,
+                labels = legend_labels,
+                title = "Comparison",
+                opacity = 0.7
+              )
+          }
+
+          fadd_coast_overlay(map_proxy, coast_overlay_wgs84, options)
+        })
+      } else {
+        # --- Scenario mode: both scenarios' full 4-colour scheme ----------
+        # Each scenario is split into two addGlPolygons() calls sharing the
+        # same group= so clearGlLayers() removes both: one for
+        # selected/locked-in/locked-out rows at fillOpacity 0.5, one for
+        # not-selected rows at fillOpacity 0.15 (very transparent), so
+        # overlaps between scenarios remain visually distinguishable.
+        add_scenario_layer <- function(
+          proxy,
+          solution_col,
+          locked_in_col,
+          locked_out_col,
+          colour_selected,
+          colour_locked_in,
+          colour_locked_out,
+          colour_unselected,
+          group
+        ) {
+          cat_colour <- dplyr::case_when(
+            soln_wgs84[[locked_out_col]] ~ colour_locked_out,
+            soln_wgs84[[locked_in_col]] ~ colour_locked_in,
+            soln_wgs84[[solution_col]] == 1 ~ colour_selected,
+            TRUE ~ colour_unselected
+          )
+
+          is_unselected <- cat_colour == colour_unselected
+
+          proxy_out <- proxy
+          if (any(!is_unselected)) {
+            main_data <- soln_wgs84[!is_unselected, , drop = FALSE]
+            main_rgb <- t(col2rgb(cat_colour[!is_unselected])) / 255
+            proxy_out <- proxy_out %>%
+              leafgl::addGlPolygons(
+                data = main_data,
+                fillColor = main_rgb,
+                fillOpacity = 0.5,
+                stroke = TRUE,
+                group = group,
+                digits = 5
+              )
+          }
+          if (any(is_unselected)) {
+            grey_data <- soln_wgs84[is_unselected, , drop = FALSE]
+            grey_rgb <- t(col2rgb(cat_colour[is_unselected])) / 255
+            proxy_out <- proxy_out %>%
+              leafgl::addGlPolygons(
+                data = grey_data,
+                fillColor = grey_rgb,
+                fillOpacity = 0.15,
+                stroke = TRUE,
+                group = group,
+                digits = 5
+              )
+          }
+
+          list(
+            proxy = proxy_out,
+            has_locked_in = any(soln_wgs84[[locked_in_col]]),
+            has_locked_out = any(soln_wgs84[[locked_out_col]])
+          )
+        }
+
+        shinyjs::delay(0, {
+          map_proxy <- base_proxy
+          legend_colours <- character(0)
+          legend_labels <- character(0)
+
+          if (isTRUE(show_scen1)) {
+            res1 <- add_scenario_layer(
+              map_proxy,
+              solution_col = "solution_1",
+              locked_in_col = "is_locked_in1",
+              locked_out_col = "is_locked_out1",
+              colour_selected = "#2ca02c",
+              colour_locked_in = "#1f77b4",
+              colour_locked_out = "#d62728",
+              colour_unselected = "#a8a8a8",
+              group = "scen1_polygons"
+            )
+            map_proxy <- res1$proxy
+            legend_colours <- c(legend_colours, "#2ca02c")
+            legend_labels <- c(legend_labels, "Scenario 1: Selected")
+            if (res1$has_locked_in) {
+              legend_colours <- c(legend_colours, "#1f77b4")
+              legend_labels <- c(legend_labels, "Scenario 1: Locked In")
+            }
+            if (res1$has_locked_out) {
+              legend_colours <- c(legend_colours, "#d62728")
+              legend_labels <- c(legend_labels, "Scenario 1: Locked Out")
+            }
+          }
+
+          if (isTRUE(show_scen2)) {
+            res2 <- add_scenario_layer(
+              map_proxy,
+              solution_col = "solution_2",
+              locked_in_col = "is_locked_in2",
+              locked_out_col = "is_locked_out2",
+              colour_selected = "#1b7837",
+              colour_locked_in = "#6baed6",
+              colour_locked_out = "#fb6a4a",
+              colour_unselected = "#a8a8a8",
+              group = "scen2_polygons"
+            )
+            map_proxy <- res2$proxy
+            legend_colours <- c(legend_colours, "#1b7837")
+            legend_labels <- c(legend_labels, "Scenario 2: Selected")
+            if (res2$has_locked_in) {
+              legend_colours <- c(legend_colours, "#6baed6")
+              legend_labels <- c(legend_labels, "Scenario 2: Locked In")
+            }
+            if (res2$has_locked_out) {
+              legend_colours <- c(legend_colours, "#fb6a4a")
+              legend_labels <- c(legend_labels, "Scenario 2: Locked Out")
+            }
+          }
+
+          if (length(legend_colours) > 0) {
+            map_proxy <- map_proxy %>%
+              leaflet::addLegend(
+                position = "bottomleft",
+                colors = legend_colours,
+                labels = legend_labels,
+                title = "Scenario",
+                opacity = 0.7
+              )
+          }
+
+          fadd_coast_overlay(map_proxy, coast_overlay_wgs84, options)
+        })
+      }
+    }
+
+    # Observer: re-render the Explore layer whenever the Explore sub-tab
+    # becomes active (and the Comparison navbar tab is visible), or whenever
+    # the mode/checkbox selection changes while already on the Explore tab.
+    # Mirrors mod_2scenario.R's WebGL re-add observer, extended to include
+    # the mode/checkbox reactives in the trigger list.
+    shiny::observeEvent(
+      list(
+        input$tabs,
+        tab_visible(),
+        input$exploreMode,
+        input$showScen1,
+        input$showScen2
+      ),
+      {
+        if (!isTRUE(tab_visible()) || !identical(input$tabs, "11")) {
+          return()
+        }
+        render_explore_layer(
+          mode = input$exploreMode %||% "compare",
+          show_scen1 = input$showScen1 %||% TRUE,
+          show_scen2 = input$showScen2 %||% TRUE
+        )
+      }
+    )
+
+    # Click-to-inspect popup: shows planning unit ID, selection status in
+    # each scenario, and cost values. Does NOT show the full feature list
+    # (already available in the Details tab) — keeps the popup short and
+    # dual-scenario-friendly. Mirrors mod_2scenario.R's click handler.
+    shiny::observeEvent(
+      input$leaflet_map_explore_glify_click,
+      {
+        tryCatch(
+          {
+            click <- input$leaflet_map_explore_glify_click
+            if (is.null(click) || is.null(click$id)) {
+              return()
+            }
+
+            soln_sf <- shiny::isolate(comp_map_sf())
+            if (is.null(soln_sf)) {
+              return()
+            }
+
+            # Compare mode filters rows before rendering, so the clicked
+            # layerId is only meaningful there; in Scenario mode, polygons
+            # are rendered without layerId (two scenarios share the map), so
+            # this handler only fires usefully in Compare mode. Still guard
+            # defensively against a missing match.
+            pu_idx <- which(soln_sf$pu_id == click$id)
+            if (length(pu_idx) == 0) {
+              return()
+            }
+
+            pu_row <- sf::st_drop_geometry(soln_sf[pu_idx[1], , drop = FALSE])
+            pu_id <- pu_row$pu_id
+
+            sel1 <- isTRUE(as.logical(pu_row[["solution_1"]]) == TRUE)
+            sel2 <- isTRUE(as.logical(pu_row[["solution_2"]]) == TRUE)
+
+            cost_col1 <- shiny::isolate(input$costid1)
+            cost_col2 <- shiny::isolate(input$costid2)
+
+            get_cost_name <- function(cost_col) {
+              if (is.null(cost_col) || cost_col == "Cost_None") {
+                return("Cost")
+              }
+              info <- Dict[
+                Dict$nameVariable == cost_col,
+                "nameCommon",
+                drop = TRUE
+              ]
+              if (length(info) > 0) info[1] else cost_col
+            }
+
+            get_cost_value <- function(cost_col) {
+              if (
+                is.null(cost_col) ||
+                  !(cost_col %in% names(pu_row))
+              ) {
+                return(NA)
+              }
+              round(as.numeric(pu_row[[cost_col]]), 2)
+            }
+
+            cost_value1 <- get_cost_value(cost_col1)
+            cost_value2 <- get_cost_value(cost_col2)
+
+            # Update highlight (clears any previous highlight polygon first)
+            proxy <- leaflet::leafletProxy(
+              "leaflet_map_explore",
+              session = session
+            ) %>%
+              leaflet::clearGroup("highlight")
+
+            proxy %>%
+              leaflet::addPolygons(
+                data = soln_sf[pu_idx[1], , drop = FALSE],
+                layerId = paste0("highlight_", pu_id),
+                fillColor = "yellow",
+                fillOpacity = 0.5,
+                color = "#FF6600",
+                weight = 3,
+                group = "highlight"
+              )
+
+            new_content <- shiny::tagList(
+              shiny::h4(paste0("Planning Unit #", pu_id)),
+              shiny::hr(style = "margin: 5px 0;"),
+              shiny::p(
+                shiny::strong("Scenario 1: "),
+                if (sel1) "Selected" else "Not selected",
+                style = "margin-bottom: 2px;"
+              ),
+              shiny::p(
+                shiny::strong("Scenario 2: "),
+                if (sel2) "Selected" else "Not selected",
+                style = "margin-bottom: 8px;"
+              ),
+              shiny::hr(style = "margin: 5px 0;"),
+              shiny::h5("Cost"),
+              shiny::p(
+                shiny::strong(paste0(
+                  get_cost_name(cost_col1),
+                  " (Scenario 1): "
+                )),
+                if (is.na(cost_value1)) {
+                  "N/A"
+                } else {
+                  format(cost_value1, big.mark = ",")
+                },
+                style = "margin-bottom: 2px;"
+              ),
+              shiny::p(
+                shiny::strong(paste0(
+                  get_cost_name(cost_col2),
+                  " (Scenario 2): "
+                )),
+                if (is.na(cost_value2)) {
+                  "N/A"
+                } else {
+                  format(cost_value2, big.mark = ",")
+                },
+                style = "margin-bottom: 2px;"
+              )
+            )
+
+            explore_panel_content(new_content)
+          },
+          error = function(e) {
+            message("Explore map click handler error: ", e$message)
+          }
+        )
+      },
+      ignoreInit = TRUE,
+      ignoreNULL = TRUE
+    )
 
     ## Report Generation -------------------------------------------------------
     # Registered once at module init; content function is lazy (only called on download click).

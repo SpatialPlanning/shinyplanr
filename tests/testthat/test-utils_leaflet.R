@@ -2,6 +2,9 @@
 #
 # Tests for fprep_wgs84() — prepares sf objects for Leaflet rendering,
 # optionally shifting longitudes to 0-360 for antimeridian-crossing regions.
+#
+# Also tests fadd_coast_overlay() — shared helper for drawing the coastline
+# overlay on top of a WebGL planning-unit layer in a leafletProxy chain.
 
 test_that("fprep_wgs84() transforms to EPSG:4326", {
   poly <- sf::st_sf(
@@ -72,4 +75,41 @@ test_that("fprep_wgs84() defaults antimeridian to FALSE when not supplied", {
 
   expect_equal(unname(bbox["xmin"]), 0)
   expect_equal(unname(bbox["xmax"]), 1)
+})
+
+test_that("fadd_coast_overlay() returns proxy unchanged when coast_overlay_wgs84 is NULL", {
+  proxy <- leaflet::leaflet()
+  out <- shinyplanr:::fadd_coast_overlay(proxy, NULL, options = list())
+  expect_identical(out, proxy)
+})
+
+test_that("fadd_coast_overlay() adds a coast_overlay group when coast_overlay_wgs84 is supplied", {
+  coast <- sf::st_sf(
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
+      crs = "EPSG:4326"
+    )
+  )
+  proxy <- leaflet::leaflet()
+  out <- shinyplanr:::fadd_coast_overlay(
+    proxy,
+    coast,
+    options = list(coast_overlay_colour = "red", coast_overlay_fill = "blue")
+  )
+  expect_s3_class(out, "leaflet")
+  call <- out$x$calls[[length(out$x$calls)]]
+  expect_equal(call$method, "addPolygons")
+})
+
+test_that("fadd_coast_overlay() falls back to default colours when options are missing", {
+  coast <- sf::st_sf(
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(cbind(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0)))),
+      crs = "EPSG:4326"
+    )
+  )
+  proxy <- leaflet::leaflet()
+  expect_no_error(
+    shinyplanr:::fadd_coast_overlay(proxy, coast, options = list())
+  )
 })
