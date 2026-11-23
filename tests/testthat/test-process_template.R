@@ -380,11 +380,11 @@ test_that("2_setup_data.R substitutes country and crs tokens correctly", {
   )
 
   expect_true(
-    grepl('country    <- "TokenTest"', data_text, fixed = TRUE),
+    grepl('country <- "TokenTest"', data_text, fixed = TRUE),
     label = "2_setup_data.R should contain the substituted country name"
   )
   expect_true(
-    grepl('crs        <- "EPSG:32760"', data_text, fixed = TRUE),
+    grepl('crs <- "EPSG:32760"', data_text, fixed = TRUE),
     label = "2_setup_data.R should contain the substituted CRS"
   )
   expect_false(
@@ -425,7 +425,7 @@ test_that("2_setup_data.R includes st_simplify() calls for bndry and coast", {
   )
   expect_true(
     grepl(
-      'bndry <- sf::st_simplify(bndry, preserveTopology = TRUE, dTolerance = simplify_tol)',
+      "bndry <- sf::st_simplify(\n  bndry,\n  preserveTopology = TRUE,\n  dTolerance = simplify_tol\n)",
       data_text,
       fixed = TRUE
     ),
@@ -433,7 +433,7 @@ test_that("2_setup_data.R includes st_simplify() calls for bndry and coast", {
   )
   expect_true(
     grepl(
-      'coast <- sf::st_simplify(coast, preserveTopology = TRUE, dTolerance = simplify_tol)',
+      "coast <- sf::st_simplify(\n  coast,\n  preserveTopology = TRUE,\n  dTolerance = simplify_tol\n)",
       data_text,
       fixed = TRUE
     ),
