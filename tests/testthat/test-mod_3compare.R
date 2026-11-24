@@ -246,7 +246,10 @@ test_that("mod_3compare_server() uses the updated light/dark green Scenario-mode
   # Scenario 1 "Selected" must be the light green (#7fc97f), Scenario 2 the
   # dark green (#00441b) -- the old near-identical greens (#2ca02c/#1b7837)
   # must no longer appear as colour_selected values.
-  src <- paste(readLines("../../R/mod_3compare.R"), collapse = "\n")
+  # Source is inspected via the loaded function body rather than
+  # readLines() on the R/ source file, since R CMD check runs tests
+  # against the installed package, which has no plain .R files on disk.
+  src <- paste(deparse(body(mod_3compare_server)), collapse = "\n")
   expect_match(src, "#7fc97f", fixed = TRUE)
   expect_match(src, "#00441b", fixed = TRUE)
 })
@@ -255,12 +258,12 @@ test_that("mod_3compare_server() Explore map legends use bottomleft position", {
   # Legend sits at bottomleft, next to the zoom control (also bottomleft) --
   # Leaflet stacks same-corner controls, and a CSS rule (shinyplanr.css)
   # arranges them in a row so the legend appears beside the zoom buttons.
-  src <- paste(readLines("../../R/mod_3compare.R"), collapse = "\n")
+  src <- paste(deparse(body(mod_3compare_server)), collapse = "\n")
   expect_match(src, 'position = "bottomleft"', fixed = TRUE)
 })
 
 test_that("mod_3compare_server() suppresses the default zoom control and relocates a single one via onRender()", {
-  src <- paste(readLines("../../R/mod_3compare.R"), collapse = "\n")
+  src <- paste(deparse(body(mod_3compare_server)), collapse = "\n")
   # zoomControl = FALSE at map creation prevents a duplicate top-left control
   # from appearing alongside the bottom-left one added by onRender().
   expect_match(src, "zoomControl = FALSE", fixed = TRUE)

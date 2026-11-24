@@ -187,21 +187,36 @@ Mirror the `mod_2scenario` Explore tab pattern closely:
 
   **`mode == "compare"`:**
   - Compute `pu_colour` via `dplyr::case_when()`:
-    - `solution_1 == 1 & solution_2 == 1 ~ "#808080"` (grey — both)
+    - `solution_1 == 1 & solution_2 == 1 ~ "#4d4d4d"` (dark grey — both
+      selected; darkened from the original `#808080` so it reads clearly
+      distinct from the new light "not selected" grey below)
     - `solution_1 == 0 & solution_2 == 1 ~ "#1f77b4"` (blue — added)
     - `solution_1 == 1 & solution_2 == 0 ~ "#d62728"` (red — removed)
-    - else `NA` (neither — filtered out before rendering, not coloured
-      grey-and-hidden, to avoid sending unneeded WebGL geometry)
-  - Filter `comp_map_sf()` to non-NA rows before calling
-    `leafgl::addGlPolygons()` (unlike `mod_2scenario`, which renders all rows
-    because it always shows "not selected" in grey — here unselected is
-    deliberately omitted per confirmed decision #2).
-  - Legend: `colors = c("#808080","#1f77b4","#d62728")`,
-    `labels = c("Selected in Both", "Added (Scenario 2 only)", "Removed (Scenario 1 only)")`,
+    - else `"#a8a8a8"` (light grey — neither selected; same hex as
+      `mod_2scenario`'s "Not Selected" colour at
+      [`mod_2scenario.R:1381`](../R/mod_2scenario.R:1381), so the two Explore
+      sub-tabs are visually consistent)
+  - Unlike earlier drafts of this plan, "neither selected" rows are **not**
+    filtered out — they're rendered like `mod_2scenario` does, but at a much
+    lower opacity so they read as a faint backdrop rather than competing
+    with the Compare colours. Split the `leafgl::addGlPolygons()` call in
+    two, sharing one `group=` (same split technique used for Scenario mode
+    below):
+    - Call A: rows where `pu_colour != "#a8a8a8"` (both / added / removed),
+      `fillOpacity = 0.5`.
+    - Call B: rows where `pu_colour == "#a8a8a8"` (neither selected),
+      `fillOpacity = 0.15` — matching the Scenario-mode "Not Selected"
+      opacity exactly.
+  - Legend: `colors = c("#4d4d4d","#1f77b4","#d62728","#a8a8a8")`,
+    `labels = c("Selected in Both", "Added (Scenario 2 only)", "Removed (Scenario 1 only)", "Not Selected")`,
     only including blue/red entries if any such cells exist (mirroring the
     locked-in/out conditional legend logic in
-    [`mod_2scenario.R:1385-1396`](../R/mod_2scenario.R:1385-1396)); grey entry
-    always shown if any "both" cells exist.
+    [`mod_2scenario.R:1385-1396`](../R/mod_2scenario.R:1385-1396)); dark-grey
+    and light-grey entries always shown if any matching cells exist. (Note:
+    this differs from Scenario mode, which deliberately omits its "Not
+    Selected" entry from the legend — Compare mode includes it since it's
+    one of only four possible categories here, versus one of several in
+    Scenario mode.)
   - No lock-in/lock-out colouring in this mode (confirmed decision #2).
 
   **`mode == "scenario"`:**
